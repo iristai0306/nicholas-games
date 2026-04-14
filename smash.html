@@ -127,6 +127,10 @@ body{background:#0a0a12;color:#fff;font-family:"Segoe UI",sans-serif;overflow:hi
   <h1>SELECT FIGHTER</h1>
   <div class="char-grid" id="char-grid">
     <!-- Characters injected by JS -->
+    <!-- TEST CARD: if this doesn't show, CSS is broken -->
+    <div class="char-card" style="display:inline-block;background:#ff0000;width:120px;height:150px;margin:8px;line-height:150px;text-align:center;color:#fff;font-size:14px">
+      TEST CARD
+    </div>
   </div>
   <div class="player-panels" id="player-panels">
     <div class="panel empty" id="p1-panel">
@@ -179,12 +183,17 @@ let p2Locked=false;
 
 // Build character grid
 function buildCharGrid(){
+  console.log("buildCharGrid: starting");
   var grid=document.getElementById("char-grid");
+  console.log("buildCharGrid: grid element =", grid);
+  console.log("buildCharGrid: grid innerHTML before =", grid.innerHTML.substring(0, 100));
   grid.innerHTML="";
+  console.log("buildCharGrid: grid.innerHTML cleared");
   CHARACTERS.forEach(function(char,i){
     var card=document.createElement("div");
     card.className="char-card";
     card.dataset.index=i;
+    console.log("buildCharGrid: creating card", i, char.name);
     card.style.display="inline-block";
 
     var ind=document.createElement("div");
@@ -215,7 +224,9 @@ function buildCharGrid(){
     })(i));
 
     grid.appendChild(card);
+    console.log("buildCharGrid: appended card", i, ", grid childCount =", grid.children.length);
   });
+  console.log("buildCharGrid: done, grid.innerHTML =", grid.innerHTML.substring(0, 200));
 }
 
 function onCardClick(index){
