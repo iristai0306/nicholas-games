@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smash Arena - Platform Fighter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: "Segoe UI", Tahoma, sans-serif; overflow: hidden; }
+    #gameCanvas { border: 3px solid #444; border-radius: 8px; background: #0f0f1a; }
+    #ui { color: #fff; text-align: center; margin-bottom: 10px; font-size: 14px; display: flex; gap: 40px; justify-content: center; }
+    .player-info { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .player-label { font-size: 12px; color: #aaa; }
+    .damage { font-size: 28px; font-weight: bold; }
+    .stocks { font-size: 16px; }
+    .controls { margin-top: 10px; font-size: 12px; color: #888; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+    #menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.88); border: 2px solid #555; border-radius: 16px; padding: 28px 36px; text-align: center; color: #fff; z-index: 10; min-width: 360px; max-height: 90vh; overflow-y: auto; }
+    #menu h1 { font-size: 30px; margin-bottom: 14px; color: #f5c518; }
+    #menu h2 { font-size: 14px; margin-bottom: 8px; color: #ccc; margin-top: 10px; }
+    .char-select { display: flex; gap: 8px; justify-content: center; margin: 8px 0; flex-wrap: wrap; }
+    .char-card { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 5px; border-radius: 10px; border: 2px solid transparent; transition: border-color 0.1s, transform 0.1s; }
+    .char-card:hover { transform: scale(1.07); border-color: #888; }
+    .char-card.sel { border-color: #f5c518; }
+    .char-emoji { font-size: 30px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: #2a2a3e; border-radius: 7px; }
+    .char-name { font-size: 10px; color: #aaa; }
+    .stage-select { display: flex; gap: 8px; justify-content: center; margin: 8px 0; flex-wrap: wrap; }
+    .stage-btn { padding: 7px 13px; border-radius: 8px; border: 2px solid #555; background: #2a2a3e; color: #ccc; cursor: pointer; font-size: 12px; transition: all 0.1s; }
+    .stage-btn:hover { border-color: #f5c518; color: #fff; }
+    .stage-btn.sel { border-color: #f5c518; background: #3a3a5e; color: #fff; }
+    #startBtn { margin-top: 16px; padding: 11px 36px; font-size: 17px; border-radius: 10px; border: none; background: #f5c518; color: #1a1a2e; font-weight: bold; cursor: pointer; }
+    #startBtn:hover { transform: scale(1.04); }
+    .hidden { display: none !important; }
+    #winner { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.85); border: 2px solid #f5c518; border-radius: 16px; padding: 28px 48px; text-align: center; color: #f5c518; z-index: 10; font-size: 26px; font-weight: bold; }
+    #winner small { display: block; font-size: 13px; color: #aaa; margin-top: 8px; }
+    .p1-color { color: #4a9eff; }
+    .p2-color { color: #ff6b6b; }
+  </style>
+</head>
+<body>
+
+<div id="menu">
+  <h1>SMASH ARENA</h1>
+  <h2>Player 1 - Choose Fighter</h2>
+  <div class="char-select" id="p1Chars"></div>
+  <h2>Player 2 - Choose Fighter</h2>
+  <div class="char-select" id="p2Chars"></div>
+  <h2>Choose Stage</h2>
+  <div class="stage-select" id="stageBtns"></div>
+  <button id="startBtn">FIGHT!</button>
+</div>
+
+<div id="winner" class="hidden">
+  <div id="winnerText"></div>
+  <small>Press SPACE to rematch</small>
+</div>
+
+<div id="ui">
+  <div class="player-info">
+    <span class="player-label">P1 (<span id="p1Name">-</span>)</span>
+    <span class="damage p1-color" id="p1Dmg">0%</span>
+    <span class="stocks" id="p1Stocks">&#10084;&#10084;&#10084;</span>
+  </div>
+  <div class="player-info">
+    <span class="player-label">P2 (<span id="p2Name">-</span>)</span>
+    <span class="damage p2-color" id="p2Dmg">0%</span>
+    <span class="stocks" id="p2Stocks">&#10084;&#10084;&#10084;</span>
+  </div>
+</div>
+
+<canvas id="gameCanvas" width="960" height="540"></canvas>
+
+<div class="controls">
+  <span><b>P1:</b> A/D=Move | W=Jump | S=Fall | F=Smash | G=Special | H=Shield</span>
+  <span><b>P2:</b> Arrows=Move | Up=Jump | Down=Fall | J=Smash | K=Special | L=Shield</span>
+</div>
+
+<script>
+var CHARACTERS = [
+  { name: "Fox", emoji: "&#x1F98A;", color: "#ff8c42", weight: 1.0, speed: 2.2, jumpPower: 14,
+    attacks: { jab:{damage:4,knockback:2.5,angle:45,range:48,duration:8}, tilt:{damage:8,knockback:5.5,angle:40,range:58,duration:14}, smash:{damage:18,knockback:12,angle:35,range:72,duration:22}, special:{damage:12,knockback:8,angle:20,range:95,duration:28} } },
+  { name: "Brawler", emoji: "&#x1F9F1;", color: "#6c5ce7", weight: 1.3, speed: 1.6, jumpPower: 12,
+    attacks: { jab:{damage:5,knockback:3.5,angle:50,range:40,duration:10}, tilt:{damage:10,knockback:7,angle:42,range:56,duration:16}, smash:{damage:22,knockback:15,angle:32,range:78,duration:26}, special:{damage:16,knockback:10,angle:15,range:105,duration:36} } },
+  { name: "Spark", emoji: "&#x26A1;", color: "#fdcb6e", weight: 0.85, speed: 2.8, jumpPower: 15,
+    attacks: { jab:{damage:3,knockback:2,angle:48,range:44,duration:6}, tilt:{damage:7,knockback:4.5,angle:38,range:54,duration:12}, smash:{damage:16,knockback:10,angle:40,range:68,duration:20}, special:{damage:10,knockback:6,angle:25,range:85,duration:24} } },
+  { name: "Terra", emoji: "&#x1FAA8;", color: "#a29bfe", weight: 1.5, speed: 1.2, jumpPower: 10,
+    attacks: { jab:{damage:6,knockback:4,angle:52,range:38,duration:12}, tilt:{damage:12,knockback:8.5,angle:44,range:54,duration:18}, smash:{damage:26,knockback:18,angle:28,range:82,duration:30}, special:{damage:20,knockback:14,angle:10,range:115,duration:40} } }
+];
+
+var STAGES = [
+  { name: "Battlefield", platformColor: "#4c7c4c", bgColor: "#0d1f14",
+    drawBg: function(ctx,w,h) {
+      ctx.fillStyle="#163020"; ctx.beginPath(); ctx.moveTo(0,h*.55); ctx.quadraticCurveTo(w*.25,h*.35,w*.5,h*.5); ctx.quadraticCurveTo(w*.75,h*.65,w,h*.45); ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,0.25)"; for(var i=0;i<40;i++){var sx=(i*137.5)%w,sy=(i*73.3)%(h*.5); ctx.beginPath(); ctx.arc(sx,sy,1,0,Math.PI*2); ctx.fill();}
+    },
+    getPlatforms: function(w,h){ var b=h-55; return [ {x:0,y:b,w:w,h:20,type:"ground"}, {x:w/2-70,y:b-130,w:140,h:12,type:"platform"}, {x:w/2-210,y:b-78,w:100,h:12,type:"platform"}, {x:w/2+110,y:b-78,w:100,h:12,type:"platform"} ]; }
+  },
+  { name: "Final Destination", platformColor: "#5555aa", bgColor: "#0a0a18",
+    drawBg: function(ctx,w,h){
+      var g=ctx.createRadialGradient(w/2,h*.4,0,w/2,h*.4,w*.6); g.addColorStop(0,"rgba(80,40,120,0.3)"); g.addColorStop(1,"rgba(0,0,0,0)"); ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+      ctx.fillStyle="rgba(255,255,255,0.4)"; for(var i=0;i<70;i++){var sx=(i*97.3)%w,sy=(i*53.7)%h; ctx.beginPath(); ctx.arc(sx,sy,Math.random()<.1?2:1,0,Math.PI*2); ctx.fill();}
+    },
+    getPlatforms: function(w,h){ return [ {x:0,y:h-55,w:w,h:20,type:"ground"} ]; }
+  },
+  { name: "Fountain", platformColor: "#4a8ab4", bgColor: "#0d1f30",
+    drawBg: function(ctx,w,h){
+      ctx.fillStyle="rgba(40,110,170,0.12)"; ctx.fillRect(0,h-80,w,80);
+      ctx.fillStyle="rgba(150,220,255,0.15)"; for(var i=0;i<8;i++){var fx=w*.1+i*(w*.1),fy=h-120-Math.sin(Date.now()/300+i)*20; ctx.beginPath(); ctx.moveTo(fx-3,h-60); ctx.lineTo(fx,fy); ctx.lineTo(fx+3,h-60); ctx.fill();}
+    },
+    getPlatforms: function(w,h){ var b=h-55; return [ {x:0,y:b,w:w,h:20,type:"ground"}, {x:w/2-60,y:b-155,w:120,h:12,type:"platform"}, {x:75,y:b-92,w:95,h:12,type:"platform"}, {x:w-170,y:b-92,w:95,h:12,type:"platform"} ]; }
+  }
+];
+
+var GRAVITY=.55, MAX_FALL=16, G_FRICTION=.84, A_FRICTION=.965, SHIELD_SIZE=34, MAX_STOCKS=3, RESPAWN_INVULN=120, SMASH_MAX_CHARGE=30;
+
+var canvas=document.getElementById("gameCanvas"), ctx=canvas.getContext("2d");
+var W=canvas.width, H=canvas.height;
+var gameRunning=false, gameOver=false, stageIndex=0, p1CharIndex=0, p2CharIndex=1, stagePlatforms=[], p1, p2, animFrame=null;
+
+function Fighter(x,y,ci,pn){
+  var ch=CHARACTERS[ci];
+  this.x=x; this.y=y; this.vx=0; this.vy=0;
+  this.charIndex=ci; this.playerNum=pn;
+  this.name=ch.name; this.emoji=ch.emoji; this.color=ch.color;
+  this.weight=ch.weight; this.speed=ch.speed; this.jumpPower=ch.jumpPower;
+  this.damage=0; this.stocks=MAX_STOCKS; this.facing=pn===1?1:-1;
+  this.onGround=false; this.jumpsLeft=2; this.shield=1; this.shielding=false;
+  this.blink=0; this.hitstun=0; this.attackActive=0; this.attackCooldown=0;
+  this.attackType=null; this.attackFrame=0; this.isSmashing=false;
+  this.specialCooldown=0; this.hitCooldown=0; this.dead=false; this.respawnTimer=0;
+  this.width=36; this.height=52; this._atk=ch.attacks;
+}
+Fighter.prototype.hb=function(){ return {x:this.x-this.width/2,y:this.y-this.height,w:this.width,h:this.height}; };
+Fighter.prototype.moveLeft=function(){ if(!this.dead&&!this.shielding) this.vx-=this.speed*.28; };
+Fighter.prototype.moveRight=function(){ if(!this.dead&&!this.shielding) this.vx+=this.speed*.28; };
+Fighter.prototype.jump=function(){ if(this.dead)return; if(this.jumpsLeft>0){ this.vy=-this.jumpPower*(this.jumpsLeft===2?1:.82); this.jumpsLeft--; this.onGround=false; } };
+Fighter.prototype.fastFall=function(){ if(!this.onGround&&!this.dead) this.vy=Math.max(this.vy,5); };
+Fighter.prototype.tapAttack=function(){ if(this.dead||this.attackCooldown>0||this.specialCooldown>0||this.isSmashing)return; this.attackType=this.onGround?"tilt":"jab"; this.attackFrame=0; this.attackActive=this._atk[this.attackType].duration; this.attackCooldown=this.onGround?18:12; };
+Fighter.prototype.startSmash=function(){ if(this.dead||this.attackCooldown>0||this.specialCooldown>0)return; this.isSmashing=true; this.attackType="smash"; this.attackFrame=0; };
+Fighter.prototype.releaseSmash=function(){ if(!this.isSmashing)return; this.isSmashing=false; var c=Math.min(this.attackFrame,SMASH_MAX_CHARGE); var p=.6+(c/SMASH_MAX_CHARGE)*.4; this.attackActive=Math.max(6,Math.floor(this._atk.smash.duration*p)); this.attackCooldown=38; };
+Fighter.prototype.special=function(){ if(this.dead||this.specialCooldown>0)return; this.attackType="special"; this.attackFrame=0; this.attackActive=this._atk.special.duration; this.attackCooldown=22; this.specialCooldown=130; };
+Fighter.prototype.shieldOn=function(){ if(!this.dead&&this.shield>0) this.shielding=true; };
+Fighter.prototype.shieldOff=function(){ this.shielding=false; };
+Fighter.prototype.update=function(){
+  var self=this;
+  if(this.dead){ if(--this.respawnTimer<=0)this.respawn(); return; }
+  if(this.blink>0)this.blink--;
+  this.vy=Math.min(this.vy+GRAVITY,MAX_FALL);
+  this.vx*=(this.onGround?G_FRICTION:A_FRICTION);
+  this.x+=this.vx; this.y+=this.vy;
+  this.onGround=false;
+  stagePlatforms.forEach(function(p){ self._collide(p); });
+  if(this.y>H+180||this.x<-220||this.x>W+220)this.die();
+  if(this.attackCooldown>0)this.attackCooldown--;
+  if(this.specialCooldown>0)this.specialCooldown--;
+  if(this.hitstun>0)this.hitstun--;
+  if(this.hitCooldown>0)this.hitCooldown--;
+  if(this.attackFrame<300)this.attackFrame++;
+  if(!this.shielding){ this.shield=Math.min(1,this.shield+.006); } else { this.shield=Math.max(0,this.shield-.022); if(this.shield<=0){ this.shielding=false; this.shield=0; this.damage+=35; } }
+  if(Math.abs(this.vx)>.3&&this.hitstun===0)this.facing=this.vx>0?1:-1;
+};
+Fighter.prototype._collide=function(plat){
+  var hb=this.hb();
+  if(this.vy>=0&&hb.x+hb.w>plat.x&&hb.x<plat.x+plat.w&&hb.y+hb.h>=plat.y&&hb.y+hb.h<=plat.y+plat.h+this.vy+3){
+    this.y=plat.y; this.vy=0; this.onGround=true; this.jumpsLeft=2;
+  }
+};
+Fighter.prototype.getAtkBox=function(){
+  if(this.attackActive<=0||!this.attackType)return null;
+  var a=this._atk[this.attackType], r=a.range, s=this.width+r;
+  return {x:this.x-s/2, y:this.y-this.height*.55, w:s, h:this.height*.55};
+};
+Fighter.prototype.applyHitTo=function(def){
+  if(def.hitCooldown>0||def.dead)return;
+  var a=this._atk[this.attackType];
+  var kb=a.knockback*(1+def.damage/95)*(1/def.weight);
+  var ang=(a.angle*Math.PI)/180;
+  def.vx=Math.cos(ang)*kb*this.facing;
+  def.vy=-Math.sin(ang)*kb;
+  def.hitstun=Math.floor(kb*2.8); def.hitCooldown=22; def.damage+=a.damage; def.blink=14;
+  if(def.shielding){ def.shield=Math.max(0,def.shield-.28); def.damage=Math.max(0,def.damage-a.damage*.45); }
+};
+Fighter.prototype.die=function(){ if(this.dead)return; this.stocks--; this.dead=true; this.respawnTimer=95; };
+Fighter.prototype.respawn=function(){ this.dead=false; this.damage=0; this.vx=0; this.vy=0; this.x=W/2; this.y=H/3; this.blink=RESPAWN_INVULN; this.shield=1; this.hitstun=0; this.attackActive=0; this.attackCooldown=0; };
+Fighter.prototype.draw=function(){
+  if(this.dead)return;
+  if(this.blink>0&&Math.floor(this.blink/4)%2)return;
+  var cx=this.x, cy=this.y;
+  // Shield
+  if(this.shielding&&this.shield>0){
+    ctx.save(); ctx.globalAlpha=.25+this.shield*.35; ctx.strokeStyle="#88ccff"; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(cx,cy-this.height/2,SHIELD_SIZE,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle="rgba(100,180,255,0.08)"; ctx.fill(); ctx.restore();
+  }
+  // Charge orb
+  if(this.isSmashing){
+    var c=Math.min(this.attackFrame/SMASH_MAX_CHARGE,1);
+    ctx.save(); ctx.globalAlpha=.6; ctx.fillStyle="hsl("+(60*c)+",100%,60%)";
+    ctx.beginPath(); ctx.arc(cx,cy-this.height-18,7+c*14,0,Math.PI*2); ctx.fill(); ctx.restore();
+  }
+  // Attack arc
+  if(this.attackActive>0&&this.attackType){
+    var a=this._atk[this.attackType], r=a.range*.75, mid=this.facing>0?0:Math.PI;
+    var cols={jab:"#ffff88",tilt:"#ffdd44",smash:"#ff8800",special:"#dd44ff"};
+    ctx.save(); ctx.globalAlpha=.3; ctx.fillStyle=cols[this.attackType]||"#ffff88";
+    ctx.translate(cx,cy-this.height*.5); ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.arc(0,0,r,mid-Math.PI*.55,mid+Math.PI*.55); ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+  // Body
+  ctx.save(); ctx.translate(cx,cy); ctx.scale(this.facing,1);
+  ctx.fillStyle="rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(0,0,17,5,0,0,Math.PI*2); ctx.fill();
+  var bw=this.width*.88, bh=this.height*.55;
+  ctx.fillStyle=this.color; ctx.beginPath(); ctx.roundRect(-bw/2,-this.height,bw,bh,5); ctx.fill();
+  ctx.fillStyle="#f5d0a0"; ctx.beginPath(); ctx.arc(0,-this.height-8,15,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#222"; ctx.beginPath(); ctx.arc(4,-this.height-10,2.5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#2a2a2a"; ctx.fillRect(-11,-this.height*.45,8,15); ctx.fillRect(3,-this.height*.45,8,15);
+  ctx.restore();
+  ctx.save(); ctx.font="15px serif"; ctx.textAlign="center"; ctx.fillText(this.emoji,cx,cy-this.height-30); ctx.restore();
+};
+
+function boxesOverlap(a,b){ return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y; }
+function checkHit(att,def){
+  if(att.attackActive<=0)return;
+  var ab=att.getAtkBox(); if(!ab)return;
+  if(att.attackFrame===1&&boxesOverlap(ab,def.hb())) att.applyHitTo(def);
+}
+
+function drawStage(){
+  var s=STAGES[stageIndex];
+  ctx.fillStyle=s.bgColor; ctx.fillRect(0,0,W,H);
+  s.drawBg(ctx,W,H);
+  stagePlatforms.forEach(function(p){
+    if(p.type==="ground"){
+      ctx.fillStyle=s.platformColor; ctx.fillRect(p.x,p.y,p.w,p.h);
+      ctx.fillStyle="#6aaa6a"; ctx.fillRect(p.x,p.y,p.w,4);
+    } else {
+      ctx.fillStyle=s.platformColor; ctx.beginPath(); ctx.roundRect(p.x,p.y,p.w,p.h,4); ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,0.12)"; ctx.fillRect(p.x+4,p.y+2,p.w-8,3);
+    }
+  });
+  ctx.strokeStyle="rgba(255,50,50,0.25)"; ctx.lineWidth=2; ctx.setLineDash([6,6]); ctx.strokeRect(-3,-3,W+6,H+6); ctx.setLineDash([]);
+}
+
+function updateUI(){
+  document.getElementById("p1Name").textContent=CHARACTERS[p1CharIndex].name;
+  document.getElementById("p2Name").textContent=CHARACTERS[p2CharIndex].name;
+  document.getElementById("p1Dmg").textContent=Math.floor(p1.damage)+"%";
+  document.getElementById("p2Dmg").textContent=Math.floor(p2.damage)+"%";
+  document.getElementById("p1Dmg").style.color=p1.damage>100?"#ff4444":"#4a9eff";
+  document.getElementById("p2Dmg").style.color=p2.damage>100?"#ff4444":"#ff6b6b";
+  var h1="",h2="";
+  for(var i=0;i<Math.max(0,p1.stocks);i++) h1+="&#10084;";
+  for(var j=0;j<Math.max(0,p2.stocks);j++) h2+="&#10084;";
+  document.getElementById("p1Stocks").innerHTML=h1;
+  document.getElementById("p2Stocks").innerHTML=h2;
+}
+
+function loop(){
+  if(!gameRunning)return;
+  p1.update(); p2.update();
+  if(p1.isSmashing&&p1.attackFrame>SMASH_MAX_CHARGE+10)p1.releaseSmash();
+  if(p2.isSmashing&&p2.attackFrame>SMASH_MAX_CHARGE+10)p2.releaseSmash();
+  checkHit(p1,p2); checkHit(p2,p1);
+  if(p1.attackActive>0)p1.attackActive--;
+  if(p2.attackActive>0)p2.attackActive--;
+  updateUI();
+  if(p1.stocks<=0||p2.stocks<=0){
+    gameRunning=false; gameOver=true;
+    var win=p1.stocks>0?"Player 1":"Player 2";
+    var em=p1.stocks>0?CHARACTERS[p1CharIndex].emoji:CHARACTERS[p2CharIndex].emoji;
+    document.getElementById("winnerText").innerHTML=em+" "+win+" Wins!";
+    document.getElementById("winner").classList.remove("hidden");
+    return;
+  }
+  animFrame=requestAnimationFrame(loop);
+}
+
+function render(){
+  drawStage();
+  if(p1)p1.draw(); if(p2)p2.draw();
+  if(gameRunning||gameOver) requestAnimationFrame(render);
+}
+
+function startGame(){
+  gameRunning=true; gameOver=false;
+  stagePlatforms=STAGES[stageIndex].getPlatforms(W,H);
+  p1=new Fighter(W*.28,H*.4,p1CharIndex,1);
+  p2=new Fighter(W*.72,H*.4,p2CharIndex,2);
+  document.getElementById("menu").classList.add("hidden");
+  document.getElementById("winner").classList.add("hidden");
+  updateUI();
+  loop(); render();
+}
+
+var heldKeys={};
+document.addEventListener("keydown",function(e){
+  if(heldKeys[e.code])return; heldKeys[e.code]=true;
+  if(gameOver&&e.code==="Space"){ startGame(); return; }
+  if(!gameRunning)return;
+  if(e.code==="KeyA")p1.moveLeft(); if(e.code==="KeyD")p1.moveRight();
+  if(e.code==="KeyW")p1.jump(); if(e.code==="KeyS")p1.fastFall();
+  if(e.code==="KeyF")p1.startSmash(); if(e.code==="KeyG")p1.special(); if(e.code==="KeyH")p1.shieldOn();
+  if(e.code==="ArrowLeft")p2.moveLeft(); if(e.code==="ArrowRight")p2.moveRight();
+  if(e.code==="ArrowUp")p2.jump(); if(e.code==="ArrowDown")p2.fastFall();
+  if(e.code==="KeyJ")p2.startSmash(); if(e.code==="KeyK")p2.special(); if(e.code==="KeyL")p2.shieldOn();
+});
+document.addEventListener("keyup",function(e){
+  heldKeys[e.code]=false;
+  if(!gameRunning)return;
+  if(e.code==="KeyF"){ if(p1.isSmashing)p1.releaseSmash(); else p1.tapAttack(); }
+  if(e.code==="KeyJ"){ if(p2.isSmashing)p2.releaseSmash(); else p2.tapAttack(); }
+  if(e.code==="KeyH")p1.shieldOff();
+  if(e.code==="KeyL")p2.shieldOff();
+});
+
+// Character select UI
+function buildCharUI(){
+  var p1div=document.getElementById("p1Chars"), p2div=document.getElementById("p2Chars");
+  CHARACTERS.forEach(function(ch,i){
+    var card1=document.createElement("div"); card1.className="char-card"+(i===p1CharIndex?" sel":"");
+    card1.innerHTML="<div class="char-emoji">"+ch.emoji+"</div><div class="char-name">"+ch.name+"</div>";
+    card1.onclick=function(){ p1CharIndex=i; document.querySelectorAll("#p1Chars .char-card").forEach(function(c){c.classList.remove("sel");}); card1.classList.add("sel"); };
+    p1div.appendChild(card1);
+
+    var card2=document.createElement("div"); card2.className="char-card"+(i===p2CharIndex?" sel":"");
+    card2.innerHTML="<div class="char-emoji">"+ch.emoji+"</div><div class="char-name">"+ch.name+"</div>";
+    card2.onclick=function(){ p2CharIndex=i; document.querySelectorAll("#p2Chars .char-card").forEach(function(c){c.classList.remove("sel");}); card2.classList.add("sel"); };
+    p2div.appendChild(card2);
+  });
+  var sdiv=document.getElementById("stageBtns");
+  STAGES.forEach(function(s,i){
+    var btn=document.createElement("button"); btn.className="stage-btn"+(i===stageIndex?" sel":"");
+    btn.textContent=s.name;
+    btn.onclick=function(){ stageIndex=i; document.querySelectorAll(".stage-btn").forEach(function(b){b.classList.remove("sel");}); btn.classList.add("sel"); };
+    sdiv.appendChild(btn);
+  });
+  document.getElementById("startBtn").onclick=startGame;
+}
+buildCharUI();
+<\/script>
+</body>
+</html>
