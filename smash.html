@@ -193,14 +193,16 @@
 <script>
 // ─── CHARACTERS (real emoji strings) ───
 var CHARACTERS = [
-  { name: "Fox",     emoji: "🦊", color: "#ff8c42", weight: 1.0,  speed: 2.2, jumpPower: 14,
-    attacks: { jab:{damage:4,knockback:2.5,angle:45,range:48,duration:8}, tilt:{damage:8,knockback:5.5,angle:40,range:58,duration:14}, smash:{damage:18,knockback:12,angle:35,range:72,duration:22}, special:{damage:12,knockback:8,angle:20,range:95,duration:28} } },
-  { name: "Brawler", emoji: "🧱", color: "#6c5ce7", weight: 1.3,  speed: 1.6, jumpPower: 12,
-    attacks: { jab:{damage:5,knockback:3.5,angle:50,range:40,duration:10}, tilt:{damage:10,knockback:7,angle:42,range:56,duration:16}, smash:{damage:22,knockback:15,angle:32,range:78,duration:26}, special:{damage:16,knockback:10,angle:15,range:105,duration:36} } },
-  { name: "Spark",   emoji: "⚡", color: "#fdcb6e", weight: 0.85, speed: 2.8, jumpPower: 15,
-    attacks: { jab:{damage:3,knockback:2,angle:48,range:44,duration:6}, tilt:{damage:7,knockback:4.5,angle:38,range:54,duration:12}, smash:{damage:16,knockback:10,angle:40,range:68,duration:20}, special:{damage:10,knockback:6,angle:25,range:85,duration:24} } },
-  { name: "Terra",   emoji: "🪨", color: "#a29bfe", weight: 1.5,  speed: 1.2, jumpPower: 10,
-    attacks: { jab:{damage:6,knockback:4,angle:52,range:38,duration:12}, tilt:{damage:12,knockback:8.5,angle:44,range:54,duration:18}, smash:{damage:26,knockback:18,angle:28,range:82,duration:30}, special:{damage:20,knockback:14,angle:10,range:115,duration:40} } }
+  { name: "Psyduck", emoji: "🦆", color: "#ffeb3b", weight: 0.95, speed: 1.9, jumpPower: 13,
+    attacks: { jab:{damage:4,knockback:2,angle:48,range:46,duration:8}, tilt:{damage:9,knockback:5,angle:42,range:56,duration:15}, smash:{damage:17,knockback:11,angle:36,range:70,duration:22}, special:{damage:11,knockback:7,angle:22,range:90,duration:26} } },
+  { name: "Yoshi",   emoji: "🦖", color: "#4caf50", weight: 1.1,  speed: 2.0, jumpPower: 14,
+    attacks: { jab:{damage:5,knockback:3,angle:50,range:50,duration:9}, tilt:{damage:10,knockback:6,angle:44,range:60,duration:15}, smash:{damage:20,knockback:14,angle:30,range:76,duration:24}, special:{damage:15,knockback:9,angle:18,range:100,duration:32} } },
+  { name: "Mickey",  emoji: "🐭", color: "#333333", weight: 0.85, speed: 2.6, jumpPower: 15,
+    attacks: { jab:{damage:3,knockback:1.8,angle:46,range:44,duration:7}, tilt:{damage:8,knockback:4.5,angle:40,range:54,duration:12}, smash:{damage:15,knockback:9,angle:38,range:66,duration:20}, special:{damage:10,knockback:6,angle:24,range:82,duration:22} } },
+  { name: "Gojo",    emoji: "👤", color: "#e8e8f0", weight: 1.0,  speed: 2.1, jumpPower: 14,
+    attacks: { jab:{damage:4,knockback:2.2,angle:44,range:48,duration:8}, tilt:{damage:9,knockback:5.8,angle:38,range:58,duration:14}, smash:{damage:19,knockback:13,angle:32,range:74,duration:23}, special:{damage:14,knockback:11,angle:15,range:108,duration:30} } },
+  { name: "Ditto",   emoji: "💜", color: "#9c27b0", weight: 0.8,  speed: 2.4, jumpPower: 15,
+    attacks: { jab:{damage:3,knockback:1.5,angle:50,range:42,duration:7}, tilt:{damage:7,knockback:4,angle:42,range:52,duration:13}, smash:{damage:14,knockback:8,angle:40,range:64,duration:20}, special:{damage:9,knockback:5,angle:28,range:78,duration:24} } }
 ];
 
 var STAGES = [
@@ -410,7 +412,7 @@ function buildMenu(){
   var sdiv=document.getElementById("stage-btns");
 
   CHARACTERS.forEach(function(ch,i){
-    var traits={Fox:"balanced",Brawler:"heavy",Spark:"fast/light",Terra:"tank"};
+    var traits={Psyduck:"confused",Yoshi:"tongue/grab",Mickey:"fast/light",Gojo:"infinity",Ditto:"transform"};
     var card1=document.createElement("div");
     card1.className="char-card"+(i===p1CharIndex?" selected":"");
     card1.innerHTML='<div class="char-emoji">'+ch.emoji+'</div><div class="char-name">'+ch.name+'</div><div class="char-trait">'+traits[ch.name]+'</div>';
