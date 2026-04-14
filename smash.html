@@ -317,12 +317,12 @@ function buildCharUI(){
   var p1div=document.getElementById("p1Chars"), p2div=document.getElementById("p2Chars");
   CHARACTERS.forEach(function(ch,i){
     var card1=document.createElement("div"); card1.className="char-card"+(i===p1CharIndex?" sel":"");
-    card1.innerHTML="<div class="char-emoji">"+ch.emoji+"</div><div class="char-name">"+ch.name+"</div>";
+    card1.innerHTML='<div class="char-emoji">'+ch.emoji+'</div><div class="char-name">'+ch.name+'</div>';
     card1.onclick=function(){ p1CharIndex=i; document.querySelectorAll("#p1Chars .char-card").forEach(function(c){c.classList.remove("sel");}); card1.classList.add("sel"); };
     p1div.appendChild(card1);
 
     var card2=document.createElement("div"); card2.className="char-card"+(i===p2CharIndex?" sel":"");
-    card2.innerHTML="<div class="char-emoji">"+ch.emoji+"</div><div class="char-name">"+ch.name+"</div>";
+    card2.innerHTML='<div class="char-emoji">'+ch.emoji+'</div><div class="char-name">'+ch.name+'</div>';
     card2.onclick=function(){ p2CharIndex=i; document.querySelectorAll("#p2Chars .char-card").forEach(function(c){c.classList.remove("sel");}); card2.classList.add("sel"); };
     p2div.appendChild(card2);
   });
