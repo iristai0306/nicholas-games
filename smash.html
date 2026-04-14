@@ -6,225 +6,110 @@
 <title>Smash Arena</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a12;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:"Segoe UI",sans-serif;overflow:hidden;color:#fff}
-#gameCanvas{border:3px solid #444;border-radius:8px;background:#0f0f1a;display:none}
-#menu-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(180deg,#0a0a18 0%,#12122a 60%,#0a0a18 100%);display:flex;flex-direction:column;z-index:100;overflow:hidden}
+body{background:#0a0a12;color:#fff;font-family:"Segoe UI",sans-serif;overflow:hidden}
 
-/* ===== SMASH ULTIMATE CHARACTER SELECT ===== */
-#char-select-screen{flex:1;display:flex;flex-direction:column;width:100%;position:relative;min-height:0;overflow:hidden}
+/* ===== CHAR SELECT SCREEN ===== */
+#char-select-screen{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:#12122a;
+}
+#char-select-screen h1{
+  text-align:center;
+  padding-top:20px;
+  font-size:24px;
+  letter-spacing:4px;
+  color:#fff;
+  margin-bottom:20px;
+}
 
-/* TOP SECTION - Character Grid */
-.cs-top{padding:16px 20px 10px;display:flex;flex-direction:column;align-items:center;min-height:0;flex-shrink:0}
-
-.cs-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.cs-header-text{font-size:18px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,0.5)}
-.cs-header-line{flex:1;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)}
-
-.char-grid{display:grid;grid-template-columns:repeat(5,140px);gap:14px;width:fit-content;min-height:334px}
+/* Character grid - inline-block layout, no flexbox */
+.char-grid{
+  text-align:center;
+  margin-bottom:30px;
+}
 
 .char-card{
-  width:140px;height:160px;
-  background:linear-gradient(180deg,#1e1e38 0%,#151530 100%);
+  display:inline-block;
+  width:120px;
+  height:150px;
+  background:#1e1e38;
   border:3px solid #333;
-  border-radius:16px;
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-  padding-top:14px;gap:10px;
+  border-radius:12px;
+  margin:8px;
   cursor:pointer;
-  transition:all 0.12s ease;
-  position:relative;
-  overflow:hidden;
-}
-.char-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:3px;
-  background:rgba(255,255,255,0.08);border-radius:13px 13px 0 0;
-}
-.char-card:hover{
-  transform:scale(1.06) translateY(-4px);
-  border-color:#aaa;
-  box-shadow:0 8px 30px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.1);
-}
-.char-card:hover::before{background:rgba(255,255,255,0.25)}
-
-/* Colored square in center of card */
-.char-swatch{
-  width:72px;height:72px;border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 16px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.2);
+  vertical-align:top;
   position:relative;
 }
-.char-swatch::after{
-  content:'';position:absolute;top:4px;left:6px;right:6px;height:8px;
-  background:linear-gradient(180deg,rgba(255,255,255,0.3),transparent);
-  border-radius:6px 6px 0 0;
-}
-.char-initial{
-  font-size:32px;font-weight:900;color:rgba(255,255,255,0.9);
-  text-shadow:0 2px 4px rgba(0,0,0,0.5);
+
+.char-color{
+  width:70px;
+  height:70px;
+  border-radius:10px;
+  margin:12px auto 8px;
 }
 
-.char-name-tag{
-  font-size:12px;font-weight:700;color:#ccc;
-  letter-spacing:1.5px;text-transform:uppercase;
-  padding:4px 10px;background:rgba(0,0,0,0.3);
-  border-radius:6px;text-align:center;
+.char-name{
+  font-size:12px;
+  font-weight:bold;
+  color:#ccc;
+  letter-spacing:1px;
+  text-transform:uppercase;
 }
 
-/* Pick indicator tags */
 .pick-indicator{
-  position:absolute;top:6px;right:6px;
-  width:28px;height:28px;border-radius:50%;
-  display:none;align-items:center;justify-content:center;
-  font-size:11px;font-weight:bold;color:#fff;
-  box-shadow:0 2px 8px rgba(0,0,0,0.5);
-}
-.pick-indicator.p1-pick{background:#4a9eff}
-.pick-indicator.p2-pick{background:#ff6b6b}
-.pick-indicator.p3-pick{background:#6bff6b;color:#111}
-.pick-indicator.p4-pick{background:#ffdd44;color:#111}
-.char-card.p1-picked{border-color:#4a9eff;box-shadow:0 0 0 3px #4a9eff,0 0 30px rgba(74,158,255,0.4)}
-.char-card.p2-picked{border-color:#ff6b6b;box-shadow:0 0 0 3px #ff6b6b,0 0 30px rgba(255,107,107,0.4)}
-.char-card.p3-picked{border-color:#6bff6b;box-shadow:0 0 0 3px #6bff6b,0 0 30px rgba(107,255,107,0.4)}
-.char-card.p4-picked{border-color:#ffdd44;box-shadow:0 0 0 3px #ffdd44,0 0 30px rgba(255,221,68,0.4)}
-.char-card.multi-picked{border-color:#fff;box-shadow:0 0 0 3px #fff,0 0 40px rgba(255,255,255,0.4)}
-
-/* ===== BOTTOM SECTION - Player Panels ===== */
-.cs-bottom{
-  background:linear-gradient(180deg,rgba(10,10,20,0) 0%,rgba(5,5,15,0.95) 30%,#050510 100%);
-  padding:20px 20px 24px;
-  display:flex;flex-direction:column;align-items:center;gap:14px;
-}
-
-.turn-banner{
-  font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;
-  color:rgba(255,255,255,0.5);text-align:center;min-height:18px;
-}
-
-.player-panels{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;justify-content:center}
-
-.player-panel{
-  width:170px;height:120px;
-  border-radius:14px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-  border:3px solid rgba(255,255,255,0.1);
-  transition:all 0.2s ease;
-  position:relative;overflow:hidden;
-}
-.player-panel::before{
-  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
-  background:linear-gradient(180deg,rgba(255,255,255,0.05) 0%,transparent 40%);
-  pointer-events:none;
-}
-.player-panel .panel-inner{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;z-index:1;
-}
-
-/* Player number badge */
-.player-badge{
-  width:32px;height:32px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:900;color:#fff;
-  border:2px solid rgba(255,255,255,0.3);
-}
-.p1-panel .player-badge{background:#4a9eff;border-color:#4a9eff}
-.p2-panel .player-badge{background:#ff6b6b;border-color:#ff6b6b}
-.p3-panel .player-badge{background:#6bff6b;border-color:#6bff6b;color:#111}
-.p4-panel .player-badge{background:#ffdd44;border-color:#ffdd44;color:#111}
-
-/* Character name in panel */
-.panel-char-name{
-  font-size:11px;font-weight:700;color:#fff;
-  letter-spacing:2px;text-transform:uppercase;
-  padding:3px 10px;background:rgba(0,0,0,0.4);
-  border-radius:5px;min-width:90px;text-align:center;
-}
-.panel-placeholder{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:1px}
-
-/* Controller icon */
-.controller-icon{
-  width:28px;height:20px;opacity:0.5;
-  display:flex;align-items:center;justify-content:center;
-}
-.controller-icon svg{width:100%;height:100%;fill:currentColor}
-
-/* Panel border glow when picking */
-.player-panel.is-picking{
-  animation:pickingGlow 0.8s ease-in-out infinite;
-}
-.p1-panel.is-picking{border-color:#4a9eff;box-shadow:0 0 25px rgba(74,158,255,0.5)}
-.p2-panel.is-picking{border-color:#ff6b6b;box-shadow:0 0 25px rgba(255,107,107,0.5)}
-.p3-panel.is-picking{border-color:#6bff6b;box-shadow:0 0 25px rgba(107,255,107,0.5)}
-.p4-panel.is-picking{border-color:#ffdd44;box-shadow:0 0 25px rgba(255,221,68,0.5)}
-
-@keyframes pickingGlow{
-  0%,100%{transform:scale(1)}
-  50%{transform:scale(1.02)}
-}
-
-/* Empty slot panel */
-.panel-empty{
-  border:3px dashed rgba(255,255,255,0.15);
-  background:rgba(0,0,0,0.2);
-}
-
-/* CPU badge */
-.cpu-badge{
-  font-size:9px;font-weight:700;letter-spacing:2px;
-  color:rgba(255,255,255,0.4);
-  padding:2px 8px;background:rgba(0,0,0,0.4);
-  border-radius:4px;text-transform:uppercase;
-}
-
-/* Ready button */
-#ready-btn{
+  position:absolute;
+  top:4px;right:4px;
+  width:24px;height:24px;
+  border-radius:50%;
+  font-size:10px;font-weight:bold;
+  color:#fff;
   display:none;
-  padding:14px 60px;font-size:22px;border-radius:14px;border:none;
-  background:linear-gradient(135deg,#f5c518,#e6a817);color:#1a1a2e;
-  font-weight:bold;cursor:pointer;letter-spacing:3px;text-transform:uppercase;
-  box-shadow:0 0 40px rgba(245,197,24,0.5);
-  animation:readyPulse 1.3s infinite;
+  text-align:center;
+  line-height:24px;
 }
-@keyframes readyPulse{
-  0%,100%{transform:scale(1);box-shadow:0 0 40px rgba(245,197,24,0.5)}
-  50%{transform:scale(1.05);box-shadow:0 0 60px rgba(245,197,24,0.8)}
-}
-#ready-btn:hover{transform:scale(1.08);box-shadow:0 0 80px rgba(245,197,24,0.9)}
+.pick-indicator.p1{background:#4a9eff}
+.pick-indicator.p2{background:#ff6b6b}
 
-.controls-hint{
-  display:flex;gap:16px;font-size:11px;color:rgba(255,255,255,0.35);
-  flex-wrap:wrap;justify-content:center;
-}
-.controls-hint span{
-  padding:4px 12px;background:rgba(255,255,255,0.05);
-  border-radius:6px;border:1px solid rgba(255,255,255,0.08);
+/* Player panels at bottom */
+.player-panels{
+  text-align:center;
+  margin-top:10px;
 }
 
-/* ===== STAGE SELECT ===== */
-#stage-select-screen{display:none;flex-direction:column;align-items:center;padding:40px 20px;width:100%}
-.screen-title{font-size:28px;color:#fff;margin-bottom:30px;text-transform:uppercase;letter-spacing:4px}
-.stage-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:36px}
-.stage-card{
-  width:190px;height:110px;background:#1e1e3a;border:3px solid #444;
-  border-radius:14px;display:flex;flex-direction:column;align-items:center;
-  justify-content:flex-end;padding-bottom:12px;cursor:pointer;
-  transition:all 0.15s;position:relative;overflow:hidden;
+.panel{
+  display:inline-block;
+  width:150px;
+  height:100px;
+  border-radius:12px;
+  border:3px solid #444;
+  margin:10px;
+  text-align:center;
+  vertical-align:top;
+  padding-top:15px;
 }
-.stage-card:hover{transform:scale(1.05);border-color:#f5c518;box-shadow:0 8px 30px rgba(0,0,0,0.5)}
-.stage-card.selected{border-color:#f5c518;background:#2a2a4a;box-shadow:0 0 25px rgba(245,197,24,0.3)}
-.stage-card.selected::after{content:"\2713";position:absolute;top:6px;right:8px;font-size:18px;color:#f5c518}
-.stage-preview{position:absolute;top:0;left:0;right:0;height:70px;border-radius:11px 11px 0 0}
-.stage-name{font-size:13px;color:#fff;font-weight:600;z-index:1}
-#fight-btn{
-  display:none;padding:18px 80px;font-size:30px;border-radius:16px;border:none;
-  background:linear-gradient(135deg,#f5c518,#e6a817);color:#1a1a2e;font-weight:bold;
-  cursor:pointer;letter-spacing:4px;text-transform:uppercase;
-  box-shadow:0 0 40px rgba(245,197,24,0.5);animation:readyPulse 1.5s infinite;
-}
-#fight-btn:hover{transform:scale(1.1);box-shadow:0 0 70px rgba(245,197,24,0.9)}
+.panel.p1{background:#4a9eff22;border-color:#4a9eff}
+.panel.p2{background:#ff6b6b22;border-color:#ff6b6b}
+.panel.empty{background:#1a1a2a;border-color:#333;border-style:dashed}
 
-/* ===== IN-GAME UI ===== */
+.panel .label{
+  font-size:14px;
+  font-weight:bold;
+  margin-bottom:8px;
+}
+.panel . charname{
+  font-size:11px;
+  color:#aaa;
+}
+
+/* ===== GAME CANVAS ===== */
+#gameCanvas{
+  display:none;
+  border:3px solid #444;
+  border-radius:8px;
+  background:#0f0f1a;
+}
 #ui{display:none;gap:50px;justify-content:center;color:#fff}
-.player-info{display:flex;flex-direction:column;align-items:center;gap:4px}
+.player-info{display:block;text-align:center}
 .player-label{font-size:12px;color:#aaa}
 .damage{font-size:28px;font-weight:bold}
 .stocks{font-size:16px}
@@ -236,33 +121,26 @@ body{background:#0a0a12;display:flex;flex-direction:column;align-items:center;ju
 </style>
 </head>
 <body>
-<div id="menu-overlay">
-  <div id="char-select-screen">
-    <div class="cs-top">
-      <div class="cs-header">
-        <div class="cs-header-text">Select Fighter</div>
-        <div class="cs-header-line"></div>
-      </div>
-      <div class="char-grid" id="char-grid"></div>
-    </div>
-    <div class="cs-bottom">
-      <div class="turn-banner" id="turn-banner"></div>
-      <div class="player-panels" id="player-panels"></div>
-      <button id="ready-btn">Ready to Fight!</button>
-      <div class="controls-hint">
-        <span>Arrow Keys / WASD — Move</span>
-        <span>Space / Enter — Select</span>
-        <span>or Click</span>
-      </div>
-    </div>
+
+<!-- CHARACTER SELECT SCREEN -->
+<div id="char-select-screen">
+  <h1>SELECT FIGHTER</h1>
+  <div class="char-grid" id="char-grid">
+    <!-- Characters injected by JS -->
   </div>
-  <div id="stage-select-screen">
-    <div class="screen-title">Choose Stage</div>
-    <div class="stage-grid" id="stage-grid"></div>
-    <button id="fight-btn">Fight!</button>
+  <div class="player-panels" id="player-panels">
+    <div class="panel empty" id="p1-panel">
+      <div class="label">P1</div>
+      <div class="charname">Choosing...</div>
+    </div>
+    <div class="panel empty" id="p2-panel">
+      <div class="label">CPU</div>
+      <div class="charname">Picking...</div>
+    </div>
   </div>
 </div>
 
+<!-- GAME UI -->
 <div id="ui">
   <div class="player-info"><span class="player-label">P1 (<span id="p1Name">-</span>)</span><span class="damage p1-color" id="p1Dmg">0%</span><span class="stocks" id="p1Stocks">❤❤❤</span></div>
   <div class="player-info"><span class="player-label">P2 (<span id="p2Name">-</span>)</span><span class="damage p2-color" id="p2Dmg">0%</span><span class="stocks" id="p2Stocks">❤❤❤</span></div>
@@ -276,11 +154,11 @@ body{background:#0a0a12;display:flex;flex-direction:column;align-items:center;ju
 
 <script>
 const CHARACTERS=[
-  {name:"Psyduck",color:"#ffeb3b",weight:0.95,speed:1.9,jumpPower:13,attacks:{jab:{damage:4,knockback:2,angle:48,range:46,duration:8},tilt:{damage:9,knockback:5,angle:42,range:56,duration:15},smash:{damage:17,knockback:11,angle:36,range:70,duration:22},special:{damage:11,knockback:7,angle:22,range:90,duration:26}}}},
-  {name:"Yoshi",color:"#4caf50",weight:1.1,speed:2.0,jumpPower:14,attacks:{jab:{damage:5,knockback:3,angle:50,range:50,duration:9},tilt:{damage:10,knockback:6,angle:44,range:60,duration:15},smash:{damage:20,knockback:14,angle:30,range:76,duration:24},special:{damage:15,knockback:9,angle:18,range:100,duration:32}}}},
-  {name:"Mickey",color:"#c62828",weight:0.85,speed:2.6,jumpPower:15,attacks:{jab:{damage:3,knockback:1.8,angle:46,range:44,duration:7},tilt:{damage:8,knockback:4.5,angle:40,range:54,duration:12},smash:{damage:15,knockback:9,angle:38,range:66,duration:20},special:{damage:10,knockback:6,angle:24,range:82,duration:22}}}},
-  {name:"Gojo",color:"#1e88e5",weight:1.0,speed:2.1,jumpPower:14,attacks:{jab:{damage:4,knockback:2.2,angle:44,range:48,duration:8},tilt:{damage:9,knockback:5.8,angle:38,range:58,duration:14},smash:{damage:19,knockback:13,angle:32,range:74,duration:23},special:{damage:14,knockback:11,angle:15,range:108,duration:30}}}},
-  {name:"Ditto",color:"#9c27b0",weight:0.8,speed:2.4,jumpPower:15,attacks:{jab:{damage:3,knockback:1.5,angle:50,range:42,duration:7},tilt:{damage:7,knockback:4,angle:42,range:52,duration:13},smash:{damage:14,knockback:8,angle:40,range:64,duration:20},special:{damage:9,knockback:5,angle:28,range:78,duration:24}}}}
+  {name:"Psyduck",color:"#FFD700",weight:0.95,speed:1.9,jumpPower:13,attacks:{jab:{damage:4,knockback:2,angle:48,range:46,duration:8},tilt:{damage:9,knockback:5,angle:42,range:56,duration:15},smash:{damage:17,knockback:11,angle:36,range:70,duration:22},special:{damage:11,knockback:7,angle:22,range:90,duration:26}}}},
+  {name:"Yoshi",color:"#32CD32",weight:1.1,speed:2.0,jumpPower:14,attacks:{jab:{damage:5,knockback:3,angle:50,range:50,duration:9},tilt:{damage:10,knockback:6,angle:44,range:60,duration:15},smash:{damage:20,knockback:14,angle:30,range:76,duration:24},special:{damage:15,knockback:9,angle:18,range:100,duration:32}}}},
+  {name:"Mickey",color:"#DC143C",weight:0.85,speed:2.6,jumpPower:15,attacks:{jab:{damage:3,knockback:1.8,angle:46,range:44,duration:7},tilt:{damage:8,knockback:4.5,angle:40,range:54,duration:12},smash:{damage:15,knockback:9,angle:38,range:66,duration:20},special:{damage:10,knockback:6,angle:24,range:82,duration:22}}}},
+  {name:"Gojo",color:"#4169E1",weight:1.0,speed:2.1,jumpPower:14,attacks:{jab:{damage:4,knockback:2.2,angle:44,range:48,duration:8},tilt:{damage:9,knockback:5.8,angle:38,range:58,duration:14},smash:{damage:19,knockback:13,angle:32,range:74,duration:23},special:{damage:14,knockback:11,angle:15,range:108,duration:30}}}},
+  {name:"Ditto",color:"#9932CC",weight:0.8,speed:2.4,jumpPower:15,attacks:{jab:{damage:3,knockback:1.5,angle:50,range:42,duration:7},tilt:{damage:7,knockback:4,angle:42,range:52,duration:13},smash:{damage:14,knockback:8,angle:40,range:64,duration:20},special:{damage:9,knockback:5,angle:28,range:78,duration:24}}}}
 ];
 const STAGES=[
   {name:"Battlefield",platformColor:"#4c7c4c",bgColor:"#0d1f14",preview:"#2d5a3d",drawBg:function(ctx,w,h){ctx.fillStyle="#163020";ctx.beginPath();ctx.moveTo(0,h*.55);ctx.quadraticCurveTo(w*.25,h*.35,w*.5,h*.5);ctx.quadraticCurveTo(w*.75,h*.65,w,h*.45);ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.fill();ctx.fillStyle="rgba(255,255,255,0.25)";for(var i=0;i<40;i++){var sx=(i*137.5)%w,sy=(i*73.3)%(h*.5);ctx.beginPath();ctx.arc(sx,sy,1,0,Math.PI*2);ctx.fill();}},getPlatforms:function(w,h){var b=h-55;return[{x:0,y:b,w:w,h:20,type:"ground"},{x:w/2-70,y:b-130,w:140,h:12,type:"platform"},{x:w/2-210,y:b-78,w:100,h:12,type:"platform"},{x:w/2+110,y:b-78,w:100,h:12,type:"platform"}];}},
@@ -288,223 +166,117 @@ const STAGES=[
   {name:"Fountain",platformColor:"#4a8ab4",bgColor:"#0d1f30",preview:"#1a4a6a",drawBg:function(ctx,w,h){ctx.fillStyle="rgba(40,110,170,0.12)";ctx.fillRect(0,h-80,w,80);ctx.fillStyle="rgba(150,220,255,0.15)";for(var i=0;i<8;i++){var fx=w*.1+i*(w*.1),fy=h-120-Math.sin(Date.now()/300+i)*20;ctx.beginPath();ctx.moveTo(fx-3,h-60);ctx.lineTo(fx,fy);ctx.lineTo(fx+3,h-60);ctx.fill();}},getPlatforms:function(w,h){var b=h-55;return[{x:0,y:b,w:w,h:20,type:"ground"},{x:w/2-60,y:b-155,w:120,h:12,type:"platform"},{x:75,y:b-92,w:95,h:12,type:"platform"},{x:w-170,y:b-92,w:95,h:12,type:"platform"}];}}
 ];
 const GRAVITY=.55,MAX_FALL=16,G_FRICTION=.84,A_FRICTION=.965,SHIELD_SIZE=34,MAX_STOCKS=3,RESPAWN_INVULN=120,SMASH_MAX_CHARGE=30;
-const PLAYER_COLORS=['#4a9eff','#ff6b6b','#6bff6b','#ffdd44'];
-const PLAYER_CN=['p1','p2','p3','p4'];
-const PCOLOR_BG=['#4a9eff','#ff6b6b','#6bff6b','#ffdd44'];
 
 let canvas=document.getElementById("gameCanvas"),ctx=canvas.getContext("2d");
 let W=canvas.width,H=canvas.height;
 let gameRunning=false,gameOver=false,stageIndex=0,stagePlatforms=[],p1=null,p2=null,heldKeys={};
 
 // Character select state
-let slots=[
-  {id:0,label:'P1',isHuman:true,charIndex:null,isLocked:false,isChoosing:true},
-  {id:1,label:'CPU',isHuman:false,charIndex:1,isLocked:true,isChoosing:false}
-];
-let currentPickerIndex=0;
-let charCursor={x:0,y:0};
+let p1CharIndex=null;
+let p2CharIndex=1; // CPU auto-picks Yoshi
+let p1Locked=false;
+let p2Locked=false;
 
-// Build character grid with colored squares
+// Build character grid
 function buildCharGrid(){
-  const grid=document.getElementById('char-grid');
-  grid.innerHTML='';
-  CHARACTERS.forEach((char,index)=>{
-    const card=document.createElement('div');
-    card.className='char-card';
-    card.dataset.index=index;
-    card.innerHTML=`
-      <div class="pick-indicator p1-pick" id="pick-p1-${index}">P1</div>
-      <div class="pick-indicator p2-pick" id="pick-p2-${index}">P2</div>
-      <div class="pick-indicator p3-pick" id="pick-p3-${index}">P3</div>
-      <div class="pick-indicator p4-pick" id="pick-p4-${index}">P4</div>
-      <div class="char-swatch" style="background:${char.color}">
-        <div class="char-initial">${char.name[0]}</div>
-      </div>
-      <div class="char-name-tag">${char.name}</div>
-    `;
-    card.addEventListener('click',()=>onCardClick(index));
+  var grid=document.getElementById("char-grid");
+  grid.innerHTML="";
+  CHARACTERS.forEach(function(char,i){
+    var card=document.createElement("div");
+    card.className="char-card";
+    card.dataset.index=i;
+    card.style.display="inline-block";
+
+    var ind=document.createElement("div");
+    ind.className="pick-indicator p1";
+    ind.id="pick1-"+i;
+    ind.innerHTML="P1";
+
+    var ind2=document.createElement("div");
+    ind2.className="pick-indicator p2";
+    ind2.id="pick2-"+i;
+    ind2.innerHTML="P2";
+
+    var colorBox=document.createElement("div");
+    colorBox.className="char-color";
+    colorBox.style.background=char.color;
+
+    var nameTag=document.createElement("div");
+    nameTag.className="char-name";
+    nameTag.innerHTML=char.name;
+
+    card.appendChild(ind);
+    card.appendChild(ind2);
+    card.appendChild(colorBox);
+    card.appendChild(nameTag);
+
+    card.addEventListener("click",(function(idx){
+      return function(){onCardClick(idx);};
+    })(i));
+
     grid.appendChild(card);
   });
 }
-
-// Build player panels at bottom
-function buildPlayerPanels(){
-  const panels=document.getElementById('player-panels');
-  panels.innerHTML='';
-  for(let i=0;i<4;i++){
-    const slot=slots.find(s=>s.id===i);
-    const div=document.createElement('div');
-    const cn=PLAYER_CN[i];
-    div.className=`player-panel ${cn}-panel`;
-
-    if(!slot){
-      div.classList.add('panel-empty');
-      div.innerHTML=`
-        <div class="panel-inner">
-          <div class="panel-placeholder">Empty</div>
-        </div>
-      `;
-    } else if(slot.isLocked && slot.charIndex!==null){
-      // Player has picked
-      const char=CHARACTERS[slot.charIndex];
-      div.style.background=`linear-gradient(180deg,${char.color}44 0%,${char.color}22 100%)`;
-      div.innerHTML=`
-        <div class="panel-inner">
-          <div class="player-badge">${i+1}</div>
-          <div class="panel-char-name" style="background:${char.color}33;color:#fff">${char.name}</div>
-          ${slot.isHuman?`
-          <div class="controller-icon">
-            <svg viewBox="0 0 24 16"><rect x="1" y="4" width="22" height="12" rx="3" fill="currentColor" opacity="0.6"/><circle cx="6" cy="10" r="2" fill="currentColor" opacity="0.8"/><circle cx="18" cy="10" r="2" fill="currentColor" opacity="0.8"/><rect x="8" y="8" width="2" height="4" fill="currentColor" opacity="0.6"/><rect x="11" y="8" width="2" height="4" fill="currentColor" opacity="0.6"/><rect x="14" y="8" width="2" height="4" fill="currentColor" opacity="0.6"/></svg>
-          </div>`:`<div class="cpu-badge">CPU</div>`}
-        </div>
-      `;
-    } else if(slot.isChoosing && slot.isHuman){
-      // Player is currently choosing
-      div.classList.add('is-picking');
-      div.style.background='rgba(255,255,255,0.05)';
-      div.innerHTML=`
-        <div class="panel-inner">
-          <div class="player-badge">${i+1}</div>
-          <div class="panel-placeholder">Choosing...</div>
-          <div class="controller-icon">
-            <svg viewBox="0 0 24 16"><rect x="1" y="4" width="22" height="12" rx="3" fill="currentColor" opacity="0.6"/><circle cx="6" cy="10" r="2" fill="currentColor" opacity="0.8"/><circle cx="18" cy="10" r="2" fill="currentColor" opacity="0.8"/><rect x="8" y="8" width="2" height="4" fill="currentColor" opacity="0.6"/><rect x="11" y="8" width="2" height="4" fill="currentColor" opacity="0.6"/><rect x="14" y="8" width="2" height="4" fill="currentColor" opacity="0.6"/></svg>
-          </div>
-        </div>
-      `;
-    } else {
-      // CPU waiting
-      div.classList.add('panel-empty');
-      div.innerHTML=`
-        <div class="panel-inner">
-          <div class="player-badge">${i+1}</div>
-          <div class="panel-placeholder">Waiting</div>
-          <div class="cpu-badge">CPU</div>
-        </div>
-      `;
-    }
-    panels.appendChild(div);
-  }
-}
-
-function getHumanSlots(){return slots.filter(s=>s.isHuman);}
-function getChoosingHumanSlots(){return slots.filter(s=>s.isHuman&&!s.isLocked&&s.isChoosing);}
-function allLocked(){return slots.filter(s=>s.isHuman).every(s=>s.isLocked||s.charIndex!==null);}
-function getCurrentPicker(){const c=getChoosingHumanSlots();return c.length>0?c[0]:null;}
 
 function onCardClick(index){
-  const picker=getCurrentPicker();
-  if(!picker)return;
-  charCursor.x=index%5;charCursor.y=Math.floor(index/5);
-  lockIn(picker.id,index);
+  if(p1Locked) return;
+  p1CharIndex=index;
+  p1Locked=true;
+  updatePanels();
+  updatePickIndicators();
+  checkStart();
 }
 
-function lockIn(slotId,charIndex){
-  const slot=slots.find(s=>s.id===slotId);
-  if(!slot)return;
-  slot.charIndex=charIndex;
-  slot.isLocked=true;
-  slot.isChoosing=false;
+function updatePanels(){
+  var p1=document.getElementById("p1-panel");
+  var p2=document.getElementById("p2-panel");
 
-  // Auto-pick for CPU slots when it's their turn
-  const c=getChoosingHumanSlots();
-  if(c.length>0){
-    c[0].isChoosing=true;
-    if(!c[0].isHuman && c[0].charIndex===null){
-      // CPU auto picks after short delay
-      setTimeout(()=>{
-        if(c[0] && !c[0].isLocked){
-          c[0].charIndex=Math.floor(Math.random()*CHARACTERS.length);
-          c[0].isLocked=true;
-          c[0].isChoosing=false;
-          rebuildAll();
-        }
-      },600);
-    }
+  if(p1CharIndex!==null){
+    var c=CHARACTERS[p1CharIndex];
+    p1.className="panel p1";
+    p1.innerHTML='<div class="label">P1</div><div class="charname" style="color:'+c.color+'">'+c.name+'</div>';
   }
-  rebuildAll();
+
+  // CPU picks Yoshi automatically
+  p2.className="panel p2";
+  p2.innerHTML='<div class="label">CPU</div><div class="charname" style="color:#32CD32">Yoshi</div>';
+  p2Locked=true;
 }
 
-function rebuildAll(){buildCharGrid();buildPlayerPanels();updateCharHighlight();updateTurnBanner();checkReadyBtn();}
-
-function updateCharHighlight(){
-  const cards=document.querySelectorAll('.char-card');
-  const locked=slots.filter(s=>s.isLocked&&s.charIndex!==null);
-  cards.forEach((card,idx)=>{
-    card.classList.remove('p1-picked','p2-picked','p3-picked','p4-picked','multi-picked');
-    document.querySelectorAll(`.pick-indicator`).forEach(el=>el.style.display='none');
-    const pickers=locked.filter(s=>s.charIndex===idx);
-    if(pickers.length>=2){
-      card.classList.add('multi-picked');
-    } else if(pickers.length===1){
-      const pid=pickers[0].id;
-      card.classList.add(PLAYER_CN[pid]+'-picked');
-      const ind=document.getElementById(`pick-${PLAYER_CN[pid]}-${idx}`);
-      if(ind)ind.style.display='flex';
-    }
-  });
-}
-
-function updateTurnBanner(){
-  const banner=document.getElementById('turn-banner');
-  const picker=getCurrentPicker();
-  if(!picker){
-    if(allLocked()){
-      banner.innerHTML='<span style="color:#6bff6b">All players ready!</span>';
-    } else {
-      banner.textContent='';
-    }
-    return;
+function updatePickIndicators(){
+  // Hide all
+  for(var i=0;i<5;i++){
+    var e=document.getElementById("pick1-"+i);
+    var e2=document.getElementById("pick2-"+i);
+    if(e)e.style.display="none";
+    if(e2)e2.style.display="none";
   }
-  banner.innerHTML=`<span style="color:${PLAYER_COLORS[picker.id]};font-weight:bold">${picker.label}</span> — choose your fighter!`;
+  // Show picked
+  if(p1CharIndex!==null){
+    var e=document.getElementById("pick1-"+p1CharIndex);
+    if(e)e.style.display="block";
+  }
 }
 
-function checkReadyBtn(){
-  document.getElementById('ready-btn').style.display=allLocked()?'inline-block':'none';
+function checkStart(){
+  if(p1Locked && p2Locked){
+    setTimeout(function(){
+      document.getElementById("char-select-screen").style.display="none";
+      startGame();
+    },800);
+  }
 }
 
-function moveCursor(dx){
-  const picker=getCurrentPicker();
-  if(!picker)return;
-  charCursor.x=(charCursor.x+dx+5)%5;
-}
-
-document.addEventListener('keydown',(e)=>{
-  if(document.getElementById('char-select-screen').style.display===''&&!document.getElementById('char-select-screen').offsetParent)return;
-  const picker=getCurrentPicker();
-  if(!picker)return;
-  switch(e.code){
-    case'ArrowLeft':case'KeyA':moveCursor(-1);break;
-    case'ArrowRight':case'KeyD':moveCursor(1);break;
-    case'Space':case'Enter':case'KeyF':case'KeyJ':lockIn(picker.id,charCursor.y*5+charCursor.x);e.preventDefault();break;
+// Keyboard for P1 selection
+document.addEventListener("keydown",function(e){
+  if(document.getElementById("char-select-screen").style.display==="none") return;
+  if(p1Locked) return;
+  if(e.code==="Space"||e.code==="Enter"){
+    if(p1CharIndex!==null) checkStart();
   }
 });
 
-document.getElementById('ready-btn').addEventListener('click',()=>{
-  document.getElementById('char-select-screen').style.display='none';
-  document.getElementById('stage-select-screen').style.display='flex';
-  buildStageGrid();
-});
-
-function buildStageGrid(){
-  const grid=document.getElementById('stage-grid');
-  grid.innerHTML='';
-  STAGES.forEach((stage,index)=>{
-    const card=document.createElement('div');
-    card.className='stage-card'+(index===stageIndex?' selected':'');
-    card.innerHTML=`<div class="stage-preview" style="background:${stage.preview}"></div><div class="stage-name">${stage.name}</div>`;
-    card.addEventListener('click',()=>{
-      stageIndex=index;
-      document.querySelectorAll('.stage-card').forEach(c=>c.classList.remove('selected'));
-      card.classList.add('selected');
-      document.getElementById('fight-btn').style.display='block';
-    });
-    grid.appendChild(card);
-  });
-}
-
-document.get.getElementById('fight-btn').addEventListener('click',startGame);
-
-// Fighter class
+// ===== GAME ENGINE =====
 function Fighter(x,y,ci,pn){
   var ch=CHARACTERS[ci];
   this.x=x;this.y=y;this.vx=0;this.vy=0;this.charIndex=ci;this.playerNum=pn;
@@ -570,7 +342,6 @@ Fighter.prototype.draw=function(){
   ctx.fillStyle="#222";ctx.beginPath();ctx.arc(4,-this.height-10,2.5,0,Math.PI*2);ctx.fill();
   ctx.fillStyle="#2a2a2a";ctx.fillRect(-11,-this.height*.45,8,15);ctx.fillRect(3,-this.height*.45,8,15);
   ctx.restore();
-  ctx.save();ctx.font="bold 26px serif";ctx.textAlign="center";ctx.fillText(this.name[0],cx,cy-this.height-32);ctx.restore();
 };
 function boxesOverlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
 function checkHit(att,def){if(att.attackActive<=0)return;var ab=att.getAtkBox();if(!ab)return;if(att.attackFrame===1&&boxesOverlap(ab,def.hb()))att.applyHitTo(def);}
@@ -578,11 +349,46 @@ function drawStage(){var s=STAGES[stageIndex];ctx.fillStyle=s.bgColor;ctx.fillRe
 function updateUI(){document.getElementById("p1Name").textContent=CHARACTERS[p1.charIndex].name;document.getElementById("p2Name").textContent=CHARACTERS[p2.charIndex].name;document.getElementById("p1Dmg").textContent=Math.floor(p1.damage)+"%";document.getElementById("p2Dmg").textContent=Math.floor(p2.damage)+"%";document.getElementById("p1Dmg").style.color=p1.damage>100?"#ff4444":"#4a9eff";document.getElementById("p2Dmg").style.color=p2.damage>100?"#ff4444":"#ff6b6b";document.getElementById("p1Stocks").textContent="\u2764".repeat(Math.max(0,p1.stocks));document.getElementById("p2Stocks").textContent="\u2764".repeat(Math.max(0,p2.stocks));}
 function loop(){if(!gameRunning)return;p1.update();p2.update();if(p1.isSmashing&&p1.attackFrame>SMASH_MAX_CHARGE+10)p1.releaseSmash();if(p2.isSmashing&&p2.attackFrame>SMASH_MAX_CHARGE+10)p2.releaseSmash();checkHit(p1,p2);checkHit(p2,p1);if(p1.attackActive>0)p1.attackActive--;if(p2.attackActive>0)p2.attackActive--;updateUI();if(p1.stocks<=0||p2.stocks<=0){gameRunning=false;gameOver=true;var win=p1.stocks>0?"Player 1":"Player 2";document.getElementById("winnerText").innerHTML=win+" Wins!";document.getElementById("winner").style.display="block";return;}requestAnimationFrame(loop);}
 function render(){drawStage();if(p1)p1.draw();if(p2)p2.draw();if(gameRunning||gameOver)requestAnimationFrame(render);}
-function startGame(){var humans=slots.filter(s=>s.isHuman&&s.isLocked);p1CharIndex=humans[0]?humans[0].charIndex:0;p2CharIndex=humans[1]?humans[1].charIndex:1;gameRunning=true;gameOver=false;stagePlatforms=STAGES[stageIndex].getPlatforms(W,H);p1=new Fighter(W*.28,H*.4,p1CharIndex,1);p2=new Fighter(W*.72,H*.4,p2CharIndex,2);document.getElementById("menu-overlay").style.display="none";document.getElementById("winner").style.display="none";document.getElementById("gameCanvas").style.display="block";document.getElementById("ui").style.display="flex";document.querySelector(".controls").style.display="flex";updateUI();loop();render();}
+function startGame(){
+  gameRunning=true;
+  gameOver=false;
+  stagePlatforms=STAGES[stageIndex].getPlatforms(W,H);
+  p1=new Fighter(W*.28,H*.4,p1CharIndex,1);
+  p2=new Fighter(W*.72,H*.4,p2CharIndex,2);
+  document.getElementById("gameCanvas").style.display="block";
+  document.getElementById("ui").style.display="flex";
+  document.querySelector(".controls").style.display="block";
+  updateUI();
+  loop();
+  render();
+}
 document.addEventListener("keydown",function(e){if(heldKeys[e.code])return;heldKeys[e.code]=true;if(gameOver&&e.code==="Space"){resetGame();return;}if(!gameRunning)return;if(e.code==="KeyA")p1.moveLeft();if(e.code==="KeyD")p1.moveRight();if(e.code==="KeyW")p1.jump();if(e.code==="KeyS")p1.fastFall();if(e.code==="KeyF")p1.startSmash();if(e.code==="KeyG")p1.special();if(e.code==="KeyH")p1.shieldOn();if(e.code==="ArrowLeft")p2.moveLeft();if(e.code==="ArrowRight")p2.moveRight();if(e.code==="ArrowUp")p2.jump();if(e.code==="ArrowDown")p2.fastFall();if(e.code==="KeyJ")p2.startSmash();if(e.code==="KeyK")p2.special();if(e.code==="KeyL")p2.shieldOn();});
 document.addEventListener("keyup",function(e){heldKeys[e.code]=false;if(!gameRunning)return;if(e.code==="KeyF"){if(p1.isSmashing)p1.releaseSmash();else p1.tapAttack();}if(e.code==="KeyJ"){if(p2.isSmashing)p2.releaseSmash();else p2.tapAttack();}if(e.code==="KeyH")p1.shieldOff();if(e.code==="KeyL")p2.shieldOff();});
-function resetGame(){slots=[{id:0,label:'P1',isHuman:true,charIndex:null,isLocked:false,isChoosing:true},{id:1,label:'CPU',isHuman:false,charIndex:1,isLocked:true,isChoosing:false}];currentPickerIndex=0;charCursor={x:0,y:0};document.getElementById('gameCanvas').style.display='none';document.getElementById('ui').style.display='none';document.querySelector('.controls').style.display='none';document.getElementById('winner').style.display='none';document.getElementById('menu-overlay').style.display='flex';document.getElementById('char-select-screen').style.display='flex';document.getElementById('stage-select-screen').style.display='none';document.getElementById('fight-btn').style.display='none';rebuildAll();}
-rebuildAll();
+function resetGame(){
+  p1CharIndex=null;
+  p2CharIndex=1;
+  p1Locked=false;
+  p2Locked=false;
+  gameRunning=false;
+  gameOver=false;
+  p1=null;
+  p2=null;
+  document.getElementById("gameCanvas").style.display="none";
+  document.getElementById("ui").style.display="none";
+  document.querySelector(".controls").style.display="none";
+  document.getElementById("winner").style.display="none";
+  document.getElementById("char-select-screen").style.display="block";
+  buildCharGrid();
+  var p1p=document.getElementById("p1-panel");
+  p1p.className="panel empty";
+  p1p.innerHTML='<div class="label">P1</div><div class="charname">Choosing...</div>';
+  var p2p=document.getElementById("p2-panel");
+  p2p.className="panel p2";
+  p2p.innerHTML='<div class="label">CPU</div><div class="charname">Picking...</div>';
+}
+
+// Init
+buildCharGrid();
 </script>
 </body>
 </html>
