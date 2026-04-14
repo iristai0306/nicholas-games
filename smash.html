@@ -42,6 +42,11 @@ body{background:#0a0a12;color:#fff;font-family:"Segoe UI",sans-serif;overflow:hi
   cursor:pointer;
   vertical-align:top;
   position:relative;
+  transition:border-color .2s,box-shadow .2s;
+}
+.char-card.selected{
+  border-color:#4a9eff;
+  box-shadow:0 0 18px rgba(74,158,255,.55);
 }
 
 .char-color{
@@ -221,8 +226,25 @@ function onCardClick(index){
   if(p1Locked) return;
   p1CharIndex=index;
   p1Locked=true;
+  // Highlight selected card
+  document.querySelectorAll('.char-card').forEach(function(c){c.classList.remove('selected');});
+  document.querySelector('.char-card[data-index="'+index+'"]').classList.add('selected');
   updatePanels();
   updatePickIndicators();
+  // CPU picks after short delay
+  setTimeout(cpuPick,600);
+  checkStart();
+}
+
+function cpuPick(){
+  // CPU picks a different character from P1
+  var choices=[0,1,2,3,4];
+  var cpuIdx=choices.filter(function(c){return c!==p1CharIndex})[Math.floor(Math.random()*4)];
+  p2CharIndex=cpuIdx;
+  p2Locked=true;
+  var e=document.getElementById('pick2-'+cpuIdx);
+  if(e)e.style.display='block';
+  updatePanels();
   checkStart();
 }
 
@@ -236,10 +258,11 @@ function updatePanels(){
     p1.innerHTML='<div class="label">P1</div><div class="charname" style="color:'+c.color+'">'+c.name+'</div>';
   }
 
-  // CPU picks Yoshi automatically
-  p2.className="panel p2";
-  p2.innerHTML='<div class="label">CPU</div><div class="charname" style="color:#32CD32">Yoshi</div>';
-  p2Locked=true;
+  if(p2CharIndex!==null){
+    var c2=CHARACTERS[p2CharIndex];
+    p2.className="panel p2";
+    p2.innerHTML='<div class="label">CPU</div><div class="charname" style="color:'+c2.color+'">'+c2.name+'</div>';
+  }
 }
 
 function updatePickIndicators(){
