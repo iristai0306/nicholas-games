@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Platform Fighter</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+#select-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 20px; }
+#select-screen h1 { font-size: 2em; color: #fff; text-shadow: 0 0 20px #6cf; }
+.char-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; max-width: 700px; width: 100%; }
+.char-card { background: #222; border: 3px solid #444; border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; transition: all 0.2s; user-select: none; }
+.char-card:hover { border-color: #6cf; transform: scale(1.05); box-shadow: 0 0 15px #6cf5; }
+.char-card.selected { border-color: #0f0; box-shadow: 0 0 20px #0f08; }
+.char-swatch { width: 60px; height: 60px; border-radius: 8px; margin: 0 auto 10px; }
+.char-card h3 { font-size: 1em; color: #fff; }
+.start-btn { margin-top: 20px; padding: 15px 60px; font-size: 1.3em; background: linear-gradient(135deg, #6cf, #39f); border: none; border-radius: 30px; color: #fff; cursor: pointer; font-weight: bold; display: none; box-shadow: 0 0 20px #6cf6; }
+.start-btn.show { display: block; }
+.player-panels { display: flex; justify-content: center; gap: 40px; margin-top: 20px; }
+.panel { text-align: center; background: #1a1a2e; padding: 10px 20px; border-radius: 10px; border: 2px solid #444; }
+.panel .label { font-size: 0.8em; color: #888; }
+.panel .name { font-size: 1.2em; font-weight: bold; }
+
+/* Game Screen */
+#game-screen { display: none; flex-direction: column; height: 100vh; }
+#game-header { text-align: center; padding: 8px; font-size: 0.9em; color: #aaa; }
+#arena { flex: 1; position: relative; overflow: hidden; background: linear-gradient(180deg, #1a1a3e 0%, #0a0a1a 100%); }
+.platform { position: absolute; background: #555; border-radius: 4px; box-shadow: 0 4px 8px #0008; }
+#ground { bottom: 0; left: 0; right: 0; height: 60px; }
+#plat1 { top: 55%; left: 10%; width: 35%; height: 18px; }
+#plat2 { top: 55%; right: 10%; width: 35%; height: 18px; }
+#plat3 { top: 30%; left: 30%; width: 40%; height: 18px; }
+.fighter { position: absolute; width: 40px; height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: box-shadow 0.1s; }
+.fighter.invincible { box-shadow: 0 0 15px #fff, 0 0 25px #fff; }
+#hud { display: flex; justify-content: space-between; padding: 10px 20px; background: #0a0a1a; }
+.hud-player { text-align: center; min-width: 120px; }
+.hud-name { font-weight: bold; font-size: 1.1em; }
+.hud-damage { font-size: 2.5em; color: #f44; font-weight: bold; }
+.hud-stocks { font-size: 1.5em; letter-spacing: 4px; }
+.cpu-panel { opacity: 0.7; }
+.controls-hint { text-align: center; font-size: 0.75em; color: #555; padding: 5px; }
+.hit-effect { position: absolute; width: 50px; height: 50px; border-radius: 50%; pointer-events: none; animation: hitPop 0.3s ease-out forwards; }
+@keyframes hitPop { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+
+/* KO overlay */
+#ko-overlay { display: none; position: fixed; inset: 0; background: #000c; z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
+#ko-overlay.show { display: flex; }
+#ko-text { font-size: 5em; font-weight: bold; color: #f44; text-shadow: 0 0 30px #f00; animation: pulse 0.5s infinite alternate; }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+#restart-btn { padding: 15px 40px; font-size: 1.2em; background: #6cf; border: none; border-radius: 20px; color: #000; cursor: pointer; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<!-- Character Select Screen -->
+<div id="select-screen">
+  <h1>⚔️ CHOOSE YOUR FIGHTER</h1>
+  <div class="char-grid" id="charGrid"></div>
+  <div class="player-panels">
+    <div class="panel" id="p1-panel" style="border-color:#6cf">
+      <div class="label">PLAYER 1</div>
+      <div class="name" id="p1-name">—</div>
+    </div>
+    <div class="panel" id="cpu-panel" style="border-color:#f44">
+      <div class="label">CPU</div>
+      <div class="name" id="cpu-name">—</div>
+    </div>
+  </div>
+  <button class="start-btn" id="startBtn" onclick="startGame()">FIGHT!</button>
+</div>
+
+<!-- Game Screen -->
+<div id="game-screen">
+  <div id="game-header">Platform Fighter — 3 stocks each</div>
+  <div id="arena">
+    <div class="platform" id="ground"></div>
+    <div class="platform" id="plat1"></div>
+    <div class="platform" id="plat2"></div>
+    <div class="platform" id="plat3"></div>
+    <div class="fighter" id="p1"></div>
+    <div class="fighter" id="cpu"></div>
+  </div>
+  <div id="hud">
+    <div class="hud-player">
+      <div class="hud-name" id="hud-p1-name">P1</div>
+      <div class="hud-damage" id="hud-p1-dmg">0%</div>
+      <div class="hud-stocks" id="hud-p1-stocks">♥♥♥</div>
+    </div>
+    <div class="hud-player cpu-panel">
+      <div class="hud-name" id="hud-cpu-name">CPU</div>
+      <div class="hud-damage" id="hud-cpu-dmg">0%</div>
+      <div class="hud-stocks" id="hud-cpu-stocks">♥♥♥</div>
+    </div>
+  </div>
+  <div class="controls-hint">WASD / Arrow Keys = Move | Space = Jump | J = Attack</div>
+</div>
+
+<!-- KO Overlay -->
+<div id="ko-overlay">
+  <div id="ko-text">KO!</div>
+  <button id="restart-btn" onclick="returnToSelect()">Play Again</button>
+</div>
+
+<script>
+const ARENA_W = window.innerWidth;
+const ARENA_H = window.innerHeight - 180;
+const GROUND_Y = ARENA_H - 60;
+const GRAVITY = 0.6;
+const JUMP_FORCE = -14;
+const MOVE_SPEED = 5;
+const ATTACK_RANGE = 70;
+const ATTACK_COOLDOWN = 400;
+
+const CHARACTERS = [
+  { id: 'psyduck', name: 'Psyduck', color: '#FFE135', icon: '🦆' },
+  { id: 'yoshi',   name: 'Yoshi',   color: '#4CAF50', icon: '🦎' },
+  { id: 'mickey',  name: 'Mickey',  color: '#E53935', icon: '🐭' },
+  { id: 'gojo',    name: 'Gojo',    color: '#1E88E5', icon: '🧑' },
+  { id: 'ditto',   name: 'Ditto',   color: '#9C27B0', icon: '🔮' }
+];
+
+let selectedP1 = null;
+let selectedCPU = null;
+
+function initSelect() {
+  const grid = document.getElementById('charGrid');
+  grid.innerHTML = '';
+  CHARACTERS.forEach((ch, i) => {
+    const card = document.createElement('div');
+    card.className = 'char-card';
+    card.dataset.idx = i;
+    card.innerHTML = `<div class="char-swatch" style="background:${ch.color}"></div><h3>${ch.name}</h3>`;
+    card.onclick = () => selectP1(i);
+    grid.appendChild(card);
+  });
+}
+
+function selectP1(idx) {
+  document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.char-card')[idx].classList.add('selected');
+  selectedP1 = CHARACTERS[idx];
+  // CPU auto-picks different
+  const cpuIdx = (idx + 1 + Math.floor(Math.random() * 3)) % 5;
+  selectedCPU = CHARACTERS[cpuIdx];
+  document.getElementById('p1-name').textContent = selectedP1.name;
+  document.getElementById('cpu-name').textContent = selectedCPU.name + ' (CPU)';
+  document.getElementById('startBtn').classList.add('show');
+}
+
+function startGame() {
+  if (!selectedP1) return;
+  document.getElementById('select-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'flex';
+  initGame();
+}
+
+// Game state
+let p1, cpu;
+let gameRunning = false;
+let keys = {};
+let koShowing = false;
+
+function makeFighter(char, side) {
+  return {
+    char,
+    x: side === 'p1' ? ARENA_W * 0.25 : ARENA_W * 0.75,
+    y: GROUND_Y - 40,
+    vx: 0,
+    vy: 0,
+    onGround: true,
+    damage: 0,
+    stocks: 3,
+    facingRight: side === 'p1',
+    lastAttack: 0,
+    invincibleUntil: 0,
+    side
+  };
+}
+
+function getPlatforms() {
+  return [
+    { x: 0, y: GROUND_Y, w: ARENA_W, h: 60, name: 'ground' },
+    { x: ARENA_W * 0.10, y: ARENA_H * 0.55, w: ARENA_W * 0.35, h: 18, name: 'plat1' },
+    { x: ARENA_W * 0.55, y: ARENA_H * 0.55, w: ARENA_W * 0.35, h: 18, name: 'plat2' },
+    { x: ARENA_W * 0.30, y: ARENA_H * 0.30, w: ARENA_W * 0.40, h: 18, name: 'plat3' }
+  ];
+}
+
+function platformCollision(f) {
+  const plats = getPlatforms();
+  f.onGround = false;
+  for (const p of plats) {
+    if (f.vy >= 0 &&
+        f.x + 40 > p.x && f.x < p.x + p.w &&
+        f.y + 40 >= p.y && f.y + 40 <= p.y + p.h + f.vy + 1) {
+      f.y = p.y - 40;
+      f.vy = 0;
+      f.onGround = true;
+    }
+  }
+  // bounds
+  if (f.x < 0) f.x = 0;
+  if (f.x > ARENA_W - 40) f.x = ARENA_W - 40;
+  if (f.y > ARENA_H) respawn(f);
+}
+
+function respawn(f) {
+  f.x = f.side === 'p1' ? ARENA_W * 0.25 : ARENA_W * 0.75;
+  f.y = 0;
+  f.vx = 0;
+  f.vy = 0;
+  f.invincibleUntil = Date.now() + 2000;
+  f.damage = 0;
+  f.stocks--;
+  updateHUD();
+  if (f.stocks <= 0) endGame(f.side === 'p1' ? 'cpu' : 'p1');
+}
+
+function attack(attacker, defender) {
+  const now = Date.now();
+  if (now - attacker.lastAttack < ATTACK_COOLDOWN) return;
+  attacker.lastAttack = now;
+
+  const dx = defender.x - attacker.x;
+  const dy = defender.y - attacker.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist < ATTACK_RANGE && now > defender.invincibleUntil) {
+    const baseKb = 8;
+    const dmg = 8 + Math.random() * 6;
+    defender.damage += dmg;
+    const angle = Math.atan2(dy, dx);
+    const kbMult = 1 + defender.damage / 60;
+    defender.vx = Math.cos(angle) * baseKb * kbMult + (attacker.side === 'p1' ? 4 : -4);
+    defender.vy = Math.sin(angle) * baseKb * kbMult - 5;
+    defender.invincibleUntil = now + 300;
+    showHitEffect(defender.x + 20, defender.y + 20, attacker.char.color);
+    updateHUD();
+  }
+}
+
+function showHitEffect(x, y, color) {
+  const arena = document.getElementById('arena');
+  const eff = document.createElement('div');
+  eff.className = 'hit-effect';
+  eff.style.left = (x - 25) + 'px';
+  eff.style.top = (y - 25) + 'px';
+  eff.style.background = color + '8';
+  eff.style.border = `3px solid ${color}`;
+  arena.appendChild(eff);
+  setTimeout(() => eff.remove(), 300);
+}
+
+function updateHUD() {
+  document.getElementById('hud-p1-name').textContent = p1 ? p1.char.name : '';
+  document.getElementById('hud-cpu-name').textContent = cpu ? cpu.char.name : '';
+  document.getElementById('hud-p1-dmg').textContent = p1 ? Math.floor(p1.damage) + '%' : '0%';
+  document.getElementById('hud-cpu-dmg').textContent = cpu ? Math.floor(cpu.damage) + '%' : '0%';
+  document.getElementById('hud-p1-stocks').textContent = p1 ? '♥'.repeat(Math.max(0, p1.stocks)) : '';
+  document.getElementById('hud-cpu-stocks').textContent = cpu ? '♥'.repeat(Math.max(0, cpu.stocks)) : '';
+}
+
+function renderFighter(f, el) {
+  el.style.left = f.x + 'px';
+  el.style.top = f.y + 'px';
+  el.style.background = f.char.color + 'cc';
+  el.style.color = '#fff';
+  el.style.textShadow = '0 0 5px #000';
+  el.textContent = f.char.icon;
+  el.style.transform = 'scaleX(' + (f.facingRight ? 1 : -1) + ')';
+  el.classList.toggle('invincible', Date.now() < f.invincibleUntil);
+}
+
+let cpuAITimer = 0;
+let cpuTarget = null;
+
+function updateCPU() {
+  if (!cpu || !p1) return;
+  cpuAITimer++;
+  if (cpuAITimer < 5) return;
+  cpuAITimer = 0;
+
+  // Simple AI
+  const dx = p1.x - cpu.x;
+  const dy = p1.y - cpu.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist < ATTACK_RANGE * 0.8) {
+    attack(cpu, p1);
+    cpu.vx *= 0.5;
+  } else if (dist > ATTACK_RANGE * 1.5) {
+    cpu.vx = dx > 0 ? MOVE_SPEED * 0.8 : -MOVE_SPEED * 0.8;
+    cpu.facingRight = dx > 0;
+    if (cpu.onGround && Math.random() < 0.05) cpu.vy = JUMP_FORCE;
+  } else {
+    cpu.vx *= 0.3;
+    if (cpu.onGround && Math.random() < 0.08) {
+      cpu.vy = JUMP_FORCE;
+      cpu.vx = dx > 0 ? MOVE_SPEED : -MOVE_SPEED;
+    }
+  }
+}
+
+function endGame(winner) {
+  gameRunning = false;
+  const overlay = document.getElementById('ko-overlay');
+  const koText = document.getElementById('ko-text');
+  const winnerName = winner === 'p1' ? selectedP1.name : selectedCPU.name;
+  koText.textContent = winner === 'p1' ? 'YOU WIN!' : 'CPU WINS!';
+  koText.style.color = winner === 'p1' ? '#0f0' : '#f44';
+  overlay.classList.add('show');
+}
+
+function returnToSelect() {
+  document.getElementById('ko-overlay').classList.remove('show');
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('select-screen').style.display = 'flex';
+  selectedP1 = null;
+  selectedCPU = null;
+  initSelect();
+  document.getElementById('p1-name').textContent = '—';
+  document.getElementById('cpu-name').textContent = '—';
+  document.getElementById('startBtn').classList.remove('show');
+}
+
+function initGame() {
+  p1 = makeFighter(selectedP1, 'p1');
+  cpu = makeFighter(selectedCPU, 'cpu');
+  gameRunning = true;
+  koShowing = false;
+  cpuAITimer = 0;
+  updateHUD();
+
+  const p1El = document.getElementById('p1');
+  const cpuEl = document.getElementById('cpu');
+  renderFighter(p1, p1El);
+  renderFighter(cpu, cpuEl);
+
+  document.addEventListener('keydown', e => { keys[e.code] = true; e.preventDefault(); });
+  document.addEventListener('keyup', e => keys[e.code] = false);
+
+  gameLoop();
+}
+
+function gameLoop() {
+  if (!gameRunning) return;
+
+  // P1 controls
+  if (keys['KeyA'] || keys['ArrowLeft'])  { p1.vx = -MOVE_SPEED; p1.facingRight = false; }
+  else if (keys['KeyD'] || keys['ArrowRight']) { p1.vx = MOVE_SPEED; p1.facingRight = true; }
+  else p1.vx *= 0.8;
+
+  if ((keys['KeyW'] || keys['ArrowUp'] || keys['Space']) && p1.onGround) {
+    p1.vy = JUMP_FORCE;
+    p1.onGround = false;
+  }
+  if (keys['KeyJ'] || keys['KeyZ']) attack(p1, cpu);
+
+  // Physics
+  p1.vy += GRAVITY;
+  cpu.vy += GRAVITY;
+  p1.x += p1.vx;
+  cpu.x += cpu.vx;
+  p1.y += p1.vy;
+  cpu.y += cpu.vy;
+
+  platformCollision(p1);
+  platformCollision(cpu);
+
+  updateCPU();
+  if (keys['KeyJ'] || keys['KeyZ']) attack(p1, cpu);
+
+  // Attack collision both ways
+  const now = Date.now();
+  if (now - p1.lastAttack < 100) attack(p1, cpu);
+  if (now - cpu.lastAttack < 100) attack(cpu, p1);
+
+  renderFighter(p1, document.getElementById('p1'));
+  renderFighter(cpu, document.getElementById('cpu'));
+
+  requestAnimationFrame(gameLoop);
+}
+
+// Responsive platforms on resize
+window.addEventListener('resize', () => {
+  // nothing needed mid-game
+});
+
+initSelect();
+</script>
+</body>
+</html>
