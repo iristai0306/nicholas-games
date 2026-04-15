@@ -25,14 +25,38 @@ body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overf
 /* Game Screen */
 #game-screen { display: none; flex-direction: column; height: 100vh; }
 #game-header { text-align: center; padding: 8px; font-size: 0.9em; color: #aaa; }
-#arena { flex: 1; position: relative; overflow: hidden; background: linear-gradient(180deg, #1a1a3e 0%, #0a0a1a 100%); }
-.platform { position: absolute; background: #555; border-radius: 4px; box-shadow: 0 4px 8px #0008; }
+#game-container { flex: 1; position: relative; overflow: hidden; }
+#camera { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: center center; transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+#arena { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+/* Parallax Background Layers */
+.bg-layer { position: absolute; top: 0; left: 0; width: 200%; height: 100%; pointer-events: none; }
+#bg-stars { background: transparent; }
+#bg-clouds { top: 10%; }
+#bg-mountains-far { top: 35%; }
+#bg-mountains-near { top: 50%; }
+#bg-trees { top: 60%; }
+
+/* Platform styling - 2.5D */
+.platform { position: absolute; border-radius: 6px; }
+.platform-top { position: absolute; top: 0; left: 0; right: 0; height: 8px; border-radius: 6px 6px 0 0; }
+.platform-body { position: absolute; top: 8px; left: 0; right: 0; bottom: 0; border-radius: 0 0 4px 4px; }
+
+/* Ground platform */
 #ground { bottom: 0; left: 0; right: 0; height: 60px; }
-#plat1 { top: 55%; left: 10%; width: 35%; height: 18px; }
-#plat2 { top: 55%; right: 10%; width: 35%; height: 18px; }
-#plat3 { top: 30%; left: 30%; width: 40%; height: 18px; }
-.fighter { position: absolute; width: 40px; height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: box-shadow 0.1s; }
-.fighter.invincible { box-shadow: 0 0 15px #fff, 0 0 25px #fff; }
+#ground .platform-top { height: 12px; border-radius: 0; }
+#ground .platform-body { bottom: 0; }
+
+/* Fighter 2.5D styling */
+.fighter-wrap { position: absolute; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+.fighter-body { position: relative; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 22px; transition: box-shadow 0.1s; }
+.fighter-shadow { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 36px; height: 10px; background: radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, transparent 70%); border-radius: 50%; }
+.fighter.invincible .fighter-body { box-shadow: 0 0 20px #fff, 0 0 35px #fff; }
+
+/* Fighter depth shading */
+.fighter-inner { position: absolute; inset: 0; border-radius: 8px; background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.2) 100%); pointer-events: none; }
+.fighter-icon { position: relative; z-index: 1; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
+
 #hud { display: flex; justify-content: space-between; padding: 10px 20px; background: #0a0a1a; }
 .hud-player { text-align: center; min-width: 120px; }
 .hud-name { font-weight: bold; font-size: 1.1em; }
@@ -40,7 +64,7 @@ body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overf
 .hud-stocks { font-size: 1.5em; letter-spacing: 4px; }
 .cpu-panel { opacity: 0.7; }
 .controls-hint { text-align: center; font-size: 0.75em; color: #555; padding: 5px; }
-.hit-effect { position: absolute; width: 50px; height: 50px; border-radius: 50%; pointer-events: none; animation: hitPop 0.3s ease-out forwards; }
+.hit-effect { position: absolute; width: 50px; height: 50px; border-radius: 50%; pointer-events: none; animation: hitPop 0.3s ease-out forwards; z-index: 50; }
 @keyframes hitPop { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
 
 /* KO overlay */
@@ -49,6 +73,9 @@ body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overf
 #ko-text { font-size: 5em; font-weight: bold; color: #f44; text-shadow: 0 0 30px #f00; animation: pulse 0.5s infinite alternate; }
 @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
 #restart-btn { padding: 15px 40px; font-size: 1.2em; background: #6cf; border: none; border-radius: 20px; color: #000; cursor: pointer; font-weight: bold; }
+
+/* Blast zone indicator */
+#blast-zone { position: absolute; bottom: -120px; left: 0; right: 0; height: 80px; border-top: 3px dashed rgba(255,50,50,0.4); pointer-events: none; }
 </style>
 </head>
 <body>
@@ -73,13 +100,50 @@ body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overf
 <!-- Game Screen -->
 <div id="game-screen">
   <div id="game-header">Platform Fighter — 3 stocks each</div>
-  <div id="arena">
-    <div class="platform" id="ground"></div>
-    <div class="platform" id="plat1"></div>
-    <div class="platform" id="plat2"></div>
-    <div class="platform" id="plat3"></div>
-    <div class="fighter" id="p1"></div>
-    <div class="fighter" id="cpu"></div>
+  <div id="game-container">
+    <div id="camera">
+      <div id="arena">
+        <!-- Parallax backgrounds -->
+        <canvas id="bg-stars" class="bg-layer" width="800" height="400"></canvas>
+        <canvas id="bg-clouds" class="bg-layer" width="800" height="200"></canvas>
+        <canvas id="bg-mountains-far" class="bg-layer" width="800" height="200"></canvas>
+        <canvas id="bg-mountains-near" class="bg-layer" width="800" height="150"></canvas>
+
+        <!-- Platforms -->
+        <div class="platform" id="ground">
+          <div class="platform-top"></div>
+          <div class="platform-body"></div>
+        </div>
+        <div class="platform" id="plat1">
+          <div class="platform-top"></div>
+          <div class="platform-body"></div>
+        </div>
+        <div class="platform" id="plat2">
+          <div class="platform-top"></div>
+          <div class="platform-body"></div>
+        </div>
+        <div class="platform" id="plat3">
+          <div class="platform-top"></div>
+          <div class="platform-body"></div>
+        </div>
+
+        <!-- Fighters -->
+        <div class="fighter-wrap" id="p1-wrap">
+          <div class="fighter-shadow"></div>
+          <div class="fighter-body" id="p1">
+            <div class="fighter-inner"></div>
+            <div class="fighter-icon"></div>
+          </div>
+        </div>
+        <div class="fighter-wrap" id="cpu-wrap">
+          <div class="fighter-shadow"></div>
+          <div class="fighter-body" id="cpu">
+            <div class="fighter-inner"></div>
+            <div class="fighter-icon"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div id="hud">
     <div class="hud-player">
@@ -103,14 +167,18 @@ body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overf
 </div>
 
 <script>
-const ARENA_W = window.innerWidth;
-const ARENA_H = window.innerHeight - 180;
-const GROUND_Y = ARENA_H - 60;
+// ============ CONSTANTS ============
+const ARENA_W = 1200;
+const ARENA_H = 600;
 const GRAVITY = 0.6;
 const JUMP_FORCE = -14;
 const MOVE_SPEED = 5;
 const ATTACK_RANGE = 70;
 const ATTACK_COOLDOWN = 400;
+const BLAST_ZONE_Y = ARENA_H + 100;
+const CAM_ZOOM_NORMAL = 1.0;
+const CAM_ZOOM_DEATH = 0.55;
+const CAM_LERP_SPEED = 0.08;
 
 const CHARACTERS = [
   { id: 'psyduck', name: 'Psyduck', color: '#FFE135', icon: '🦆' },
@@ -120,8 +188,238 @@ const CHARACTERS = [
   { id: 'ditto',   name: 'Ditto',   color: '#9C27B0', icon: '🔮' }
 ];
 
+// ============ PLATFORM DEFS ============
+function getPlatforms() {
+  return [
+    { x: 0,         y: ARENA_H - 60, w: ARENA_W,    h: 60,  name: 'ground' },
+    { x: ARENA_W * 0.10, y: ARENA_H * 0.55, w: ARENA_W * 0.35, h: 18, name: 'plat1' },
+    { x: ARENA_W * 0.55, y: ARENA_H * 0.55, w: ARENA_W * 0.35, h: 18, name: 'plat2' },
+    { x: ARENA_W * 0.30, y: ARENA_H * 0.30, w: ARENA_W * 0.40, h: 18, name: 'plat3' }
+  ];
+}
+
+// ============ CAMERA SYSTEM ============
+let cam = { x: ARENA_W / 2, y: ARENA_H / 2, zoom: CAM_ZOOM_NORMAL, targetZoom: CAM_ZOOM_NORMAL };
+let deathState = null; // { fighter, startY, startTime }
+
+function updateCamera() {
+  if (!p1 || !cpu) return;
+
+  let targetX, targetY, zoomTarget;
+
+  if (deathState) {
+    // Death zoom: follow falling fighter
+    const elapsed = (Date.now() - deathState.startTime) / 1000;
+    const fallProgress = Math.min(elapsed / 1.2, 1);
+    const f = deathState.fighter;
+    targetX = f.x + 20;
+    targetY = f.y + 20 + fallProgress * 150;
+    zoomTarget = CAM_ZOOM_DEATH;
+    cam.targetZoom = zoomTarget;
+  } else {
+    // Normal: midpoint between fighters, zoom out if far apart
+    const midX = (p1.x + cpu.x) / 2 + 20;
+    const midY = (p1.y + cpu.y) / 2 + 20;
+    const dx = Math.abs(p1.x - cpu.x);
+    const dy = Math.abs(p1.y - cpu.y);
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    zoomTarget = dist > 300 ? 0.9 : CAM_ZOOM_NORMAL;
+    cam.targetZoom = zoomTarget;
+    targetX = midX;
+    targetY = midY;
+  }
+
+  // Smooth lerp camera
+  cam.x += (targetX - cam.x) * CAM_LERP_SPEED;
+  cam.y += (targetY - cam.y) * CAM_LERP_SPEED;
+  cam.zoom += (cam.targetZoom - cam.zoom) * CAM_LERP_SPEED;
+
+  // Apply camera transform
+  const container = document.getElementById('game-container');
+  const cw = container.clientWidth;
+  const ch = container.clientHeight;
+  const offsetX = cw / 2 - cam.x * cam.zoom;
+  const offsetY = ch / 2 - cam.y * cam.zoom;
+
+  const camera = document.getElementById('camera');
+  camera.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${cam.zoom})`;
+}
+
+function applyCameraBounds() {
+  // Keep camera centered on arena
+  const container = document.getElementById('game-container');
+  const cw = container.clientWidth;
+  const ch = container.clientHeight;
+  const scaledW = cw / cam.zoom;
+  const scaledH = ch / cam.zoom;
+  let cx = cam.x;
+  let cy = cam.y;
+  // Soft bounds
+  if (cx < scaledW / 2) cx = scaledW / 2;
+  if (cx > ARENA_W - scaledW / 2) cx = ARENA_W - scaledW / 2;
+  if (cy < scaledH / 2) cy = scaledH / 2;
+  if (cy > ARENA_H - scaledH / 2) cy = ARENA_H - scaledH / 2;
+  cam.x = cx;
+  cam.y = cy;
+}
+
+// ============ PARALLAX BACKGROUND ============
+function drawBackground() {
+  const starsCanvas = document.getElementById('bg-stars');
+  const cloudsCanvas = document.getElementById('bg-clouds');
+  const farCanvas = document.getElementById('bg-mountains-far');
+  const nearCanvas = document.getElementById('bg-mountains-near');
+
+  const W = ARENA_W;
+  const H = ARENA_H;
+
+  // Stars
+  const sctx = starsCanvas.getContext('2d');
+  starsCanvas.width = W * 2;
+  starsCanvas.height = H;
+  sctx.clearRect(0, 0, starsCanvas.width, starsCanvas.height);
+  for (let i = 0; i < 80; i++) {
+    const sx = (i * 137.5 + Math.sin(i) * 50) % (W * 2);
+    const sy = (i * 73.3 + Math.cos(i) * 30) % (H * 0.7);
+    const sr = 0.5 + (i % 3) * 0.5;
+    sctx.fillStyle = `rgba(255,255,255,${0.3 + (i % 5) * 0.1})`;
+    sctx.beginPath();
+    sctx.arc(sx, sy, sr, 0, Math.PI * 2);
+    sctx.fill();
+  }
+
+  // Clouds
+  const cctx = cloudsCanvas.getContext('2d');
+  cloudsCanvas.width = W * 2;
+  cloudsCanvas.height = H * 0.4;
+  cctx.clearRect(0, 0, cloudsCanvas.width, cloudsCanvas.height);
+  for (let i = 0; i < 6; i++) {
+    const cx = (i * 220 + 50) % (W * 2);
+    const cy = 30 + (i % 3) * 40;
+    drawCloud(cctx, cx, cy, 60 + i * 10);
+  }
+
+  // Far mountains
+  const fmctx = farCanvas.getContext('2d');
+  farCanvas.width = W * 2;
+  farCanvas.height = H * 0.35;
+  fmctx.clearRect(0, 0, farCanvas.width, farCanvas.height);
+  drawMountains(fmctx, farCanvas.width, farCanvas.height, '#1a1a4e', 0.4, 8);
+
+  // Near mountains
+  const nmctx = nearCanvas.getContext('2d');
+  nearCanvas.width = W * 2;
+  nearCanvas.height = H * 0.25;
+  nmctx.clearRect(0, 0, nearCanvas.width, nearCanvas.height);
+  drawMountains(nmctx, nearCanvas.width, nearCanvas.height, '#12122a', 0.6, 5);
+}
+
+function drawCloud(ctx, x, y, size) {
+  ctx.fillStyle = 'rgba(180, 180, 220, 0.15)';
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+  ctx.arc(x + size * 0.4, y - size * 0.1, size * 0.4, 0, Math.PI * 2);
+  ctx.arc(x + size * 0.8, y, size * 0.35, 0, Math.PI * 2);
+  ctx.arc(x + size * 0.4, y + size * 0.15, size * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawMountains(ctx, w, h, color, variance, peaks) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(0, h);
+  const step = w / peaks;
+  for (let i = 0; i <= peaks; i++) {
+    const px = i * step;
+    const ph = h * (0.3 + Math.sin(i * 1.7 + variance * 10) * variance + Math.random() * 0.1);
+    if (i === 0) {
+      ctx.lineTo(px, h - ph);
+    } else {
+      const cpx = px - step / 2;
+      const cpy = h - ph - Math.random() * h * 0.2;
+      ctx.quadraticCurveTo(cpx, cpy, px, h - ph);
+    }
+  }
+  ctx.lineTo(w, h);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function updateParallax() {
+  // Move parallax layers based on camera position
+  const parallaxFactor = 0.1;
+  const ox = (cam.x - ARENA_W / 2) * parallaxFactor;
+
+  document.getElementById('bg-clouds').style.transform = `translateX(${-ox * 0.3}px)`;
+  document.getElementById('bg-mountains-far').style.transform = `translateX(${-ox * 0.5}px)`;
+  document.getElementById('bg-mountains-near').style.transform = `translateX(${-ox * 0.8}px)`;
+}
+
+// ============ PLATFORM RENDERING ============
+function setupPlatforms() {
+  const platColors = {
+    ground: { top: '#5a5a6a', body: '#2a2a3a' },
+    plat1:  { top: '#6a8caf', body: '#3a5a7a' },
+    plat2:  { top: '#6a8caf', body: '#3a5a7a' },
+    plat3:  { top: '#7a9a6a', body: '#4a6a3a' }
+  };
+
+  ['ground', 'plat1', 'plat2', 'plat3'].forEach(id => {
+    const el = document.getElementById(id);
+    const p = getPlatforms().find(pl => pl.name === id);
+    if (!p) return;
+    el.style.left = p.x + 'px';
+    el.style.top = p.y + 'px';
+    el.style.width = p.w + 'px';
+    el.style.height = p.h + 'px';
+    const c = platColors[id];
+    el.querySelector('.platform-top').style.background = c.top;
+    el.querySelector('.platform-body').style.background = c.body;
+    // Extra depth shadow
+    el.querySelector('.platform-body').style.boxShadow = `0 ${id === 'ground' ? '8px' : '4px'} 12px rgba(0,0,0,0.6)`;
+  });
+}
+
+// ============ FIGHT RENDER ============
+function renderFighter(f, wrapEl, bodyEl) {
+  const iconEl = bodyEl.querySelector('.fighter-icon');
+  const shadowEl = wrapEl.querySelector('.fighter-shadow');
+
+  // Position wrapper
+  wrapEl.style.left = f.x + 'px';
+  wrapEl.style.top = f.y + 'px';
+
+  // Body
+  bodyEl.style.background = f.char.color + 'dd';
+  bodyEl.style.borderRadius = '8px';
+  bodyEl.style.boxShadow = `0 4px 0 ${f.char.color}88, 0 6px 15px rgba(0,0,0,0.4)`;
+
+  // Inner gradient gives depth
+  const inner = bodyEl.querySelector('.fighter-inner');
+  inner.style.background = `linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 45%, rgba(0,0,0,0.25) 100%)`;
+  inner.style.borderRadius = '8px';
+
+  iconEl.textContent = f.char.icon;
+  iconEl.style.transform = `scaleX(${f.facingRight ? 1 : -1})`;
+
+  // Shadow: closer to ground = smaller/sharper
+  const groundY = GROUND_Y || (ARENA_H - 60);
+  const distToGround = groundY - (f.y + 40);
+  const shadowScale = Math.max(0.3, 1 - distToGround / 400);
+  const shadowAlpha = Math.max(0.2, 0.6 - distToGround / 600);
+  shadowEl.style.transform = `translateX(-50%) scale(${shadowScale})`;
+  shadowEl.style.background = `radial-gradient(ellipse, rgba(0,0,0,${shadowAlpha}) 0%, transparent 70%)`;
+
+  bodyEl.classList.toggle('invincible', Date.now() < f.invincibleUntil);
+}
+
+// ============ GAME STATE ============
 let selectedP1 = null;
 let selectedCPU = null;
+let p1, cpu;
+let gameRunning = false;
+let keys = {};
+let koShowing = false;
 
 function initSelect() {
   const grid = document.getElementById('charGrid');
@@ -140,7 +438,6 @@ function selectP1(idx) {
   document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
   document.querySelectorAll('.char-card')[idx].classList.add('selected');
   selectedP1 = CHARACTERS[idx];
-  // CPU auto-picks different
   const cpuIdx = (idx + 1 + Math.floor(Math.random() * 3)) % 5;
   selectedCPU = CHARACTERS[cpuIdx];
   document.getElementById('p1-name').textContent = selectedP1.name;
@@ -155,17 +452,11 @@ function startGame() {
   initGame();
 }
 
-// Game state
-let p1, cpu;
-let gameRunning = false;
-let keys = {};
-let koShowing = false;
-
 function makeFighter(char, side) {
   return {
     char,
     x: side === 'p1' ? ARENA_W * 0.25 : ARENA_W * 0.75,
-    y: GROUND_Y - 40,
+    y: ARENA_H - 100,
     vx: 0,
     vy: 0,
     onGround: true,
@@ -176,15 +467,6 @@ function makeFighter(char, side) {
     invincibleUntil: 0,
     side
   };
-}
-
-function getPlatforms() {
-  return [
-    { x: 0, y: GROUND_Y, w: ARENA_W, h: 60, name: 'ground' },
-    { x: ARENA_W * 0.10, y: ARENA_H * 0.55, w: ARENA_W * 0.35, h: 18, name: 'plat1' },
-    { x: ARENA_W * 0.55, y: ARENA_H * 0.55, w: ARENA_W * 0.35, h: 18, name: 'plat2' },
-    { x: ARENA_W * 0.30, y: ARENA_H * 0.30, w: ARENA_W * 0.40, h: 18, name: 'plat3' }
-  ];
 }
 
 function platformCollision(f) {
@@ -199,22 +481,30 @@ function platformCollision(f) {
       f.onGround = true;
     }
   }
-  // bounds
   if (f.x < 0) f.x = 0;
   if (f.x > ARENA_W - 40) f.x = ARENA_W - 40;
-  if (f.y > ARENA_H) respawn(f);
 }
 
 function respawn(f) {
   f.x = f.side === 'p1' ? ARENA_W * 0.25 : ARENA_W * 0.75;
-  f.y = 0;
+  f.y = ARENA_H * 0.3;
   f.vx = 0;
   f.vy = 0;
   f.invincibleUntil = Date.now() + 2000;
   f.damage = 0;
   f.stocks--;
   updateHUD();
-  if (f.stocks <= 0) endGame(f.side === 'p1' ? 'cpu' : 'p1');
+  if (f.stocks <= 0) {
+    endGame(f.side === 'p1' ? 'cpu' : 'p1');
+  } else {
+    // Trigger death camera, then respawn after animation
+    deathState = { fighter: f, startTime: Date.now() };
+    setTimeout(() => {
+      deathState = null;
+      cam.zoom = CAM_ZOOM_NORMAL;
+      cam.targetZoom = CAM_ZOOM_NORMAL;
+    }, 1800);
+  }
 }
 
 function attack(attacker, defender) {
@@ -246,7 +536,7 @@ function showHitEffect(x, y, color) {
   eff.className = 'hit-effect';
   eff.style.left = (x - 25) + 'px';
   eff.style.top = (y - 25) + 'px';
-  eff.style.background = color + '8';
+  eff.style.background = color + '6';
   eff.style.border = `3px solid ${color}`;
   arena.appendChild(eff);
   setTimeout(() => eff.remove(), 300);
@@ -261,27 +551,14 @@ function updateHUD() {
   document.getElementById('hud-cpu-stocks').textContent = cpu ? '♥'.repeat(Math.max(0, cpu.stocks)) : '';
 }
 
-function renderFighter(f, el) {
-  el.style.left = f.x + 'px';
-  el.style.top = f.y + 'px';
-  el.style.background = f.char.color + 'cc';
-  el.style.color = '#fff';
-  el.style.textShadow = '0 0 5px #000';
-  el.textContent = f.char.icon;
-  el.style.transform = 'scaleX(' + (f.facingRight ? 1 : -1) + ')';
-  el.classList.toggle('invincible', Date.now() < f.invincibleUntil);
-}
-
 let cpuAITimer = 0;
-let cpuTarget = null;
 
 function updateCPU() {
-  if (!cpu || !p1) return;
+  if (!cpu || !p1 || deathState) return;
   cpuAITimer++;
   if (cpuAITimer < 5) return;
   cpuAITimer = 0;
 
-  // Simple AI
   const dx = p1.x - cpu.x;
   const dy = p1.y - cpu.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
@@ -330,12 +607,18 @@ function initGame() {
   gameRunning = true;
   koShowing = false;
   cpuAITimer = 0;
+  deathState = null;
+  cam = { x: ARENA_W / 2, y: ARENA_H / 2, zoom: CAM_ZOOM_NORMAL, targetZoom: CAM_ZOOM_NORMAL };
+
+  drawBackground();
+  setupPlatforms();
   updateHUD();
 
-  const p1El = document.getElementById('p1');
-  const cpuEl = document.getElementById('cpu');
-  renderFighter(p1, p1El);
-  renderFighter(cpu, cpuEl);
+  document.getElementById('p1-wrap').style.display = 'flex';
+  document.getElementById('cpu-wrap').style.display = 'flex';
+
+  renderFighter(p1, document.getElementById('p1-wrap'), document.getElementById('p1'));
+  renderFighter(cpu, document.getElementById('cpu-wrap'), document.getElementById('cpu'));
 
   document.addEventListener('keydown', e => { keys[e.code] = true; e.preventDefault(); });
   document.addEventListener('keyup', e => keys[e.code] = false);
@@ -376,16 +659,19 @@ function gameLoop() {
   if (now - p1.lastAttack < 100) attack(p1, cpu);
   if (now - cpu.lastAttack < 100) attack(cpu, p1);
 
-  renderFighter(p1, document.getElementById('p1'));
-  renderFighter(cpu, document.getElementById('cpu'));
+  // Check blast zone
+  if (p1.y > BLAST_ZONE_Y) respawn(p1);
+  if (cpu.y > BLAST_ZONE_Y) respawn(cpu);
+
+  // Update camera
+  updateCamera();
+  updateParallax();
+
+  renderFighter(p1, document.getElementById('p1-wrap'), document.getElementById('p1'));
+  renderFighter(cpu, document.getElementById('cpu-wrap'), document.getElementById('cpu'));
 
   requestAnimationFrame(gameLoop);
 }
-
-// Responsive platforms on resize
-window.addEventListener('resize', () => {
-  // nothing needed mid-game
-});
 
 initSelect();
 </script>
