@@ -78,6 +78,24 @@ body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overf
 #ko-text { font-size: 5em; font-weight: bold; color: #f44; text-shadow: 0 0 30px #f00; animation: pulse 0.5s infinite alternate; }
 @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
 #restart-btn { padding: 15px 40px; font-size: 1.2em; background: linear-gradient(135deg, #6cf, #39f); border: none; border-radius: 20px; color: #000; cursor: pointer; font-weight: bold; box-shadow: 0 0 20px #6cf6; }
+#boundary-box { position: absolute; pointer-events: none; border: 2px dashed rgba(255,100,100,0.25); border-radius: 6px; z-index: 5; }
+#warning-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 60; display: none; }
+#warning-overlay.active { display: block; }
+.warning-edge { position: absolute; background: linear-gradient(to center, rgba(255,0,0,0.5), transparent); }
+.warning-top { top: 0; left: 0; right: 0; height: 100px; }
+.warning-bottom { bottom: 0; left: 0; right: 0; height: 100px; }
+.warning-left { top: 0; bottom: 0; left: 0; width: 100px; }
+.warning-right { top: 0; bottom: 0; right: 0; width: 100px; }
+#warning-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3em; font-weight: bold; color: #f00; text-shadow: 0 0 20px #f00, 0 0 40px #f00; opacity: 0; pointer-events: none; animation: warnBlink 0.25s infinite alternate; }
+@keyframes warnBlink { from { opacity: 0.6; } to { opacity: 1; } }
+#game-container.shake { animation: shake 0.15s ease-out; }
+@keyframes shake { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-10px, 5px); } 50% { transform: translate(10px, -5px); } 75% { transform: translate(-5px, 10px); } }
+#screen-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 90; }
+#screen-flash.active { animation: flashAnim 0.25s ease-out forwards; }
+@keyframes flashAnim { 0% { opacity: 0.9; } 100% { opacity: 0; } }
+#beam-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
+#particle-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 75; overflow: hidden; }
+.particle { position: absolute; border-radius: 50%; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -200,6 +218,17 @@ body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overf
     </div>
   </div>
   <div class="controls-hint">WASD / Arrow Keys = Move | Space = Jump | J = Attack</div>
+  <div id="boundary-box"></div>
+  <div id="warning-overlay">
+    <div class="warning-edge warning-top"></div>
+    <div class="warning-edge warning-bottom"></div>
+    <div class="warning-edge warning-left"></div>
+    <div class="warning-edge warning-right"></div>
+    <div id="warning-text">TURN BACK!</div>
+  </div>
+  <div id="screen-flash"></div>
+  <canvas id="beam-canvas"></canvas>
+  <div id="particle-container"></div>
 </div>
 
 <div id="ko-overlay">
@@ -219,6 +248,7 @@ const BLAST_ZONE_Y = ARENA_H + 100;
 const CAM_ZOOM_MIN = 0.6;
 const CAM_ZOOM_MAX = 1.0;
 const CAM_LERP_SPEED = 0.08;
+const BOUNDARY = { left: 0, right: ARENA_W, top: -50, bottom: ARENA_H + 50, WARNING_ZONE: 120 };
 
 const CHARACTERS = [
   { id: 'psyduck', name: 'Psyduck', color: '#FFE135', icon: '🦆' },
@@ -241,6 +271,131 @@ function getPlatforms() {
 
 let cam = { x: ARENA_W / 2, y: ARENA_H / 2, zoom: CAM_ZOOM_MAX, targetZoom: CAM_ZOOM_MAX };
 let deathState = null;
+let boundaryState = { beamActive: false, beamStart: 0, beamX: 0, beamY: 0, cooldownUntil: 0 };
+
+function setupBoundaryVisuals() {
+  const box = document.getElementById('boundary-box');
+  box.style.left = BOUNDARY.left + 'px';
+  box.style.top = BOUNDARY.top + 'px';
+  box.style.width = (BOUNDARY.right - BOUNDARY.left) + 'px';
+  box.style.height = (BOUNDARY.bottom - BOUNDARY.top) + 'px';
+}
+
+function isOutOfBounds(f) {
+  const cx = f.x + 24, cy = f.y + 24;
+  return cx < BOUNDARY.left || cx > BOUNDARY.right || cy < BOUNDARY.top || cy > BOUNDARY.bottom;
+}
+
+function getWarningLevel(f) {
+  const m = BOUNDARY.WARNING_ZONE;
+  const cx = f.x + 24, cy = f.y + 24;
+  const nearLeft = BOUNDARY.left + m, nearRight = BOUNDARY.right - m;
+  const nearTop = BOUNDARY.top + m, nearBottom = BOUNDARY.bottom - m;
+  if (cx < nearLeft || cx > nearRight || cy < nearTop || cy > nearBottom) return 2;
+  if (cx < nearLeft + m || cx > nearRight - m || cy < nearTop + m || cy > nearBottom - m) return 1;
+  return 0;
+}
+
+function updateBoundaryWarning(fighter) {
+  const now = Date.now();
+  const warnEl = document.getElementById('warning-overlay');
+  const warnText = document.getElementById('warning-text');
+  const container = document.getElementById('game-container');
+  if (now < boundaryState.cooldownUntil) { warnEl.classList.remove('active'); container.classList.remove('shake'); return; }
+  const wl = getWarningLevel(fighter);
+  if (wl > 0) {
+    warnEl.classList.add('active');
+    warnText.style.opacity = wl === 2 ? '1' : '0';
+    if (wl === 2) container.classList.add('shake'); else container.classList.remove('shake');
+  } else { warnEl.classList.remove('active'); container.classList.remove('shake'); }
+}
+
+function triggerBoundaryPenalty(f) {
+  const now = Date.now();
+  if (now < boundaryState.cooldownUntil) return;
+  boundaryState.cooldownUntil = now + 1500;
+  boundaryState.beamActive = true;
+  boundaryState.beamStart = now;
+  boundaryState.beamX = f.x + 24;
+  boundaryState.beamY = f.y + 24;
+
+  const flash = document.getElementById('screen-flash');
+  flash.classList.remove('active'); void flash.offsetWidth; flash.classList.add('active');
+
+  const container = document.getElementById('game-container');
+  container.classList.remove('shake'); void container.offsetWidth; container.classList.add('shake');
+
+  spawnParticles(boundaryState.beamX, boundaryState.beamY, 30, f.char.color);
+
+  const cx = ARENA_W / 2, cy = ARENA_H / 2;
+  const dx = cx - f.x, dy = cy - f.y;
+  const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+  f.vx = (dx / dist) * 14;
+  f.vy = (dy / dist) * 14 * 0.6 - 8;
+
+  f.stocks = Math.max(0, f.stocks - 1);
+  f.damage = 0;
+  updateHUD();
+  document.getElementById('warning-overlay').classList.remove('active');
+  if (f.stocks <= 0) endGame(f.side === 'p1' ? 'cpu' : 'p1');
+}
+
+function spawnParticles(x, y, count, color) {
+  const container = document.getElementById('particle-container');
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 4 + Math.random() * 8;
+    p.style.width = size + 'px'; p.style.height = size + 'px';
+    p.style.background = color; p.style.boxShadow = '0 0 ' + size + 'px ' + color;
+    p.style.left = x + 'px'; p.style.top = y + 'px';
+    container.appendChild(p);
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+    const speed = 4 + Math.random() * 7;
+    const vx = Math.cos(angle) * speed, vy = Math.sin(angle) * speed - 4;
+    let px = x, py = y, life = 1;
+    const animate = () => {
+      life -= 0.025;
+      if (life <= 0) { p.remove(); return; }
+      px += vx; py += vy + 0.3;
+      p.style.left = px + 'px'; p.style.top = py + 'px';
+      p.style.opacity = life; p.style.transform = 'scale(' + life + ')';
+      requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }
+}
+
+function drawBeam() {
+  if (!boundaryState.beamActive) return;
+  const now = Date.now(), elapsed = now - boundaryState.beamStart, duration = 700;
+  if (elapsed > duration) { boundaryState.beamActive = false; return; }
+
+  const canvas = document.getElementById('beam-canvas');
+  const container = document.getElementById('game-container');
+  canvas.width = container.clientWidth; canvas.height = container.clientHeight;
+  const fade = 1 - (elapsed / duration), beamLen = 900;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const cw = container.clientWidth, ch = container.clientHeight;
+  const offsetX = cw / 2 - cam.x * cam.zoom, offsetY = ch / 2 - cam.y * cam.zoom;
+  const bx = boundaryState.beamX * cam.zoom + offsetX, by = boundaryState.beamY * cam.zoom + offsetY;
+
+  const g1 = ctx.createLinearGradient(bx, by - beamLen * cam.zoom, bx, by);
+  g1.addColorStop(0, 'rgba(255,50,50,0)'); g1.addColorStop(0.4, 'rgba(255,80,0,' + (fade * 0.5) + ')'); g1.addColorStop(1, 'rgba(255,200,0,' + fade + ')');
+  ctx.strokeStyle = g1; ctx.lineWidth = 24 * cam.zoom * fade; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by - beamLen * cam.zoom * fade); ctx.stroke();
+
+  const g2 = ctx.createLinearGradient(bx, by - beamLen * cam.zoom, bx, by);
+  g2.addColorStop(0, 'rgba(255,255,255,0)'); g2.addColorStop(0.4, 'rgba(255,255,180,' + (fade * 0.7) + ')'); g2.addColorStop(1, 'rgba(255,255,255,' + fade + ')');
+  ctx.strokeStyle = g2; ctx.lineWidth = 8 * cam.zoom * fade;
+  ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by - beamLen * cam.zoom * fade); ctx.stroke();
+
+  const fl = Math.sin(elapsed * 0.08) * 0.3 + 0.7;
+  ctx.strokeStyle = 'rgba(255,255,255,' + (fade * fl * 0.4) + ')'; ctx.lineWidth = 14 * cam.zoom * fade * fl;
+  ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by - beamLen * cam.zoom * fade * 0.85); ctx.stroke();
+}
 
 function calculateDynamicZoom() {
   if (!p1 || !cpu) return CAM_ZOOM_MAX;
@@ -680,6 +835,7 @@ function initGame() {
 
   drawBackground();
   setupPlatforms();
+  setupBoundaryVisuals();
   updateHUD();
 
   document.getElementById('p1-wrap').style.display = 'flex';
@@ -730,6 +886,17 @@ function gameLoop() {
   // Blast zone
   if (p1.y > BLAST_ZONE_Y) respawn(p1);
   if (cpu.y > BLAST_ZONE_Y) respawn(cpu);
+
+  // Boundary checks
+  if (p1 && !deathState) {
+    if (isOutOfBounds(p1)) triggerBoundaryPenalty(p1);
+    else updateBoundaryWarning(p1);
+  }
+  if (cpu && !deathState) {
+    if (isOutOfBounds(cpu)) triggerBoundaryPenalty(cpu);
+    else updateBoundaryWarning(cpu);
+  }
+  drawBeam();
 
   // Update camera and rendering
   updateCamera();
