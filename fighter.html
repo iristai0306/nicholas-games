@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Platform Fighter</title>
+<title>Platform Fighter 2.5D</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
@@ -25,62 +25,63 @@ body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overf
 /* Game Screen */
 #game-screen { display: none; flex-direction: column; height: 100vh; }
 #game-header { text-align: center; padding: 8px; font-size: 0.9em; color: #aaa; }
-#game-container { flex: 1; position: relative; overflow: hidden; }
-#camera { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: center center; transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-#arena { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+#game-container { flex: 1; position: relative; overflow: hidden; perspective: 1000px; }
+#camera { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: center center; }
+#arena { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-style: preserve-3d; }
 
-/* Parallax Background Layers */
+/* Parallax Background Layers with depth */
 .bg-layer { position: absolute; top: 0; left: 0; width: 200%; height: 100%; pointer-events: none; }
-#bg-stars { background: transparent; }
-#bg-clouds { top: 10%; }
-#bg-mountains-far { top: 35%; }
-#bg-mountains-near { top: 50%; }
-#bg-trees { top: 60%; }
+.bg-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 40%, #2a2a4a 70%, #1a2a3a 100%); }
 
-/* Platform styling - 2.5D */
-.platform { position: absolute; border-radius: 6px; }
-.platform-top { position: absolute; top: 0; left: 0; right: 0; height: 8px; border-radius: 6px 6px 0 0; }
-.platform-body { position: absolute; top: 8px; left: 0; right: 0; bottom: 0; border-radius: 0 0 4px 4px; }
+/* Platform styling - True 2.5D with thickness */
+.platform-group { position: absolute; transform-style: preserve-3d; }
+.platform { position: absolute; transform-style: preserve-3d; }
+.platform-top { position: absolute; top: 0; left: 0; border-radius: 8px 8px 4px 4px; }
+.platform-front { position: absolute; left: 0; right: 0; background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%); border-radius: 0 0 4px 4px; }
+.platform-side-left { position: absolute; top: 0; left: 0; bottom: 0; width: 12px; background: linear-gradient(90deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 100%); border-radius: 0 0 0 4px; }
+.platform-side-right { position: absolute; top: 0; right: 0; bottom: 0; width: 12px; background: linear-gradient(-90deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 100%); border-radius: 0 0 4px 0; }
 
 /* Ground platform */
-#ground { bottom: 0; left: 0; right: 0; height: 60px; }
-#ground .platform-top { height: 12px; border-radius: 0; }
-#ground .platform-body { bottom: 0; }
+#ground { bottom: 0; left: 0; right: 0; }
+#ground .platform-top { border-radius: 0; }
+#ground .platform-front { border-radius: 0; }
 
-/* Fighter 2.5D styling */
-.fighter-wrap { position: absolute; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
-.fighter-body { position: relative; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 22px; transition: box-shadow 0.1s; }
-.fighter-shadow { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 36px; height: 10px; background: radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, transparent 70%); border-radius: 50%; }
-.fighter.invincible .fighter-body { box-shadow: 0 0 20px #fff, 0 0 35px #fff; }
+/* Fighter 2.5D styling with depth */
+.fighter-wrap { position: absolute; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; transform-style: preserve-3d; transition: transform 0.1s; }
+.fighter-body { position: relative; width: 48px; height: 48px; transform-style: preserve-3d; }
+.fighter-face { position: absolute; border-radius: 10px; }
+.fighter-front { inset: 0; transform: translateZ(12px); display: flex; align-items: center; justify-content: center; }
+.fighter-back { inset: 0; transform: translateZ(-12px); }
+.fighter-left { width: 24px; height: 48px; left: -12px; transform: rotateY(-90deg); }
+.fighter-right { width: 24px; height: 48px; right: -12px; transform: rotateY(90deg); }
+.fighter-top { width: 48px; height: 24px; top: -12px; transform: rotateX(90deg); }
+.fighter-bottom { width: 48px; height: 24px; bottom: -12px; transform: rotateX(-90deg); }
 
-/* Fighter depth shading */
-.fighter-inner { position: absolute; inset: 0; border-radius: 8px; background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.2) 100%); pointer-events: none; }
-.fighter-icon { position: relative; z-index: 1; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); }
+.fighter-shadow { position: absolute; bottom: -20px; left: 50%; width: 40px; height: 12px; background: radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, transparent 70%); border-radius: 50%; transform: translateX(-50%); filter: blur(2px); }
 
-#hud { display: flex; justify-content: space-between; padding: 10px 20px; background: #0a0a1a; }
+.fighter-shading { position: absolute; inset: 0; border-radius: 10px; background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 40%, rgba(0,0,0,0.4) 100%); pointer-events: none; }
+.fighter-icon { position: relative; z-index: 1; font-size: 26px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); }
+
+#hud { display: flex; justify-content: space-between; padding: 10px 20px; background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2a 100%); border-top: 2px solid #333; }
 .hud-player { text-align: center; min-width: 120px; }
 .hud-name { font-weight: bold; font-size: 1.1em; }
-.hud-damage { font-size: 2.5em; color: #f44; font-weight: bold; }
+.hud-damage { font-size: 2.5em; color: #f44; font-weight: bold; text-shadow: 0 0 10px rgba(255,68,68,0.5); }
 .hud-stocks { font-size: 1.5em; letter-spacing: 4px; }
 .cpu-panel { opacity: 0.7; }
-.controls-hint { text-align: center; font-size: 0.75em; color: #555; padding: 5px; }
-.hit-effect { position: absolute; width: 50px; height: 50px; border-radius: 50%; pointer-events: none; animation: hitPop 0.3s ease-out forwards; z-index: 50; }
-@keyframes hitPop { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+.controls-hint { text-align: center; font-size: 0.75em; color: #555; padding: 5px; background: #0a0a1a; }
 
-/* KO overlay */
+.hit-effect { position: absolute; width: 60px; height: 60px; border-radius: 50%; pointer-events: none; animation: hitPop 0.3s ease-out forwards; z-index: 50; }
+@keyframes hitPop { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+
 #ko-overlay { display: none; position: fixed; inset: 0; background: #000c; z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
 #ko-overlay.show { display: flex; }
 #ko-text { font-size: 5em; font-weight: bold; color: #f44; text-shadow: 0 0 30px #f00; animation: pulse 0.5s infinite alternate; }
 @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
-#restart-btn { padding: 15px 40px; font-size: 1.2em; background: #6cf; border: none; border-radius: 20px; color: #000; cursor: pointer; font-weight: bold; }
-
-/* Blast zone indicator */
-#blast-zone { position: absolute; bottom: -120px; left: 0; right: 0; height: 80px; border-top: 3px dashed rgba(255,50,50,0.4); pointer-events: none; }
+#restart-btn { padding: 15px 40px; font-size: 1.2em; background: linear-gradient(135deg, #6cf, #39f); border: none; border-radius: 20px; color: #000; cursor: pointer; font-weight: bold; box-shadow: 0 0 20px #6cf6; }
 </style>
 </head>
 <body>
 
-<!-- Character Select Screen -->
 <div id="select-screen">
   <h1>⚔️ CHOOSE YOUR FIGHTER</h1>
   <div class="char-grid" id="charGrid"></div>
@@ -97,49 +98,90 @@ body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overf
   <button class="start-btn" id="startBtn" onclick="startGame()">FIGHT!</button>
 </div>
 
-<!-- Game Screen -->
 <div id="game-screen">
-  <div id="game-header">Platform Fighter — 3 stocks each</div>
+  <div id="game-header">Platform Fighter 2.5D — 3 stocks each</div>
   <div id="game-container">
     <div id="camera">
       <div id="arena">
-        <!-- Parallax backgrounds -->
+        <div class="bg-gradient"></div>
         <canvas id="bg-stars" class="bg-layer" width="800" height="400"></canvas>
         <canvas id="bg-clouds" class="bg-layer" width="800" height="200"></canvas>
         <canvas id="bg-mountains-far" class="bg-layer" width="800" height="200"></canvas>
         <canvas id="bg-mountains-near" class="bg-layer" width="800" height="150"></canvas>
 
-        <!-- Platforms -->
-        <div class="platform" id="ground">
-          <div class="platform-top"></div>
-          <div class="platform-body"></div>
+        <div class="platform-group" id="ground">
+          <div class="platform">
+            <div class="platform-top"></div>
+            <div class="platform-front"></div>
+          </div>
         </div>
-        <div class="platform" id="plat1">
-          <div class="platform-top"></div>
-          <div class="platform-body"></div>
+        <div class="platform-group" id="plat1">
+          <div class="platform">
+            <div class="platform-top"></div>
+            <div class="platform-front"></div>
+            <div class="platform-side-left"></div>
+            <div class="platform-side-right"></div>
+          </div>
         </div>
-        <div class="platform" id="plat2">
-          <div class="platform-top"></div>
-          <div class="platform-body"></div>
+        <div class="platform-group" id="plat2">
+          <div class="platform">
+            <div class="platform-top"></div>
+            <div class="platform-front"></div>
+            <div class="platform-side-left"></div>
+            <div class="platform-side-right"></div>
+          </div>
         </div>
-        <div class="platform" id="plat3">
-          <div class="platform-top"></div>
-          <div class="platform-body"></div>
+        <div class="platform-group" id="plat3">
+          <div class="platform">
+            <div class="platform-top"></div>
+            <div class="platform-front"></div>
+            <div class="platform-side-left"></div>
+            <div class="platform-side-right"></div>
+          </div>
+        </div>
+        <div class="platform-group" id="plat4">
+          <div class="platform">
+            <div class="platform-top"></div>
+            <div class="platform-front"></div>
+            <div class="platform-side-left"></div>
+            <div class="platform-side-right"></div>
+          </div>
+        </div>
+        <div class="platform-group" id="plat5">
+          <div class="platform">
+            <div class="platform-top"></div>
+            <div class="platform-front"></div>
+            <div class="platform-side-left"></div>
+            <div class="platform-side-right"></div>
+          </div>
         </div>
 
-        <!-- Fighters -->
         <div class="fighter-wrap" id="p1-wrap">
           <div class="fighter-shadow"></div>
           <div class="fighter-body" id="p1">
-            <div class="fighter-inner"></div>
-            <div class="fighter-icon"></div>
+            <div class="fighter-face fighter-front">
+              <div class="fighter-shading"></div>
+              <div class="fighter-icon"></div>
+            </div>
+            <div class="fighter-face fighter-back"></div>
+            <div class="fighter-face fighter-left"></div>
+            <div class="fighter-face fighter-right"></div>
+            <div class="fighter-face fighter-top"></div>
+            <div class="fighter-face fighter-bottom"></div>
           </div>
         </div>
         <div class="fighter-wrap" id="cpu-wrap">
           <div class="fighter-shadow"></div>
           <div class="fighter-body" id="cpu">
-            <div class="fighter-inner"></div>
-            <div class="fighter-icon"></div>
+            <div class="fighter-face fighter-front">
+              <div class="fighter-shading"></div>
+              <div class="fighter-icon"></div>
+            </div>
+            <div class="fighter-face fighter-back"></div>
+            <div class="fighter-face fighter-left"></div>
+            <div class="fighter-face fighter-right"></div>
+            <div class="fighter-face fighter-top"></div>
+            <div class="fighter-face fighter-bottom"></div>
           </div>
         </div>
       </div>
@@ -160,260 +202,285 @@ body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overf
   <div class="controls-hint">WASD / Arrow Keys = Move | Space = Jump | J = Attack</div>
 </div>
 
-<!-- KO Overlay -->
 <div id="ko-overlay">
   <div id="ko-text">KO!</div>
   <button id="restart-btn" onclick="returnToSelect()">Play Again</button>
 </div>
 
 <script>
-// ============ CONSTANTS ============
 const ARENA_W = 1200;
-const ARENA_H = 600;
+const ARENA_H = 700;
 const GRAVITY = 0.6;
 const JUMP_FORCE = -14;
 const MOVE_SPEED = 5;
 const ATTACK_RANGE = 70;
 const ATTACK_COOLDOWN = 400;
 const BLAST_ZONE_Y = ARENA_H + 100;
-const CAM_ZOOM_NORMAL = 1.0;
-const CAM_ZOOM_DEATH = 0.55;
+const CAM_ZOOM_MIN = 0.6;
+const CAM_ZOOM_MAX = 1.0;
 const CAM_LERP_SPEED = 0.08;
 
 const CHARACTERS = [
   { id: 'psyduck', name: 'Psyduck', color: '#FFE135', icon: '🦆' },
-  { id: 'yoshi',   name: 'Yoshi',   color: '#4CAF50', icon: '🦎' },
-  { id: 'mickey',  name: 'Mickey',  color: '#E53935', icon: '🐭' },
-  { id: 'gojo',    name: 'Gojo',    color: '#1E88E5', icon: '🧑' },
-  { id: 'ditto',   name: 'Ditto',   color: '#9C27B0', icon: '🔮' }
+  { id: 'yoshi', name: 'Yoshi', color: '#4CAF50', icon: '🦎' },
+  { id: 'mickey', name: 'Mickey', color: '#E53935', icon: '🐭' },
+  { id: 'gojo', name: 'Gojo', color: '#1E88E5', icon: '🧑' },
+  { id: 'ditto', name: 'Ditto', color: '#9C27B0', icon: '🔮' }
 ];
 
-// ============ PLATFORM DEFS ============
 function getPlatforms() {
   return [
-    { x: 0,         y: ARENA_H - 60, w: ARENA_W,    h: 60,  name: 'ground' },
-    { x: ARENA_W * 0.10, y: ARENA_H * 0.55, w: ARENA_W * 0.35, h: 18, name: 'plat1' },
-    { x: ARENA_W * 0.55, y: ARENA_H * 0.55, w: ARENA_W * 0.35, h: 18, name: 'plat2' },
-    { x: ARENA_W * 0.30, y: ARENA_H * 0.30, w: ARENA_W * 0.40, h: 18, name: 'plat3' }
+    { x: 0, y: ARENA_H - 60, w: ARENA_W, h: 60, name: 'ground', thickness: 40 },
+    { x: 80, y: ARENA_H * 0.68, w: 260, h: 24, name: 'plat1', thickness: 16 },
+    { x: ARENA_W - 340, y: ARENA_H * 0.68, w: 260, h: 24, name: 'plat2', thickness: 16 },
+    { x: 280, y: ARENA_H * 0.48, w: 220, h: 22, name: 'plat3', thickness: 14 },
+    { x: ARENA_W - 500, y: ARENA_H * 0.48, w: 220, h: 22, name: 'plat4', thickness: 14 },
+    { x: ARENA_W / 2 - 140, y: ARENA_H * 0.28, w: 280, h: 26, name: 'plat5', thickness: 18 }
   ];
 }
 
-// ============ CAMERA SYSTEM ============
-let cam = { x: ARENA_W / 2, y: ARENA_H / 2, zoom: CAM_ZOOM_NORMAL, targetZoom: CAM_ZOOM_NORMAL };
-let deathState = null; // { fighter, startY, startTime }
+let cam = { x: ARENA_W / 2, y: ARENA_H / 2, zoom: CAM_ZOOM_MAX, targetZoom: CAM_ZOOM_MAX };
+let deathState = null;
+
+function calculateDynamicZoom() {
+  if (!p1 || !cpu) return CAM_ZOOM_MAX;
+  const dx = p1.x - cpu.x;
+  const dy = p1.y - cpu.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const baseDistance = 180;
+  const maxDistance = 550;
+  
+  if (distance <= baseDistance) return CAM_ZOOM_MAX;
+  if (distance >= maxDistance) return CAM_ZOOM_MIN;
+  
+  const t = (distance - baseDistance) / (maxDistance - baseDistance);
+  return CAM_ZOOM_MAX - t * (CAM_ZOOM_MAX - CAM_ZOOM_MIN);
+}
 
 function updateCamera() {
   if (!p1 || !cpu) return;
-
   let targetX, targetY, zoomTarget;
 
   if (deathState) {
-    // Death zoom: follow falling fighter
     const elapsed = (Date.now() - deathState.startTime) / 1000;
     const fallProgress = Math.min(elapsed / 1.2, 1);
     const f = deathState.fighter;
-    targetX = f.x + 20;
-    targetY = f.y + 20 + fallProgress * 150;
-    zoomTarget = CAM_ZOOM_DEATH;
-    cam.targetZoom = zoomTarget;
+    targetX = f.x + 24;
+    targetY = f.y + 24 + fallProgress * 150;
+    zoomTarget = 0.55;
   } else {
-    // Normal: midpoint between fighters, zoom out if far apart
-    const midX = (p1.x + cpu.x) / 2 + 20;
-    const midY = (p1.y + cpu.y) / 2 + 20;
-    const dx = Math.abs(p1.x - cpu.x);
-    const dy = Math.abs(p1.y - cpu.y);
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    zoomTarget = dist > 300 ? 0.9 : CAM_ZOOM_NORMAL;
-    cam.targetZoom = zoomTarget;
-    targetX = midX;
-    targetY = midY;
+    targetX = (p1.x + cpu.x) / 2 + 24;
+    targetY = (p1.y + cpu.y) / 2 + 24;
+    zoomTarget = calculateDynamicZoom();
   }
-
-  // Smooth lerp camera
+  
+  cam.targetZoom = zoomTarget;
   cam.x += (targetX - cam.x) * CAM_LERP_SPEED;
   cam.y += (targetY - cam.y) * CAM_LERP_SPEED;
   cam.zoom += (cam.targetZoom - cam.zoom) * CAM_LERP_SPEED;
 
-  // Apply camera transform
   const container = document.getElementById('game-container');
   const cw = container.clientWidth;
   const ch = container.clientHeight;
   const offsetX = cw / 2 - cam.x * cam.zoom;
   const offsetY = ch / 2 - cam.y * cam.zoom;
 
-  const camera = document.getElementById('camera');
-  camera.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${cam.zoom})`;
+  document.getElementById('camera').style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${cam.zoom})`;
 }
 
-function applyCameraBounds() {
-  // Keep camera centered on arena
-  const container = document.getElementById('game-container');
-  const cw = container.clientWidth;
-  const ch = container.clientHeight;
-  const scaledW = cw / cam.zoom;
-  const scaledH = ch / cam.zoom;
-  let cx = cam.x;
-  let cy = cam.y;
-  // Soft bounds
-  if (cx < scaledW / 2) cx = scaledW / 2;
-  if (cx > ARENA_W - scaledW / 2) cx = ARENA_W - scaledW / 2;
-  if (cy < scaledH / 2) cy = scaledH / 2;
-  if (cy > ARENA_H - scaledH / 2) cy = ARENA_H - scaledH / 2;
-  cam.x = cx;
-  cam.y = cy;
-}
-
-// ============ PARALLAX BACKGROUND ============
 function drawBackground() {
-  const starsCanvas = document.getElementById('bg-stars');
-  const cloudsCanvas = document.getElementById('bg-clouds');
-  const farCanvas = document.getElementById('bg-mountains-far');
-  const nearCanvas = document.getElementById('bg-mountains-near');
-
   const W = ARENA_W;
   const H = ARENA_H;
 
-  // Stars
+  const starsCanvas = document.getElementById('bg-stars');
   const sctx = starsCanvas.getContext('2d');
   starsCanvas.width = W * 2;
   starsCanvas.height = H;
-  sctx.clearRect(0, 0, starsCanvas.width, starsCanvas.height);
-  for (let i = 0; i < 80; i++) {
-    const sx = (i * 137.5 + Math.sin(i) * 50) % (W * 2);
-    const sy = (i * 73.3 + Math.cos(i) * 30) % (H * 0.7);
-    const sr = 0.5 + (i % 3) * 0.5;
-    sctx.fillStyle = `rgba(255,255,255,${0.3 + (i % 5) * 0.1})`;
+  for (let i = 0; i < 150; i++) {
+    const sx = (i * 137.5 + Math.sin(i) * 80) % (W * 2);
+    const sy = (i * 73.3 + Math.cos(i) * 50) % (H * 0.8);
+    const sr = 0.5 + (i % 4) * 0.5;
+    sctx.fillStyle = `rgba(255,255,255,${0.2 + (i % 5) * 0.08})`;
     sctx.beginPath();
     sctx.arc(sx, sy, sr, 0, Math.PI * 2);
     sctx.fill();
   }
 
-  // Clouds
+  const cloudsCanvas = document.getElementById('bg-clouds');
   const cctx = cloudsCanvas.getContext('2d');
   cloudsCanvas.width = W * 2;
   cloudsCanvas.height = H * 0.4;
-  cctx.clearRect(0, 0, cloudsCanvas.width, cloudsCanvas.height);
-  for (let i = 0; i < 6; i++) {
-    const cx = (i * 220 + 50) % (W * 2);
-    const cy = 30 + (i % 3) * 40;
-    drawCloud(cctx, cx, cy, 60 + i * 10);
+  for (let i = 0; i < 10; i++) {
+    const cx = (i * 300 + 100) % (W * 2);
+    const cy = 50 + (i % 5) * 60;
+    const size = 80 + i * 10;
+    const grad = cctx.createRadialGradient(cx, cy, 0, cx, cy, size);
+    grad.addColorStop(0, 'rgba(200,200,255,0.15)');
+    grad.addColorStop(1, 'rgba(200,200,255,0)');
+    cctx.fillStyle = grad;
+    cctx.beginPath();
+    cctx.arc(cx, cy, size * 0.6, 0, Math.PI * 2);
+    cctx.arc(cx + size * 0.5, cy, size * 0.5, 0, Math.PI * 2);
+    cctx.fill();
   }
 
-  // Far mountains
+  const farCanvas = document.getElementById('bg-mountains-far');
   const fmctx = farCanvas.getContext('2d');
   farCanvas.width = W * 2;
   farCanvas.height = H * 0.35;
-  fmctx.clearRect(0, 0, farCanvas.width, farCanvas.height);
-  drawMountains(fmctx, farCanvas.width, farCanvas.height, '#1a1a4e', 0.4, 8);
+  const fgrad = fmctx.createLinearGradient(0, 0, 0, farCanvas.height);
+  fgrad.addColorStop(0, '#1a1a4e');
+  fgrad.addColorStop(1, '#2a2a6e');
+  fmctx.fillStyle = fgrad;
+  fmctx.beginPath();
+  fmctx.moveTo(0, farCanvas.height);
+  const step = farCanvas.width / 12;
+  for (let i = 0; i <= 12; i++) {
+    const px = i * step;
+    const ph = farCanvas.height * (0.4 + Math.sin(i * 0.8) * 0.2);
+    if (i === 0) fmctx.lineTo(px, farCanvas.height - ph);
+    else fmctx.lineTo(px, farCanvas.height - ph);
+  }
+  fmctx.lineTo(farCanvas.width, farCanvas.height);
+  fmctx.fill();
 
-  // Near mountains
+  const nearCanvas = document.getElementById('bg-mountains-near');
   const nmctx = nearCanvas.getContext('2d');
   nearCanvas.width = W * 2;
   nearCanvas.height = H * 0.25;
-  nmctx.clearRect(0, 0, nearCanvas.width, nearCanvas.height);
-  drawMountains(nmctx, nearCanvas.width, nearCanvas.height, '#12122a', 0.6, 5);
-}
-
-function drawCloud(ctx, x, y, size) {
-  ctx.fillStyle = 'rgba(180, 180, 220, 0.15)';
-  ctx.beginPath();
-  ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
-  ctx.arc(x + size * 0.4, y - size * 0.1, size * 0.4, 0, Math.PI * 2);
-  ctx.arc(x + size * 0.8, y, size * 0.35, 0, Math.PI * 2);
-  ctx.arc(x + size * 0.4, y + size * 0.15, size * 0.3, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawMountains(ctx, w, h, color, variance, peaks) {
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(0, h);
-  const step = w / peaks;
-  for (let i = 0; i <= peaks; i++) {
-    const px = i * step;
-    const ph = h * (0.3 + Math.sin(i * 1.7 + variance * 10) * variance + Math.random() * 0.1);
-    if (i === 0) {
-      ctx.lineTo(px, h - ph);
-    } else {
-      const cpx = px - step / 2;
-      const cpy = h - ph - Math.random() * h * 0.2;
-      ctx.quadraticCurveTo(cpx, cpy, px, h - ph);
-    }
+  const ngrad = nmctx.createLinearGradient(0, 0, 0, nearCanvas.height);
+  ngrad.addColorStop(0, '#12122a');
+  ngrad.addColorStop(1, '#1a1a3a');
+  nmctx.fillStyle = ngrad;
+  nmctx.beginPath();
+  nmctx.moveTo(0, nearCanvas.height);
+  const nstep = nearCanvas.width / 8;
+  for (let i = 0; i <= 8; i++) {
+    const px = i * nstep;
+    const ph = nearCanvas.height * (0.5 + Math.cos(i * 0.9) * 0.25);
+    if (i === 0) nmctx.lineTo(px, nearCanvas.height - ph);
+    else nmctx.lineTo(px, nearCanvas.height - ph);
   }
-  ctx.lineTo(w, h);
-  ctx.closePath();
-  ctx.fill();
+  nmctx.lineTo(nearCanvas.width, nearCanvas.height);
+  nmctx.fill();
 }
 
 function updateParallax() {
-  // Move parallax layers based on camera position
-  const parallaxFactor = 0.1;
-  const ox = (cam.x - ARENA_W / 2) * parallaxFactor;
-
+  const ox = (cam.x - ARENA_W / 2) * 0.1;
   document.getElementById('bg-clouds').style.transform = `translateX(${-ox * 0.3}px)`;
   document.getElementById('bg-mountains-far').style.transform = `translateX(${-ox * 0.5}px)`;
   document.getElementById('bg-mountains-near').style.transform = `translateX(${-ox * 0.8}px)`;
 }
 
-// ============ PLATFORM RENDERING ============
 function setupPlatforms() {
   const platColors = {
-    ground: { top: '#5a5a6a', body: '#2a2a3a' },
-    plat1:  { top: '#6a8caf', body: '#3a5a7a' },
-    plat2:  { top: '#6a8caf', body: '#3a5a7a' },
-    plat3:  { top: '#7a9a6a', body: '#4a6a3a' }
+    ground: { top: 'linear-gradient(180deg, #7a7a8a 0%, #5a5a6a 50%, #3a3a4a 100%)', side: '#2a2a3a' },
+    plat1: { top: 'linear-gradient(180deg, #9ac8ef 0%, #7aa8cf 50%, #5a88af 100%)', side: '#3a5a7a' },
+    plat2: { top: 'linear-gradient(180deg, #9ac8ef 0%, #7aa8cf 50%, #5a88af 100%)', side: '#3a5a7a' },
+    plat3: { top: 'linear-gradient(180deg, #aada9a 0%, #8aba7a 50%, #6a9a5a 100%)', side: '#4a6a3a' },
+    plat4: { top: 'linear-gradient(180deg, #aada9a 0%, #8aba7a 50%, #6a9a5a 100%)', side: '#4a6a3a' },
+    plat5: { top: 'linear-gradient(180deg, #eaaa9a 0%, #ca8a7a 50%, #aa6a5a 100%)', side: '#7a4a3a' }
   };
 
-  ['ground', 'plat1', 'plat2', 'plat3'].forEach(id => {
-    const el = document.getElementById(id);
+  ['ground', 'plat1', 'plat2', 'plat3', 'plat4', 'plat5'].forEach(id => {
+    const group = document.getElementById(id);
     const p = getPlatforms().find(pl => pl.name === id);
     if (!p) return;
-    el.style.left = p.x + 'px';
-    el.style.top = p.y + 'px';
+    
+    group.style.left = p.x + 'px';
+    group.style.top = p.y + 'px';
+    const el = group.querySelector('.platform');
     el.style.width = p.w + 'px';
     el.style.height = p.h + 'px';
+    
     const c = platColors[id];
-    el.querySelector('.platform-top').style.background = c.top;
-    el.querySelector('.platform-body').style.background = c.body;
-    // Extra depth shadow
-    el.querySelector('.platform-body').style.boxShadow = `0 ${id === 'ground' ? '8px' : '4px'} 12px rgba(0,0,0,0.6)`;
+    const topEl = el.querySelector('.platform-top');
+    topEl.style.width = p.w + 'px';
+    topEl.style.height = (id === 'ground' ? p.h : p.h * 0.5) + 'px';
+    topEl.style.background = c.top;
+    topEl.style.boxShadow = id === 'ground' 
+      ? 'inset 0 4px 8px rgba(255,255,255,0.15), 0 10px 25px rgba(0,0,0,0.6)' 
+      : 'inset 0 2px 4px rgba(255,255,255,0.3), 0 8px 20px rgba(0,0,0,0.5)';
+    
+    const front = el.querySelector('.platform-front');
+    if (front) {
+      front.style.top = (id === 'ground' ? p.h * 0.5 : p.h * 0.5) + 'px';
+      front.style.height = p.thickness + 'px';
+      front.style.background = `linear-gradient(180deg, ${c.side}ee 0%, ${c.side} 100%)`;
+    }
+    
+    const left = el.querySelector('.platform-side-left');
+    const right = el.querySelector('.platform-side-right');
+    if (left) {
+      left.style.height = (p.h * 0.5 + p.thickness) + 'px';
+      left.style.top = '0px';
+      left.style.background = `linear-gradient(90deg, rgba(0,0,0,0.6) 0%, ${c.side}aa 50%, ${c.side} 100%)`;
+    }
+    if (right) {
+      right.style.height = (p.h * 0.5 + p.thickness) + 'px';
+      right.style.top = '0px';
+      right.style.background = `linear-gradient(-90deg, rgba(0,0,0,0.6) 0%, ${c.side}aa 50%, ${c.side} 100%)`;
+    }
   });
 }
 
-// ============ FIGHT RENDER ============
 function renderFighter(f, wrapEl, bodyEl) {
   const iconEl = bodyEl.querySelector('.fighter-icon');
   const shadowEl = wrapEl.querySelector('.fighter-shadow');
+  const faces = bodyEl.querySelectorAll('.fighter-face');
 
-  // Position wrapper
   wrapEl.style.left = f.x + 'px';
   wrapEl.style.top = f.y + 'px';
+  
+  // 3D rotation based on facing and velocity
+  const rotY = f.facingRight ? 5 : -5;
+  const rotX = Math.max(-10, Math.min(10, f.vy * 0.8));
+  bodyEl.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
 
-  // Body
-  bodyEl.style.background = f.char.color + 'dd';
-  bodyEl.style.borderRadius = '8px';
-  bodyEl.style.boxShadow = `0 4px 0 ${f.char.color}88, 0 6px 15px rgba(0,0,0,0.4)`;
+  const baseColor = f.char.color;
+  const darkColor = adjustBrightness(baseColor, -40);
+  const lightColor = adjustBrightness(baseColor, 30);
 
-  // Inner gradient gives depth
-  const inner = bodyEl.querySelector('.fighter-inner');
-  inner.style.background = `linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 45%, rgba(0,0,0,0.25) 100%)`;
-  inner.style.borderRadius = '8px';
+  faces.forEach((face, idx) => {
+    if (idx === 0) { // front
+      face.style.background = `linear-gradient(135deg, ${lightColor} 0%, ${baseColor} 50%, ${darkColor} 100%)`;
+    } else if (idx === 1) { // back
+      face.style.background = darkColor;
+    } else if (idx === 2 || idx === 3) { // sides
+      face.style.background = `linear-gradient(90deg, ${darkColor} 0%, ${baseColor} 100%)`;
+    } else { // top/bottom
+      face.style.background = idx === 4 ? lightColor : darkColor;
+    }
+  });
 
   iconEl.textContent = f.char.icon;
   iconEl.style.transform = `scaleX(${f.facingRight ? 1 : -1})`;
 
-  // Shadow: closer to ground = smaller/sharper
-  const groundY = GROUND_Y || (ARENA_H - 60);
-  const distToGround = groundY - (f.y + 40);
-  const shadowScale = Math.max(0.3, 1 - distToGround / 400);
-  const shadowAlpha = Math.max(0.2, 0.6 - distToGround / 600);
+  // Dynamic shadow based on height
+  const groundY = ARENA_H - 60;
+  const distToGround = Math.max(0, groundY - (f.y + 48));
+  const shadowScale = Math.max(0.4, 1 - distToGround / 350);
+  const shadowAlpha = Math.max(0.2, 0.7 - distToGround / 400);
   shadowEl.style.transform = `translateX(-50%) scale(${shadowScale})`;
-  shadowEl.style.background = `radial-gradient(ellipse, rgba(0,0,0,${shadowAlpha}) 0%, transparent 70%)`;
+  shadowEl.style.background = `radial-gradient(ellipse, rgba(0,0,0,${shadowAlpha}) 0%, rgba(0,0,0,${shadowAlpha * 0.5}) 50%, transparent 70%)`;
+  shadowEl.style.width = (50 * shadowScale) + 'px';
+  shadowEl.style.height = (15 * shadowScale) + 'px';
 
-  bodyEl.classList.toggle('invincible', Date.now() < f.invincibleUntil);
+  if (Date.now() < f.invincibleUntil) {
+    bodyEl.style.filter = 'drop-shadow(0 0 10px #fff)';
+  } else {
+    bodyEl.style.filter = 'none';
+  }
 }
 
-// ============ GAME STATE ============
+function adjustBrightness(color, amount) {
+  const num = parseInt(color.replace('#', ''), 16);
+  const r = Math.max(0, Math.min(255, (num >> 16) + amount));
+  const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amount));
+  const b = Math.max(0, Math.min(255, (num & 0x0000FF) + amount));
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+}
+
 let selectedP1 = null;
 let selectedCPU = null;
 let p1, cpu;
@@ -456,7 +523,7 @@ function makeFighter(char, side) {
   return {
     char,
     x: side === 'p1' ? ARENA_W * 0.25 : ARENA_W * 0.75,
-    y: ARENA_H - 100,
+    y: ARENA_H - 150,
     vx: 0,
     vy: 0,
     onGround: true,
@@ -473,16 +540,18 @@ function platformCollision(f) {
   const plats = getPlatforms();
   f.onGround = false;
   for (const p of plats) {
+    const platTop = p.y;
+    const platBottom = p.y + (p.name === 'ground' ? p.h : p.h * 0.5);
     if (f.vy >= 0 &&
-        f.x + 40 > p.x && f.x < p.x + p.w &&
-        f.y + 40 >= p.y && f.y + 40 <= p.y + p.h + f.vy + 1) {
-      f.y = p.y - 40;
+        f.x + 48 > p.x && f.x < p.x + p.w &&
+        f.y + 48 >= platTop && f.y + 48 <= platBottom + f.vy + 2) {
+      f.y = platTop - 48;
       f.vy = 0;
       f.onGround = true;
     }
   }
   if (f.x < 0) f.x = 0;
-  if (f.x > ARENA_W - 40) f.x = ARENA_W - 40;
+  if (f.x > ARENA_W - 48) f.x = ARENA_W - 48;
 }
 
 function respawn(f) {
@@ -497,12 +566,11 @@ function respawn(f) {
   if (f.stocks <= 0) {
     endGame(f.side === 'p1' ? 'cpu' : 'p1');
   } else {
-    // Trigger death camera, then respawn after animation
     deathState = { fighter: f, startTime: Date.now() };
     setTimeout(() => {
       deathState = null;
-      cam.zoom = CAM_ZOOM_NORMAL;
-      cam.targetZoom = CAM_ZOOM_NORMAL;
+      cam.zoom = CAM_ZOOM_MAX;
+      cam.targetZoom = CAM_ZOOM_MAX;
     }, 1800);
   }
 }
@@ -525,7 +593,7 @@ function attack(attacker, defender) {
     defender.vx = Math.cos(angle) * baseKb * kbMult + (attacker.side === 'p1' ? 4 : -4);
     defender.vy = Math.sin(angle) * baseKb * kbMult - 5;
     defender.invincibleUntil = now + 300;
-    showHitEffect(defender.x + 20, defender.y + 20, attacker.char.color);
+    showHitEffect(defender.x + 24, defender.y + 24, attacker.char.color);
     updateHUD();
   }
 }
@@ -534,10 +602,10 @@ function showHitEffect(x, y, color) {
   const arena = document.getElementById('arena');
   const eff = document.createElement('div');
   eff.className = 'hit-effect';
-  eff.style.left = (x - 25) + 'px';
-  eff.style.top = (y - 25) + 'px';
-  eff.style.background = color + '6';
-  eff.style.border = `3px solid ${color}`;
+  eff.style.left = (x - 30) + 'px';
+  eff.style.top = (y - 30) + 'px';
+  eff.style.background = `radial-gradient(circle, ${color}80 0%, ${color}40 50%, transparent 70%)`;
+  eff.style.boxShadow = `0 0 30px ${color}`;
   arena.appendChild(eff);
   setTimeout(() => eff.remove(), 300);
 }
@@ -608,7 +676,7 @@ function initGame() {
   koShowing = false;
   cpuAITimer = 0;
   deathState = null;
-  cam = { x: ARENA_W / 2, y: ARENA_H / 2, zoom: CAM_ZOOM_NORMAL, targetZoom: CAM_ZOOM_NORMAL };
+  cam = { x: ARENA_W / 2, y: ARENA_H / 2, zoom: CAM_ZOOM_MAX, targetZoom: CAM_ZOOM_MAX };
 
   drawBackground();
   setupPlatforms();
@@ -630,7 +698,7 @@ function gameLoop() {
   if (!gameRunning) return;
 
   // P1 controls
-  if (keys['KeyA'] || keys['ArrowLeft'])  { p1.vx = -MOVE_SPEED; p1.facingRight = false; }
+  if (keys['KeyA'] || keys['ArrowLeft']) { p1.vx = -MOVE_SPEED; p1.facingRight = false; }
   else if (keys['KeyD'] || keys['ArrowRight']) { p1.vx = MOVE_SPEED; p1.facingRight = true; }
   else p1.vx *= 0.8;
 
@@ -638,7 +706,6 @@ function gameLoop() {
     p1.vy = JUMP_FORCE;
     p1.onGround = false;
   }
-  if (keys['KeyJ'] || keys['KeyZ']) attack(p1, cpu);
 
   // Physics
   p1.vy += GRAVITY;
@@ -652,18 +719,19 @@ function gameLoop() {
   platformCollision(cpu);
 
   updateCPU();
-  if (keys['KeyJ'] || keys['KeyZ']) attack(p1, cpu);
 
-  // Attack collision both ways
+  // Attacks
+  if (keys['KeyJ'] || keys['KeyZ']) attack(p1, cpu);
+  
   const now = Date.now();
   if (now - p1.lastAttack < 100) attack(p1, cpu);
   if (now - cpu.lastAttack < 100) attack(cpu, p1);
 
-  // Check blast zone
+  // Blast zone
   if (p1.y > BLAST_ZONE_Y) respawn(p1);
   if (cpu.y > BLAST_ZONE_Y) respawn(cpu);
 
-  // Update camera
+  // Update camera and rendering
   updateCamera();
   updateParallax();
 
