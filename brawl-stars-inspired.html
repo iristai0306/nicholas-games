@@ -27,8 +27,8 @@
         #gameContainer {
             position: relative;
             width: 100%;
-            max-width: 600px;
-            aspect-ratio: 9/16;
+            max-width: 900px;
+            aspect-ratio: 16/9;
             background: #16213e;
             border-radius: 20px;
             overflow: hidden;
@@ -58,9 +58,9 @@
         
         #menuScreen h1 {
             color: #e94560;
-            font-size: 2.5em;
+            font-size: 2.2em;
             text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
-            margin-top: 30px;
+            margin-top: 20px;
             margin-bottom: 10px;
             text-align: center;
         }
@@ -68,22 +68,22 @@
         #menuScreen .subtitle {
             color: #a0a0a0;
             font-size: 0.9em;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         .brawler-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
             width: 100%;
-            max-width: 350px;
-            margin-bottom: 30px;
+            max-width: 600px;
+            margin-bottom: 25px;
         }
         
         .brawler-card {
             background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 15px 10px;
+            border-radius: 12px;
+            padding: 12px 8px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
@@ -97,14 +97,14 @@
         }
         
         .brawler-icon {
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
-            margin: 0 auto 8px;
+            margin: 0 auto 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5em;
+            font-size: 1.3em;
         }
         
         .brawler-card:nth-child(1) .brawler-icon { background: #ff6b6b; }
@@ -116,21 +116,21 @@
         
         .brawler-name {
             color: white;
-            font-size: 0.8em;
+            font-size: 0.75em;
             font-weight: bold;
         }
         
         .brawler-role {
             color: #888;
-            font-size: 0.65em;
+            font-size: 0.6em;
         }
         
         #playBtn {
             background: linear-gradient(135deg, #e94560, #c73e54);
             color: white;
             border: none;
-            padding: 18px 60px;
-            font-size: 1.3em;
+            padding: 15px 50px;
+            font-size: 1.2em;
             font-weight: bold;
             border-radius: 30px;
             cursor: pointer;
@@ -155,12 +155,12 @@
         
         #healthBar {
             position: absolute;
-            top: 15px;
-            left: 15px;
-            width: 150px;
-            height: 20px;
+            top: 12px;
+            left: 12px;
+            width: 120px;
+            height: 16px;
             background: rgba(0,0,0,0.5);
-            border-radius: 10px;
+            border-radius: 8px;
             overflow: hidden;
             border: 2px solid #333;
         }
@@ -174,15 +174,15 @@
         
         #ammoBar {
             position: absolute;
-            top: 42px;
-            left: 15px;
+            top: 34px;
+            left: 12px;
             display: flex;
-            gap: 5px;
+            gap: 4px;
         }
         
         .ammo-dot {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             background: #4ecdc4;
             border-radius: 50%;
             transition: opacity 0.2s;
@@ -194,10 +194,10 @@
         
         #scoreDisplay {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 12px;
+            right: 12px;
             color: white;
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: bold;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
@@ -207,72 +207,54 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 40%;
-            pointer-events: auto;
+            height: 100%;
+            pointer-events: none;
             display: none;
         }
         
-        #joystickZone {
+        #aimZone {
             position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 120px;
-            height: 120px;
-        }
-        
-        #joystick {
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-            border: 3px solid rgba(255,255,255,0.3);
-            position: relative;
-        }
-        
-        #joystickKnob {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 50px;
-            height: 50px;
-            background: rgba(233, 69, 96, 0.8);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            pointer-events: auto;
         }
         
         #shootBtn {
             position: absolute;
-            bottom: 50px;
-            right: 30px;
-            width: 80px;
-            height: 80px;
-            background: rgba(233, 69, 96, 0.8);
+            bottom: 25px;
+            right: 25px;
+            width: 70px;
+            height: 70px;
+            background: rgba(233, 69, 96, 0.85);
             border-radius: 50%;
             border: 3px solid rgba(255,255,255,0.5);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5em;
+            font-size: 1.3em;
             color: white;
             box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
+            pointer-events: auto;
         }
         
         #superBtn {
             position: absolute;
-            bottom: 50px;
-            right: 130px;
-            width: 60px;
-            height: 60px;
-            background: rgba(78, 205, 196, 0.8);
+            bottom: 25px;
+            right: 110px;
+            width: 55px;
+            height: 55px;
+            background: rgba(78, 205, 196, 0.85);
             border-radius: 50%;
             border: 3px solid rgba(255,255,255,0.5);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2em;
+            font-size: 1.1em;
             color: white;
             box-shadow: 0 5px 20px rgba(78, 205, 196, 0.4);
+            pointer-events: auto;
         }
         
         #shootBtn:active, #superBtn:active {
@@ -295,22 +277,22 @@
         
         #gameOverScreen h2 {
             color: #e94560;
-            font-size: 2.5em;
-            margin-bottom: 20px;
+            font-size: 2.2em;
+            margin-bottom: 15px;
         }
         
         #finalScore {
             color: white;
-            font-size: 1.5em;
-            margin-bottom: 30px;
+            font-size: 1.3em;
+            margin-bottom: 25px;
         }
         
         #restartBtn {
             background: #4ecdc4;
             color: white;
             border: none;
-            padding: 15px 40px;
-            font-size: 1.2em;
+            padding: 12px 35px;
+            font-size: 1.1em;
             font-weight: bold;
             border-radius: 25px;
             cursor: pointer;
@@ -320,11 +302,21 @@
             background: transparent;
             color: #888;
             border: 2px solid #888;
-            padding: 12px 30px;
-            font-size: 1em;
+            padding: 10px 25px;
+            font-size: 0.9em;
             border-radius: 25px;
             cursor: pointer;
-            margin-top: 15px;
+            margin-top: 12px;
+        }
+        
+        @media (max-width: 600px) {
+            .brawler-grid {
+                grid-template-columns: repeat(3, 1fr);
+                max-width: 320px;
+            }
+            #menuScreen h1 {
+                font-size: 1.8em;
+            }
         }
     </style>
 </head>
@@ -385,11 +377,7 @@
         </div>
         
         <div id="controls">
-            <div id="joystickZone">
-                <div id="joystick">
-                    <div id="joystickKnob"></div>
-                </div>
-            </div>
+            <div id="aimZone"></div>
             <div id="superBtn">⚡</div>
             <div id="shootBtn">🔥</div>
         </div>
@@ -412,16 +400,16 @@
         let gameLoopId;
         
         const brawlers = {
-            colt: { health: 2800, speed: 7, damage: 320, range: 9, reload: 1.5, color: '#ff6b6b', emoji: '🔫' },
-            shelly: { health: 3600, speed: 6, damage: 420, range: 7, reload: 1.5, color: '#4ecdc4', emoji: '🎯' },
-            rico: { health: 2600, speed: 7, damage: 320, range: 10, reload: 1.2, color: '#ffe66d', emoji: '⚡' },
-            bull: { health: 5000, speed: 5, damage: 400, range: 5, reload: 1.6, color: '#a8e6cf', emoji: '🐂' },
-            poco: { health: 4000, speed: 6, damage: 660, range: 7, reload: 1.6, color: '#ff8b94', emoji: '🎸' },
-            dynamike: { health: 2800, speed: 6, damage: 800, range: 7, reload: 1.8, color: '#c7ceea', emoji: '💣' }
+            colt: { health: 2800, speed: 5, damage: 320, range: 250, reload: 1.2, color: '#ff6b6b', emoji: '🔫' },
+            shelly: { health: 3600, speed: 4.5, damage: 420, range: 180, reload: 1.3, color: '#4ecdc4', emoji: '🎯' },
+            rico: { health: 2600, speed: 5, damage: 320, range: 280, reload: 1.0, color: '#ffe66d', emoji: '⚡' },
+            bull: { health: 5000, speed: 3.5, damage: 400, range: 120, reload: 1.4, color: '#a8e6cf', emoji: '🐂' },
+            poco: { health: 4000, speed: 4.5, damage: 660, range: 200, reload: 1.3, color: '#ff8b94', emoji: '🎸' },
+            dynamike: { health: 2800, speed: 4.5, damage: 800, range: 180, reload: 1.5, color: '#c7ceea', emoji: '💣' }
         };
         
         let player = { x: 0, y: 0, vx: 0, vy: 0, health: 0, maxHealth: 0, ammo: 3, maxAmmo: 3, lastShot: 0, superCharge: 0, angle: 0, brawler: null };
-        let joystick = { x: 0, y: 0, active: false, startX: 0, startY: 0 };
+        let aim = { x: 0, y: 0, active: false };
         let bullets = [];
         let enemies = [];
         let particles = [];
@@ -479,12 +467,12 @@
             particles = [];
             obstacles = [];
             
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 8; i++) {
                 obstacles.push({
-                    x: Math.random() * (canvas.width - 100) + 50,
-                    y: Math.random() * (canvas.height - 250) + 150,
-                    width: 50 + Math.random() * 30,
-                    height: 50 + Math.random() * 30
+                    x: Math.random() * (canvas.width - 150) + 75,
+                    y: Math.random() * (canvas.height - 150) + 75,
+                    width: 60 + Math.random() * 40,
+                    height: 60 + Math.random() * 40
                 });
             }
             
@@ -502,18 +490,18 @@
             const stats = brawlers[type];
             
             let ex, ey;
-            if (Math.random() < 0.5) {
-                ex = Math.random() < 0.5 ? -40 : canvas.width + 40;
-                ey = Math.random() * canvas.height;
-            } else {
-                ex = Math.random() * canvas.width;
-                ey = Math.random() < 0.5 ? -40 : canvas.height + 40;
+            const side = Math.floor(Math.random() * 4);
+            switch(side) {
+                case 0: ex = -40; ey = Math.random() * canvas.height; break;
+                case 1: ex = canvas.width + 40; ey = Math.random() * canvas.height; break;
+                case 2: ex = Math.random() * canvas.width; ey = -40; break;
+                case 3: ex = Math.random() * canvas.width; ey = canvas.height + 40; break;
             }
             
             enemies.push({
                 x: ex, y: ey, vx: 0, vy: 0,
-                health: stats.health * 0.4,
-                maxHealth: stats.health * 0.4,
+                health: stats.health * 0.35,
+                maxHealth: stats.health * 0.35,
                 type: type, stats: stats,
                 lastShot: 0, angle: 0
             });
@@ -521,46 +509,44 @@
             setTimeout(spawnEnemy, 2500 + Math.random() * 2000);
         }
         
-        const joystickZone = document.getElementById('joystickZone');
-        const joystickKnob = document.getElementById('joystickKnob');
+        // Aiming controls
+        const aimZone = document.getElementById('aimZone');
         
-        joystickZone.addEventListener('touchstart', (e) => {
+        aimZone.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            const touch = e.touches[0];
-            const rect = joystickZone.getBoundingClientRect();
-            joystick.startX = rect.left + rect.width / 2;
-            joystick.startY = rect.top + rect.height / 2;
-            joystick.active = true;
-            updateJoystick(touch.clientX, touch.clientY);
+            aim.active = true;
+            updateAim(e.touches[0].clientX, e.touches[0].clientY);
         });
         
-        joystickZone.addEventListener('touchmove', (e) => {
+        aimZone.addEventListener('touchmove', (e) => {
             e.preventDefault();
-            if (joystick.active) updateJoystick(e.touches[0].clientX, e.touches[0].clientY);
+            if (aim.active) updateAim(e.touches[0].clientX, e.touches[0].clientY);
         });
         
-        joystickZone.addEventListener('touchend', (e) => {
+        aimZone.addEventListener('touchend', (e) => {
             e.preventDefault();
-            joystick.active = false;
-            joystick.x = 0;
-            joystick.y = 0;
-            joystickKnob.style.transform = 'translate(-50%, -50%)';
+            aim.active = false;
         });
         
-        function updateJoystick(clientX, clientY) {
-            const maxDist = 35;
-            let dx = clientX - joystick.startX;
-            let dy = clientY - joystick.startY;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            
-            if (dist > maxDist) {
-                dx = (dx / dist) * maxDist;
-                dy = (dy / dist) * maxDist;
-            }
-            
-            joystick.x = dx / maxDist;
-            joystick.y = dy / maxDist;
-            joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+        // Mouse support for desktop testing
+        aimZone.addEventListener('mousedown', (e) => {
+            aim.active = true;
+            updateAim(e.clientX, e.clientY);
+        });
+        
+        aimZone.addEventListener('mousemove', (e) => {
+            if (aim.active) updateAim(e.clientX, e.clientY);
+        });
+        
+        aimZone.addEventListener('mouseup', () => {
+            aim.active = false;
+        });
+        
+        function updateAim(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            aim.x = clientX - rect.left;
+            aim.y = clientY - rect.top;
+            player.angle = Math.atan2(aim.y - player.y, aim.x - player.x);
         }
         
         document.getElementById('shootBtn').addEventListener('touchstart', (e) => { e.preventDefault(); shoot(); });
@@ -572,49 +558,46 @@
             if (gameState !== 'playing' || player.ammo <= 0) return;
             
             const now = Date.now();
-            if (now - player.lastShot < 300) return;
+            if (now - player.lastShot < 250) return;
             
             player.ammo--;
             player.lastShot = now;
             
-            let targetAngle = player.angle;
-            let nearestDist = Infinity;
+            const spread = selectedBrawler === 'shelly' ? 0.3 : 0;
+            const bulletCount = selectedBrawler === 'shelly' ? 5 : 1;
             
-            enemies.forEach(enemy => {
-                const dx = enemy.x - player.x;
-                const dy = enemy.y - player.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < nearestDist) {
-                    nearestDist = dist;
-                    targetAngle = Math.atan2(dy, dx);
-                }
-            });
+            for (let i = 0; i < bulletCount; i++) {
+                const angleOffset = (i - (bulletCount - 1) / 2) * spread;
+                const angle = player.angle + angleOffset;
+                
+                bullets.push({
+                    x: player.x + Math.cos(angle) * 25,
+                    y: player.y + Math.sin(angle) * 25,
+                    vx: Math.cos(angle) * 12,
+                    vy: Math.sin(angle) * 12,
+                    damage: player.brawler.damage / bulletCount,
+                    isPlayer: true,
+                    color: player.brawler.color,
+                    size: selectedBrawler === 'bull' ? 8 : 6,
+                    maxDist: player.brawler.range,
+                    distTraveled: 0
+                });
+            }
             
-            bullets.push({
-                x: player.x + Math.cos(targetAngle) * 20,
-                y: player.y + Math.sin(targetAngle) * 20,
-                vx: Math.cos(targetAngle) * 10,
-                vy: Math.sin(targetAngle) * 10,
-                damage: player.brawler.damage,
-                isPlayer: true,
-                color: player.brawler.color,
-                size: 6
-            });
-            
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 4; i++) {
                 particles.push({
-                    x: player.x + Math.cos(targetAngle) * 20,
-                    y: player.y + Math.sin(targetAngle) * 20,
-                    vx: (Math.random() - 0.5) * 3,
-                    vy: (Math.random() - 0.5) * 3,
-                    life: 15,
+                    x: player.x + Math.cos(player.angle) * 25,
+                    y: player.y + Math.sin(player.angle) * 25,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    life: 12,
                     color: '#ffff88',
                     size: 3
                 });
             }
             
             updateUI();
-            setTimeout(() => { if (player.ammo < player.maxAmmo) { player.ammo++; updateUI(); } }, player.brawler.reload * 800);
+            setTimeout(() => { if (player.ammo < player.maxAmmo) { player.ammo++; updateUI(); } }, player.brawler.reload * 700);
         }
         
         function useSuper() {
@@ -622,27 +605,41 @@
             player.superCharge = 0;
             updateUI();
             
-            for (let i = 0; i < 12; i++) {
-                const angle = (Math.PI * 2 / 12) * i;
-                bullets.push({
-                    x: player.x, y: player.y,
-                    vx: Math.cos(angle) * 12,
-                    vy: Math.sin(angle) * 12,
-                    damage: player.brawler.damage * 0.6,
-                    isPlayer: true,
-                    color: '#ffff00',
-                    size: 8
-                });
+            if (selectedBrawler === 'bull') {
+                // Bull's dash
+                player.vx = Math.cos(player.angle) * 15;
+                player.vy = Math.sin(player.angle) * 15;
+                for (let i = 0; i < 10; i++) {
+                    setTimeout(() => {
+                        player.x += player.vx;
+                        player.y += player.vy;
+                    }, i * 20);
+                }
+            } else {
+                for (let i = 0; i < 16; i++) {
+                    const angle = (Math.PI * 2 / 16) * i;
+                    bullets.push({
+                        x: player.x, y: player.y,
+                        vx: Math.cos(angle) * 14,
+                        vy: Math.sin(angle) * 14,
+                        damage: player.brawler.damage * 0.5,
+                        isPlayer: true,
+                        color: '#ffff00',
+                        size: 8,
+                        maxDist: 200,
+                        distTraveled: 0
+                    });
+                }
             }
             
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 20; i++) {
                 particles.push({
                     x: player.x, y: player.y,
-                    vx: (Math.random() - 0.5) * 8,
-                    vy: (Math.random() - 0.5) * 8,
-                    life: 25,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 30,
                     color: '#ffff00',
-                    size: 4
+                    size: 5
                 });
             }
         }
@@ -653,6 +650,7 @@
             document.getElementById('scoreDisplay').textContent = 'Score: ' + score;
             const superBtn = document.getElementById('superBtn');
             superBtn.style.opacity = player.superCharge >= 100 ? '1' : '0.4';
+            superBtn.style.boxShadow = player.superCharge >= 100 ? '0 0 25px rgba(78, 205, 196, 1)' : '0 5px 20px rgba(78, 205, 196, 0.4)';
         }
         
         function gameOver() {
@@ -668,11 +666,13 @@
             ctx.fillStyle = '#2d4a3e';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
+            // Draw grid
             ctx.strokeStyle = 'rgba(255,255,255,0.05)';
             ctx.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
-            for (let y = 0; y < canvas.height; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+            for (let x = 0; x < canvas.width; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+            for (let y = 0; y < canvas.height; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
             
+            // Draw obstacles
             ctx.fillStyle = '#1a1a2e';
             obstacles.forEach(obs => {
                 ctx.fillRect(obs.x - obs.width/2, obs.y - obs.height/2, obs.width, obs.height);
@@ -681,52 +681,56 @@
                 ctx.strokeRect(obs.x - obs.width/2, obs.y - obs.height/2, obs.width, obs.height);
             });
             
-            const speed = player.brawler.speed;
-            player.vx = joystick.x * speed;
-            player.vy = joystick.y * speed;
+            // Draw aiming line
+            if (aim.active) {
+                const range = player.brawler.range;
+                const endX = player.x + Math.cos(player.angle) * range;
+                const endY = player.y + Math.sin(player.angle) * range;
+                
+                ctx.strokeStyle = 'rgba(200, 200, 200, 0.4)';
+                ctx.lineWidth = 4;
+                ctx.setLineDash([10, 10]);
+                ctx.beginPath();
+                ctx.moveTo(player.x, player.y);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Draw range indicator at end
+                ctx.fillStyle = 'rgba(200, 200, 200, 0.3)';
+                ctx.beginPath();
+                ctx.arc(endX, endY, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
             
-            let newX = player.x + player.vx;
-            let newY = player.y + player.vy;
-            
-            let canMoveX = true, canMoveY = true;
-            obstacles.forEach(obs => {
-                if (newX + 15 > obs.x - obs.width/2 && newX - 15 < obs.x + obs.width/2 &&
-                    player.y + 15 > obs.y - obs.height/2 && player.y - 15 < obs.y + obs.height/2) canMoveX = false;
-                if (player.x + 15 > obs.x - obs.width/2 && player.x - 15 < obs.x + obs.width/2 &&
-                    newY + 15 > obs.y - obs.height/2 && newY - 15 < obs.y + obs.height/2) canMoveY = false;
-            });
-            
-            if (canMoveX) player.x = newX;
-            if (canMoveY) player.y = newY;
-            
-            player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
-            player.y = Math.max(20, Math.min(canvas.height - 20, player.y));
-            
-            if (joystick.x !== 0 || joystick.y !== 0) player.angle = Math.atan2(joystick.y, joystick.x);
-            
+            // Draw player
             ctx.save();
             ctx.translate(player.x, player.y);
             ctx.rotate(player.angle);
             ctx.fillStyle = player.brawler.color;
             ctx.beginPath();
-            ctx.arc(0, 0, 18, 0, Math.PI * 2);
+            ctx.arc(0, 0, 20, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = '#fff';
             ctx.lineWidth = 3;
             ctx.stroke();
             ctx.fillStyle = '#fff';
             ctx.beginPath();
-            ctx.arc(10, 0, 5, 0, Math.PI * 2);
+            ctx.arc(12, 0, 6, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
             
-            ctx.font = '20px Arial';
+            ctx.font = '22px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(player.brawler.emoji, player.x, player.y - 28);
+            ctx.fillText(player.brawler.emoji, player.x, player.y - 30);
             
+            // Update and draw bullets
             bullets = bullets.filter(bullet => {
                 bullet.x += bullet.vx;
                 bullet.y += bullet.vy;
+                bullet.distTraveled += Math.sqrt(bullet.vx * bullet.vx + bullet.vy * bullet.vy);
+                
+                if (bullet.distTraveled > bullet.maxDist) return false;
                 
                 let hitObstacle = false;
                 obstacles.forEach(obs => {
@@ -753,14 +757,14 @@
                     enemies.forEach((enemy, ei) => {
                         const dx = bullet.x - enemy.x;
                         const dy = bullet.y - enemy.y;
-                        if (Math.sqrt(dx * dx + dy * dy) < 20) {
+                        if (Math.sqrt(dx * dx + dy * dy) < 22) {
                             enemy.health -= bullet.damage;
                             hit = true;
                             if (enemy.health <= 0) {
                                 score += 100;
-                                player.superCharge = Math.min(100, player.superCharge + 20);
-                                for (let i = 0; i < 8; i++) {
-                                    particles.push({ x: enemy.x, y: enemy.y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6, life: 20, color: enemy.stats.color, size: 4 });
+                                player.superCharge = Math.min(100, player.superCharge + 15);
+                                for (let i = 0; i < 10; i++) {
+                                    particles.push({ x: enemy.x, y: enemy.y, vx: (Math.random() - 0.5) * 7, vy: (Math.random() - 0.5) * 7, life: 25, color: enemy.stats.color, size: 5 });
                                 }
                                 enemies.splice(ei, 1);
                             }
@@ -770,8 +774,8 @@
                 } else {
                     const dx = bullet.x - player.x;
                     const dy = bullet.y - player.y;
-                    if (Math.sqrt(dx * dx + dy * dy) < 20) {
-                        player.health -= bullet.damage * 0.3;
+                    if (Math.sqrt(dx * dx + dy * dy) < 22) {
+                        player.health -= bullet.damage * 0.25;
                         hit = true;
                         updateUI();
                         if (player.health <= 0) gameOver();
@@ -781,13 +785,14 @@
                 return !hit && bullet.x > -50 && bullet.x < canvas.width + 50 && bullet.y > -50 && bullet.y < canvas.height + 50;
             });
             
+            // Update and draw enemies
             enemies.forEach(enemy => {
                 const dx = player.x - enemy.x;
                 const dy = player.y - enemy.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 enemy.angle = Math.atan2(dy, dx);
                 
-                const espeed = enemy.stats.speed * 0.3;
+                const espeed = enemy.stats.speed * 0.25;
                 enemy.vx = Math.cos(enemy.angle) * espeed;
                 enemy.vy = Math.sin(enemy.angle) * espeed;
                 
@@ -796,69 +801,71 @@
                 
                 let canMoveEX = true, canMoveEY = true;
                 obstacles.forEach(obs => {
-                    if (newEX + 15 > obs.x - obs.width/2 && newEX - 15 < obs.x + obs.width/2 &&
-                    enemy.y + 15 > obs.y - obs.height/2 && enemy.y - 15 < obs.y + obs.height/2) canMoveEX = false;
-                if (enemy.x + 15 > obs.x - obs.width/2 && enemy.x - 15 < obs.x + obs.width/2 &&
-                    newEY + 15 > obs.y - obs.height/2 && newEY - 15 < obs.y + obs.height/2) canMoveEY = false;
+                    if (newEX + 18 > obs.x - obs.width/2 && newEX - 18 < obs.x + obs.width/2 &&
+                        enemy.y + 18 > obs.y - obs.height/2 && enemy.y - 18 < obs.y + obs.height/2) canMoveEX = false;
+                    if (enemy.x + 18 > obs.x - obs.width/2 && enemy.x - 18 < obs.x + obs.width/2 &&
+                        newEY + 18 > obs.y - obs.height/2 && newEY - 18 < obs.y + obs.height/2) canMoveEY = false;
+                });
+                
+                if (canMoveEX) enemy.x = newEX;
+                if (canMoveEY) enemy.y = newEY;
+                
+                if (dist > 90) {
+                    enemy.x += enemy.vx;
+                    enemy.y += enemy.vy;
+                }
+                
+                if (Date.now() - enemy.lastShot > 1800 && dist < 220) {
+                    enemy.lastShot = Date.now();
+                    bullets.push({
+                        x: enemy.x, y: enemy.y,
+                        vx: Math.cos(enemy.angle) * 8,
+                        vy: Math.sin(enemy.angle) * 8,
+                        damage: enemy.stats.damage * 0.25,
+                        isPlayer: false,
+                        color: '#ff4444',
+                        size: 5,
+                        maxDist: 200,
+                        distTraveled: 0
+                    });
+                }
+                
+                ctx.save();
+                ctx.translate(enemy.x, enemy.y);
+                ctx.rotate(enemy.angle);
+                ctx.fillStyle = enemy.stats.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, 18, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#ff4444';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.restore();
+                
+                ctx.font = '18px Arial';
+                ctx.fillText(enemy.stats.emoji, enemy.x, enemy.y - 26);
+                
+                ctx.fillStyle = '#333';
+                ctx.fillRect(enemy.x - 22, enemy.y - 38, 44, 6);
+                ctx.fillStyle = '#0f0';
+                ctx.fillRect(enemy.x - 22, enemy.y - 38, 44 * (enemy.health / enemy.maxHealth), 6);
             });
             
-            if (canMoveEX) enemy.x = newEX;
-            if (canMoveEY) enemy.y = newEY;
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life / 25;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                return p.life > 0;
+            });
             
-            if (dist > 80) {
-                enemy.x += enemy.vx;
-                enemy.y += enemy.vy;
-            }
-            
-            if (Date.now() - enemy.lastShot > 1500 && dist < 200) {
-                enemy.lastShot = Date.now();
-                bullets.push({
-                    x: enemy.x, y: enemy.y,
-                    vx: Math.cos(enemy.angle) * 7,
-                    vy: Math.sin(enemy.angle) * 7,
-                    damage: enemy.stats.damage * 0.3,
-                    isPlayer: false,
-                    color: '#ff4444',
-                    size: 5
-                });
-            }
-            
-            ctx.save();
-            ctx.translate(enemy.x, enemy.y);
-            ctx.rotate(enemy.angle);
-            ctx.fillStyle = enemy.stats.color;
-            ctx.beginPath();
-            ctx.arc(0, 0, 16, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#ff4444';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.restore();
-            
-            ctx.font = '16px Arial';
-            ctx.fillText(enemy.stats.emoji, enemy.x, enemy.y - 24);
-            
-            ctx.fillStyle = '#333';
-            ctx.fillRect(enemy.x - 20, enemy.y - 35, 40, 5);
-            ctx.fillStyle = '#0f0';
-            ctx.fillRect(enemy.x - 20, enemy.y - 35, 40 * (enemy.health / enemy.maxHealth), 5);
-        });
-        
-        particles = particles.filter(p => {
-            p.x += p.vx;
-            p.y += p.vy;
-            p.life--;
-            ctx.fillStyle = p.color;
-            ctx.globalAlpha = p.life / 20;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalAlpha = 1;
-            return p.life > 0;
-        });
-        
-        gameLoopId = requestAnimationFrame(gameLoop);
-    }
-</script>
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+    </script>
 </body>
 </html>
