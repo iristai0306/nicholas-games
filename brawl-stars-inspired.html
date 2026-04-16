@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Brawl Stars Inspired</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        body {
+            background: #1a1a2e;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 9/16;
+            background: #16213e;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #menuScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+            z-index: 100;
+        }
+        
+        #menuScreen h1 {
+            color: #e94560;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+            margin-top: 30px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        #menuScreen .subtitle {
+            color: #a0a0a0;
+            font-size: 0.9em;
+            margin-bottom: 30px;
+        }
+        
+        .brawler-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 350px;
+            margin-bottom: 30px;
+        }
+        
+        .brawler-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .brawler-card:hover, .brawler-card.selected {
+            background: rgba(233, 69, 96, 0.2);
+            border-color: #e94560;
+            transform: scale(1.05);
+        }
+        
+        .brawler-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+        
+        .brawler-card:nth-child(1) .brawler-icon { background: #ff6b6b; }
+        .brawler-card:nth-child(2) .brawler-icon { background: #4ecdc4; }
+        .brawler-card:nth-child(3) .brawler-icon { background: #ffe66d; }
+        .brawler-card:nth-child(4) .brawler-icon { background: #a8e6cf; }
+        .brawler-card:nth-child(5) .brawler-icon { background: #ff8b94; }
+        .brawler-card:nth-child(6) .brawler-icon { background: #c7ceea; }
+        
+        .brawler-name {
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .brawler-role {
+            color: #888;
+            font-size: 0.65em;
+        }
+        
+        #playBtn {
+            background: linear-gradient(135deg, #e94560, #c73e54);
+            color: white;
+            border: none;
+            padding: 18px 60px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
+            transition: all 0.3s;
+        }
+        
+        #playBtn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(233, 69, 96, 0.5);
+        }
+        
+        #gameUI {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: none;
+        }
+        
+        #healthBar {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 150px;
+            height: 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #333;
+        }
+        
+        #healthFill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            transition: width 0.2s;
+        }
+        
+        #ammoBar {
+            position: absolute;
+            top: 42px;
+            left: 15px;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .ammo-dot {
+            width: 12px;
+            height: 12px;
+            background: #4ecdc4;
+            border-radius: 50%;
+            transition: opacity 0.2s;
+        }
+        
+        .ammo-dot.empty {
+            opacity: 0.3;
+        }
+        
+        #scoreDisplay {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            pointer-events: auto;
+            display: none;
+        }
+        
+        #joystickZone {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 120px;
+            height: 120px;
+        }
+        
+        #joystick {
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.3);
+            position: relative;
+        }
+        
+        #joystickKnob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            background: rgba(233, 69, 96, 0.8);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        #shootBtn {
+            position: absolute;
+            bottom: 50px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+            background: rgba(233, 69, 96, 0.8);
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            color: white;
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
+        }
+        
+        #superBtn {
+            position: absolute;
+            bottom: 50px;
+            right: 130px;
+            width: 60px;
+            height: 60px;
+            background: rgba(78, 205, 196, 0.8);
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            color: white;
+            box-shadow: 0 5px 20px rgba(78, 205, 196, 0.4);
+        }
+        
+        #shootBtn:active, #superBtn:active {
+            transform: scale(0.95);
+        }
+        
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        
+        #gameOverScreen h2 {
+            color: #e94560;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        
+        #finalScore {
+            color: white;
+            font-size: 1.5em;
+            margin-bottom: 30px;
+        }
+        
+        #restartBtn {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+        
+        #backToMenuBtn {
+            background: transparent;
+            color: #888;
+            border: 2px solid #888;
+            padding: 12px 30px;
+            font-size: 1em;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="menuScreen">
+            <h1>🔥 BRAWL ARENA</h1>
+            <div class="subtitle">Choose Your Brawler</div>
+            
+            <div class="brawler-grid">
+                <div class="brawler-card selected" data-brawler="colt">
+                    <div class="brawler-icon">🔫</div>
+                    <div class="brawler-name">Colt</div>
+                    <div class="brawler-role">Damage</div>
+                </div>
+                <div class="brawler-card" data-brawler="shelly">
+                    <div class="brawler-icon">🎯</div>
+                    <div class="brawler-name">Shelly</div>
+                    <div class="brawler-role">Fighter</div>
+                </div>
+                <div class="brawler-card" data-brawler="rico">
+                    <div class="brawler-icon">⚡</div>
+                    <div class="brawler-name">Rico</div>
+                    <div class="brawler-role">Sharpshooter</div>
+                </div>
+                <div class="brawler-card" data-brawler="bull">
+                    <div class="brawler-icon">🐂</div>
+                    <div class="brawler-name">Bull</div>
+                    <div class="brawler-role">Tank</div>
+                </div>
+                <div class="brawler-card" data-brawler="poco">
+                    <div class="brawler-icon">🎸</div>
+                    <div class="brawler-name">Poco</div>
+                    <div class="brawler-role">Support</div>
+                </div>
+                <div class="brawler-card" data-brawler="dynamike">
+                    <div class="brawler-icon">💣</div>
+                    <div class="brawler-name">Dynamike</div>
+                    <div class="brawler-role">Thrower</div>
+                </div>
+            </div>
+            
+            <button id="playBtn">PLAY</button>
+        </div>
+        
+        <div id="gameUI">
+            <div id="healthBar">
+                <div id="healthFill"></div>
+            </div>
+            <div id="ammoBar">
+                <div class="ammo-dot"></div>
+                <div class="ammo-dot"></div>
+                <div class="ammo-dot"></div>
+            </div>
+            <div id="scoreDisplay">Score: 0</div>
+        </div>
+        
+        <div id="controls">
+            <div id="joystickZone">
+                <div id="joystick">
+                    <div id="joystickKnob"></div>
+                </div>
+            </div>
+            <div id="superBtn">⚡</div>
+            <div id="shootBtn">🔥</div>
+        </div>
+        
+        <div id="gameOverScreen">
+            <h2>DEFEATED!</h2>
+            <div id="finalScore">Score: 0</div>
+            <button id="restartBtn">Play Again</button>
+            <button id="backToMenuBtn">Back to Menu</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = 'menu';
+        let selectedBrawler = 'colt';
+        let score = 0;
+        let gameLoopId;
+        
+        const brawlers = {
+            colt: { health: 2800, speed: 7, damage: 320, range: 9, reload: 1.5, color: '#ff6b6b', emoji: '🔫' },
+            shelly: { health: 3600, speed: 6, damage: 420, range: 7, reload: 1.5, color: '#4ecdc4', emoji: '🎯' },
+            rico: { health: 2600, speed: 7, damage: 320, range: 10, reload: 1.2, color: '#ffe66d', emoji: '⚡' },
+            bull: { health: 5000, speed: 5, damage: 400, range: 5, reload: 1.6, color: '#a8e6cf', emoji: '🐂' },
+            poco: { health: 4000, speed: 6, damage: 660, range: 7, reload: 1.6, color: '#ff8b94', emoji: '🎸' },
+            dynamike: { health: 2800, speed: 6, damage: 800, range: 7, reload: 1.8, color: '#c7ceea', emoji: '💣' }
+        };
+        
+        let player = { x: 0, y: 0, vx: 0, vy: 0, health: 0, maxHealth: 0, ammo: 3, maxAmmo: 3, lastShot: 0, superCharge: 0, angle: 0, brawler: null };
+        let joystick = { x: 0, y: 0, active: false, startX: 0, startY: 0 };
+        let bullets = [];
+        let enemies = [];
+        let particles = [];
+        let obstacles = [];
+        
+        function resizeCanvas() {
+            const container = document.getElementById('gameContainer');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        document.querySelectorAll('.brawler-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.brawler-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedBrawler = card.dataset.brawler;
+            });
+        });
+        
+        document.getElementById('playBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', startGame);
+        document.getElementById('backToMenuBtn').addEventListener('click', showMenu);
+        
+        function showMenu() {
+            gameState = 'menu';
+            document.getElementById('menuScreen').style.display = 'flex';
+            document.getElementById('gameUI').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('gameOverScreen').style.display = 'none';
+        }
+        
+        function startGame() {
+            gameState = 'playing';
+            score = 0;
+            
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('gameUI').style.display = 'block';
+            document.getElementById('controls').style.display = 'block';
+            document.getElementById('gameOverScreen').style.display = 'none';
+            
+            const stats = brawlers[selectedBrawler];
+            player.brawler = stats;
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            player.health = stats.health;
+            player.maxHealth = stats.health;
+            player.ammo = 3;
+            player.superCharge = 0;
+            player.angle = 0;
+            
+            bullets = [];
+            enemies = [];
+            particles = [];
+            obstacles = [];
+            
+            for (let i = 0; i < 6; i++) {
+                obstacles.push({
+                    x: Math.random() * (canvas.width - 100) + 50,
+                    y: Math.random() * (canvas.height - 250) + 150,
+                    width: 50 + Math.random() * 30,
+                    height: 50 + Math.random() * 30
+                });
+            }
+            
+            updateUI();
+            if (gameLoopId) cancelAnimationFrame(gameLoopId);
+            gameLoop();
+            setTimeout(spawnEnemy, 2000);
+        }
+        
+        function spawnEnemy() {
+            if (gameState !== 'playing') return;
+            
+            const types = Object.keys(brawlers);
+            const type = types[Math.floor(Math.random() * types.length)];
+            const stats = brawlers[type];
+            
+            let ex, ey;
+            if (Math.random() < 0.5) {
+                ex = Math.random() < 0.5 ? -40 : canvas.width + 40;
+                ey = Math.random() * canvas.height;
+            } else {
+                ex = Math.random() * canvas.width;
+                ey = Math.random() < 0.5 ? -40 : canvas.height + 40;
+            }
+            
+            enemies.push({
+                x: ex, y: ey, vx: 0, vy: 0,
+                health: stats.health * 0.4,
+                maxHealth: stats.health * 0.4,
+                type: type, stats: stats,
+                lastShot: 0, angle: 0
+            });
+            
+            setTimeout(spawnEnemy, 2500 + Math.random() * 2000);
+        }
+        
+        const joystickZone = document.getElementById('joystickZone');
+        const joystickKnob = document.getElementById('joystickKnob');
+        
+        joystickZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = joystickZone.getBoundingClientRect();
+            joystick.startX = rect.left + rect.width / 2;
+            joystick.startY = rect.top + rect.height / 2;
+            joystick.active = true;
+            updateJoystick(touch.clientX, touch.clientY);
+        });
+        
+        joystickZone.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (joystick.active) updateJoystick(e.touches[0].clientX, e.touches[0].clientY);
+        });
+        
+        joystickZone.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            joystick.active = false;
+            joystick.x = 0;
+            joystick.y = 0;
+            joystickKnob.style.transform = 'translate(-50%, -50%)';
+        });
+        
+        function updateJoystick(clientX, clientY) {
+            const maxDist = 35;
+            let dx = clientX - joystick.startX;
+            let dy = clientY - joystick.startY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist > maxDist) {
+                dx = (dx / dist) * maxDist;
+                dy = (dy / dist) * maxDist;
+            }
+            
+            joystick.x = dx / maxDist;
+            joystick.y = dy / maxDist;
+            joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+        }
+        
+        document.getElementById('shootBtn').addEventListener('touchstart', (e) => { e.preventDefault(); shoot(); });
+        document.getElementById('superBtn').addEventListener('touchstart', (e) => { e.preventDefault(); useSuper(); });
+        document.getElementById('shootBtn').addEventListener('mousedown', shoot);
+        document.getElementById('superBtn').addEventListener('mousedown', useSuper);
+        
+        function shoot() {
+            if (gameState !== 'playing' || player.ammo <= 0) return;
+            
+            const now = Date.now();
+            if (now - player.lastShot < 300) return;
+            
+            player.ammo--;
+            player.lastShot = now;
+            
+            let targetAngle = player.angle;
+            let nearestDist = Infinity;
+            
+            enemies.forEach(enemy => {
+                const dx = enemy.x - player.x;
+                const dy = enemy.y - player.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < nearestDist) {
+                    nearestDist = dist;
+                    targetAngle = Math.atan2(dy, dx);
+                }
+            });
+            
+            bullets.push({
+                x: player.x + Math.cos(targetAngle) * 20,
+                y: player.y + Math.sin(targetAngle) * 20,
+                vx: Math.cos(targetAngle) * 10,
+                vy: Math.sin(targetAngle) * 10,
+                damage: player.brawler.damage,
+                isPlayer: true,
+                color: player.brawler.color,
+                size: 6
+            });
+            
+            for (let i = 0; i < 3; i++) {
+                particles.push({
+                    x: player.x + Math.cos(targetAngle) * 20,
+                    y: player.y + Math.sin(targetAngle) * 20,
+                    vx: (Math.random() - 0.5) * 3,
+                    vy: (Math.random() - 0.5) * 3,
+                    life: 15,
+                    color: '#ffff88',
+                    size: 3
+                });
+            }
+            
+            updateUI();
+            setTimeout(() => { if (player.ammo < player.maxAmmo) { player.ammo++; updateUI(); } }, player.brawler.reload * 800);
+        }
+        
+        function useSuper() {
+            if (gameState !== 'playing' || player.superCharge < 100) return;
+            player.superCharge = 0;
+            updateUI();
+            
+            for (let i = 0; i < 12; i++) {
+                const angle = (Math.PI * 2 / 12) * i;
+                bullets.push({
+                    x: player.x, y: player.y,
+                    vx: Math.cos(angle) * 12,
+                    vy: Math.sin(angle) * 12,
+                    damage: player.brawler.damage * 0.6,
+                    isPlayer: true,
+                    color: '#ffff00',
+                    size: 8
+                });
+            }
+            
+            for (let i = 0; i < 15; i++) {
+                particles.push({
+                    x: player.x, y: player.y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 25,
+                    color: '#ffff00',
+                    size: 4
+                });
+            }
+        }
+        
+        function updateUI() {
+            document.getElementById('healthFill').style.width = ((player.health / player.maxHealth) * 100) + '%';
+            document.querySelectorAll('.ammo-dot').forEach((dot, i) => dot.classList.toggle('empty', i >= player.ammo));
+            document.getElementById('scoreDisplay').textContent = 'Score: ' + score;
+            const superBtn = document.getElementById('superBtn');
+            superBtn.style.opacity = player.superCharge >= 100 ? '1' : '0.4';
+        }
+        
+        function gameOver() {
+            gameState = 'gameover';
+            document.getElementById('gameOverScreen').style.display = 'flex';
+            document.getElementById('finalScore').textContent = 'Score: ' + score;
+            document.getElementById('controls').style.display = 'none';
+        }
+        
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+            
+            ctx.fillStyle = '#2d4a3e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+            for (let y = 0; y < canvas.height; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+            
+            ctx.fillStyle = '#1a1a2e';
+            obstacles.forEach(obs => {
+                ctx.fillRect(obs.x - obs.width/2, obs.y - obs.height/2, obs.width, obs.height);
+                ctx.strokeStyle = '#444';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(obs.x - obs.width/2, obs.y - obs.height/2, obs.width, obs.height);
+            });
+            
+            const speed = player.brawler.speed;
+            player.vx = joystick.x * speed;
+            player.vy = joystick.y * speed;
+            
+            let newX = player.x + player.vx;
+            let newY = player.y + player.vy;
+            
+            let canMoveX = true, canMoveY = true;
+            obstacles.forEach(obs => {
+                if (newX + 15 > obs.x - obs.width/2 && newX - 15 < obs.x + obs.width/2 &&
+                    player.y + 15 > obs.y - obs.height/2 && player.y - 15 < obs.y + obs.height/2) canMoveX = false;
+                if (player.x + 15 > obs.x - obs.width/2 && player.x - 15 < obs.x + obs.width/2 &&
+                    newY + 15 > obs.y - obs.height/2 && newY - 15 < obs.y + obs.height/2) canMoveY = false;
+            });
+            
+            if (canMoveX) player.x = newX;
+            if (canMoveY) player.y = newY;
+            
+            player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
+            player.y = Math.max(20, Math.min(canvas.height - 20, player.y));
+            
+            if (joystick.x !== 0 || joystick.y !== 0) player.angle = Math.atan2(joystick.y, joystick.x);
+            
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.angle);
+            ctx.fillStyle = player.brawler.color;
+            ctx.beginPath();
+            ctx.arc(0, 0, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(10, 0, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(player.brawler.emoji, player.x, player.y - 28);
+            
+            bullets = bullets.filter(bullet => {
+                bullet.x += bullet.vx;
+                bullet.y += bullet.vy;
+                
+                let hitObstacle = false;
+                obstacles.forEach(obs => {
+                    if (bullet.x > obs.x - obs.width/2 && bullet.x < obs.x + obs.width/2 &&
+                        bullet.y > obs.y - obs.height/2 && bullet.y < obs.y + obs.height/2) hitObstacle = true;
+                });
+                
+                if (hitObstacle && selectedBrawler === 'rico') {
+                    obstacles.forEach(obs => {
+                        if (bullet.x > obs.x - obs.width/2 && bullet.x < obs.x + obs.width/2) bullet.vx *= -1;
+                        if (bullet.y > obs.y - obs.height/2 && bullet.y < obs.y + obs.height/2) bullet.vy *= -1;
+                    });
+                    return bullet.x > -50 && bullet.x < canvas.width + 50 && bullet.y > -50 && bullet.y < canvas.height + 50;
+                }
+                if (hitObstacle) return false;
+                
+                ctx.fillStyle = bullet.color;
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.size || 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                let hit = false;
+                if (bullet.isPlayer) {
+                    enemies.forEach((enemy, ei) => {
+                        const dx = bullet.x - enemy.x;
+                        const dy = bullet.y - enemy.y;
+                        if (Math.sqrt(dx * dx + dy * dy) < 20) {
+                            enemy.health -= bullet.damage;
+                            hit = true;
+                            if (enemy.health <= 0) {
+                                score += 100;
+                                player.superCharge = Math.min(100, player.superCharge + 20);
+                                for (let i = 0; i < 8; i++) {
+                                    particles.push({ x: enemy.x, y: enemy.y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6, life: 20, color: enemy.stats.color, size: 4 });
+                                }
+                                enemies.splice(ei, 1);
+                            }
+                            updateUI();
+                        }
+                    });
+                } else {
+                    const dx = bullet.x - player.x;
+                    const dy = bullet.y - player.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < 20) {
+                        player.health -= bullet.damage * 0.3;
+                        hit = true;
+                        updateUI();
+                        if (player.health <= 0) gameOver();
+                    }
+                }
+                
+                return !hit && bullet.x > -50 && bullet.x < canvas.width + 50 && bullet.y > -50 && bullet.y < canvas.height + 50;
+            });
+            
+            enemies.forEach(enemy => {
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                enemy.angle = Math.atan2(dy, dx);
+                
+                const espeed = enemy.stats.speed * 0.3;
+                enemy.vx = Math.cos(enemy.angle) * espeed;
+                enemy.vy = Math.sin(enemy.angle) * espeed;
+                
+                let newEX = enemy.x + enemy.vx;
+                let newEY = enemy.y + enemy.vy;
+                
+                let canMoveEX = true, canMoveEY = true;
+                obstacles.forEach(obs => {
+                    if (newEX + 15 > obs.x - obs.width/2 && newEX - 15 < obs.x + obs.width/2 &&
+                    enemy.y + 15 > obs.y - obs.height/2 && enemy.y - 15 < obs.y + obs.height/2) canMoveEX = false;
+                if (enemy.x + 15 > obs.x - obs.width/2 && enemy.x - 15 < obs.x + obs.width/2 &&
+                    newEY + 15 > obs.y - obs.height/2 && newEY - 15 < obs.y + obs.height/2) canMoveEY = false;
+            });
+            
+            if (canMoveEX) enemy.x = newEX;
+            if (canMoveEY) enemy.y = newEY;
+            
+            if (dist > 80) {
+                enemy.x += enemy.vx;
+                enemy.y += enemy.vy;
+            }
+            
+            if (Date.now() - enemy.lastShot > 1500 && dist < 200) {
+                enemy.lastShot = Date.now();
+                bullets.push({
+                    x: enemy.x, y: enemy.y,
+                    vx: Math.cos(enemy.angle) * 7,
+                    vy: Math.sin(enemy.angle) * 7,
+                    damage: enemy.stats.damage * 0.3,
+                    isPlayer: false,
+                    color: '#ff4444',
+                    size: 5
+                });
+            }
+            
+            ctx.save();
+            ctx.translate(enemy.x, enemy.y);
+            ctx.rotate(enemy.angle);
+            ctx.fillStyle = enemy.stats.color;
+            ctx.beginPath();
+            ctx.arc(0, 0, 16, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ff4444';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+            
+            ctx.font = '16px Arial';
+            ctx.fillText(enemy.stats.emoji, enemy.x, enemy.y - 24);
+            
+            ctx.fillStyle = '#333';
+            ctx.fillRect(enemy.x - 20, enemy.y - 35, 40, 5);
+            ctx.fillStyle = '#0f0';
+            ctx.fillRect(enemy.x - 20, enemy.y - 35, 40 * (enemy.health / enemy.maxHealth), 5);
+        });
+        
+        particles = particles.filter(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life--;
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life / 20;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            return p.life > 0;
+        });
+        
+        gameLoopId = requestAnimationFrame(gameLoop);
+    }
+</script>
+</body>
+</html>
