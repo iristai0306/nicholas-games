@@ -78,7 +78,7 @@ let currentMove=1,gear2Active=false,gear2TimeLeft=0,charging=false,chargePower=0
 const player={x:WORLD_WIDTH/2,y:WORLD_HEIGHT/2,size:25,speed:6,hp:100,maxHp:100,stamina:100,facing:'down',isAttacking:false,attackFrame:0,walkFrame:0};
 const keys={};
 const dummies=[];for(let i=0;i<6;i++)dummies.push({x:300+Math.random()*1000,y:300+Math.random()*600,hp:50,maxHp:50,size:20,hitFlash:0,knockbackX:0,knockbackY:0});
-const boss={x:120,y:120,size:45,hp:500,maxHp:500,active:false};
+const boss={x:120,y:120,size:45,hp:500,maxHp:500,active:true};
 const trees=[];for(let i=0;i<12;i++)trees.push({x:200+Math.random()*1200,y:200+Math.random()*800,size:35+Math.random()*20,type:Math.random()>.5?'palm':'pine'});
 const rocks=[];for(let i=0;i<15;i++)rocks.push({x:Math.random()*WORLD_WIDTH,y:Math.random()*WORLD_HEIGHT,size:15+Math.random()*20});
 const particles=[],stretchArms=[],smokeParticles=[],impactEffects=[];
