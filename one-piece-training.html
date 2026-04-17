@@ -5,625 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>One Piece - Training Ground</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            overflow: hidden;
-            background: #1a1a2e;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        #gameCanvas {
-            display: block;
-            image-rendering: pixelated;
-        }
-
-        .ui-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .health-bar {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px 25px;
-            border-radius: 10px;
-            border: 2px solid #ffd700;
-        }
-
-        .player-name {
-            color: #ffd700;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .hp-container {
-            width: 200px;
-            height: 20px;
-            background: #333;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 2px solid #fff;
-        }
-
-        .hp-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff4444, #ff6666);
-            width: 100%;
-            transition: width 0.3s ease;
-        }
-
-        .stamina-container {
-            width: 200px;
-            height: 12px;
-            background: #333;
-            border-radius: 6px;
-            overflow: hidden;
-            margin-top: 5px;
-            border: 2px solid #fff;
-        }
-
-        .stamina-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #44ff44, #66ff66);
-            width: 100%;
-        }
-
-        .controls-hint {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px 20px;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 14px;
-            line-height: 1.8;
-        }
-
-        .controls-hint span {
-            color: #ffd700;
-            font-weight: bold;
-        }
-
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 12px 25px;
-            background: linear-gradient(135deg, #ff6b00, #ff0000);
-            border: 2px solid #ffd700;
-            color: white;
-            cursor: pointer;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            pointer-events: auto;
-            transition: transform 0.2s;
-        }
-
-        .back-btn:hover {
-            transform: scale(1.05);
-        }
-
-        .boss-indicator {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            padding: 10px 30px;
-            border-radius: 10px;
-            border: 2px solid #ff0066;
-            color: #ff0066;
-            font-size: 16px;
-            font-weight: bold;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #0a0a1a; font-family: 'Segoe UI', sans-serif; }
+        #gameCanvas { display: block; }
+        .ui-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        .health-bar { position: absolute; top: 20px; left: 20px; background: linear-gradient(135deg, rgba(20,20,40,0.95), rgba(40,20,40,0.95)); padding: 15px 25px; border-radius: 15px; border: 3px solid #ffd700; box-shadow: 0 0 20px rgba(255,215,0,0.3); }
+        .player-name { color: #ffd700; font-size: 20px; font-weight: bold; margin-bottom: 10px; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+        .hp-container { width: 220px; height: 24px; background: #222; border-radius: 12px; overflow: hidden; border: 2px solid #fff; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+        .hp-fill { height: 100%; background: linear-gradient(180deg, #ff6666, #cc0000); width: 100%; transition: width 0.3s ease; box-shadow: inset 0 -3px 10px rgba(0,0,0,0.3); }
+        .stamina-container { width: 220px; height: 14px; background: #222; border-radius: 7px; overflow: hidden; margin-top: 8px; border: 2px solid #fff; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+        .stamina-fill { height: 100%; background: linear-gradient(180deg, #66ff66, #00aa00); width: 100%; }
+        .hp-text, .stamina-text { position: absolute; right: 30px; font-size: 12px; font-weight: bold; color: #fff; text-shadow: 0 0 3px #000; }
+        .hp-text { top: 52px; } .stamina-text { top: 84px; }
+        .controls-hint { position: absolute; bottom: 20px; left: 20px; background: linear-gradient(135deg, rgba(20,20,40,0.95), rgba(40,20,40,0.95)); padding: 20px 25px; border-radius: 15px; color: #fff; font-size: 14px; line-height: 2; border: 2px solid #4169e1; box-shadow: 0 0 20px rgba(65,105,225,0.3); }
+        .controls-hint span { color: #ffd700; font-weight: bold; background: rgba(255,215,0,0.2); padding: 3px 8px; border-radius: 5px; margin-right: 5px; }
+        .back-btn { position: absolute; top: 20px; right: 20px; padding: 15px 30px; background: linear-gradient(135deg, #ff6b00, #ff0000); border: 3px solid #ffd700; color: white; cursor: pointer; border-radius: 10px; font-size: 16px; font-weight: bold; pointer-events: auto; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 0 20px rgba(255,107,0,0.4); }
+        .back-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(255,107,0,0.6); }
+        .boss-indicator { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, rgba(255,0,102,0.9), rgba(150,0,60,0.9)); padding: 12px 35px; border-radius: 25px; border: 3px solid #ff69b4; color: #fff; font-size: 16px; font-weight: bold; text-shadow: 0 0 10px rgba(255,105,180,0.8); box-shadow: 0 0 30px rgba(255,0,102,0.5); animation: bossPulse 2s infinite; }
+        @keyframes bossPulse { 0%, 100% { box-shadow: 0 0 20px rgba(255,0,102,0.5); } 50% { box-shadow: 0 0 40px rgba(255,0,102,0.8); } }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
-    
     <div class="ui-overlay">
         <div class="health-bar">
-            <div class="player-name">Luffy</div>
-            <div class="hp-container">
-                <div class="hp-fill" id="hpFill"></div>
-            </div>
-            <div class="stamina-container">
-                <div class="stamina-fill" id="staminaFill"></div>
-            </div>
+            <div class="player-name">⚔️ Monkey D. Luffy</div>
+            <div class="hp-container"><div class="hp-fill" id="hpFill"></div></div>
+            <span class="hp-text" id="hpText">100/100</span>
+            <div class="stamina-container"><div class="stamina-fill" id="staminaFill"></div></div>
+            <span class="stamina-text" id="staminaText">100%</span>
         </div>
-
         <div class="boss-indicator">👁️ DOFLAMINGO IS WATCHING</div>
-
-        <button class="back-btn" onclick="goBack()">← Back to Menu</button>
-
+        <button class="back-btn" onclick="goBack()">← Menu</button>
         <div class="controls-hint">
-            <span>WASD / Arrows</span> - Move<br>
-            <span>J</span> - Light Attack<br>
-            <span>K</span> - Heavy Attack<br>
-            <span>L</span> - Special<br>
-            <span>Space</span> - Dash
+            <span>WASD</span> Move<br><span>J</span> Light Attack<br><span>K</span> Heavy Attack<br><span>L</span> Special<br><span>Space</span> Dash
         </div>
     </div>
-
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
-        // Game constants
-        const WORLD_WIDTH = 2400;
-        const WORLD_HEIGHT = 1800;
-        const VIEW_WIDTH = window.innerWidth;
-        const VIEW_HEIGHT = window.innerHeight;
-
-        canvas.width = VIEW_WIDTH;
-        canvas.height = VIEW_HEIGHT;
-
-        // Camera
+        const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
+        const WORLD_WIDTH = 2400, WORLD_HEIGHT = 1800;
+        let VIEW_WIDTH = window.innerWidth, VIEW_HEIGHT = window.innerHeight;
+        canvas.width = VIEW_WIDTH; canvas.height = VIEW_HEIGHT;
         const camera = { x: 0, y: 0 };
-
-        // Player
-        const player = {
-            x: WORLD_WIDTH / 2,
-            y: WORLD_HEIGHT / 2,
-            size: 30,
-            speed: 5,
-            hp: 100,
-            maxHp: 100,
-            stamina: 100,
-            color: '#ff4444',
-            facing: 'down',
-            isAttacking: false,
-            attackFrame: 0
-        };
-
-        // Keys
+        const player = { x: WORLD_WIDTH/2, y: WORLD_HEIGHT/2, size: 25, speed: 6, hp: 100, maxHp: 100, stamina: 100, facing: 'down', isAttacking: false, attackFrame: 0, walkFrame: 0 };
         const keys = {};
-
-        // Training dummies
-        const dummies = [];
-        for (let i = 0; i < 8; i++) {
-            dummies.push({
-                x: 400 + Math.random() * 1600,
-                y: 400 + Math.random() * 1000,
-                hp: 50,
-                maxHp: 50,
-                size: 25
-            });
-        }
-
-        // Boss (Doflamingo)
-        const boss = {
-            x: 150,
-            y: 150,
-            size: 50,
-            name: 'Doflamingo',
-            color: '#ff69b4',
-            watching: true
-        };
-
-        // Palm trees
-        const trees = [];
-        for (let i = 0; i < 15; i++) {
-            trees.push({
-                x: Math.random() * WORLD_WIDTH,
-                y: Math.random() * WORLD_HEIGHT,
-                size: 40 + Math.random() * 30
-            });
-        }
-
-        // Rocks
-        const rocks = [];
-        for (let i = 0; i < 20; i++) {
-            rocks.push({
-                x: Math.random() * WORLD_WIDTH,
-                y: Math.random() * WORLD_HEIGHT,
-                size: 20 + Math.random() * 25
-            });
-        }
-
-        // Input handling
-        window.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-            if (e.key === ' ') keys['space'] = true;
-        });
-
-        window.addEventListener('keyup', (e) => {
-            keys[e.key.toLowerCase()] = false;
-            if (e.key === ' ') keys['space'] = false;
-        });
-
-        // Update camera to follow player
-        function updateCamera() {
-            camera.x = player.x - VIEW_WIDTH / 2;
-            camera.y = player.y - VIEW_HEIGHT / 2;
-
-            // Clamp camera to world bounds
-            camera.x = Math.max(0, Math.min(camera.x, WORLD_WIDTH - VIEW_WIDTH));
-            camera.y = Math.max(0, Math.min(camera.y, WORLD_HEIGHT - VIEW_HEIGHT));
-        }
-
-        // Update player
-        function updatePlayer() {
-            let dx = 0;
-            let dy = 0;
-
-            if (keys['w'] || keys['arrowup']) dy = -1;
-            if (keys['s'] || keys['arrowdown']) dy = 1;
-            if (keys['a'] || keys['arrowleft']) dx = -1;
-            if (keys['d'] || keys['arrowright']) dx = 1;
-
-            // Normalize diagonal movement
-            if (dx !== 0 && dy !== 0) {
-                dx *= 0.707;
-                dy *= 0.707;
-            }
-
-            player.x += dx * player.speed;
-            player.y += dy * player.speed;
-
-            // Clamp to world bounds
-            player.x = Math.max(player.size, Math.min(player.x, WORLD_WIDTH - player.size));
-            player.y = Math.max(player.size, Math.min(player.y, WORLD_HEIGHT - player.size));
-
-            // Update facing
-            if (dx > 0) player.facing = 'right';
-            else if (dx < 0) player.facing = 'left';
-            else if (dy < 0) player.facing = 'up';
-            else if (dy > 0) player.facing = 'down';
-
-            // Attacks
-            if (keys['j'] && !player.isAttacking) {
-                player.isAttacking = true;
-                player.attackFrame = 10;
-                checkHit('light');
-            }
-            if (keys['k'] && !player.isAttacking) {
-                player.isAttacking = true;
-                player.attackFrame = 20;
-                checkHit('heavy');
-            }
-
-            if (player.attackFrame > 0) {
-                player.attackFrame--;
-            } else {
-                player.isAttacking = false;
-            }
-        }
-
-        // Check attack hits
-        function checkHit(type) {
-            const range = type === 'light' ? 60 : 100;
-            const damage = type === 'light' ? 10 : 25;
-
-            dummies.forEach(dummy => {
-                const dist = Math.hypot(dummy.x - player.x, dummy.y - player.y);
-                if (dist < range) {
-                    dummy.hp -= damage;
-                    if (dummy.hp <= 0) {
-                        dummy.hp = dummy.maxHp;
-                        dummy.x = 400 + Math.random() * 1600;
-                        dummy.y = 400 + Math.random() * 1000;
-                    }
-                }
-            });
-        }
-
-        // Draw functions
+        const dummies = []; for (let i = 0; i < 10; i++) dummies.push({ x: 300 + Math.random() * 1800, y: 300 + Math.random() * 1200, hp: 50, maxHp: 50, size: 20, hitFlash: 0 });
+        const boss = { x: 120, y: 120, size: 45 };
+        const trees = []; for (let i = 0; i < 20; i++) trees.push({ x: 200 + Math.random() * 2000, y: 200 + Math.random() * 1400, size: 35 + Math.random() * 20, type: Math.random() > 0.5 ? 'palm' : 'pine' });
+        const rocks = []; for (let i = 0; i < 25; i++) rocks.push({ x: Math.random() * WORLD_WIDTH, y: Math.random() * WORLD_HEIGHT, size: 15 + Math.random() * 20 });
+        const particles = [];
+        function createParticle(x, y, color) { particles.push({ x, y, vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4, life: 30, color, size: Math.random() * 5 + 2 }); }
+        window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; if (e.key === ' ') keys['space'] = true; });
+        window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; if (e.key === ' ') keys['space'] = false; });
+        function updateCamera() { const tx = player.x - VIEW_WIDTH / 2, ty = player.y - VIEW_HEIGHT / 2; camera.x += (tx - camera.x) * 0.1; camera.y += (ty - camera.y) * 0.1; camera.x = Math.max(0, Math.min(camera.x, WORLD_WIDTH - VIEW_WIDTH)); camera.y = Math.max(0, Math.min(camera.y, WORLD_HEIGHT - VIEW_HEIGHT)); }
+        function updatePlayer() { let dx = 0, dy = 0, moving = false; if (keys['w'] || keys['arrowup']) { dy = -1; moving = true; } if (keys['s'] || keys['arrowdown']) { dy = 1; moving = true; } if (keys['a'] || keys['arrowleft']) { dx = -1; moving = true; } if (keys['d'] || keys['arrowright']) { dx = 1; moving = true; } if (dx && dy) { dx *= 0.707; dy *= 0.707; } let speed = player.speed; if (keys['space'] && player.stamina >= 20) { speed *= 2.5; player.stamina -= 2; for (let i = 0; i < 3; i++) createParticle(player.x + (Math.random() - 0.5) * 30, player.y + (Math.random() - 0.5) * 30, 'rgba(255,255,100,0.6)'); } else if (player.stamina < 100) player.stamina += 0.5; player.x += dx * speed; player.y += dy * speed; player.x = Math.max(player.size, Math.min(player.x, WORLD_WIDTH - player.size)); player.y = Math.max(player.size, Math.min(player.y, WORLD_HEIGHT - player.size)); if (dx > 0) player.facing = 'right'; else if (dx < 0) player.facing = 'left'; else if (dy < 0) player.facing = 'up'; else if (dy > 0) player.facing = 'down'; if (moving) player.walkFrame += 0.2; if (keys['j'] && !player.isAttacking) { player.isAttacking = true; player.attackFrame = 15; checkHit('light'); } if (keys['k'] && !player.isAttacking) { player.isAttacking = true; player.attackFrame = 25; checkHit('heavy'); } if (player.attackFrame > 0) player.attackFrame--; else player.isAttacking = false; }
+        function checkHit(type) { const range = type === 'light' ? 70 : 110, damage = type === 'light' ? 12 : 28; dummies.forEach(dummy => { const dist = Math.hypot(dummy.x - player.x, dummy.y - player.y); if (dist < range) { dummy.hp -= damage; dummy.hitFlash = 10; for (let i = 0; i < 8; i++) createParticle(dummy.x + (Math.random() - 0.5) * 30, dummy.y + (Math.random() - 0.5) * 30, type === 'heavy' ? '#ff6600' : '#ffff00'); if (dummy.hp <= 0) { dummy.hp = dummy.maxHp; dummy.x = 300 + Math.random() * 1800; dummy.y = 300 + Math.random() * 1200; for (let i = 0; i < 15; i++) createParticle(dummy.x, dummy.y, '#00ff00'); } } }); }
+        function updateParticles() { for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.x += p.vx; p.y += p.vy; p.life--; p.size *= 0.95; if (p.life <= 0) particles.splice(i, 1); } }
         function drawGround() {
-            // Sand base
-            ctx.fillStyle = '#e6c288';
-            ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-
-            // Sand texture
-            ctx.fillStyle = '#d4a574';
-            for (let i = 0; i < 100; i++) {
-                const x = (i * 137) % WORLD_WIDTH;
-                const y = (i * 89) % WORLD_HEIGHT;
-                ctx.fillRect(x, y, 4, 4);
-            }
-
-            // Water edges
-            ctx.fillStyle = '#4a90d9';
-            ctx.fillRect(0, 0, WORLD_WIDTH, 100);
-            ctx.fillRect(0, WORLD_HEIGHT - 100, WORLD_WIDTH, 100);
-            ctx.fillRect(0, 0, 100, WORLD_HEIGHT);
-            ctx.fillRect(WORLD_WIDTH - 100, 0, 100, WORLD_HEIGHT);
-
-            // Beach gradient
-            const gradient = ctx.createLinearGradient(0, 100, 0, 200);
-            gradient.addColorStop(0, '#4a90d9');
-            gradient.addColorStop(1, '#e6c288');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 100, WORLD_WIDTH, 100);
+            const grad = ctx.createRadialGradient(WORLD_WIDTH/2, WORLD_HEIGHT/2, 0, WORLD_WIDTH/2, WORLD_HEIGHT/2, WORLD_WIDTH);
+            grad.addColorStop(0, '#f4d03f'); grad.addColorStop(0.5, '#e6c288'); grad.addColorStop(1, '#d4a574');
+            ctx.fillStyle = grad; ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+            ctx.fillStyle = 'rgba(180,140,100,0.3)'; for (let i = 0; i < 200; i++) { const x = ((i * 137) + Math.floor(camera.x / 10) * 10) % WORLD_WIDTH, y = ((i * 89) + Math.floor(camera.y / 10) * 10) % WORLD_HEIGHT; ctx.fillRect(x, y, 3, 3); }
+            const waveOffset = Date.now() / 1000;
+            const topGrad = ctx.createLinearGradient(0, 0, 0, 150); topGrad.addColorStop(0, '#1e3a5f'); topGrad.addColorStop(0.5, '#2e5984'); topGrad.addColorStop(1, '#4a90d9'); ctx.fillStyle = topGrad; ctx.fillRect(0, 0, WORLD_WIDTH, 150);
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2; for (let i = 0; i < 5; i++) { ctx.beginPath(); for (let x = 0; x < WORLD_WIDTH; x += 20) { const y = 50 + i * 20 + Math.sin((x + waveOffset * 50) * 0.02) * 10; if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke(); }
+            const botGrad = ctx.createLinearGradient(0, WORLD_HEIGHT - 150, 0, WORLD_HEIGHT); botGrad.addColorStop(0, '#4a90d9'); botGrad.addColorStop(0.5, '#2e5984'); botGrad.addColorStop(1, '#1e3a5f'); ctx.fillStyle = botGrad; ctx.fillRect(0, WORLD_HEIGHT - 150, WORLD_WIDTH, 150);
+            const leftGrad = ctx.createLinearGradient(0, 0, 150, 0); leftGrad.addColorStop(0, '#1e3a5f'); leftGrad.addColorStop(0.5, '#2e5984'); leftGrad.addColorStop(1, '#4a90d9'); ctx.fillStyle = leftGrad; ctx.fillRect(0, 0, 150, WORLD_HEIGHT);
+            const rightGrad = ctx.createLinearGradient(WORLD_WIDTH - 150, 0, WORLD_WIDTH, 0); rightGrad.addColorStop(0, '#4a90d9'); rightGrad.addColorStop(0.5, '#2e5984'); rightGrad.addColorStop(1, '#1e3a5f'); ctx.fillStyle = rightGrad; ctx.fillRect(WORLD_WIDTH - 150, 0, 150, WORLD_HEIGHT);
         }
-
-        function drawRocks() {
-            rocks.forEach(rock => {
-                const screenX = rock.x - camera.x;
-                const screenY = rock.y - camera.y;
-
-                if (screenX < -50 || screenX > VIEW_WIDTH + 50 || 
-                    screenY < -50 || screenY > VIEW_HEIGHT + 50) return;
-
-                ctx.fillStyle = '#888';
-                ctx.beginPath();
-                ctx.arc(screenX, screenY, rock.size, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = '#666';
-                ctx.beginPath();
-                ctx.arc(screenX - 5, screenY - 5, rock.size * 0.7, 0, Math.PI * 2);
-                ctx.fill();
-            });
-        }
-
-        function drawTrees() {
-            trees.forEach(tree => {
-                const screenX = tree.x - camera.x;
-                const screenY = tree.y - camera.y;
-
-                if (screenX < -100 || screenX > VIEW_WIDTH + 100 || 
-                    screenY < -100 || screenY > VIEW_HEIGHT + 100) return;
-
-                // Trunk
-                ctx.fillStyle = '#8b4513';
-                ctx.fillRect(screenX - 8, screenY, 16, 40);
-
-                // Leaves (3 circles)
-                ctx.fillStyle = '#228b22';
-                ctx.beginPath();
-                ctx.arc(screenX, screenY - 10, tree.size * 0.6, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.beginPath();
-                ctx.arc(screenX - 20, screenY + 10, tree.size * 0.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.beginPath();
-                ctx.arc(screenX + 20, screenY + 10, tree.size * 0.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Coconuts
-                ctx.fillStyle = '#654321';
-                ctx.beginPath();
-                ctx.arc(screenX - 5, screenY - 5, 5, 0, Math.PI * 2);
-                ctx.arc(screenX + 8, screenY - 2, 5, 0, Math.PI * 2);
-                ctx.fill();
-            });
-        }
-
-        function drawBossPlatform() {
-            const screenX = boss.x - camera.x;
-            const screenY = boss.y - camera.y;
-
-            // Stone platform
-            ctx.fillStyle = '#555';
-            ctx.fillRect(screenX - 80, screenY - 60, 160, 120);
-
-            // Platform border
-            ctx.strokeStyle = '#777';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(screenX - 80, screenY - 60, 160, 120);
-
-            // Steps
-            ctx.fillStyle = '#666';
-            for (let i = 0; i < 4; i++) {
-                ctx.fillRect(screenX + 60, screenY + 20 + i * 15, 30 - i * 5, 12);
-            }
-        }
-
-        function drawBoss() {
-            const screenX = boss.x - camera.x;
-            const screenY = boss.y - camera.y;
-
-            // Pink feather coat
-            ctx.fillStyle = '#ff69b4';
-            ctx.beginPath();
-            ctx.moveTo(screenX, screenY - 30);
-            ctx.lineTo(screenX - 40, screenY + 30);
-            ctx.lineTo(screenX + 40, screenY + 30);
-            ctx.closePath();
-            ctx.fill();
-
-            // Body
-            ctx.fillStyle = '#ff1493';
-            ctx.fillRect(screenX - 15, screenY - 10, 30, 40);
-
-            // Head
-            ctx.fillStyle = '#fdbcb4';
-            ctx.beginPath();
-            ctx.arc(screenX, screenY - 20, 18, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Sunglasses
-            ctx.fillStyle = '#ff0066';
-            ctx.fillRect(screenX - 15, screenY - 25, 12, 8);
-            ctx.fillRect(screenX + 3, screenY - 25, 12, 8);
-
-            // Blonde hair
-            ctx.fillStyle = '#ffd700';
-            ctx.beginPath();
-            ctx.arc(screenX, screenY - 28, 20, Math.PI, 0);
-            ctx.fill();
-
-            // Name tag
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(screenX - 50, screenY - 70, 100, 20);
-            ctx.fillStyle = '#ff69b4';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('DOFLAMINGO', screenX, screenY - 56);
-        }
-
-        function drawDummies() {
-            dummies.forEach(dummy => {
-                const screenX = dummy.x - camera.x;
-                const screenY = dummy.y - camera.y;
-
-                if (screenX < -50 || screenX > VIEW_WIDTH + 50 || 
-                    screenY < -50 || screenY > VIEW_HEIGHT + 50) return;
-
-                // Post
-                ctx.fillStyle = '#8b4513';
-                ctx.fillRect(screenX - 5, screenY - 20, 10, 40);
-
-                // Target circle
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc(screenX, screenY - 25, 15, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Red center
-                ctx.fillStyle = '#ff0000';
-                ctx.beginPath();
-                ctx.arc(screenX, screenY - 25, 8, 0, Math.PI * 2);
-                ctx.fill();
-
-                // HP bar
-                const hpPercent = dummy.hp / dummy.maxHp;
-                ctx.fillStyle = '#333';
-                ctx.fillRect(screenX - 20, screenY - 50, 40, 6);
-                ctx.fillStyle = hpPercent > 0.5 ? '#0f0' : '#f00';
-                ctx.fillRect(screenX - 20, screenY - 50, 40 * hpPercent, 6);
-            });
-        }
-
-        function drawPlayer() {
-            const screenX = player.x - camera.x;
-            const screenY = player.y - camera.y;
-
-            // Shadow
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.beginPath();
-            ctx.ellipse(screenX, screenY + 20, 20, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Body (straw hat color)
-            ctx.fillStyle = '#ff6b35';
-            ctx.beginPath();
-            ctx.arc(screenX, screenY, player.size, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Straw hat
-            ctx.fillStyle = '#ffd700';
-            ctx.beginPath();
-            ctx.ellipse(screenX, screenY - 15, 35, 10, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#ff8c00';
-            ctx.beginPath();
-            ctx.ellipse(screenX, screenY - 20, 20, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Red band
-            ctx.fillStyle = '#ff0000';
-            ctx.fillRect(screenX - 22, screenY - 22, 44, 5);
-
-            // Face
-            ctx.fillStyle = '#fdbcb4';
-            ctx.beginPath();
-            ctx.arc(screenX, screenY + 5, 18, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Eyes
-            ctx.fillStyle = '#000';
-            ctx.beginPath();
-            ctx.arc(screenX - 6, screenY + 3, 3, 0, Math.PI * 2);
-            ctx.arc(screenX + 6, screenY + 3, 3, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Smile
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(screenX, screenY + 8, 8, 0.2, Math.PI - 0.2);
-            ctx.stroke();
-
-            // Attack effect
-            if (player.isAttacking) {
-                ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                const range = player.attackFrame > 15 ? 80 : 50;
-                ctx.arc(screenX, screenY, range, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-        }
-
-        function drawGrid() {
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.lineWidth = 1;
-
-            const startX = Math.floor(camera.x / 100) * 100 - camera.x;
-            const startY = Math.floor(camera.y / 100) * 100 - camera.y;
-
-            for (let x = startX; x < VIEW_WIDTH; x += 100) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, VIEW_HEIGHT);
-                ctx.stroke();
-            }
-
-            for (let y = startY; y < VIEW_HEIGHT; y += 100) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(VIEW_WIDTH, y);
-                ctx.stroke();
-            }
-        }
-
-        // Main game loop
-        function gameLoop() {
-            updatePlayer();
-            updateCamera();
-
-            // Clear
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
-
-            // Draw world
-            drawGround();
-            drawGrid();
-            drawRocks();
-            drawTrees();
-            drawBossPlatform();
-            drawDummies();
-            drawBoss();
-            drawPlayer();
-
-            // Update UI
-            document.getElementById('hpFill').style.width = (player.hp / player.maxHp * 100) + '%';
-            document.getElementById('staminaFill').style.width = (player.stamina / 100 * 100) + '%';
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        function goBack() {
-            window.location.href = 'one-piece-start.html';
-        }
-
-        // Handle resize
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
-        // Start
+        function drawShadow(x, y, size) { ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x, y + size * 0.7, size, size * 0.3, 0, 0, Math.PI * 2); ctx.fill(); }
+        function drawRocks() { rocks.forEach(rock => { const sx = rock.x - camera.x, sy = rock.y - camera.y; if (sx < -100 || sx > VIEW_WIDTH + 100 || sy < -100 || sy > VIEW_HEIGHT + 100) return; drawShadow(sx, sy, rock.size); const grad = ctx.createRadialGradient(sx - rock.size * 0.3, sy - rock.size * 0.3, 0, sx, sy, rock.size); grad.addColorStop(0, '#999'); grad.addColorStop(0.5, '#666'); grad.addColorStop(1, '#444'); ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(sx, sy, rock.size, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.beginPath(); ctx.arc(sx - rock.size * 0.3, sy - rock.size * 0.3, rock.size * 0.4, 0, Math.PI * 2); ctx.fill(); }); }
+        function drawTrees() { trees.forEach(tree => { const sx = tree.x - camera.x, sy = tree.y - camera.y; if (sx < -150 || sx > VIEW_WIDTH + 150 || sy < -150 || sy > VIEW_HEIGHT + 150) return; drawShadow(sx, sy + 10, tree.size * 0.8); if (tree.type === 'palm') { const trunkGrad = ctx.createLinearGradient(sx - 8, sy, sx + 8, sy); trunkGrad.addColorStop(0, '#654321'); trunkGrad.addColorStop(0.5, '#8b4513'); trunkGrad.addColorStop(1, '#5a3a1a'); ctx.fillStyle = trunkGrad; ctx.beginPath(); ctx.moveTo(sx - 6, sy + 35); ctx.quadraticCurveTo(sx - 3, sy, sx - 8, sy - 25); ctx.lineTo(sx + 8, sy - 25); ctx.quadraticCurveTo(sx + 3, sy, sx + 6, sy + 35); ctx.fill(); ctx.fillStyle = '#228b22'; const leaves = [{a: -0.8, l: 1.2}, {a: -0.3, l: 1}, {a: 0.2, l: 1.1}, {a: 0.7, l: 1.3}, {a: 1.2, l: 1}]; leaves.forEach(leaf => { ctx.beginPath(); ctx.ellipse(sx + Math.cos(leaf.a) * tree.size * 0.7, sy - 25 + Math.sin(leaf.a) * tree.size * 0.3, tree.size * leaf.l * 0.5, tree.size * 0.15, leaf.a, 0, Math.PI * 2); ctx.fill(); }); ctx.fillStyle = '#4a3728'; ctx.beginPath(); ctx.arc(sx - 5, sy - 20, 5, 0, Math.PI * 2); ctx.arc(sx + 6, sy - 18, 5, 0, Math.PI * 2); ctx.arc(sx, sy - 15, 5, 0, Math.PI * 2); ctx.fill(); } else { ctx.fillStyle = '#5a3a1a'; ctx.fillRect(sx - 6, sy, 12, 40); const pineGrad = ctx.createLinearGradient(sx, sy - 50, sx, sy); pineGrad.addColorStop(0, '#2d5016'); pineGrad.addColorStop(1, '#1a3009'); ctx.fillStyle = pineGrad; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(sx - 30 + i * 5, sy - i * 20); ctx.lineTo(sx, sy - 50 - i * 15); ctx.lineTo(sx + 30 - i * 5, sy - i * 20); ctx.closePath(); ctx.fill(); } } }); }
+        function drawBossPlatform() { const sx = boss.x - camera.x, sy = boss.y - camera.y; drawShadow(sx, sy + 20, 90); const platGrad = ctx.createLinearGradient(sx - 80, sy - 60, sx + 80, sy + 60); platGrad.addColorStop(0, '#777'); platGrad.addColorStop(0.5, '#555'); platGrad.addColorStop(1, '#444'); ctx.fillStyle = platGrad; ctx.fillRect(sx - 80, sy - 60, 160, 120); ctx.strokeStyle = '#999'; ctx.lineWidth = 3; ctx.strokeRect(sx - 80, sy - 60, 160, 120); ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(sx - 70, sy - 50, 30, 25); ctx.fillRect(sx - 30, sy - 30, 40, 30); ctx.fillRect(sx + 20, sy - 40, 35, 20); const stepGrad = ctx.createLinearGradient(sx + 50, sy + 20, sx + 80, sy + 80); stepGrad.addColorStop(0, '#666'); stepGrad.addColorStop(1, '#444'); ctx.fillStyle = stepGrad; for (let i = 0; i < 4; i++) ctx.fillRect(sx + 55, sy + 20 + i * 15, 30 - i * 4, 12); }
+        function drawBoss() { const sx = boss.x - camera.x, sy = boss.y - camera.y; drawShadow(sx, sy + 15, 50); const time = Date.now() / 1000; ctx.fillStyle = '#ff69b4'; ctx.beginPath(); ctx.moveTo(sx, sy - 35); for (let i = 0; i < 7; i++) { const angle = -0.8 + i * 0.27, wave = Math.sin(time * 2 + i) * 5, len = 50 + Math.sin(time + i * 0.5) * 5; ctx.lineTo(sx + Math.cos(angle) * len + wave, sy + 20 + Math.sin(angle) * 20); } ctx.closePath(); ctx.fill(); ctx.fillStyle = '#ff8dc7'; ctx.beginPath(); ctx.moveTo(sx, sy - 30); for (let i = 0; i < 5; i++) { const angle = -0.6 + i * 0.3, wave = Math.sin(time * 2 + i) * 3; ctx.lineTo(sx + Math.cos(angle) * 35 + wave, sy + 10 + Math.sin(angle) * 15); } ctx.closePath(); ctx.fill(); const bodyGrad = ctx.createLinearGradient(sx - 15, sy - 10, sx + 15, sy + 30); bodyGrad.addColorStop(0, '#ff1493'); bodyGrad.addColorStop(1, '#c71585'); ctx.fillStyle = bodyGrad; ctx.fillRect(sx - 15, sy - 10, 30, 40); const headGrad = ctx.createRadialGradient(sx - 5, sy - 25, 0, sx, sy - 20, 20); headGrad.addColorStop(0, '#ffe4c4'); headGrad.addColorStop(1, '#fdbcb4'); ctx.fillStyle = headGrad; ctx.beginPath(); ctx.arc(sx, sy - 20, 18, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ff0066'; ctx.fillRect(sx - 16, sy - 26, 14, 9); ctx.fillRect(sx + 2, sy - 26, 14, 9); ctx.fillRect(sx - 2, sy - 24, 4, 4); ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(sx - 14, sy - 25, 5, 3); ctx.fillRect(sx + 4, sy - 25, 5, 3); ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(sx, sy - 32, 20, Math.PI, 0); ctx.fill(); ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3; for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(sx + i * 6, sy - 32); ctx.lineTo(sx + i * 8, sy - 45); ctx.stroke(); } ctx.shadowColor = '#ff69b4'; ctx.shadowBlur = 20; ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(sx - 55, sy - 75, 110, 22); ctx.shadowBlur = 0; ctx.fillStyle = '#ff69b4'; ctx.font = 'bold 13px Arial'; ctx.textAlign = 'center'; ctx.fillText('DOFLAMINGO', sx, sy - 60); }
+        function drawDummies() { dummies.forEach(dummy => { const sx = dummy.x - camera.x, sy = dummy.y - camera.y; if (sx < -100 || sx > VIEW_WIDTH + 100 || sy < -100 || sy > VIEW_HEIGHT + 100) return; if (dummy.hitFlash > 0) { ctx.fillStyle = `rgba(255,255,255,${dummy.hitFlash / 10})`; ctx.fillRect(sx - 40, sy - 60, 80, 80); dummy.hitFlash--; } drawShadow(sx, sy + 15, 20); const postGrad = ctx.createLinearGradient(sx - 6, sy - 25, sx + 6, sy + 25); postGrad.addColorStop(0, '#a0522d'); postGrad.addColorStop(0.5, '#8b4513'); postGrad.addColorStop(1, '#654321'); ctx.fillStyle = postGrad; ctx.fillRect(sx - 6, sy - 25, 12, 50); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(sx - 3, sy - 25, 3, 50); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(sx, sy - 25, 15, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ff0000'; ctx.beginPath(); ctx.arc(sx, sy - 25, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(sx, sy - 25, 3, 0, Math.PI * 2); ctx.fill(); const hpPct = dummy.hp / dummy.maxHp; ctx.fillStyle = '#333'; ctx.fillRect(sx - 20, sy - 50, 40, 6); ctx.fillStyle = hpPct > 0.5 ? '#0f0' : '#f00'; ctx.fillRect(sx - 20, sy - 50, 40 * hpPct, 6); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(sx - 20, sy - 50, 40, 6); }); }
+        function drawPlayer() { const sx = player.x - camera.x, sy = player.y - camera.y; drawShadow(sx, sy + 20, 25); const bounce = Math.sin(player.walkFrame) * 3; ctx.fillStyle = '#ff6b35'; ctx.beginPath(); ctx.arc(sx, sy + bounce, player.size, 0, Math.PI * 2); ctx.fill(); const hatGrad = ctx.createLinearGradient(sx - 35, sy - 35 + bounce, sx + 35, sy - 15 + bounce); hatGrad.addColorStop(0, '#ffd700'); hatGrad.addColorStop(0.5, '#ffec8b'); hatGrad.addColorStop(1, '#daa520'); ctx.fillStyle = hatGrad; ctx.beginPath(); ctx.ellipse(sx, sy - 15 + bounce, 35, 10, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ff8c00'; ctx.beginPath(); ctx.ellipse(sx, sy - 22 + bounce, 22, 8, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ff0000'; ctx.fillRect(sx - 24, sy - 24 + bounce, 48, 5); const faceGrad = ctx.createRadialGradient(sx - 5, sy + 5 + bounce, 0, sx, sy + 5 + bounce, 18); faceGrad.addColorStop(0, '#ffe4c4'); faceGrad.addColorStop(1, '#fdbcb4'); ctx.fillStyle = faceGrad; ctx.beginPath(); ctx.arc(sx, sy + 5 + bounce, 18, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(sx - 6, sy + 3 + bounce, 3, 0, Math.PI * 2); ctx.arc(sx + 6, sy + 3 + bounce, 3, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx, sy + 8 + bounce, 8, 0.2, Math.PI - 0.2); ctx.stroke(); if (player.isAttacking) { ctx.strokeStyle = `rgba(255, 215, 0, ${player.attackFrame / 25})`; ctx.lineWidth = 4; ctx.beginPath(); const range = player.attackFrame > 15 ? 90 : 60; ctx.arc(sx, sy + bounce, range, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = `rgba(255, 100, 0, ${player.attackFrame / 50})`; ctx.fill(); } }
+        function drawParticles() { particles.forEach(p => { const sx = p.x - camera.x, sy = p.y - camera.y; ctx.fillStyle = p.color; ctx.globalAlpha = p.life / 30; ctx.beginPath(); ctx.arc(sx, sy, p.size, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }); }
+        function gameLoop() { updatePlayer(); updateCamera(); updateParticles(); ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT); drawGround(); drawRocks(); drawTrees(); drawBossPlatform(); drawDummies(); drawBoss(); drawPlayer(); drawParticles(); document.getElementById('hpFill').style.width = (player.hp / player.maxHp * 100) + '%'; document.getElementById('staminaFill').style.width = (player.stamina / 100 * 100) + '%'; document.getElementById('hpText').textContent = `${Math.ceil(player.hp)}/${player.maxHp}`; document.getElementById('staminaText').textContent = `${Math.ceil(player.stamina)}%`; requestAnimationFrame(gameLoop); }
+        function goBack() { window.location.href = 'one-piece-start.html'; }
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; VIEW_WIDTH = window.innerWidth; VIEW_HEIGHT = window.innerHeight; });
         gameLoop();
     </script>
 </body>
