@@ -21,21 +21,33 @@
             display: block;
             width: 100vw;
             height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
         }
 
-        .ui-layer {
+        .screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 10;
         }
 
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* START SCREEN */
         .title-container {
             text-align: center;
             margin-bottom: 60px;
@@ -72,7 +84,6 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            pointer-events: auto;
         }
 
         .menu-btn {
@@ -122,23 +133,247 @@
             color: rgba(135, 206, 235, 0.6);
             font-size: 14px;
         }
+
+        /* MODE SELECT SCREEN */
+        .mode-select-container {
+            text-align: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .mode-title {
+            font-size: 50px;
+            font-weight: 900;
+            color: #ffd700;
+            text-shadow: 
+                0 0 10px #ff6b00,
+                0 0 30px #ff4500;
+            margin-bottom: 50px;
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { text-shadow: 0 0 10px #ff6b00, 0 0 30px #ff4500; }
+            to { text-shadow: 0 0 20px #ff6b00, 0 0 50px #ff4500, 0 0 80px #ff0000; }
+        }
+
+        .mode-cards {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .mode-card {
+            width: 300px;
+            height: 400px;
+            background: linear-gradient(135deg, rgba(20, 30, 60, 0.9), rgba(40, 20, 60, 0.9));
+            border: 3px solid #4169e1;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 30px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 40%,
+                rgba(255, 215, 0, 0.1) 50%,
+                transparent 60%
+            );
+            animation: cardShine 3s infinite;
+        }
+
+        @keyframes cardShine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .mode-card:hover {
+            transform: translateY(-20px) scale(1.05);
+            border-color: #ffd700;
+            box-shadow: 
+                0 20px 60px rgba(255, 107, 0, 0.4),
+                0 0 40px rgba(255, 215, 0, 0.3);
+        }
+
+        .mode-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px currentColor);
+        }
+
+        .mode-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .mode-desc {
+            font-size: 16px;
+            color: #87ceeb;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .back-btn {
+            margin-top: 40px;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border: 2px solid #87ceeb;
+            background: rgba(65, 105, 225, 0.3);
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(65, 105, 225, 0.6);
+            transform: scale(1.05);
+        }
+
+        /* Character Select Screen */
+        .char-select-container {
+            text-align: center;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .char-select-title {
+            font-size: 45px;
+            font-weight: 900;
+            color: #ffd700;
+            text-shadow: 0 0 20px #ff6b00;
+            margin-bottom: 30px;
+        }
+
+        .char-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .char-card {
+            aspect-ratio: 3/4;
+            background: linear-gradient(135deg, rgba(30, 30, 60, 0.95), rgba(60, 30, 60, 0.95));
+            border: 3px solid #4169e1;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .char-card:hover {
+            transform: scale(1.08);
+            border-color: #ffd700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+
+        .char-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .char-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b00, #ff0000);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+
+        .char-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .char-fruit {
+            font-size: 14px;
+            color: #87ceeb;
+        }
+
+        .selected-info {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px 40px;
+            border-radius: 15px;
+            border: 2px solid #ffd700;
+            margin-bottom: 20px;
+        }
+
+        .selected-char-name {
+            font-size: 32px;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .selected-char-desc {
+            font-size: 16px;
+            color: #87ceeb;
+        }
+
+        .start-fight-btn {
+            padding: 20px 60px;
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ff6b00, #ff0000);
+            border: 3px solid #ffd700;
+            color: white;
+            cursor: pointer;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .start-fight-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(255, 107, 0, 0.8);
+        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
     
-    <div class="ui-layer">
+    <!-- START SCREEN -->
+    <div id="startScreen" class="screen active">
         <svg class="jolly-roger" viewBox="0 0 100 100">
-            <!-- Straw Hat Jolly Roger -->
             <circle cx="50" cy="50" r="45" fill="none" stroke="#fff" stroke-width="3"/>
-            <!-- Crossbones -->
             <line x1="25" y1="25" x2="75" y2="75" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
             <line x1="75" y1="25" x2="25" y2="75" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
-            <!-- Skull -->
             <circle cx="50" cy="45" r="18" fill="#fff"/>
             <circle cx="43" cy="42" r="5" fill="#0a0a1a"/>
             <circle cx="57" cy="42" r="5" fill="#0a0a1a"/>
-            <!-- Straw Hat -->
             <ellipse cx="50" cy="32" rx="28" ry="8" fill="#ffd700"/>
             <path d="M 30 32 Q 50 20 70 32" fill="#ff6b00"/>
             <ellipse cx="50" cy="28" rx="20" ry="6" fill="#ffd700"/>
@@ -151,7 +386,7 @@
         </div>
 
         <div class="menu-buttons">
-            <button class="menu-btn" onclick="startGame()">⚔️ Start Adventure</button>
+            <button class="menu-btn" onclick="showModeSelect()">⚔️ Start Adventure</button>
             <button class="menu-btn" onclick="showInstructions()">📜 How to Play</button>
             <button class="menu-btn" onclick="showSettings()">⚙️ Settings</button>
         </div>
@@ -159,9 +394,107 @@
         <div class="version">v1.0 - Fan Made</div>
     </div>
 
+    <!-- MODE SELECT SCREEN -->
+    <div id="modeSelectScreen" class="screen">
+        <div class="mode-select-container">
+            <h2 class="mode-title">CHOOSE YOUR PATH</h2>
+            
+            <div class="mode-cards">
+                <div class="mode-card" onclick="selectMode('story')">
+                    <div class="mode-icon">📖</div>
+                    <div class="mode-name">Story Mode</div>
+                    <div class="mode-desc">Embark on an epic journey across the Grand Line. Battle powerful foes, discover ancient treasures, and chase the dream of becoming the Pirate King!</div>
+                </div>
+
+                <div class="mode-card" onclick="selectMode('training')">
+                    <div class="mode-icon">🎯</div>
+                    <div class="mode-name">Training Mode</div>
+                    <div class="mode-desc">Master your skills and perfect your combos. Practice against training dummies with no pressure. Perfect for learning new characters!</div>
+                </div>
+
+                <div class="mode-card" onclick="selectMode('1v1')">
+                    <div class="mode-icon">⚔️</div>
+                    <div class="mode-name">1v1 Mode</div>
+                    <div class="mode-desc">Face off against a friend or AI opponent in intense one-on-one battles. Test your skills and prove who's the strongest pirate!</div>
+                </div>
+            </div>
+
+            <button class="back-btn" onclick="showStartScreen()">← Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- CHARACTER SELECT SCREEN -->
+    <div id="charSelectScreen" class="screen">
+        <div class="char-select-container">
+            <h2 class="char-select-title">SELECT YOUR PIRATE</h2>
+            
+            <div class="char-grid">
+                <div class="char-card" onclick="selectCharacter('luffy')">
+                    <div class="char-avatar">🎩</div>
+                    <div class="char-name">Luffy</div>
+                    <div class="char-fruit">Gum-Gum Fruit</div>
+                </div>
+
+                <div class="char-card" onclick="selectCharacter('zoro')">
+                    <div class="char-avatar">⚔️</div>
+                    <div class="char-name">Zoro</div>
+                    <div class="char-fruit">Swordsman</div>
+                </div>
+
+                <div class="char-card" onclick="selectCharacter('sanji')">
+                    <div class="char-avatar">🦵</div>
+                    <div class="char-name">Sanji</div>
+                    <div class="char-fruit">Black Leg Style</div>
+                </div>
+
+                <div class="char-card" onclick="selectCharacter('nami')">
+                    <div class="char-avatar">⚡</div>
+                    <div class="char-name">Nami</div>
+                    <div class="char-fruit">Weather Wizard</div>
+                </div>
+
+                <div class="char-card locked" onclick="selectCharacter('ace')">
+                    <div class="char-avatar">🔥</div>
+                    <div class="char-name">Ace</div>
+                    <div class="char-fruit">Flame-Flame Fruit 🔒</div>
+                </div>
+
+                <div class="char-card locked" onclick="selectCharacter('law')">
+                    <div class="char-avatar">💀</div>
+                    <div class="char-name">Law</div>
+                    <div class="char-fruit">Op-Op Fruit 🔒</div>
+                </div>
+
+                <div class="char-card locked" onclick="selectCharacter('doffy')">
+                    <div class="char-avatar">🕸️</div>
+                    <div class="char-name">Doflamingo</div>
+                    <div class="char-fruit">String-String Fruit 🔒</div>
+                </div>
+
+                <div class="char-card locked" onclick="selectCharacter('kaido')">
+                    <div class="char-avatar">🐉</div>
+                    <div class="char-name">Kaido</div>
+                    <div class="char-fruit">Fish-Fish Fruit 🔒</div>
+                </div>
+            </div>
+
+            <div class="selected-info" id="selectedInfo">
+                <div class="selected-char-name" id="selectedName">Select a Character</div>
+                <div class="selected-char-desc" id="selectedDesc">Click on a pirate to view their abilities</div>
+            </div>
+
+            <button class="start-fight-btn" onclick="startGame()">SET SAIL! 🚢</button>
+            <br><br>
+            <button class="back-btn" onclick="showModeSelect()">← Back to Modes</button>
+        </div>
+    </div>
+
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+
+        let currentMode = '';
+        let selectedCharacter = '';
 
         // Resize canvas
         function resize() {
@@ -171,13 +504,72 @@
         resize();
         window.addEventListener('resize', resize);
 
+        // Screen management
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showStartScreen() {
+            showScreen('startScreen');
+        }
+
+        function showModeSelect() {
+            showScreen('modeSelectScreen');
+        }
+
+        function showCharSelect() {
+            showScreen('charSelectScreen');
+        }
+
+        function selectMode(mode) {
+            currentMode = mode;
+            showCharSelect();
+        }
+
+        const charData = {
+            luffy: { name: 'Monkey D. Luffy', desc: 'Captain of the Straw Hat Pirates. Uses stretching abilities from the Gum-Gum Fruit to deliver powerful punches and kicks. Special: Gear Second & Gear Third' },
+            zoro: { name: 'Roronoa Zoro', desc: 'Master Swordsman wielding three blades. Uses Santoryu (Three Sword Style) with devastating cutting power. Special: Nine Sword Style Asura' },
+            sanji: { name: 'Vinsmoke Sanji', desc: 'Straw Hat Chef with powerful kicks. Uses Diable Jambe to ignite his legs. Special: Hell Memories' },
+            nami: { name: 'Nami', desc: 'Navigator and Weather Wizard. Uses Clima-Tact to control lightning and storms. Special: Thunderbolt Tempo' },
+            ace: { name: 'Portgas D. Ace', desc: 'Fire Fist Ace with Flame-Flame Fruit powers. Creates and controls fire at will. Special: Flame Emperor' },
+            law: { name: 'Trafalgar Law', desc: 'Surgeon of Death with Op-Op Fruit. Can manipulate anything within his ROOM. Special: Gamma Knife' },
+            doffy: { name: 'Donquixote Doflamingo', desc: 'Heavenly Yaksha with String-String Fruit. Controls razor-sharp strings. Special: God Thread' },
+            kaido: { name: 'Kaido', desc: 'The Strongest Creature with Fish-Fish Fruit Model: Azure Dragon. Immense power and durability. Special: Blast Breath' }
+        };
+
+        function selectCharacter(char) {
+            if (document.querySelector(`[onclick="selectCharacter('${char}')"]`).classList.contains('locked')) {
+                alert('🔒 This character is locked! Complete Story Mode chapters to unlock them.');
+                return;
+            }
+            selectedCharacter = char;
+            document.getElementById('selectedName').textContent = charData[char].name;
+            document.getElementById('selectedDesc').textContent = charData[char].desc;
+        }
+
+        function startGame() {
+            if (!selectedCharacter) {
+                alert('⚠️ Please select a character first!');
+                return;
+            }
+            alert(`🚢 Setting sail!\n\nMode: ${currentMode.toUpperCase()}\nCharacter: ${charData[selectedCharacter].name}\n\nGame loading... (Coming soon!)`);
+        }
+
+        function showInstructions() {
+            alert('📜 HOW TO PLAY:\n\n🏴‍☠️ Navigate the Grand Line\n⚔️ Battle enemy pirates\n💎 Find treasure\n🍎 Collect Devil Fruits\n\nControls (Coming Soon):\nArrow Keys / WASD - Move\nZ / J - Light Attack\nX / K - Heavy Attack\nC / L - Special Move\nSpace - Jump/Block');
+        }
+
+        function showSettings() {
+            alert('⚙️ SETTINGS:\n\n🔊 Sound: ON/OFF\n🎵 Music Volume\n🌊 Wave Effects\n\nSettings menu coming soon!');
+        }
+
         // Animation variables
         let time = 0;
         const waves = [];
         const particles = [];
         const stars = [];
 
-        // Initialize waves
         for (let i = 0; i < 5; i++) {
             waves.push({
                 y: canvas.height * 0.6 + i * 40,
@@ -188,7 +580,6 @@
             });
         }
 
-        // Initialize particles (devil fruit energy)
         for (let i = 0; i < 50; i++) {
             particles.push({
                 x: Math.random() * canvas.width,
@@ -201,7 +592,6 @@
             });
         }
 
-        // Initialize stars
         for (let i = 0; i < 200; i++) {
             stars.push({
                 x: Math.random() * canvas.width,
@@ -211,7 +601,6 @@
             });
         }
 
-        // Draw gradient sky
         function drawSky() {
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
             gradient.addColorStop(0, '#0a0a2e');
@@ -222,7 +611,6 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
-        // Draw stars
         function drawStars() {
             stars.forEach(star => {
                 const twinkle = Math.sin(time * 2 + star.twinkle) * 0.5 + 0.5;
@@ -233,7 +621,6 @@
             });
         }
 
-        // Draw animated waves
         function drawWaves() {
             waves.forEach((wave, index) => {
                 ctx.beginPath();
@@ -256,7 +643,6 @@
             });
         }
 
-        // Draw floating particles
         function drawParticles() {
             particles.forEach(p => {
                 p.y -= p.speedY;
@@ -276,12 +662,10 @@
             });
         }
 
-        // Draw sun/moon glow
         function drawSunGlow() {
             const sunX = canvas.width * 0.8;
             const sunY = canvas.height * 0.2;
             
-            // Outer glow
             const outerGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 200);
             outerGlow.addColorStop(0, 'rgba(255, 200, 100, 0.3)');
             outerGlow.addColorStop(0.5, 'rgba(255, 150, 50, 0.1)');
@@ -291,7 +675,6 @@
             ctx.arc(sunX, sunY, 200, 0, Math.PI * 2);
             ctx.fill();
             
-            // Inner sun
             const sunGradient = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 60);
             sunGradient.addColorStop(0, '#fff5e6');
             sunGradient.addColorStop(0.5, '#ffd700');
@@ -302,13 +685,11 @@
             ctx.fill();
         }
 
-        // Draw distant islands
         function drawIslands() {
             const islandOffset = Math.sin(time * 0.5) * 10;
             
             ctx.fillStyle = 'rgba(20, 40, 60, 0.8)';
             
-            // Island 1
             ctx.beginPath();
             ctx.moveTo(canvas.width * 0.1 + islandOffset, canvas.height * 0.55);
             ctx.lineTo(canvas.width * 0.15 + islandOffset, canvas.height * 0.45);
@@ -317,7 +698,6 @@
             ctx.closePath();
             ctx.fill();
             
-            // Island 2
             ctx.beginPath();
             ctx.moveTo(canvas.width * 0.7 - islandOffset, canvas.height * 0.58);
             ctx.lineTo(canvas.width * 0.75 - islandOffset, canvas.height * 0.5);
@@ -327,7 +707,6 @@
             ctx.fill();
         }
 
-        // Animation loop
         function animate() {
             time += 0.016;
             
@@ -341,20 +720,6 @@
             requestAnimationFrame(animate);
         }
 
-        // Button functions
-        function startGame() {
-            alert('🚢 Setting sail! Game loading... (Coming soon!)');
-        }
-
-        function showInstructions() {
-            alert('📜 HOW TO PLAY:\n\n🏴‍☠️ Navigate the Grand Line\n⚔️ Battle enemy pirates\n💎 Find treasure\n🍎 Collect Devil Fruits\n\nMore details coming soon!');
-        }
-
-        function showSettings() {
-            alert('⚙️ SETTINGS:\n\n🔊 Sound: ON/OFF\n🎵 Music Volume\n🌊 Wave Effects\n\nSettings menu coming soon!');
-        }
-
-        // Start animation
         animate();
     </script>
 </body>
