@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pigeon & Rex 3D</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        #gameContainer { position: relative; width: 100vw; height: 100vh; }
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(26,26,46,0.95); z-index: 100; }
+        .hidden { display: none !important; }
+        .title { font-size: clamp(2rem, 6vw, 4rem); font-weight: 900; margin-bottom: 10px; background: linear-gradient(90deg, #FFD700, #FF6B35, #FFD700); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 3s linear infinite; }
+        @keyframes shine { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+        .subtitle { font-size: 1.2rem; color: #aaa; margin-bottom: 30px; }
+        .story { max-width: 600px; text-align: center; color: #ccc; margin-bottom: 30px; line-height: 1.6; }
+        .start-btn { padding: 15px 50px; font-size: 1.3rem; font-weight: bold; background: linear-gradient(135deg, #FFD700, #FF6B35); border: none; border-radius: 50px; color: #fff; cursor: pointer; animation: pulse 2s ease-in-out infinite; transition: transform 0.2s; }
+        .start-btn:hover { transform: scale(1.05); }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.5); } 50% { box-shadow: 0 0 40px rgba(255,107,53,0.8); } }
+        .hud { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; pointer-events: none; z-index: 50; }
+        .hud-item { background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 20px; border: 2px solid #FFD700; }
+        .hud-label { color: #FFD700; font-size: 0.7rem; }
+        .hud-value { font-weight: bold; font-size: 1.1rem; }
+        .rex-health { width: 200px; height: 25px; background: rgba(0,0,0,0.7); border: 2px solid #ff4444; border-radius: 12px; overflow: hidden; }
+        .rex-fill { height: 100%; background: linear-gradient(90deg, #ff4444, #ff8888); transition: width 0.3s; }
+        .controls { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 20px; font-size: 0.8rem; color: #ccc; z-index: 50; }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="titleScreen" class="screen">
+            <div class="title">🐦 PIGEON & REX 3D 🦖</div>
+            <div class="subtitle">Now in Three Dimensions!</div>
+            <div class="story">
+                Guide your pigeon through a 3D city to help Rex escape!<br><br>
+                Fly around buildings, find food, and protect Rex from danger.<br><br>
+                <strong>If Rex dies, it's game over.</strong>
+            </div>
+            <button class="start-btn" onclick="startGame()">START ADVENTURE</button>
+        </div>
+        <div id="hud" class="hud hidden">
+            <div class="rex-health"><div id="rexFill" class="rex-fill" style="width: 100%"></div></div>
+            <div style="display: flex; gap: 15px;">
+                <div class="hud-item"><div class="hud-label">FOOD</div><div id="foodValue" class="hud-value">0/5</div></div>
+                <div class="hud-item"><div class="hud-label">LEVEL</div><div id="levelValue" class="hud-value">1</div></div>
+            </div>
+        </div>
+        <div id="controls" class="controls hidden">WASD = Move | SPACE = Poop | E = Call Rex | R = Roar | Mouse = Look</div>
+        <div id="gameOverScreen" class="screen hidden">
+            <h1 style="font-size: 3rem; color: #ff4444; margin-bottom: 20px;">💀 REX DIDN'T MAKE IT</h1>
+            <div style="font-size: 1.5rem; margin-bottom: 30px;">Food: <span id="finalFood">0</span> | Level: <span id="finalLevel">1</span></div>
+            <button class="start-btn" onclick="restartGame()">TRY AGAIN</button>
+        </div>
+    </div>
+    <script>
+        let scene, camera, renderer, gameState = 'title', level = 1;
+        let pigeon, rex, foods = [], enemies = [], buildings = [], poops = [];
+        const keys = {}, WORLD_SIZE = 400;
+        let rexHealth = 100, maxRexHealth = 100, foodCollected = 0, totalFood = 5;
+        
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 50, 300);
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.getElementById('gameContainer').appendChild(renderer.domElement);
+            
+            // Ground
+            const groundGeo = new THREE.PlaneGeometry(WORLD_SIZE * 2, WORLD_SIZE * 2);
+            const groundMat = new THREE.MeshLambertMaterial({ color: 0x90EE90 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(100, 200, 100);
+            dirLight.castShadow = true;
+            dirLight.shadow.camera.left = -200;
+            dirLight.shadow.camera.right = 200;
+            dirLight.shadow.camera.top = 200;
+            dirLight.shadow.camera.bottom = -200;
+            scene.add(dirLight);
+            
+            createBuildings();
+            createPigeon();
+            createRex();
+            createFoods();
+            createEnemies();
+            
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+            document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+            document.addEventListener('mousemove', onMouseMove);
+        }
+        
+        function createBuildings() {
+            const buildingColors = [0x808080, 0x696969, 0xA9A9A9, 0x778899];
+            for (let i = 0; i < 30; i++) {
+                const w = 20 + Math.random() * 30;
+                const h = 30 + Math.random() * 80;
+                const d = 20 + Math.random() * 30;
+                const geo = new THREE.BoxGeometry(w, h, d);
+                const mat = new THREE.MeshLambertMaterial({ color: buildingColors[Math.floor(Math.random() * 4)] });
+                const building = new THREE.Mesh(geo, mat);
+                building.position.set((Math.random() - 0.5) * WORLD_SIZE, h / 2, (Math.random() - 0.5) * WORLD_SIZE);
+                building.castShadow = true;
+                building.receiveShadow = true;
+                scene.add(building);
+                buildings.push(building);
+            }
+        }
+        
+        function createPigeon() {
+            pigeon = new THREE.Group();
+            // Body
+            const bodyGeo = new THREE.SphereGeometry(3, 16, 16);
+            const bodyMat = new THREE.MeshLambertMaterial({ color: 0x808080 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            pigeon.add(body);
+            // Head
+            const headGeo = new THREE.SphereGeometry(2, 16, 16);
+            const headMat = new THREE.MeshLambertMaterial({ color: 0x696969 });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.set(0, 2, 3);
+            pigeon.add(head);
+            // Beak
+            const beakGeo = new THREE.ConeGeometry(0.5, 2, 8);
+            const beakMat = new THREE.MeshLambertMaterial({ color: 0xFFA500 });
+            const beak = new THREE.Mesh(beakGeo, beakMat);
+            beak.rotation.x = Math.PI / 2;
+            beak.position.set(0, 2, 4.5);
+            pigeon.add(beak);
+            // Wings
+            const wingGeo = new THREE.BoxGeometry(8, 0.5, 4);
+            const wingMat = new THREE.MeshLambertMaterial({ color: 0x696969 });
+            const leftWing = new THREE.Mesh(wingGeo, wingMat);
+            leftWing.position.set(-4, 1, 0);
+            pigeon.add(leftWing);
+            const rightWing = new THREE.Mesh(wingGeo, wingMat);
+            rightWing.position.set(4, 1, 0);
+            pigeon.add(rightWing);
+            pigeon.position.set(0, 20, 0);
+            pigeon.castShadow = true;
+            scene.add(pigeon);
+        }
+        
+        function createRex() {
+            rex = new THREE.Group();
+            // Body
+            const bodyGeo = new THREE.BoxGeometry(12, 15, 20);
+            const bodyMat = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 12;
+            rex.add(body);
+            // Head
+            const headGeo = new THREE.BoxGeometry(8, 10, 12);
+            const head = new THREE.Mesh(headGeo, bodyMat);
+            head.position.set(0, 22, 12);
+            rex.add(head);
+            // Tiny arms
+            const armGeo = new THREE.BoxGeometry(2, 2, 4);
+            const leftArm = new THREE.Mesh(armGeo, bodyMat);
+            leftArm.position.set(-6, 15, 8);
+            rex.add(leftArm);
+            const rightArm = new THREE.Mesh(armGeo, bodyMat);
+            rightArm.position.set(6, 15, 8);
+            rex.add(rightArm);
+            // Legs
+            const legGeo = new THREE.BoxGeometry(4, 10, 6);
+            const leftLeg = new THREE.Mesh(legGeo, bodyMat);
+            leftLeg.position.set(-4, 5, 0);
+            rex.add(leftLeg);
+            const rightLeg = new THREE.Mesh(legGeo, bodyMat);
+            rightLeg.position.set(4, 5, 0);
+            rex.add(rightLeg);
+            // Tail
+            const tailGeo = new THREE.BoxGeometry(6, 4, 15);
+            const tail = new THREE.Mesh(tailGeo, bodyMat);
+            tail.position.set(0, 10, -15);
+            rex.add(tail);
+            rex.position.set(20, 0, 20);
+            rex.castShadow = true;
+            scene.add(rex);
+        }
+        
+        function createFoods() {
+            const foodColors = [0xFF0000, 0xFFA500, 0xFFFF00, 0x8B4513];
+            const foodEmojis = ['🍕', '🍔', '🌭', '🍟'];
+            for (let i = 0; i < totalFood; i++) {
+                const geo = new THREE.SphereGeometry(2, 16, 16);
+                const mat = new THREE.MeshLambertMaterial({ color: foodColors[i % 4] });
+                const food = new THREE.Mesh(geo, mat);
+                food.position.set((Math.random() - 0.5) * WORLD_SIZE * 0.8, 3, (Math.random() - 0.5) * WORLD_SIZE * 0.8);
+                food.castShadow = true;
+                scene.add(food);
+                foods.push({ mesh: food, collected: false, value: 15 });
+            }
+        }
+        
+        function createEnemies() {
+            const enemyColors = [0xFF0000, 0x0000FF, 0x800080];
+            for (let i = 0; i < 5 + level * 2; i++) {
+                const geo = new THREE.BoxGeometry(4, 8, 4);
+                const mat = new THREE.MeshLambertMaterial({ color: enemyColors[Math.floor(Math.random() * 3)] });
+                const enemy = new THREE.Mesh(geo, mat);
+                enemy.position.set((Math.random() - 0.5) * WORLD_SIZE * 0.8, 4, (Math.random() - 0.5) * WORLD_SIZE * 0.8);
+                enemy.castShadow = true;
+                scene.add(enemy);
+                enemies.push({ mesh: enemy, scared: 0, vx: 0, vz: 0 });
+            }
+        }
+        
+        let mouseX = 0, mouseY = 0;
+        function onMouseMove(e) { mouseX = (e.clientX / window.innerWidth) * 2 - 1; mouseY = -(e.clientY / window.innerHeight) * 2 + 1; }
+        function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
+        
+        function updatePigeon() {
+            const speed = 0.8;
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(pigeon.quaternion);
+            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(pigeon.quaternion);
+            if (keys.w) pigeon.position.addScaledVector(forward, speed);
+            if (keys.s) pigeon.position.addScaledVector(forward, -speed);
+            if (keys.a) pigeon.position.addScaledVector(right, -speed);
+            if (keys.d) pigeon.position.addScaledVector(right, speed);
+            pigeon.position.y = Math.max(5, Math.min(100, pigeon.position.y + (keys[' '] ? 0.5 : -0.2)));
+            pigeon.rotation.y = -mouseX * Math.PI;
+            pigeon.rotation.z = mouseX * 0.3;
+            pigeon.children[2].rotation.z = Math.sin(Date.now() * 0.01) * 0.5;
+            pigeon.children[3].rotation.z = -Math.sin(Date.now() * 0.01) * 0.5;
+            if (keys[' '] && !keys.lastSpace) { dropPoop(); keys.lastSpace = true; }
+            if (!keys[' ']) keys.lastSpace = false;
+            if (keys.e) callRex();
+            if (keys.r) rexRoar();
+            for (let i = 0; i < foods.length; i++) {
+                if (!foods[i].collected && pigeon.position.distanceTo(foods[i].mesh.position) < 5) {
+                    foods[i].collected = true; foods[i].mesh.visible = false; foodCollected++;
+                }
+            }
+            camera.position.copy(pigeon.position).add(new THREE.Vector3(0, 15, 30));
+            camera.lookAt(pigeon.position);
+        }
+        
+        function dropPoop() {
+            const geo = new THREE.SphereGeometry(1, 8, 8);
+            const mat = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            const poop = new THREE.Mesh(geo, mat);
+            poop.position.copy(pigeon.position);
+            poop.position.y -= 3;
+            scene.add(poop);
+            poops.push({ mesh: poop, vy: 0, life: 120 });
+        }
+        
+        function callRex() { rex.userData.target = pigeon.position.clone(); rex.userData.target.y = 0; }
+        
+        function rexRoar() {
+            if (rex.userData.lastRoar && Date.now() - rex.userData.lastRoar < 5000) return;
+            rex.userData.lastRoar = Date.now();
+            for (const enemy of enemies) {
+                if (enemy.mesh.position.distanceTo(rex.position) < 50) {
+                    enemy.scared = 180;
+                    const dir = enemy.mesh.position.clone().sub(rex.position).normalize();
+                    enemy.vx = dir.x * 2; enemy.vz = dir.z * 2;
+                }
+            }
+        }
+        
+        function updateRex() {
+            if (rex.userData.target) {
+                const dir = rex.userData.target.clone().sub(rex.position);
+                const dist = dir.length();
+                if (dist > 5) { dir.normalize(); rex.position.addScaledVector(dir, 0.3); }
+            }
+            for (const enemy of enemies) {
+                if (enemy.mesh.position.distanceTo(rex.position) < 15 && enemy.scared <= 0) {
+                    rexHealth -= 0.3;
+                    if (rexHealth <= 0) endGame();
+                }
+            }
+        }
+        
+        function updateEnemies() {
+            for (const enemy of enemies) {
+                if (enemy.scared > 0) {
+                    enemy.scared--;
+                    enemy.mesh.position.x += enemy.vx;
+                    enemy.mesh.position.z += enemy.vz;
+                    enemy.vx *= 0.95; enemy.vz *= 0.95;
+                    continue;
+                }
+                const dir = rex.position.clone().sub(enemy.mesh.position);
+                if (dir.length() < 80) { dir.normalize(); enemy.mesh.position.addScaledVector(dir, 0.2); }
+                for (const poop of poops) {
+                    if (poop.mesh.position.distanceTo(enemy.mesh.position) < 5) {
+                        enemy.scared = 120;
+                        const away = enemy.mesh.position.clone().sub(poop.mesh.position).normalize();
+                        enemy.vx = away.x * 3; enemy.vz = away.z * 3;
+                    }
+                }
+            }
+        }
+        
+        function updatePoops() {
+            for (let i = poops.length - 1; i >= 0; i--) {
+                poops[i].vy -= 0.1;
+                poops[i].mesh.position.y += poops[i].vy;
+                if (poops[i].mesh.position.y < 1) poops.splice(i, 1);
+            }
+        }
+        
+        function updateHUD() { document.getElementById('rexFill').style.width = (rexHealth / maxRexHealth * 100) + '%'; document.getElementById('foodValue').textContent = foodCollected + '/' + totalFood; document.getElementById('levelValue').textContent = level; }
+        
+        function startGame() { init(); document.getElementById('titleScreen').classList.add('hidden'); document.getElementById('hud').classList.remove('hidden'); document.getElementById('controls').classList.remove('hidden'); gameState = 'playing'; animate(); }
+        function endGame() { gameState = 'gameover'; document.getElementById('gameOverScreen').classList.remove('hidden'); document.getElementById('hud').classList.add('hidden'); document.getElementById('controls').classList.add('hidden'); document.getElementById('finalFood').textContent = foodCollected; document.getElementById('finalLevel').textContent = level; }
+        function restartGame() { location.reload(); }
+        
+        function animate() {
+            if (gameState !== 'playing') return;
+            requestAnimationFrame(animate);
+            updatePigeon(); updateRex(); updateEnemies(); updatePoops(); updateHUD();
+            if (foodCollected >= totalFood) { level++; foodCollected = 0; totalFood += 2; rexHealth = maxRexHealth; foods.forEach(f => scene.remove(f.mesh)); foods = []; createFoods(); }
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
