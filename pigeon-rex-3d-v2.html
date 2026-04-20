@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pigeon & Rex 3D - City Escape</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Roboto:wght@400;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; color: #fff; font-family: 'Roboto', sans-serif; overflow: hidden; }
+        #gameContainer { position: relative; width: 100vw; height: 100vh; }
+        canvas { display: block; }
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; transition: opacity 0.5s; }
+        .hidden { opacity: 0; pointer-events: none; }
+        #titleScreen { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+        .logo-container { text-align: center; margin-bottom: 30px; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .main-title { font-family: 'Bangers', cursive; font-size: clamp(3rem, 10vw, 7rem); letter-spacing: 5px; background: linear-gradient(90deg, #FFD700, #FF6B35, #FF8C42, #FFD700); background-size: 300% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 4s linear infinite; filter: drop-shadow(0 0 20px rgba(255,215,0,0.5)); }
+        @keyframes shine { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+        .subtitle { font-size: 1.5rem; color: #87CEEB; margin-top: -10px; letter-spacing: 3px; }
+        .characters { display: flex; gap: 50px; margin: 30px 0; font-size: 5rem; animation: bounce 2s ease-in-out infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        .story-box { max-width: 700px; background: rgba(0,0,0,0.6); border: 2px solid #FFD700; border-radius: 20px; padding: 25px; margin-bottom: 30px; backdrop-filter: blur(10px); }
+        .story-title { font-family: 'Bangers', cursive; font-size: 1.8rem; color: #FFD700; margin-bottom: 15px; text-align: center; }
+        .story-text { line-height: 1.8; color: #ddd; font-size: 1rem; }
+        .mission-list { margin-top: 15px; padding-left: 20px; }
+        .mission-list li { margin: 8px 0; color: #90EE90; }
+        .controls-box { display: flex; gap: 30px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; }
+        .control-item { background: rgba(255,255,255,0.1); padding: 15px 25px; border-radius: 10px; border: 1px solid rgba(255,215,0,0.3); text-align: center; }
+        .key { font-family: 'Bangers', cursive; font-size: 1.5rem; color: #FFD700; display: block; }
+        .action { font-size: 0.9rem; color: #aaa; }
+        .start-btn { font-family: 'Bangers', cursive; font-size: 2rem; padding: 20px 60px; background: linear-gradient(135deg, #FFD700, #FF6B35); border: none; border-radius: 50px; color: #fff; cursor: pointer; animation: pulse 2s ease-in-out infinite; transition: all 0.3s; text-transform: uppercase; letter-spacing: 3px; }
+        .start-btn:hover { transform: scale(1.1); box-shadow: 0 0 50px rgba(255,215,0,0.8); }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.5); } 50% { box-shadow: 0 0 40px rgba(255,107,53,0.8); } }
+        .hud { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 50; }
+        .hud-panel { background: rgba(0,0,0,0.8); border: 2px solid; border-radius: 15px; padding: 15px; backdrop-filter: blur(5px); }
+        .rex-panel { border-color: #ff4444; min-width: 220px; }
+        .rex-name { font-family: 'Bangers', cursive; font-size: 1.3rem; color: #ff4444; margin-bottom: 8px; }
+        .health-bar { width: 100%; height: 20px; background: #333; border-radius: 10px; overflow: hidden; }
+        .health-fill { height: 100%; background: linear-gradient(90deg, #ff4444, #ff8888); transition: width 0.3s; border-radius: 10px; }
+        .health-text { text-align: center; font-size: 0.9rem; margin-top: 5px; color: #ff8888; }
+        .stats-panel { border-color: #FFD700; display: flex; gap: 25px; }
+        .stat { text-align: center; }
+        .stat-value { font-family: 'Bangers', cursive; font-size: 2rem; color: #FFD700; }
+        .stat-label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; }
+        .task-panel { position: absolute; top: 100px; left: 20px; background: rgba(0,0,0,0.8); border: 2px solid #90EE90; border-radius: 15px; padding: 15px; max-width: 280px; backdrop-filter: blur(5px); z-index: 50; }
+        .task-title { font-family: 'Bangers', cursive; font-size: 1.2rem; color: #90EE90; margin-bottom: 10px; }
+        .task-item { padding: 8px; margin: 5px 0; background: rgba(144,238,144,0.1); border-radius: 8px; border-left: 3px solid #90EE90; font-size: 0.9rem; transition: all 0.3s; }
+        .task-item.complete { background: rgba(144,238,144,0.3); border-left-color: #00ff00; text-decoration: line-through; opacity: 0.7; }
+        .ability-bar { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 50; }
+        .ability { background: rgba(0,0,0,0.8); border: 2px solid #666; border-radius: 15px; padding: 15px 25px; text-align: center; transition: all 0.3s; }
+        .ability.ready { border-color: #FFD700; box-shadow: 0 0 20px rgba(255,215,0,0.5); }
+        .ability-key { font-family: 'Bangers', cursive; font-size: 1.5rem; color: #fff; }
+        .ability-name { font-size: 0.8rem; color: #aaa; }
+        .cooldown-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); transition: height 0.1s; }
+        #gameOverScreen { background: rgba(0,0,0,0.9); }
+        .game-over-content { text-align: center; }
+        .skull { font-size: 8rem; animation: shake 0.5s ease-in-out infinite; }
+        @keyframes shake { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+        .game-over-title { font-family: 'Bangers', cursive; font-size: 4rem; color: #ff4444; margin: 20px 0; }
+        .final-stats { display: flex; gap: 40px; justify-content: center; margin: 30px 0; }
+        .final-stat { background: rgba(255,255,255,0.1); padding: 20px 40px; border-radius: 15px; }
+        .final-stat-value { font-family: 'Bangers', cursive; font-size: 3rem; color: #FFD700; }
+        .final-stat-label { color: #aaa; }
+        #levelCompleteScreen { background: rgba(0,0,0,0.9); }
+        .trophy { font-size: 8rem; animation: spin 2s ease-in-out infinite; }
+        @keyframes spin { 0% { transform: rotateY(0); } 100% { transform: rotateY(360deg); } }
+        .level-complete-title { font-family: 'Bangers', cursive; font-size: 4rem; color: #FFD700; margin: 20px 0; }
+        .loading { position: absolute; bottom: 50px; color: #666; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="titleScreen" class="screen">
+            <div class="logo-container">
+                <div class="main-title">PIGEON & REX</div>
+                <div class="subtitle">🌆 CITY ESCAPE 🌆</div>
+            </div>
+            <div class="characters">🐦 🤝 🦖</div>
+            <div class="story-box">
+                <div class="story-title">📖 THE STORY</div>
+                <div class="story-text">
+                    Rex the T-Rex is lost in the big city! His tiny arms can't grab food or defend himself from angry humans, cars, and birds.
+                    <br><br>
+                    <strong>You are his only hope!</strong> Fly as the brave pigeon, find food, protect Rex, and guide him to safety!
+                    <ul class="mission-list">
+                        <li>🍕 Find and collect food for Rex</li>
+                        <li>💩 Drop poop on enemies to scare them</li>
+                        <li>📢 Call Rex to follow you to safety</li>
+                        <li>🦖 Use Rex's ROAR when surrounded!</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="controls-box">
+                <div class="control-item"><span class="key">WASD</span><span class="action">Fly Around</span></div>
+                <div class="control-item"><span class="key">SPACE</span><span class="action">Fly Up / Poop</span></div>
+                <div class="control-item"><span class="key">E</span><span class="action">Call Rex</span></div>
+                <div class="control-item"><span class="key">R</span><span class="action">Rex Roar</span></div>
+                <div class="control-item"><span class="key">MOUSE</span><span class="action">Look Around</span></div>
+            </div>
+            <button class="start-btn" onclick="startGame()">🎮 START ESCAPE 🎮</button>
+            <div class="loading">Loading 3D Engine...</div>
+        </div>
+        
+        <div id="hud" class="hud hidden">
+            <div class="hud-panel rex-panel">
+                <div class="rex-name">🦖 REX HEALTH</div>
+                <div class="health-bar"><div id="rexHealthFill" class="health-fill" style="width: 100%"></div></div>
+                <div id="rexHealthText" class="health-text">100/100 HP</div>
+            </div>
+            <div class="hud-panel stats-panel">
+                <div class="stat"><div id="foodStat" class="stat-value">0/5</div><div class="stat-label">Food</div></div>
+                <div class="stat"><div id="levelStat" class="stat-value">1</div><div class="stat-label">Level</div></div>
+                <div class="stat"><div id="scoreStat" class="stat-value">0</div><div class="stat-label">Score</div></div>
+            </div>
+        </div>
+        
+        <div id="taskPanel" class="task-panel hidden">
+            <div class="task-title">📋 CURRENT TASKS</div>
+            <div id="taskList"></div>
+        </div>
+        
+        <div id="abilityBar" class="ability-bar hidden">
+            <div class="ability ready" id="poopAbility"><div class="ability-key">SPACE</div><div class="ability-name">Drop Poop</div></div>
+            <div class="ability ready" id="callAbility"><div class="ability-key">E</div><div class="ability-name">Call Rex</div></div>
+            <div class="ability" id="roarAbility"><div class="ability-key">R</div><div class="ability-name">Rex Roar</div><div id="roarCooldown" class="cooldown-overlay" style="height: 0%"></div></div>
+        </div>
+        
+        <div id="gameOverScreen" class="screen hidden">
+            <div class="game-over-content">
+                <div class="skull">💀</div>
+                <div class="game-over-title">REX DIDN'T MAKE IT</div>
+                <div class="final-stats">
+                    <div class="final-stat"><div id="finalFood" class="final-stat-value">0</div><div class="final-stat-label">Food Collected</div></div>
+                    <div class="final-stat"><div id="finalLevel" class="final-stat-value">1</div><div class="final-stat-label">Level Reached</div></div>
+                    <div class="final-stat"><div id="finalScore" class="final-stat-value">0</div><div class="final-stat-label">Total Score</div></div>
+                </div>
+                <button class="start-btn" onclick="restartGame()">🔄 TRY AGAIN</button>
+            </div>
+        </div>
+        
+        <div id="levelCompleteScreen" class="screen hidden">
+            <div class="trophy">🏆</div>
+            <div class="level-complete-title">LEVEL COMPLETE!</div>
+            <div style="font-size: 1.3rem; color: #90EE90; margin-bottom: 30px;">Rex is safe... for now!</div>
+            <button class="start-btn" onclick="nextLevel()">➡️ NEXT LEVEL</button>
+        </div>
+    </div>
+    <script>
+        let scene, camera, renderer, gameState = 'title', level = 1, score = 0;
+        let pigeon, rex, foods = [], enemies = [], buildings = [], poops = [], particles = [], clouds = [];
+        const keys = {}, WORLD_SIZE = 500;
+        let rexHealth = 100, maxRexHealth = 100, foodCollected = 0, totalFood = 5;
+        let tasks = [], roarCooldown = 0, roarMaxCooldown = 300;
+        let mouseX = 0, mouseY = 0, targetRotation = 0;
+        
+        const TASKS = {
+            collectFood: { id: 'collect', text: '🍕 Collect all food (0/5)', completed: false },
+            protectRex: { id: 'protect', text: '🛡️ Keep Rex alive', completed: false },
+            scareEnemy: { id: 'scare', text: '💩 Scare an enemy with poop', completed: false },
+            useRoar: { id: 'roar', text: '📢 Use Rex Roar ability', completed: false }
+        };
+        
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 100, 600);
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('gameContainer').appendChild(renderer.domElement);
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+            sunLight.position.set(200, 300, 100);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 1000;
+            sunLight.shadow.camera.left = -400;
+            sunLight.shadow.camera.right = 400;
+            sunLight.shadow.camera.top = 400;
+            sunLight.shadow.camera.bottom = -400;
+            scene.add(sunLight);
+            
+            createEnvironment();
+            createPigeon();
+            createRex();
+            createFoods();
+            createEnemies();
+            createClouds();
+            initTasks();
+            
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; if (e.key === ' ') e.preventDefault(); });
+            document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+            document.addEventListener('mousemove', onMouseMove);
+        }
+        
+        function createEnvironment() {
+            // Ground with texture-like appearance
+            const groundGeo = new THREE.PlaneGeometry(WORLD_SIZE * 3, WORLD_SIZE * 3, 50, 50);
+            const groundMat = new THREE.MeshLambertMaterial({ color: 0x4a7c4e });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Roads
+            for (let i = 0; i < 4; i++) {
+                const roadGeo = new THREE.PlaneGeometry(WORLD_SIZE * 2, 20);
+                const roadMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                const road = new THREE.Mesh(roadGeo, roadMat);
+                road.rotation.x = -Math.PI / 2;
+                road.position.set(0, 0.1, -WORLD_SIZE/2 + i * WORLD_SIZE/3);
+                scene.add(road);
+            }
+            
+            // Buildings with variety
+            const buildingColors = [0x8B7355, 0xA0826D, 0x6B8E6B, 0x708090, 0x8B4513];
+            const windowColors = [0x87CEEB, 0xFFD700, 0xFF6B6B, 0x98FB98];
+            
+            for (let i = 0; i < 50; i++) {
+                const group = new THREE.Group();
+                const w = 25 + Math.random() * 35;
+                const h = 40 + Math.random() * 120;
+                const d = 25 + Math.random() * 35;
+                
+                // Main building
+                const geo = new THREE.BoxGeometry(w, h, d);
+                const mat = new THREE.MeshLambertMaterial({ color: buildingColors[Math.floor(Math.random() * 5)] });
+                const building = new THREE.Mesh(geo, mat);
+                building.position.y = h / 2;
+                building.castShadow = true;
+                building.receiveShadow = true;
+                group.add(building);
+                
+                // Windows
+                for (let j = 0; j < 8; j++) {
+                    const winGeo = new THREE.PlaneGeometry(4, 6);
+                    const winMat = new THREE.MeshBasicMaterial({ color: windowColors[Math.floor(Math.random() * 4)] });
+                    const win = new THREE.Mesh(winGeo, winMat);
+                    win.position.set((Math.random() - 0.5) * w * 0.8, 10 + Math.random() * (h - 20), d/2 + 0.1);
+                    group.add(win);
+                }
+                
+                // Roof detail
+                if (Math.random() > 0.5) {
+                    const roofGeo = new THREE.BoxGeometry(w * 0.6, 5, d * 0.6);
+                    const roofMat = new THREE.MeshLambertMaterial({ color: 0x444444 });
+                    const roof = new THREE.Mesh(roofGeo, roofMat);
+                    roof.position.y = h + 2.5;
+                    group.add(roof);
+                }
+                
+                group.position.set((Math.random() - 0.5) * WORLD_SIZE * 1.5, 0, (Math.random() - 0.5) * WORLD_SIZE * 1.5);
+                scene.add(group);
+                buildings.push(group);
+            }
+            
+            // Trees
+            for (let i = 0; i < 30; i++) {
+                const treeGroup = new THREE.Group();
+                const trunkGeo = new THREE.CylinderGeometry(2, 3, 15, 8);
+                const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                trunk.position.y = 7.5;
+                treeGroup.add(trunk);
+                
+                const leavesGeo = new THREE.ConeGeometry(12, 30, 8);
+                const leavesMat = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+                const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+                leaves.position.y = 25;
+                treeGroup.add(leaves);
+                
+                treeGroup.position.set((Math.random() - 0.5) * WORLD_SIZE * 1.5, 0, (Math.random() - 0.5) * WORLD_SIZE * 1.5);
+                treeGroup.castShadow = true;
+                scene.add(treeGroup);
+            }
+        }
+        
+        function createClouds() {
+            for (let i = 0; i < 15; i++) {
+                const cloudGroup = new THREE.Group();
+                for (let j = 0; j < 5; j++) {
+                    const geo = new THREE.SphereGeometry(15 + Math.random() * 10, 16, 16);
+                    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+                    const puff = new THREE.Mesh(geo, mat);
+                    puff.position.set((Math.random() - 0.5) * 30, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 20);
+                    cloudGroup.add(puff);
+                }
+                cloudGroup.position.set((Math.random() - 0.5) * WORLD_SIZE, 150 + Math.random() * 100, (Math.random() - 0.5) * WORLD_SIZE);
+                scene.add(cloudGroup);
+                clouds.push({ mesh: cloudGroup, speed: 0.1 + Math.random() * 0.2 });
+            }
+        }
+        
+        function createPigeon() {
+            pigeon = new THREE.Group();
+            
+            // Body - grey sphere
+            const bodyGeo = new THREE.SphereGeometry(4, 16, 16);
+            const bodyMat = new THREE.MeshLambertMaterial({ color: 0x808080 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.scale.set(1, 0.8, 1.3);
+            pigeon.add(body);
+            
+            // Head
+            const headGeo = new THREE.SphereGeometry(2.5, 16, 16);
+            const headMat = new THREE.MeshLambertMaterial({ color: 0x696969 });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.set(0, 2, 4);
+            pigeon.add(head);
+            
+            // Beak
+            const beakGeo = new THREE.ConeGeometry(0.8, 2.5, 8);
+            const beakMat = new THREE.MeshLambertMaterial({ color: 0xFFA500 });
+            const beak = new THREE.Mesh(beakGeo, beakMat);
+            beak.rotation.x = Math.PI / 2;
+            beak.position.set(0, 2, 5.5);
+            pigeon.add(beak);
+            
+            // Eyes
+            const eyeGeo = new THREE.SphereGeometry(0.4, 8, 8);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.position.set(-1.2, 2.5, 5);
+            pigeon.add(leftEye);
+            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+            rightEye.position.set(1.2, 2.5, 5);
+            pigeon.add(rightEye);
+            
+            // Wings
+            const wingGeo = new THREE.BoxGeometry(10, 1, 5);
+            const wingMat = new THREE.MeshLambertMaterial({ color: 0x696969 });
+            const leftWing = new THREE.Mesh(wingGeo, wingMat);
+            leftWing.position.set(-5, 1, 0);
+            pigeon.add(leftWing);
+            const rightWing = new THREE.Mesh(wingGeo, wingMat);
+            rightWing.position.set(5, 1, 0);
+            pigeon.add(rightWing);
+            
+            // Tail
+            const tailGeo = new THREE.ConeGeometry(3, 6, 4);
+            const tail = new THREE.Mesh(tailGeo, wingMat);
+            tail.rotation.x = -Math.PI / 3;
+            tail.position.set(0, 0, -5);
+            pigeon.add(tail);
+            
+            pigeon.position.set(0, 30, 0);
+            pigeon.castShadow = true;
+            scene.add(pigeon);
+        }
+        
+        function createRex() {
+            rex = new THREE.Group();
+            
+            // Body
+            const bodyGeo = new THREE.BoxGeometry(16, 18, 28);
+            const bodyMat = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 15;
+            rex.add(body);
+            
+            // Belly (lighter)
+            const bellyGeo = new THREE.BoxGeometry(14, 14, 24);
+            const bellyMat = new THREE.MeshLambertMaterial({ color: 0x90EE90 });
+            const belly = new THREE.Mesh(bellyGeo, bellyMat);
+            belly.position.set(0, 13, 1);
+            rex.add(belly);
+            
+            // Head
+            const headGeo = new THREE.BoxGeometry(12, 14, 16);
+            const head = new THREE.Mesh(headGeo, bodyMat);
+            head.position.set(0, 28, 18);
+            rex.add(head);
+            
+            // Eyes
+            const eyeGeo = new THREE.SphereGeometry(1.5, 8, 8);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.position.set(-4, 30, 24);
+            rex.add(leftEye);
+            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+            rightEye.position.set(4, 30, 24);
+            rex.add(rightEye);
+            
+            // Tiny arms
+            const armGeo = new THREE.BoxGeometry(2, 8, 2);
+            const leftArm = new THREE.Mesh(armGeo, bodyMat);
+            leftArm.position.set(-8, 18, 10);
+            leftArm.rotation.z = 0.3;
+            rex.add(leftArm);
+            const rightArm = new THREE.Mesh(armGeo, bodyMat);
+            rightArm.position.set(8, 18, 10);
+            rightArm.rotation.z = -0.3;
+            rex.add(rightArm);
+            
+            // Legs
+            const legGeo = new THREE.BoxGeometry(6, 15, 8);
+            const leftLeg = new THREE.Mesh(legGeo, bodyMat);
+            leftLeg.position.set(-6, 7.5, -5);
+            rex.add(leftLeg);
+            const rightLeg = new THREE.Mesh(legGeo, bodyMat);
+            rightLeg.position.set(6, 7.5, -5);
+            rex.add(rightLeg);
+            
+            // Tail
+            const tailGeo = new THREE.ConeGeometry(8, 25, 8);
+            const tail = new THREE.Mesh(tailGeo, bodyMat);
+            tail.rotation.x = -Math.PI / 2.5;
+            tail.position.set(0, 12, -22);
+            rex.add(tail);
+            
+            rex.position.set(30, 0, 30);
+            rex.castShadow = true;
+            scene.add(rex);
+        }
+        
+        function createFoods() {
+            const foodTypes = [
+                { emoji: '🍕', color: 0xFF6347, value: 20 },
+                { emoji: '🍔', color: 0x8B4513, value: 15 },
+                { emoji: '🌭', color: 0xFFD700, value: 12 },
+                { emoji: '🍟', color: 0xFFA500, value: 10 },
+                { emoji: '🍗', color: 0xD2691E, value: 18 }
+            ];
+            
+            for (let i = 0; i < totalFood; i++) {
+                const group = new THREE.Group();
+                const type = foodTypes[i % 5];
+                
+                const geo = new THREE.CylinderGeometry(3, 3, 2, 16);
+                const mat = new THREE.MeshLambertMaterial({ color: type.color });
+                const food = new THREE.Mesh(geo, mat);
+                food.rotation.x = Math.PI / 2;
+                group.add(food);
+                
+                // Glow effect
+                const glowGeo = new THREE.SphereGeometry(5, 16, 16);
+                const glowMat = new THREE.MeshBasicMaterial({ color: type.color, transparent: true, opacity: 0.3 });
+                const glow = new THREE.Mesh(glowGeo, glowMat);
+                group.add(glow);
+                
+                group.position.set((Math.random() - 0.5) * WORLD_SIZE, 4, (Math.random() - 0.5) * WORLD_SIZE);
+                group.userData = { type: type, id: i, floatOffset: Math.random() * Math.PI * 2 };
+                scene.add(group);
+                foods.push({ mesh: group, collected: false, value: type.value });
+            }
+        }
+        
+        function createEnemies() {
+            const enemyTypes = [
+                { type: 'human', color: 0xFF6B6B, scale: 1 },
+                { type: 'car', color: 0x4ECDC4, scale: 1.5 },
+                { type: 'bird', color: 0x95E1D3, scale: 0.8 }
+            ];
+            
+            for (let i = 0; i < 4 + level * 2; i++) {
+                const group = new THREE.Group();
+                const et = enemyTypes[Math.floor(Math.random() * 3)];
+                
+                if (et.type === 'human') {
+                    const bodyGeo = new THREE.CapsuleGeometry(2, 6, 4, 8);
+                    const bodyMat = new THREE.MeshLambertMaterial({ color: et.color });
+                    const body = new THREE.Mesh(bodyGeo, bodyMat);
+                    body.position.y = 5;
+                    group.add(body);
+                    
+                    const headGeo = new THREE.SphereGeometry(2, 16, 16);
+                    const head = new THREE.Mesh(headGeo, bodyMat);
+                    head.position.y = 10;
+                    group.add(head);
+                } else if (et.type === 'car') {
+                    const bodyGeo = new THREE.BoxGeometry(8, 4, 12);
+                    const bodyMat = new THREE.MeshLambertMaterial({ color: et.color });
+                    const body = new THREE.Mesh(bodyGeo, bodyMat);
+                    body.position.y = 3;
+                    group.add(body);
+                    
+                    const wheelGeo = new THREE.CylinderGeometry(1.5, 1.5, 1, 16);
+                    const wheelMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                    const positions = [[-4, 1.5, 4], [4, 1.5, 4], [-4, 1.5, -4], [4, 1.5, -4]];
+                    positions.forEach(pos => {
+                        const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+                        wheel.rotation.z = Math.PI / 2;
+                        wheel.position.set(...pos);
+                        group.add(wheel);
+                    });
+                } else {
+                    const bodyGeo = new THREE.ConeGeometry(3, 8, 8);
+                    const bodyMat = new THREE.MeshLambertMaterial({ color: et.color });
+                    const body = new THREE.Mesh(bodyGeo, bodyMat);
+                    body.position.y = 6;
+                    group.add(body);
+                }
+                
+                group.position.set((Math.random() - 0.5) * WORLD_SIZE, 0, (Math.random() - 0.5) * WORLD_SIZE);
+                group.scale.setScalar(et.scale);
+                group.castShadow = true;
+                scene.add(group);
+                enemies.push({ mesh: group, type: et.type, scared: 0, vx: 0, vz: 0, speed: 0.3 + Math.random() * 0.2 });
+            }
+        }
+        
+        function initTasks() {
+            tasks = Object.values(TASKS).map(t => ({ ...t }));
+            updateTaskDisplay();
+        }
+        
+        function updateTaskDisplay() {
+            const list = document.getElementById('taskList');
+            list.innerHTML = tasks.map(t => `<div class="task-item ${t.completed ? 'complete' : ''}" id="task-${t.id}">${t.text}</div>`).join('');
+        }
+        
+        function completeTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task && !task.completed) {
+                task.completed = true;
+                score += 100;
+                updateTaskDisplay();
+                updateHUD();
+            }
+        }
+        
+        function onMouseMove(e) {
+            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function updatePigeon() {
+            const speed = 1.2;
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(pigeon.quaternion);
+            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(pigeon.quaternion);
+            
+            if (keys.w) pigeon.position.addScaledVector(forward, speed);
+            if (keys.s) pigeon.position.addScaledVector(forward, -speed * 0.6);
+            if (keys.a) pigeon.position.addScaledVector(right, -speed);
+            if (keys.d) pigeon.position.addScaledVector(right, speed);
+            
+            // Vertical movement
+            if (keys[' ']) pigeon.position.y += 0.8;
+            pigeon.position.y -= 0.15; // Gravity
+            pigeon.position.y = Math.max(5, Math.min(120, pigeon.position.y));
+            
+            // Rotation based on mouse
+            targetRotation = -mouseX * Math.PI;
+            pigeon.rotation.y += (targetRotation - pigeon.rotation.y) * 0.1;
+            pigeon.rotation.z = -mouseX * 0.3;
+            pigeon.rotation.x = mouseY * 0.3;
+            
+            // Wing animation
+            const wingFlap = Math.sin(Date.now() * 0.015) * 0.5;
+            pigeon.children[4].rotation.z = wingFlap;
+            pigeon.children[5].rotation.z = -wingFlap;
+            
+            // Poop
+            if (keys[' '] && !keys.lastSpace && pigeon.position.y > 10) {
+                dropPoop();
+                keys.lastSpace = true;
+            }
+            if (!keys[' ']) keys.lastSpace = false;
+            
+            // Call Rex
+            if (keys.e && !keys.lastE) {
+                callRex();
+                keys.lastE = true;
+            }
+            if (!keys.e) keys.lastE = false;
+            
+            // Collect food
+            for (let i = 0; i < foods.length; i++) {
+                if (!foods[i].collected && pigeon.position.distanceTo(foods[i].mesh.position) < 6) {
+                    foods[i].collected = true;
+                    foods[i].mesh.visible = false;
+                    foodCollected++;
+                    score += foods[i].value * 10;
+                    createParticles(foods[i].mesh.position, 0xFFD700, 15);
+                    updateHUD();
+                    
+                    const task = tasks.find(t => t.id === 'collect');
+                    if (task) task.text = `🍕 Collect all food (${foodCollected}/${totalFood})`;
+                    if (foodCollected >= totalFood) completeTask('collect');
+                    updateTaskDisplay();
+                }
+            }
+            
+            // Camera follow
+            const camOffset = new THREE.Vector3(0, 20, 40).applyQuaternion(pigeon.quaternion);
+            camera.position.copy(pigeon.position).add(camOffset);
+            camera.lookAt(pigeon.position);
+        }
+        
+        function dropPoop() {
+            const geo = new THREE.SphereGeometry(1.5, 8, 8);
+            const mat = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            const poop = new THREE.Mesh(geo, mat);
+            poop.position.copy(pigeon.position);
+            poop.position.y -= 4;
+            scene.add(poop);
+            poops.push({ mesh: poop, vy: 0, life: 150 });
+        }
+        
+        function callRex() {
+            rex.userData.target = pigeon.position.clone();
+            rex.userData.target.y = 0;
+            document.getElementById('callAbility').classList.add('ready');
+            setTimeout(() => document.getElementById('callAbility').classList.remove('ready'), 200);
+        }
+        
+        function updateRex() {
+            // Movement
+            if (rex.userData.target) {
+                const dir = rex.userData.target.clone().sub(rex.position);
+                const dist = dir.length();
+                if (dist > 5) {
+                    dir.normalize();
+                    rex.position.addScaledVector(dir, 0.4);
+                    rex.lookAt(rex.userData.target);
+                }
+            }
+            
+            // Walking animation
+            rex.children[4].rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
+            rex.children[5].rotation.x = Math.sin(Date.now() * 0.01 + Math.PI) * 0.3;
+            
+            // Damage from enemies
+            for (const enemy of enemies) {
+                if (enemy.scared <= 0 && enemy.mesh.position.distanceTo(rex.position) < 20) {
+                    rexHealth -= 0.4;
+                    if (Math.random() > 0.7) createParticles(rex.position, 0xff4444, 3);
+                    if (rexHealth <= 0) endGame();
+                }
+            }
+            
+            // Roar ability
+            if (roarCooldown > 0) {
+                roarCooldown--;
+                const pct = (roarCooldown / roarMaxCooldown) * 100;
+                document.getElementById('roarCooldown').style.height = pct + '%';
+                document.getElementById('roarAbility').classList.remove('ready');
+            } else {
+                document.getElementById('roarAbility').classList.add('ready');
+            }
+            
+            if (keys.r && roarCooldown <= 0) {
+                roarCooldown = roarMaxCooldown;
+                rexRoar();
+            }
+        }
+        
+        function rexRoar() {
+            completeTask('roar');
+            createParticles(rex.position.clone().add(new THREE.Vector3(0, 25, 0)), 0xFFD700, 30);
+            
+            // Visual roar effect
+            const roarGeo = new THREE.RingGeometry(10, 15, 32);
+            const roarMat = new THREE.MeshBasicMaterial({ color: 0xFFD700, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+            const roarRing = new THREE.Mesh(roarGeo, roarMat);
+            roarRing.position.copy(rex.position);
+            roarRing.position.y = 20;
+            roarRing.rotation.x = -Math.PI / 2;
+            scene.add(roarRing);
+            
+            // Animate ring
+            let scale = 1;
+            const expand = setInterval(() => {
+                scale += 0.5;
+                roarRing.scale.setScalar(scale);
+                roarRing.material.opacity -= 0.05;
+                if (roarRing.material.opacity <= 0) {
+                    clearInterval(expand);
+                    scene.remove(roarRing);
+                }
+            }, 50);
+            
+            for (const enemy of enemies) {
+                if (enemy.mesh.position.distanceTo(rex.position) < 80) {
+                    enemy.scared = 300;
+                    const away = enemy.mesh.position.clone().sub(rex.position).normalize();
+                    enemy.vx = away.x * 3;
+                    enemy.vz = away.z * 3;
+                }
+            }
+        }
+        
+        function updateEnemies() {
+            for (const enemy of enemies) {
+                if (enemy.scared > 0) {
+                    enemy.scared--;
+                    enemy.mesh.position.x += enemy.vx;
+                    enemy.mesh.position.z += enemy.vz;
+                    enemy.vx *= 0.95;
+                    enemy.vz *= 0.95;
+                    enemy.mesh.rotation.y += 0.2;
+                    continue;
+                }
+                
+                // Chase Rex
+                const dir = rex.position.clone().sub(enemy.mesh.position);
+                if (dir.length() < 100) {
+                    dir.normalize();
+                    enemy.mesh.position.addScaledVector(dir, enemy.speed);
+                    enemy.mesh.lookAt(rex.position);
+                }
+                
+                // Hit by poop
+                for (const poop of poops) {
+                    if (poop.mesh.position.distanceTo(enemy.mesh.position) < 8) {
+                        enemy.scared = 200;
+                        const away = enemy.mesh.position.clone().sub(poop.mesh.position).normalize();
+                        enemy.vx = away.x * 4;
+                        enemy.vz = away.z * 4;
+                        poop.hit = true;
+                        completeTask('scare');
+                        score += 50;
+                        updateHUD();
+                    }
+                }
+            }
+        }
+        
+        function updatePoops() {
+            for (let i = poops.length - 1; i >= 0; i--) {
+                const p = poops[i];
+                p.vy -= 0.15;
+                p.mesh.position.y += p.vy;
+                p.life--;
+                if (p.mesh.position.y < 1 || p.life <= 0 || p.hit) {
+                    if (p.mesh.position.y < 1) createParticles(p.mesh.position, 0x8B4513, 5);
+                    scene.remove(p.mesh);
+                    poops.splice(i, 1);
+                }
+            }
+        }
+        
+        function updateClouds() {
+            for (const cloud of clouds) {
+                cloud.mesh.position.x += cloud.speed;
+                if (cloud.mesh.position.x > WORLD_SIZE) cloud.mesh.position.x = -WORLD_SIZE;
+            }
+        }
+        
+        function updateFoods() {
+            for (const food of foods) {
+                if (!food.collected) {
+                    food.mesh.rotation.y += 0.02;
+                    food.mesh.position.y = 4 + Math.sin(Date.now() * 0.003 + food.mesh.userData.floatOffset) * 1;
+                }
+            }
+        }
+        
+        function createParticles(pos, color, count) {
+            for (let i = 0; i < count; i++) {
+                const geo = new THREE.SphereGeometry(0.5 + Math.random(), 8, 8);
+                const mat = new THREE.MeshBasicMaterial({ color: color });
+                const p = new THREE.Mesh(geo, mat);
+                p.position.copy(pos);
+                p.position.x += (Math.random() - 0.5) * 10;
+                p.position.y += (Math.random() - 0.5) * 10;
+                p.position.z += (Math.random() - 0.5) * 10;
+                scene.add(p);
+                particles.push({ mesh: p, vx: (Math.random() - 0.5) * 2, vy: Math.random() * 2, vz: (Math.random() - 0.5) * 2, life: 60 });
+            }
+        }
+        
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.mesh.position.x += p.vx;
+                p.mesh.position.y += p.vy;
+                p.mesh.position.z += p.vz;
+                p.vy -= 0.1;
+                p.life--;
+                p.mesh.scale.setScalar(p.life / 60);
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    particles.splice(i, 1);
+                }
+            }
+        }
+        
+        function updateHUD() {
+            document.getElementById('rexHealthFill').style.width = (rexHealth / maxRexHealth * 100) + '%';
+            document.getElementById('rexHealthText').textContent = Math.ceil(rexHealth) + '/' + maxRexHealth + ' HP';
+            document.getElementById('foodStat').textContent = foodCollected + '/' + totalFood;
+            document.getElementById('levelStat').textContent = level;
+            document.getElementById('scoreStat').textContent = score;
+        }
+        
+        function startGame() {
+            init();
+            document.getElementById('titleScreen').classList.add('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('taskPanel').classList.remove('hidden');
+            document.getElementById('abilityBar').classList.remove('hidden');
+            gameState = 'playing';
+            animate();
+        }
+        
+        function endGame() {
+            gameState = 'gameover';
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('taskPanel').classList.add('hidden');
+            document.getElementById('abilityBar').classList.add('hidden');
+            document.getElementById('finalFood').textContent = foodCollected;
+            document.getElementById('finalLevel').textContent = level;
+            document.getElementById('finalScore').textContent = score;
+        }
+        
+        function nextLevel() {
+            level++;
+            document.getElementById('levelCompleteScreen').classList.add('hidden');
+            foodCollected = 0;
+            totalFood += 2;
+            rexHealth = maxRexHealth;
+            foods.forEach(f => scene.remove(f.mesh));
+            foods = [];
+            enemies.forEach(e => scene.remove(e.mesh));
+            enemies = [];
+            createFoods();
+            createEnemies();
+            tasks.forEach(t => t.completed = false);
+            tasks.find(t => t.id === 'collect').text = '🍕 Collect all food (0/' + totalFood + ')';
+            updateTaskDisplay();
+            gameState = 'playing';
+        }
+        
+        function restartGame() {
+            location.reload();
+        }
+        
+        function animate() {
+            if (gameState !== 'playing')
+ {
+                if (gameState === 'levelComplete') {
+                    requestAnimationFrame(animate);
+                    return;
+                }
+                return;
+            }
+            requestAnimationFrame(animate);
+            
+            updatePigeon();
+            updateRex();
+            updateEnemies();
+            updatePoops();
+            updateClouds();
+            updateFoods();
+            updateParticles();
+            updateHUD();
+            
+            if (foodCollected >= totalFood && gameState === 'playing') {
+                gameState = 'levelComplete';
+                document.getElementById('levelCompleteScreen').classList.remove('hidden');
+            }
+            
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
