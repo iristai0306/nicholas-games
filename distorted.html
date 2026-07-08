@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Distorted</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a12;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+// ─── Distorted — Title & Character Select Screen ───
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+let W, H;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ─── Particles (background atmosphere) ───
+const particles = [];
+for (let i = 0; i < 120; i++) {
+  particles.push({
+    x: Math.random(),
+    y: Math.random(),
+    size: 1 + Math.random() * 2.5,
+    speedX: (Math.random() - 0.5) * 0.0006,
+    speedY: (Math.random() - 0.5) * 0.0006,
+    alpha: 0.15 + Math.random() * 0.35,
+  });
+}
+
+// ─── Characters ───
+const characters = [
+  {
+    name: 'KAI',
+    title: 'The Drifter',
+    color: '#00e5ff',
+    glow: '#00e5ff66',
+    desc: 'Fast. Agile. Wields a pulse blade.',
+    body: (cx, cy, s) => {
+      // Head
+      ctx.beginPath(); ctx.arc(cx, cy - s * 0.5, s * 0.2, 0, Math.PI * 2); ctx.fill();
+      // Body triangle
+      ctx.beginPath(); ctx.moveTo(cx, cy + s * 0.1); ctx.lineTo(cx - s * 0.25, cy + s * 0.8); ctx.lineTo(cx + s * 0.25, cy + s * 0.8); ctx.closePath(); ctx.fill();
+      // Blade glow
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx + s * 0.25, cy + s * 0.4); ctx.lineTo(cx + s * 0.6, cy + s * 0.1); ctx.stroke();
+    }
+  },
+  {
+    name: 'LYRA',
+    title: 'The Architect',
+    color: '#ff6ec7',
+    glow: '#ff6ec766',
+    desc: 'Rebuilds reality. Gravity manipulator.',
+    body: (cx, cy, s) => {
+      // Head
+      ctx.beginPath(); ctx.arc(cx, cy - s * 0.5, s * 0.2, 0, Math.PI * 2); ctx.fill();
+      // Dress / floaty
+      ctx.beginPath(); ctx.moveTo(cx, cy + s * 0.1); ctx.lineTo(cx - s * 0.35, cy + s * 0.85); ctx.lineTo(cx, cy + s * 0.65); ctx.lineTo(cx + s * 0.35, cy + s * 0.85); ctx.closePath(); ctx.fill();
+      // Orb
+      ctx.beginPath(); ctx.arc(cx, cy + s * 0.35, s * 0.07, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+    }
+  },
+  {
+    name: 'REX',
+    title: 'The Titan',
+    color: '#ff6b35',
+    glow: '#ff6b3566',
+    desc: 'Brute force. Shockwave stomp.',
+    body: (cx, cy, s) => {
+      // Head bigger
+      ctx.beginPath(); ctx.arc(cx, cy - s * 0.55, s * 0.25, 0, Math.PI * 2); ctx.fill();
+      // Wide body
+      ctx.beginPath(); ctx.moveTo(cx, cy + s * 0.05); ctx.lineTo(cx - s * 0.3, cy + s * 0.9); ctx.lineTo(cx + s * 0.3, cy + s * 0.9); ctx.closePath(); ctx.fill();
+      // Fist
+      ctx.beginPath(); ctx.arc(cx + s * 0.3, cy + s * 0.5, s * 0.1, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+    }
+  },
+  {
+    name: 'ECHO',
+    title: 'The Phantom',
+    color: '#a855f7',
+    glow: '#a855f766',
+    desc: 'Stealth. Teleports through shadows.',
+    body: (cx, cy, s) => {
+      // Head
+      ctx.beginPath(); ctx.arc(cx, cy - s * 0.5, s * 0.2, 0, Math.PI * 2); ctx.fill();
+      // Slim body
+      ctx.beginPath(); ctx.moveTo(cx, cy + s * 0.1); ctx.lineTo(cx - s * 0.18, cy + s * 0.8); ctx.lineTo(cx + s * 0.18, cy + s * 0.8); ctx.closePath(); ctx.fill();
+      // Shadow trail
+      ctx.fillStyle = 'rgba(168,85,247,0.3)';
+      ctx.beginPath(); ctx.arc(cx - s * 0.25, cy + s * 0.55, s * 0.08, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + s * 0.25, cy + s * 0.4, s * 0.08, 0, Math.PI * 2); ctx.fill();
+    }
+  },
+];
+
+let selectedChar = 0;
+let hoveredChar = -1;
+let gameStarted = false;
+let pulse = 0;
+let glitchOffset = 0;
+
+// ─── Mouse / touch ───
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) / rect.width;
+  const my = (e.clientY - rect.top) / rect.height;
+  hoveredChar = hitTest(mx, my);
+});
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) / rect.width;
+  const my = (e.clientY - rect.top) / rect.height;
+  const idx = hitTest(mx, my);
+  if (idx >= 0) {
+    selectedChar = idx;
+  }
+});
+
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  const mx = (touch.clientX - rect.left) / rect.width;
+  const my = (touch.clientY - rect.top) / rect.height;
+  const idx = hitTest(mx, my);
+  if (idx >= 0) selectedChar = idx;
+}, { passive: false });
+
+function hitTest(mx, my) {
+  const charW = W / (characters.length + 1);
+  const startX = charW;
+  const cardW = W * 0.16;
+  const cardH = H * 0.3;
+  const topY = H * 0.55;
+  for (let i = 0; i < characters.length; i++) {
+    const cx = startX + i * charW;
+    const left = cx - cardW / 2;
+    const right = cx + cardW / 2;
+    const top = topY - cardH / 2;
+    const bot = topY + cardH / 2;
+    if (mx * W >= left && mx * W <= right && my * H >= top && my * H <= bot) return i;
+  }
+  return -1;
+}
+
+// ─── Draw ───
+function draw(time) {
+  ctx.clearRect(0, 0, W, H);
+
+  // Background gradient
+  const grad = ctx.createRadialGradient(W * 0.5, H * 0.4, 0, W * 0.5, H * 0.4, W * 0.8);
+  grad.addColorStop(0, '#12121f');
+  grad.addColorStop(0.5, '#0a0a12');
+  grad.addColorStop(1, '#050508');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  pulse = Math.sin(time * 0.001) * 0.5 + 0.5;
+
+  // ─── Particles ───
+  for (const p of particles) {
+    p.x += p.speedX;
+    p.y += p.speedY;
+    if (p.x < 0) p.x = 1;
+    if (p.x > 1) p.x = 0;
+    if (p.y < 0) p.y = 1;
+    if (p.y > 1) p.y = 0;
+    ctx.fillStyle = `rgba(180,180,255,${p.alpha * (0.8 + 0.2 * pulse)})`;
+    ctx.beginPath();
+    ctx.arc(p.x * W, p.y * H, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ─── Title ───
+  const titleY = H * 0.18;
+  // Glitch lines
+  glitchOffset = Math.sin(time * 0.003) * 4 + Math.sin(time * 0.007) * 2;
+  ctx.save();
+  // Glitch chromatic
+  ctx.font = `bold ${Math.min(W * 0.085, 85)}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // RGB glitch layers
+  ctx.fillStyle = 'rgba(255,0,80,0.3)';
+  ctx.fillText('DISTORTED', W / 2 + glitchOffset + 2, titleY + 2);
+  ctx.fillStyle = 'rgba(0,180,255,0.3)';
+  ctx.fillText('DISTORTED', W / 2 - glitchOffset - 2, titleY - 2);
+  ctx.fillStyle = '#fff';
+  ctx.fillText('DISTORTED', W / 2, titleY);
+
+  // Subtitle
+  ctx.font = `${Math.min(W * 0.018, 18)}px monospace`;
+  ctx.fillStyle = `rgba(180,180,255,${0.5 + 0.3 * pulse})`;
+  ctx.fillText('AN OPEN WORLD EXPLORATION GAME', W / 2, titleY + H * 0.055);
+
+  ctx.restore();
+
+  // ─── Characters ───
+  const charW = W / (characters.length + 1);
+  const startX = charW;
+  const cardY = H * 0.55;
+  const cardW = W * 0.16;
+  const cardH = H * 0.3;
+
+  for (let i = 0; i < characters.length; i++) {
+    const c = characters[i];
+    const cx = startX + i * charW;
+    const isSelected = i === selectedChar;
+    const isHovered = i === hoveredChar;
+    const scale = isSelected ? 1.15 : isHovered ? 1.05 : 1;
+    const bounce = isSelected ? Math.sin(time * 0.004 + i) * 4 : 0;
+
+    ctx.save();
+    ctx.translate(cx, cardY + bounce);
+
+    // Card background
+    const w = cardW * scale;
+    const h = cardH * scale;
+    const rx = w / 2;
+    const ry = h / 2;
+
+    ctx.shadowColor = isSelected ? c.glow : 'transparent';
+    ctx.shadowBlur = isSelected ? 30 : 0;
+
+    ctx.fillStyle = isSelected ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)';
+    ctx.strokeStyle = isSelected ? c.color : 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = isSelected ? 2 : 1;
+    roundRect(-rx, -ry, w, h, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+
+    // Character icon
+    const s = Math.min(W, H) * 0.05 * scale;
+    ctx.fillStyle = c.color;
+    c.body(ctx, 0, -ry * 0.15, s);
+
+    // Name
+    ctx.font = `bold ${Math.min(W * 0.025, 20) * scale}px monospace`;
+    ctx.fillStyle = isSelected ? c.color : '#ccc';
+    ctx.textAlign = 'center';
+    ctx.fillText(c.name, 0, ry * 0.5);
+
+    // Title
+    ctx.font = `${Math.min(W * 0.016, 13) * scale}px monospace`;
+    ctx.fillStyle = isSelected ? '#fff' : '#888';
+    ctx.fillText(c.title, 0, ry * 0.7);
+
+    // Desc (on hover or selected)
+    if (isSelected || isHovered) {
+      ctx.font = `${Math.min(W * 0.014, 11) * scale}px monospace`;
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillText(c.desc, 0, ry * 0.88);
+    }
+
+    ctx.restore();
+  }
+
+  // ─── Start Button ───
+  const btnW = W * 0.22;
+  const btnH = H * 0.07;
+  const btnX = W / 2;
+  const btnY = H * 0.88;
+  const btnPulse = Math.sin(time * 0.002) * 0.08 + 1;
+
+  ctx.save();
+  ctx.translate(btnX, btnY);
+
+  const gradBtn = ctx.createLinearGradient(-btnW / 2, -btnH / 2, btnW / 2, btnH / 2);
+  gradBtn.addColorStop(0, characters[selectedChar].color);
+  gradBtn.addColorStop(1, characters[selectedChar].glow);
+  ctx.fillStyle = gradBtn;
+  ctx.shadowColor = characters[selectedChar].glow;
+  ctx.shadowBlur = 20 * btnPulse;
+
+  roundRect(-btnW / 2 * btnPulse, -btnH / 2, btnW * btnPulse, btnH, 8);
+  ctx.fill();
+
+  ctx.shadowBlur = 0;
+  ctx.font = `bold ${Math.min(W * 0.025, 22)}px monospace`;
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('▶  START GAME', 0, 2);
+
+  ctx.restore();
+
+  // ─── Controls hint ───
+  ctx.font = `${Math.min(W * 0.013, 11)}px monospace`;
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.textAlign = 'center';
+  ctx.fillText('Click a character to select · Click START to begin', W / 2, H * 0.97);
+
+  requestAnimationFrame(draw);
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
