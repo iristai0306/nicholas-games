@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Distorted — Customise</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a12;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* ─── Scanlines overlay ─── */
+    #scanlines {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 999;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+    }
+    #scanlines::after {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+    }
+
+    /* ─── Top nav ─── */
+    #top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      z-index: 100;
+      flex-shrink: 0;
+    }
+    #top-bar h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: 18px;
+      letter-spacing: 6px;
+      color: #a0a0cc;
+    }
+    #top-bar h1 span {
+      color: #fff;
+    }
+
+    #back-btn {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: #8899bb;
+      background: none;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 6px 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    #back-btn:hover {
+      color: #fff;
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.05);
+    }
+
+    #confirm-btn {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: #fff;
+      background: linear-gradient(135deg, #6c5ce7, #a855f7);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 30px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 0 20px rgba(108,92,231,0.3);
+    }
+    #confirm-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 30px rgba(108,92,231,0.5);
+    }
+
+    /* ─── Main layout ─── */
+    #main {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      z-index: 50;
+    }
+
+    /* ─── Preview on left ─── */
+    #preview-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    #preview-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #preview-name {
+      position: absolute;
+      bottom: 30px;
+      font-family: 'Orbitron', monospace;
+      font-size: 13px;
+      letter-spacing: 4px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* ─── Options panel on right ─── */
+    #options-panel {
+      width: 320px;
+      background: rgba(255,255,255,0.02);
+      border-left: 1px solid rgba(255,255,255,0.06);
+      padding: 20px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .option-group {
+      margin-bottom: 22px;
+    }
+    .option-group h3 {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #667799;
+      margin-bottom: 10px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .swatch-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .swatch:hover {
+      transform: scale(1.15);
+    }
+    .swatch.active {
+      border-color: #fff;
+      box-shadow: 0 0 12px rgba(255,255,255,0.3);
+      transform: scale(1.15);
+    }
+    .swatch.custom {
+      width: auto;
+      padding: 0 10px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Rajdhani', sans-serif;
+      color: #8899bb;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      line-height: 32px;
+    }
+
+    .outfit-card {
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.08);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: all 0.15s;
+      background: rgba(255,255,255,0.03);
+    }
+    .outfit-card:hover {
+      border-color: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.06);
+    }
+    .outfit-card.active {
+      border-color: #6c5ce7;
+      box-shadow: 0 0 16px rgba(108,92,231,0.3);
+      background: rgba(108,92,231,0.1);
+    }
+
+    .hair-card {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.08);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.15s;
+      background: rgba(255,255,255,0.03);
+    }
+    .hair-card:hover {
+      border-color: rgba(255,255,255,0.2);
+    }
+    .hair-card.active {
+      border-color: #6c5ce7;
+      box-shadow: 0 0 16px rgba(108,92,231,0.3);
+    }
+
+    .accessory-card {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.08);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.15s;
+      background: rgba(255,255,255,0.03);
+    }
+    .accessory-card:hover {
+      border-color: rgba(255,255,255,0.2);
+    }
+    .accessory-card.active {
+      border-color: #6c5ce7;
+      box-shadow: 0 0 16px rgba(108,92,231,0.3);
+    }
+
+    .option-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* ─── Scrollbar ─── */
+    #options-panel::-webkit-scrollbar { width: 3px; }
+    #options-panel::-webkit-scrollbar-track { background: transparent; }
+    #options-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* ─── Mobile responsive ─── */
+    @media (max-width: 700px) {
+      #main {
+        flex-direction: column-reverse;
+      }
+      #options-panel {
+        width: 100%;
+        max-height: 40vh;
+        border-left: none;
+        border-top: 1px solid rgba(255,255,255,0.06);
+      }
+      #top-bar h1 { font-size: 14px; letter-spacing: 3px; }
+      #confirm-btn { padding: 6px 18px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="scanlines"></div>
+
+<div id="top-bar">
+  <button id="back-btn">← BACK</button>
+  <h1><span>//</span> DISTORTED <span>//</span></h1>
+  <button id="confirm-btn">CONFIRM</button>
+</div>
+
+<div id="main">
+  <div id="preview-area">
+    <canvas id="preview-canvas"></canvas>
+    <div id="preview-name">CUSTOMISED</div>
+  </div>
+
+  <div id="options-panel">
+    <!-- Body Colour -->
+    <div class="option-group">
+      <h3>Body Colour</h3>
+      <div class="swatch-row" id="body-colours"></div>
+    </div>
+
+    <!-- Outfit / Costume -->
+    <div class="option-group">
+      <h3>Outfit</h3>
+      <div class="option-row" id="outfits"></div>
+    </div>
+
+    <!-- Hair / Headgear -->
+    <div class="option-group">
+      <h3>Hair</h3>
+      <div class="option-row" id="hairs"></div>
+    </div>
+
+    <!-- Accessories -->
+    <div class="option-group">
+      <h3>Accessory</h3>
+      <div class="option-row" id="accessories"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DISTORTED — Character Customisation
+// ═══════════════════════════════════════════════
+
+const BODY_COLOURS = [
+  '#4a9eff', '#ff6ec7', '#ff6b35', '#a855f7',
+  '#00e5ff', '#22c55e', '#facc15', '#ef4444',
+  '#ec4899', '#14b8a6', '#8b5cf6', '#f97316',
+];
+
+const OUTFITS = [
+  { id: 'hoodie',  label: '😎', name: 'Hoodie' },
+  { id: 'jacket',  label: '🧥', name: 'Jacket' },
+  { id: 'armour',  label: '🛡️', name: 'Armour' },
+  { id: 'cloak',   label: '🧙', name: 'Cloak' },
+  { id: 'vest',    label: '👕', name: 'Vest' },
+  { id: 'robes',   label: '👘', name: 'Robes' },
+];
+
+const HAIRS = [
+  { id: 'none',  label: '🫥', name: 'None' },
+  { id: 'short', label: '✂️', name: 'Short' },
+  { id: 'spiky', label: '⚡', name: 'Spiky' },
+  { id: 'long',  label: '💇', name: 'Long' },
+  { id: 'hat',   label: '🧢', name: 'Hat' },
+  { id: 'hood',  label: '🎭', name: 'Hood' },
+];
+
+const ACCESSORIES = [
+  { id: 'none',     label: '🚫', name: 'None' },
+  { id: 'sword',    label: '🗡️', name: 'Sword' },
+  { id: 'staff',    label: '🪄', name: 'Staff' },
+  { id: 'shield',   label: '🛡️', name: 'Shield' },
+  { id: 'blaster',  label: '🔫', name: 'Blaster' },
+  { id: 'wings',    label: '🪽', name: 'Wings' },
+  { id: 'crown',    label: '👑', name: 'Crown' },
+  { id: 'orb',      label: '🔮', name: 'Orb' },
+];
+
+// ─── State ───
+const state = {
+  bodyColour: BODY_COLOURS[0],
+  outfit: OUTFITS[0].id,
+  hair: HAIRS[1].id,
+  accessory: ACCESSORIES[0].id,
+};
+
+// ─── Canvas ───
+const canvas = document.getElementById('preview-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizePreview() {
+  const rect = document.getElementById('preview-area').getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+}
+resizePreview();
+window.addEventListener('resize', resizePreview);
+
+// ─── Populate UI ───
+function buildSwatches() {
+  const container = document.getElementById('body-colours');
+  container.innerHTML = '';
+  for (const col of BODY_COLOURS) {
+    const el = document.createElement('div');
+    el.className = 'swatch' + (col === state.bodyColour ? ' active' : '');
+    el.style.background = col;
+    el.addEventListener('click', () => {
+      state.bodyColour = col;
+      document.querySelectorAll('.swatch-row .swatch').forEach(s => s.classList.remove('active'));
+      el.classList.add('active');
+    });
+    container.appendChild(el);
+  }
+  // Custom colour button
+  const custom = document.createElement('div');
+  custom.className = 'swatch custom';
+  custom.textContent = '🎨';
+  custom.title = 'Pick custom colour';
+  custom.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'color';
+    input.value = state.bodyColour;
+    input.addEventListener('input', () => {
+      state.bodyColour = input.value;
+      document.querySelectorAll('.swatch-row .swatch').forEach(s => s.classList.remove('active'));
+      custom.style.borderColor = '#fff';
+      custom.style.boxShadow = '0 0 12px rgba(255,255,255,0.3)';
+    });
+    input.click();
+  });
+  container.appendChild(custom);
+}
+
+function buildOutfits() {
+  const container = document.getElementById('outfits');
+  container.innerHTML = '';
+  for (const o of OUTFITS) {
+    const el = document.createElement('div');
+    el.className = 'outfit-card' + (o.id === state.outfit ? ' active' : '');
+    el.textContent = o.label;
+    el.title = o.name;
+    el.addEventListener('click', () => {
+      state.outfit = o.id;
+      document.querySelectorAll('.outfit-card').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+    });
+    container.appendChild(el);
+  }
+}
+
+function buildHairs() {
+  const container = document.getElementById('hairs');
+  container.innerHTML = '';
+  for (const h of HAIRS) {
+    const el = document.createElement('div');
+    el.className = 'hair-card' + (h.id === state.hair ? ' active' : '');
+    el.textContent = h.label;
+    el.title = h.name;
+    el.addEventListener('click', () => {
+      state.hair = h.id;
+      document.querySelectorAll('.hair-card').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+    });
+    container.appendChild(el);
+  }
+}
+
+function buildAccessories() {
+  const container = document.getElementById('accessories');
+  container.innerHTML = '';
+  for (const a of ACCESSORIES) {
+    const el = document.createElement('div');
+    el.className = 'accessory-card' + (a.id === state.accessory ? ' active' : '');
+    el.textContent = a.label;
+    el.title = a.name;
+    el.addEventListener('click', () => {
+      state.accessory = a.id;
+      document.querySelectorAll('.accessory-card').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+    });
+    container.appendChild(el);
+  }
+}
+
+buildSwatches();
+buildOutfits();
+buildHairs();
+buildAccessories();
+
+// ─── Draw Preview ───
+function getOutfitStyle(id) {
+  const map = {
+    hoodie: { neck: 0.25, bottom: 0.85, shoulder: 0.2, offset: 0 },
+    jacket: { neck: 0.2, bottom: 0.7, shoulder: 0.22, offset: 2 },
+    armour: { neck: 0.1, bottom: 0.8, shoulder: 0.28, offset: -1 },
+    cloak:  { neck: 0.3, bottom: 0.9, shoulder: 0.3, offset: 0 },
+    vest:   { neck: 0.18, bottom: 0.7, shoulder: 0.18, offset: 0 },
+    robes:  { neck: 0.35, bottom: 0.9, shoulder: 0.35, offset: 1 },
+  };
+  return map[id] || map.hoodie;
+}
+
+function getHairStyle(id) {
+  const map = {
+    none:  { offsetY: -0.6, spikes: 0, len: 0 },
+    short: { offsetY: -0.65, spikes: 3, len: 0.1 },
+    spiky: { offsetY: -0.7, spikes: 7, len: 0.18 },
+    long:  { offsetY: -0.55, spikes: 4, len: 0.35 },
+    hat:   { offsetY: -0.7, spikes: 0, len: 0, type: 'hat' },
+    hood:  { offsetY: -0.68, spikes: 0, len: 0, type: 'hood' },
+  };
+  return map[id] || map.none;
+}
+
+function getAccessoryDraw(id) {
+  const map = {
+    sword:   (cx, cy, s, col) => { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx + s*0.4, cy - s*0.2); ctx.lineTo(cx + s*0.6, cy + s*0.3); ctx.stroke(); ctx.fillStyle = '#ffd700'; ctx.fillRect(cx + s*0.42, cy - s*0.22, 4, 8); },
+    staff:   (cx, cy, s, col) => { ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx - s*0.35, cy - s*0.3); ctx.lineTo(cx - s*0.25, cy + s*0.4); ctx.stroke(); ctx.beginPath(); ctx.arc(cx - s*0.35, cy - s*0.35, s*0.04, 0, Math.PI*2); ctx.fillStyle = '#a855f7'; ctx.fill(); },
+    shield:  (cx, cy, s, col) => { ctx.fillStyle = '#4a9eff'; ctx.strokeStyle = '#6cb4ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(cx + s*0.35, cy + s*0.1, s*0.1, s*0.18, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke(); },
+    blaster: (cx, cy, s, col) => { ctx.fillStyle = '#facc15'; ctx.fillRect(cx + s*0.3, cy - s*0.05, s*0.3, s*0.06); ctx.fillStyle = '#ef4444'; ctx.fillRect(cx + s*0.55, cy - s*0.09, s*0.06, s*0.12); },
+    wings:   (cx, cy, s, col) => { ctx.fillStyle = `rgba(255,255,255,0.15)`; ctx.beginPath(); ctx.moveTo(cx - s*0.1, cy); ctx.lineTo(cx - s*0.4, cy - s*0.3); ctx.lineTo(cx - s*0.35, cy + s*0.1); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(cx + s*0.1, cy); ctx.lineTo(cx + s*0.4, cy - s*0.3); ctx.lineTo(cx + s*0.35, cy + s*0.1); ctx.closePath(); ctx.fill(); },
+    crown:   (cx, cy, s, col) => { ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.moveTo(cx - s*0.15, cy - s*0.6); ctx.lineTo(cx - s*0.12, cy - s*0.7); ctx.lineTo(cx, cy - s*0.62); ctx.lineTo(cx + s*0.12, cy - s*0.7); ctx.lineTo(cx + s*0.15, cy - s*0.6); ctx.closePath(); ctx.fill(); },
+    orb:     (cx, cy, s, col) => { ctx.beginPath(); ctx.arc(cx + s*0.3, cy - s*0.15, s*0.06, 0, Math.PI*2); ctx.fillStyle = '#a855f7'; ctx.fill(); ctx.beginPath(); ctx.arc(cx + s*0.3, cy - s*0.15, s*0.03, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); },
+  };
+  return map[id] || (() => {});
+}
+
+let animTime = 0;
+
+function drawPreview(time) {
+  animTime = time || 0;
+
+  const W = canvas.width;
+  const H = canvas.height;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Background glow
+  const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W*0.7);
+  grad.addColorStop(0, state.bodyColour + '15');
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  const s = Math.min(W, H) * 0.13;
+  const cx = W / 2;
+  const cy = H / 2 + s * 0.1;
+  const bounce = Math.sin(animTime * 0.002) * (s * 0.03);
+  const breath = Math.sin(animTime * 0.003) * 0.02 + 1;
+
+  ctx.save();
+  ctx.translate(cx, cy + bounce);
+  ctx.scale(breath, breath);
+
+  const col = state.bodyColour;
+
+  // ── Body ──
+  ctx.fillStyle = col;
+
+  // Outfit determines body shape
+  const outfit = getOutfitStyle(state.outfit);
+  const neckY = -s * 0.35;
+  const bottomY = s * outfit.bottom;
+  const shoulderW = s * outfit.shoulder;
+
+  // Torso
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.15, neckY);
+  ctx.lineTo(-shoulderW, bottomY);
+  ctx.lineTo(shoulderW, bottomY);
+  ctx.lineTo(s * 0.15, neckY);
+  ctx.closePath();
+  ctx.fill();
+
+  // Neck / head area
+  ctx.beginPath();
+  ctx.arc(0, -s * 0.45, s * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Outfit details ──
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  if (state.outfit === 'hoodie') {
+    // Hoodie string
+    ctx.beginPath(); ctx.moveTo(-2, neckY + s*0.1); ctx.lineTo(-8, neckY + s*0.25); ctx.moveTo(2, neckY + s*0.1); ctx.lineTo(8, neckY + s*0.25); ctx.stroke();
+    // Pocket
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.beginPath(); ctx.ellipse(0, bottomY - s*0.15, s*0.15, s*0.04, 0, 0, Math.PI*2); ctx.fill();
+  } else if (state.outfit === 'armour') {
+    // Armour plates
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(-s*0.12, neckY + s*0.1, s*0.24, s*0.15);
+    ctx.fillRect(-s*0.08, neckY + s*0.3, s*0.16, s*0.12);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.strokeRect(-s*0.12, neckY + s*0.1, s*0.24, s*0.15);
+  } else if (state.outfit === 'cloak') {
+    // Cloak cape
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.beginPath(); ctx.moveTo(-shoulderW - s*0.05, neckY); ctx.lineTo(-shoulderW - s*0.1, bottomY + s*0.1); ctx.lineTo(shoulderW + s*0.1, bottomY + s*0.1); ctx.lineTo(shoulderW + s*0.05, neckY); ctx.closePath(); ctx.fill();
+  } else if (state.outfit === 'robes') {
+    // Robe vertical line
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath(); ctx.moveTo(0, neckY + s*0.15); ctx.lineTo(0, bottomY); ctx.stroke();
+    // Collar
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.beginPath(); ctx.moveTo(-s*0.08, neckY); ctx.lineTo(0, neckY + s*0.15); ctx.lineTo(s*0.08, neckY); ctx.closePath(); ctx.fill();
+  }
+
+  // ── Hair ──
+  const hair = getHairStyle(state.hair);
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+
+  if (hair.type === 'hat') {
+    ctx.fillStyle = '#2d2d4a';
+    ctx.beginPath(); ctx.ellipse(0, -s * 0.55, s*0.2, s*0.05, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillRect(-s*0.12, -s*0.7, s*0.24, s*0.15);
+    ctx.fillStyle = '#3d3d5a';
+    ctx.fillRect(-s*0.1, -s*0.7, s*0.2, s*0.04);
+  } else if (hair.type === 'hood') {
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(0, -s*0.48, s*0.22, s*0.24, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.beginPath(); ctx.arc(0, -s*0.43, s*0.13, 0, Math.PI*2); ctx.fill();
+  } else if (hair.spikes > 0) {
+    for (let i = 0; i < hair.spikes; i++) {
+      const angle = (i / hair.spikes) * Math.PI - Math.PI/2 + 0.3;
+      const spread = (i / hair.spikes - 0.5) * 0.5;
+      const len = s * (0.12 + hair.len * 0.4);
+      ctx.beginPath();
+      ctx.moveTo(spread * s * 0.15, -s * 0.52);
+      ctx.lineTo(spread * s * 0.15 + Math.cos(angle) * len, -s * 0.52 - len * 0.6);
+      ctx.lineWidth = s * 0.04;
+      ctx.strokeStyle = col;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+  }
+
+  // ── Eyes ──
+  // Glowing eyes
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(-s*0.07, -s*0.43, s*0.028, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(s*0.07, -s*0.43, s*0.028, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = col;
+  ctx.beginPath(); ctx.arc(-s*0.07, -s*0.43, s*0.015, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(s*0.07, -s*0.43, s*0.015, 0, Math.PI*2); ctx.fill();
+
+  // ── Accessory ──
+  const accDraw = getAccessoryDraw(state.accessory);
+  const glow = Math.sin(animTime * 0.004) * 0.3 + 0.7;
+  ctx.globalAlpha = glow;
+  accDraw(0, 0, s, col);
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+
+  // ── Ground shadow ──
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + s * 0.9, s * 0.35, s * 0.04, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Ambient particles ──
+  ctx.fillStyle = 'rgba(180,180,255,0.06)';
+  for (let i = 0; i < 4; i++) {
+    const px = (Math.sin(animTime * 0.0005 + i * 2.3) * 0.5 + 0.5) * W;
+    const py = (Math.cos(animTime * 0.0007 + i * 1.7) * 0.35 + 0.5) * H;
+    const ps = 1 + Math.sin(animTime * 0.002 + i) * 0.5;
+    ctx.beginPath(); ctx.arc(px, py, ps, 0, Math.PI * 2); ctx.fill();
+  }
+
+  requestAnimationFrame(drawPreview);
+}
+
+requestAnimationFrame(drawPreview);
+
+// ─── Save & Return ───
+document.getElementById('confirm-btn').addEventListener('click', () => {
+  // Save to localStorage
+  localStorage.setItem('distorted_custom', JSON.stringify(state));
+  // Transition effect
+  canvas.style.transition = 'opacity 0.3s';
+  canvas.style.opacity = '0';
+  setTimeout(() => {
+    // Could navigate somewhere — for now just confirm
+    canvas.style.opacity = '1';
+    // Flash confirmation
+    const btn = document.getElementById('confirm-btn');
+    btn.textContent = '✓ SAVED';
+    btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+    setTimeout(() => {
+      btn.textContent = 'CONFIRM';
+      btn.style.background = 'linear-gradient(135deg, #6c5ce7, #a855f7)';
+    }, 1500);
+  }, 300);
+});
+
+document.getElementById('back-btn').addEventListener('click', () => {
+  window.location.href = 'distorted-menu.html';
+});
+
+// ─── Keyboard shortcuts ───
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('confirm-btn').click();
+  if (e.key === 'Escape') document.getElementById('back-btn').click();
+});
+
+</script>
+</body>
+</html>
