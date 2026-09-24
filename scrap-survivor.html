@@ -136,7 +136,7 @@
       💥 <b>Nova:</b> Q (PC) · NOVA button — charges on kills, clears the screen!<br>
       💰 Enemies drop <b>scrap</b> — spend it in the shop between waves<br>
       🎁 Grab <b>power-ups</b>: ❤️ health · ☢️ nuke · ❄️ freeze · ⚡ frenzy<br>
-      🤖 Buy a <b>Companion Drone</b> and it shoots for you<br>
+      🤖 Buy <b>Companion Drones</b> — up to 8 orbiting bots that shoot for you<br>
       🔩 Bosses drop <b>Cores</b> — spend them in the ARMORY for permanent power<br>
       💀 A <b>BOSS</b> spawns every 5 waves. Survive as long as you can!
     </div>
@@ -257,19 +257,19 @@ const WORDER = ['pistol','smg','shotgun','flame','rifle','tesla','laser','rocket
 
 /* ============================ IN-RUN UPGRADES ============================ */
 const UPGRADES = [
-  { id:'dmg',    name:'Power Core',   desc:'+16% bullet damage',            max:10, base:60,  grow:1.5 },
-  { id:'rate',   name:'Overclock',    desc:'+12% fire rate',                max:10, base:60,  grow:1.5 },
-  { id:'hp',     name:'Armor Plating',desc:'+25 max HP (heals 25)',         max:8,  base:70,  grow:1.55 },
-  { id:'speed',  name:'Thrusters',    desc:'+8% move speed',                max:6,  base:65,  grow:1.5 },
-  { id:'multi',  name:'Split Shot',   desc:'+1 bullet per shot',            max:4,  base:220, grow:1.9 },
-  { id:'pierce', name:'Rail Rounds',  desc:'+1 pierce',                     max:4,  base:200, grow:1.9 },
-  { id:'crit',   name:'Weak Points',  desc:'+8% crit chance (x2.2 dmg)',    max:6,  base:90,  grow:1.6 },
-  { id:'regen',  name:'Nanobots',     desc:'+0.5 HP regen / sec',           max:6,  base:110, grow:1.6 },
-  { id:'magnet', name:'Scrap Magnet', desc:'+35 pickup radius',             max:4,  base:60,  grow:1.7 },
-  { id:'dash',   name:'Dash Charge',  desc:'-14% dash cooldown',            max:4,  base:80,  grow:1.6 },
-  { id:'nova',   name:'Nova Capacitor',desc:'Nova charges 30% faster',      max:5,  base:90,  grow:1.6 },
-  { id:'drone',  name:'Companion Drone',desc:'+1 orbiting attack drone',    max:3,  base:300, grow:1.8 },
-  { id:'laser',  name:'Leech Rounds', desc:'Heal 3% of damage dealt',       max:5,  base:130, grow:1.7 }
+  { id:'dmg',    name:'Power Core',   desc:'+16% bullet damage',            max:25, base:60,  grow:1.28 },
+  { id:'rate',   name:'Overclock',    desc:'+12% fire rate',                max:25, base:60,  grow:1.28 },
+  { id:'hp',     name:'Armor Plating',desc:'+25 max HP (heals 25)',         max:20, base:70,  grow:1.30 },
+  { id:'speed',  name:'Thrusters',    desc:'+8% move speed',                max:15, base:65,  grow:1.30 },
+  { id:'multi',  name:'Split Shot',   desc:'+1 bullet per shot',            max:8,  base:220, grow:1.62 },
+  { id:'pierce', name:'Rail Rounds',  desc:'+1 pierce',                     max:8,  base:200, grow:1.62 },
+  { id:'crit',   name:'Weak Points',  desc:'+8% crit chance (x2.2 dmg)',    max:15, base:90,  grow:1.36 },
+  { id:'regen',  name:'Nanobots',     desc:'+0.5 HP regen / sec',           max:15, base:110, grow:1.36 },
+  { id:'magnet', name:'Scrap Magnet', desc:'+35 pickup radius',             max:10, base:60,  grow:1.45 },
+  { id:'dash',   name:'Dash Charge',  desc:'-12% dash cooldown',            max:10, base:80,  grow:1.40 },
+  { id:'nova',   name:'Nova Capacitor',desc:'Nova charges 30% faster',      max:12, base:90,  grow:1.38 },
+  { id:'drone',  name:'Companion Drone',desc:'+1 orbiting attack drone',    max:8,  base:300, grow:1.55 },
+  { id:'laser',  name:'Leech Rounds', desc:'Heal 3% of damage dealt',       max:12, base:130, grow:1.40 }
 ];
 function upgradeCost(u, lvl) { return Math.round(u.base * Math.pow(u.grow, lvl)); }
 
@@ -378,7 +378,7 @@ function startWave(n) {
 }
 function spawnEnemy(type, px, py) {
   const et = ETYPES[type];
-  const waveMul = 1 + (wave - 1) * 0.16;
+  const waveMul = 1 + (wave - 1) * 0.16 + Math.max(0, wave - 20) * 0.05 + Math.max(0, wave - 30) * 0.09 + Math.max(0, wave - 40) * 0.14;
   let x, y;
   if (px !== undefined) { x = px; y = py; }
   else {
@@ -389,7 +389,8 @@ function spawnEnemy(type, px, py) {
     else { x = -m; y = rand(-m, H + m); }
   }
   const hp = Math.round(et.hp * waveMul * (type === 'boss' ? 1 + (wave / 5 - 1) * 0.35 : 1));
-  enemies.push({ type, x, y, r: et.r, hp, maxHp: hp, spd: et.spd * (1 + (wave - 1) * 0.02),
+  const spdMul = 1 + (wave - 1) * 0.02 + Math.max(0, wave - 30) * 0.012 + Math.max(0, wave - 40) * 0.02;
+  enemies.push({ type, x, y, r: et.r, hp, maxHp: hp, spd: et.spd * spdMul,
     dmg: et.dmg, scrap: et.scrap, color: et.color, act: et.act,
     vx:0, vy:0, flash:0, shootCd: rand(0.8, 2), bossSpawnCd: 3.5, fuse:null, __id: ++bulletId });
 }
