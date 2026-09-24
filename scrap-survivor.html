@@ -77,6 +77,18 @@
   .card .cost { font-size:12px; font-weight:bold; margin-top:6px; color:#ffd97a; }
   .card.owned { border-color:#4ade80; background:rgba(74,222,128,.12); }
   .card.owned .cost { color:#4ade80; }
+  /* perk draft + cursed deal */
+  .card.perk { text-align:center; padding:16px 12px; border-color:rgba(125,249,255,.35); background:rgba(125,249,255,.07); }
+  .card.perk:hover { border-color:#7df9ff; transform:translateY(-3px); box-shadow:0 8px 22px rgba(125,249,255,.25); }
+  .card.perk .ico { font-size:30px; line-height:1; margin-bottom:6px; }
+  .card.perk .t { font-size:16px; }
+  .card.perk .d { font-size:12px; margin-top:5px; }
+  .card.picked { border-color:#4ade80; background:rgba(74,222,128,.16); }
+  .dealrow { display:flex; gap:12px; align-items:center; text-align:left; margin:10px 0; }
+  .dealrow .em { font-size:30px; }
+  .dealgood { color:#8cff9d; font-weight:bold; font-size:15px; }
+  .dealbad { color:#ff8080; font-size:13.5px; margin-top:2px; }
+  .dealbox { background:rgba(0,0,0,.35); border:2px solid rgba(255,90,120,.5); border-radius:14px; padding:14px; }
   .sec { text-align:left; font-size:12px; letter-spacing:2px; color:#7fd0ff; margin:16px 0 8px;
          text-transform:uppercase; font-weight:bold; }
 
@@ -232,6 +244,27 @@
   </div>
 </div>
 
+<div class="overlay" id="perk">
+  <div class="panel">
+    <div class="logo" style="font-size:clamp(26px,8vw,48px);background:linear-gradient(180deg,#d7f4ff,#7df9ff);-webkit-background-clip:text;background-clip:text;">LEVEL UP</div>
+    <div class="tagline" id="perkSub">PICK A PERK</div>
+    <div class="grid" id="perkGrid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));"></div>
+    <div class="vsline" style="margin-top:14px;font-size:12px;opacity:.65;">Your build: <span id="perkOwned" style="color:#7df9ff;">none yet</span></div>
+  </div>
+</div>
+
+<div class="overlay" id="deal">
+  <div class="panel" style="width:min(600px,94vw);">
+    <div class="logo" style="font-size:clamp(24px,7vw,44px);background:linear-gradient(180deg,#ffd7d7,#ff3b5c);-webkit-background-clip:text;background-clip:text;">CURSED DEAL</div>
+    <div class="tagline">BOSS SLAIN — TAKE THE GAMBLE?</div>
+    <div id="dealBox"></div>
+    <div class="bigmenu" style="margin-top:16px;">
+      <button class="mbtn primary" id="dealAccept" style="background:linear-gradient(180deg,#ffb3c4,#ff3b5c 60%,#a1102f);border-color:#ffb3c4;">😈 ACCEPT THE DEAL</button>
+      <button class="mbtn" id="dealDecline">🙅 PLAY IT SAFE <span class="sub">(+80 scrap)</span></button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="pause">
   <div class="panel" style="width:min(420px,92vw);">
     <div class="logo" style="font-size:clamp(32px,9vw,56px);">PAUSED</div>
@@ -317,6 +350,78 @@ const UPGRADES = [
 ];
 function upgradeCost(u, lvl) { return Math.round(u.base * Math.pow(u.grow, lvl)); }
 
+/* ============================ LEVEL-UP PERKS (draft 1 of 3) ============================ */
+const PERKS = [
+  { id:'glass',   name:'Glass Cannon',   icon:'🔻', desc:'+40% damage, −25% max HP' },
+  { id:'twin',    name:'Twin Barrels',   icon:'🔫', desc:'+1 bullet per shot' },
+  { id:'vamp',    name:'Vampiric Rounds',icon:'🩸', desc:'Heal 4% of damage you deal' },
+  { id:'thorns',  name:'Spiked Hull',    icon:'🛡', desc:'Deal 20 damage to anything that touches you' },
+  { id:'bomb',    name:'Death Blossom',  icon:'💥', desc:'Kills explode for 26 damage in a small radius' },
+  { id:'crit',    name:'Deadeye',        icon:'🎯', desc:'+12% crit chance' },
+  { id:'rapid',   name:'Rapid Hands',    icon:'⚡', desc:'+22% fire rate' },
+  { id:'boots',   name:'Rocket Boots',   icon:'👟', desc:'+15% move speed' },
+  { id:'charge',  name:'Overcharged Nova',icon:'💫',desc:'Nova charges 45% faster + 40% bigger' },
+  { id:'magnet',  name:'Big Magnet',     icon:'🧲', desc:'+80 pickup radius' },
+  { id:'regen',   name:'Living Metal',   icon:'💚', desc:'+1.2 HP regen / sec' },
+  { id:'dash',    name:'Phase Dash',     icon:'💨', desc:'−30% dash cooldown' },
+  { id:'ammo',    name:'Hollow Points',  icon:'🔩', desc:'+1 pierce' },
+  { id:'drone',   name:'Extra Drone',    icon:'🤖', desc:'+1 orbiting attack drone' },
+  { id:'lucky',   name:'Lucky Charm',    icon:'🍀', desc:'+35% scrap + better power-up drops' },
+  { id:'slow',    name:'Cryo Rounds',    icon:'❄', desc:'Hits slow enemies by 25% for 1.5s' },
+  { id:'shield',  name:'Kinetic Shield', icon:'🔵', desc:'+35 max HP and heal that much' },
+  { id:'gold',    name:'Gold Rounds',    icon:'🟡', desc:'+25% damage' }
+];
+function perkStacks() {
+  const s = {}; for (const p of runPerks) s[p.id] = (s[p.id] || 0) + 1; return s;
+}
+function hasPerk(id) { return runPerks.some(p => p.id === id); }
+function applyPerk(p) {
+  runPerks.push({ id: p.id, name: p.name, icon: p.icon });
+  const st = perkStacks()[p.id];
+  switch (p.id) {
+    case 'glass':  player.maxHp = Math.round(player.maxHp * 0.75); player.hp = Math.min(player.hp, player.maxHp); runMod.dmgMul *= 1.4; break;
+    case 'twin':   player.perkMulti = (player.perkMulti || 0) + 1; break;
+    case 'vamp':   player.perkVamp = (player.perkVamp || 0) + 0.04; break;
+    case 'thorns': player.perkThorns = (player.perkThorns || 0) + 20; break;
+    case 'bomb':   player.perkBomb = (player.perkBomb || 0) + 26; break;
+    case 'crit':   player.up.crit += 1.5; break;
+    case 'rapid':  player.up.rate += 1.8; break;
+    case 'boots':  player.up.speed += 1.9; break;
+    case 'charge': player.up.nova += 1.5; player.perkNovaR = (player.perkNovaR || 0) + 0.4; break;
+    case 'magnet': player.up.magnet += 2.3; break;
+    case 'regen':  player.up.regen += 2.4; break;
+    case 'dash':   player.up.dash += 2.5; break;
+    case 'ammo':   player.up.pierce += 1; break;
+    case 'drone':  player.up.drone += 1; break;
+    case 'lucky':  runMod.scrapMul *= 1.35; runMod.dropMul *= 1.6; break;
+    case 'slow':   player.perkSlow = 1; break;
+    case 'shield': player.maxHp += 35; player.hp += 35; break;
+    case 'gold':   runMod.dmgMul *= 1.25; break;
+  }
+  void st;
+}
+/* ============================ CURSED DEALS (after every boss) ============================ */
+const DEALS = [
+  { name:'Blood Pact',   icon:'🩸', up:'+45% damage, +20% fire rate',           down:'−30% max HP',
+    good:()=>{ runMod.dmgMul *= 1.45; player.up.rate += 2.2; }, bad:()=>{ player.maxHp = Math.round(player.maxHp*0.7); player.hp = Math.min(player.hp, player.maxHp); } },
+  { name:'Hoarder',      icon:'💰', up:'Enemies drop double scrap',             down:'Enemies +25% tougher',
+    good:()=>{ runMod.scrapMul *= 2; }, bad:()=>{ runMod.enemyHp *= 1.25; } },
+  { name:'Overclock',    icon:'⚡', up:'+35% fire rate',                       down:'Enemies +12% move speed',
+    good:()=>{ player.up.rate += 3; }, bad:()=>{ runMod.enemySpd *= 1.12; } },
+  { name:'Berserker',    icon:'🔥', up:'+30% damage',                          down:'−20% max HP',
+    good:()=>{ runMod.dmgMul *= 1.3; }, bad:()=>{ player.maxHp = Math.round(player.maxHp*0.8); player.hp = Math.min(player.hp, player.maxHp); } },
+  { name:'Iron Skin',    icon:'🛡', up:'+60 max HP (healed)',                  down:'−15% move speed',
+    good:()=>{ player.maxHp += 60; player.hp += 60; }, bad:()=>{ player.up.speed = Math.max(0, player.up.speed - 1.9); } },
+  { name:'Volatile',     icon:'💣', up:'Kills explode for 30 damage',          down:'Explosions also hurt you (8)',
+    good:()=>{ player.perkBomb = (player.perkBomb||0) + 30; }, bad:()=>{ player.perkSelfBomb = 8; } },
+  { name:'Greedy',       icon:'🍀', up:'Power-ups drop way more often',         down:'−15% damage',
+    good:()=>{ runMod.dropMul *= 2.4; }, bad:()=>{ runMod.dmgMul *= 0.85; } },
+  { name:'Titan',        icon:'🦾', up:'Enemies +40% slower',                 down:'+35% enemy HP',
+    good:()=>{ runMod.enemySpd *= 0.6; }, bad:()=>{ runMod.enemyHp *= 1.35; } }
+];
+let runPerks = [];
+let blossomDepth = 0;
+
 /* ============================ PERMANENT (ARMORY) ============================ */
 const PERMS = [
   { id:'hp',    name:'Vitality Training', desc:'+15 starting max HP',           max:5, cost:l => 2 + l*2 },
@@ -350,6 +455,16 @@ let wave = 1, waveActive = false, spawnQueue = [], spawnTimer = 0;
 let bulletId = 0, shake = 0, freezeT = 0, frenzyT = 0, waveBannerT = 0;
 let godMode = false;
 let hitstop = 0, dmgFlash = 0, bloodOn = true;
+/* combo + progression */
+let combo = 0, comboT = 0, comboBest = 0;
+let xp = 0, level = 1, xpNeed = 6, pendingLevels = 0;
+let dealPending = false;
+const runMod = { enemyHp:1, enemySpd:1, scrapMul:1, dmgMul:1, dropMul:1 };
+function comboMult() { return 1 + Math.min(combo, 40) * 0.05; }
+function gainXp(n) {
+  xp += n;
+  while (xp >= xpNeed) { xp -= xpNeed; level++; xpNeed = Math.round(6 + (level - 1) * 4.5); pendingLevels++; }
+}
 
 const player = {
   x: W/2, y: H/2, r: 15, hp: 100, maxHp: 100,
@@ -362,7 +477,13 @@ const player = {
 };
 
 const bullets = [], ebullets = [], enemies = [], pickups = [], powerups = [], parts = [], floats = [], rings = [];
-const decals = [], gibs = [], afterimages = [];
+const decals = [], gibs = [], afterimages = [], edgeBlood = [];
+function edgeSplat() {
+  if (!bloodOn) return;
+  const side = Math.floor(Math.random() * 4);
+  for (let i = 0; i < 3; i++) edgeBlood.push({ side, p: Math.random(), r: rand(28, 80), life: rand(1.6, 3.2), max: 3.2 });
+  if (edgeBlood.length > 36) edgeBlood.splice(0, edgeBlood.length - 36);
+}
 
 /* ============================ GORE / FX HELPERS ============================ */
 const MAX_PARTS = 900, MAX_DECALS = 120, MAX_GIBS = 140;
@@ -408,22 +529,27 @@ function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 function dist2(ax, ay, bx, by) { const dx = ax - bx, dy = ay - by; return dx * dx + dy * dy; }
 function circle(c, x, y, r) { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); }
 
-function statDmg() { return WEAPONS[player.weapon].dmg * (1 + player.up.dmg * 0.16) * player.permDmg * (frenzyT > 0 ? 1.6 : 1); }
+function statDmg() { return WEAPONS[player.weapon].dmg * (1 + player.up.dmg * 0.16) * player.permDmg * runMod.dmgMul * (frenzyT > 0 ? 1.6 : 1); }
 function statRate() { return WEAPONS[player.weapon].rate / (1 + player.up.rate * 0.12) * (frenzyT > 0 ? 0.6 : 1); }
-function statSpeed() { return 215 * (1 + player.up.speed * 0.08) * player.permSpeed; }
-function statBullets() { return WEAPONS[player.weapon].bullets + player.up.multi; }
+function statSpeed() { return 215 * (1 + player.up.speed * 0.08) * player.permSpeed * (player.slowT > 0 ? 0.55 : 1); }
+function statBullets() { return WEAPONS[player.weapon].bullets + player.up.multi + (player.perkMulti || 0); }
 function statPierce() { return WEAPONS[player.weapon].pierce + player.up.pierce; }
 function statCrit() { return player.up.crit * 0.08; }
 function statRegen() { return player.up.regen * 0.5; }
 function statMagnet() { return 55 + player.up.magnet * 35 + permLvl('magnet') * 30; }
 function dashCdMax() { return 1.5 * Math.pow(0.86, player.up.dash) * Math.pow(0.9, permLvl('cd')); }
-function novaMax() { return 100; }
+function novaMax() { return 100 / (1 + (player.perkNovaR || 0)); }
 function novaGain() { return 5 * (1 + player.up.nova * 0.30) * (1 + permLvl('nova') * 0.25); }
 
 /* ============================ RUN CONTROL ============================ */
 function resetRun() {
   scrap = permLvl('start') * 80; kills = 0; runScrap = 0; runCores = 0; wave = 1;
   freezeT = 0; frenzyT = 0; bulletId = 0; hitstop = 0; dmgFlash = 0;
+  combo = 0; comboT = 0; comboBest = 0; xp = 0; level = 1; xpNeed = 6; pendingLevels = 0;
+  dealPending = false; runPerks = []; blossomDepth = 0;
+  runMod.enemyHp = 1; runMod.enemySpd = 1; runMod.scrapMul = 1; runMod.dmgMul = 1; runMod.dropMul = 1;
+  player.perkMulti = 0; player.perkVamp = 0; player.perkThorns = 0; player.perkBomb = 0;
+  player.perkNovaR = 0; player.perkSlow = 0; player.perkSelfBomb = 0; player.slowT = 0;
   player.maxHp = 100 + permLvl('hp') * 15;
   player.hp = player.maxHp;
   player.x = W/2; player.y = H/2; player.vx = 0; player.vy = 0; player.angle = 0; player.fireCd = 0;
@@ -436,7 +562,7 @@ function resetRun() {
   player.drones = [];
   bullets.length = 0; ebullets.length = 0; enemies.length = 0; pickups.length = 0;
   powerups.length = 0; parts.length = 0; floats.length = 0; rings.length = 0;
-  decals.length = 0; gibs.length = 0; afterimages.length = 0;
+  decals.length = 0; gibs.length = 0; afterimages.length = 0; edgeBlood.length = 0;
   startWave(1);
 }
 function startWave(n) {
@@ -475,11 +601,20 @@ function spawnEnemy(type, px, py) {
     else if (side === 2) { x = rand(-m, W + m); y = H + m; }
     else { x = -m; y = rand(-m, H + m); }
   }
-  const hp = Math.round(et.hp * waveMul * (type === 'boss' ? 1 + (wave / 5 - 1) * 0.35 : 1));
+  const hp = Math.round(et.hp * waveMul * (type === 'boss' ? 1 + (wave / 5 - 1) * 0.35 : 1) * runMod.enemyHp);
   const spdMul = 1 + (wave - 1) * 0.02 + Math.max(0, wave - 30) * 0.012 + Math.max(0, wave - 40) * 0.02;
-  enemies.push({ type, x, y, r: et.r, hp, maxHp: hp, spd: et.spd * spdMul,
-    dmg: et.dmg, scrap: et.scrap, color: et.color, act: et.act,
-    vx:0, vy:0, flash:0, shootCd: rand(0.8, 2), bossSpawnCd: 3.5, fuse:null, __id: ++bulletId });
+  const e = { type, x, y, r: et.r, hp, maxHp: hp, spd: et.spd * spdMul * runMod.enemySpd,
+    dmg: et.dmg, scrap: et.scrap, color: et.color, blood: et.blood, act: et.act,
+    vx:0, vy:0, flash:0, shootCd: rand(0.8, 2), bossSpawnCd: 3.5, fuse:null, __id: ++bulletId };
+  /* ELITE roll — tougher, faster, glowing, drops guaranteed loot */
+  const isElite = type !== 'boss' && type !== 'mini' && wave >= 3 && Math.random() < Math.min(0.16, 0.03 + wave * 0.008);
+  if (isElite) {
+    e.elite = true;
+    e.hp = e.maxHp = Math.round(e.hp * 3.1);
+    e.spd *= 1.15; e.r *= 1.28; e.scrap = Math.round(e.scrap * 4);
+    e.dmg = Math.round(e.dmg * 1.4);
+  }
+  enemies.push(e);
 }
 
 /* ============================ DASH / NOVA ============================ */
@@ -554,8 +689,11 @@ function droneFire(d) {
 /* ============================ DAMAGE ============================ */
 function damageEnemy(e, dmg, crit) {
   if (e.hp <= 0) return;
+  dmg *= runMod.dmgMul;
   e.hp -= dmg; e.flash = 0.09;
+  if (player.perkSlow) { e.slowT = 1.5; }
   if (player.up.laser > 0) player.hp = Math.min(player.maxHp, player.hp + dmg * 0.03 * player.up.laser);
+  if (player.perkVamp) player.hp = Math.min(player.maxHp, player.hp + dmg * player.perkVamp);
   const bc = bloodOf(e);
   spray(e.x, e.y, crit ? 14 : 7, bc, crit ? 330 : 210, 40);
   sparks(e.x, e.y, crit ? 8 : 3);
@@ -569,6 +707,14 @@ function killEnemy(e) {
   kills++; runScrap += e.scrap;
   player.nova = Math.min(novaMax(), player.nova + novaGain());
 
+  /* combo + xp */
+  combo++; comboT = 2.6; if (combo > comboBest) comboBest = combo;
+  gainXp(e.type === 'boss' ? 8 : (e.type === 'elite' ? 4 : (e.type === 'tank' || e.type === 'splitter' ? 2 : 1)));
+  if (combo > 0 && combo % 10 === 0) {
+    toast('🔥 x' + combo + ' COMBO!  +' + (combo * 3) + ' scrap');
+    runScrap += combo * 3; floats.push({ x: player.x, y: player.y - 40, txt: 'x' + combo + '!', life: 1.0, col: '#ff9d3c' });
+  }
+
   // splitter spawns minis
   if (e.type === 'splitter') {
     for (let i = 0; i < 3; i++) {
@@ -577,17 +723,18 @@ function killEnemy(e) {
     }
   }
   // pickups
-  const loot = Math.round(e.scrap * player.permScrap);
+  const loot = Math.round(e.scrap * player.permScrap * runMod.scrapMul * comboMult());
   for (let i = 0; i < (e.type === 'boss' ? 5 : 1); i++) {
     const v = e.type === 'boss' ? Math.round(loot / 5) : loot;
     pickups.push({ x: e.x + rand(-14,14), y: e.y + rand(-14,14), vx: rand(-60,60), vy: rand(-60,60), v: v, r: 6, life: 14 });
   }
   // powerup drop
-  const dropChance = e.type === 'boss' ? 1 : (['tank','splitter','shooter'].includes(e.type) ? 0.14 : 0.045);
+  const dropChance = (e.type === 'boss' ? 1 : (['tank','splitter','shooter'].includes(e.type) ? 0.14 : 0.045)) * runMod.dropMul;
   if (Math.random() < dropChance) spawnPowerup(e.x, e.y);
   // boss cores
   if (e.type === 'boss') {
     runCores += 3; toast('🔩 +3 Cores from boss!'); shake = Math.max(shake, 20);
+    dealPending = true;   // offer a Cursed Deal after the boss falls
   }
   const n = e.type === 'boss' ? 40 : 12;
   const bc = bloodOf(e);
@@ -597,7 +744,13 @@ function killEnemy(e) {
     spray(e.x, e.y, 90, bc, 520, 90);
     splat(e.x, e.y, 60, bc); splat(e.x + rand(-40,40), e.y + rand(-40,40), 40, bc); splat(e.x + rand(-40,40), e.y + rand(-40,40), 34, bc);
     for (let i = 0; i < 9; i++) gib(e.x, e.y, bc);
+    edgeSplat(); edgeSplat();
     shake = Math.max(shake, 26); hitstop = Math.max(hitstop, 0.12);
+  } else if (e.elite) {
+    spray(e.x, e.y, 34, bc, 400, 70);
+    splat(e.x, e.y, e.r * 1.5, bc); gib(e.x, e.y, bc); gib(e.x, e.y, bc);
+    for (let i = 0; i < 14; i++) sparks(e.x, e.y, 1);
+    hitstop = Math.max(hitstop, 0.08); shake = Math.max(shake, 12);
   } else {
     const heavy = ['tank','splitter','shooter','exploder'].includes(e.type);
     spray(e.x, e.y, heavy ? 26 : 16, bc, heavy ? 340 : 260, 55);
@@ -606,11 +759,26 @@ function killEnemy(e) {
     if (heavy) hitstop = Math.max(hitstop, 0.05);
   }
   sfx(e.type === 'boss' ? 90 : 200, e.type === 'boss' ? 0.6 : 0.12, 'sawtooth', e.type === 'boss' ? 0.07 : 0.04);
+  /* Death Blossom — corpse detonates (chain-safe via depth guard) */
+  if (player.perkBomb && state === 'playing') {
+    if (blossomDepth < 6) {
+      blossomDepth++;
+      rings.push({ x:e.x, y:e.y, r:6, max:54, life:0.24, maxLife:0.24, col:'#ff9d3c' });
+      for (let i = 0; i < 10; i++) parts.push({ x:e.x, y:e.y, vx:rand(-200,200), vy:rand(-200,200), life:rand(0.2,0.4), max:0.4, r:rand(1.5,4), col:'#ffb03a' });
+      for (const o of enemies.slice()) {
+        if (dist2(o.x, o.y, e.x, e.y) < 54*54) damageEnemy(o, player.perkBomb, false);
+      }
+      if (player.perkSelfBomb) {
+        if (dist2(player.x, player.y, e.x, e.y) < 54*54) hurtPlayer(player.perkSelfBomb);
+      }
+      blossomDepth--;
+    }
+  }
 }
 function spawnMini(x, y) {
   const et = ETYPES.mini;
   enemies.push({ type:'mini', x, y, r: et.r, hp: et.hp, maxHp: et.hp, spd: et.spd,
-    dmg: et.dmg, scrap: et.scrap, color: et.color, act:'chase', vx:0, vy:0, flash:0, shootCd:1, fuse:null, __id: ++bulletId });
+    dmg: et.dmg, scrap: et.scrap, color: et.color, blood: et.blood, act:'chase', vx:0, vy:0, flash:0, shootCd:1, fuse:null, __id: ++bulletId });
 }
 function hurtPlayer(dmg) {
   if (godMode) return;
@@ -621,6 +789,7 @@ function hurtPlayer(dmg) {
   sfx(160, 0.14, 'square', 0.06);
   spray(player.x, player.y, 18, PLAYER_BLOOD, 300, 70);
   splat(player.x, player.y, player.r * 0.8, PLAYER_BLOOD);
+  edgeSplat();
   for (let i = 0; i < 10; i++) parts.push({ x:player.x, y:player.y, vx:rand(-160,160), vy:rand(-160,160), life:0.3, max:0.3, r:rand(2,5), col:'#ff6b6b' });
   if (player.hp <= 0) { player.hp = 0; gameOver(); }
 }
@@ -676,7 +845,9 @@ function waveComplete() {
   save.totalKills = (save.totalKills || 0) + kills;
   persist();
   scrap += runScrap; runScrap = 0;
-  state = 'shop'; openShop(); updateChrome();
+  if (dealPending) { openDeal(); return; }
+  if (pendingLevels > 0) { openPerkDraft(); return; }
+  goShop();
   sfx(660, 0.2, 'square', 0.05);
 }
 function gameOver() {
@@ -695,7 +866,6 @@ function gameOver() {
   hideAll(); showScreen('gameover'); updateChrome();
   sfx(120, 0.6, 'sawtooth', 0.06);
 }
-
 /* ============================ UPDATE ============================ */
 function update(dt) {
   if (shake > 0) shake = Math.max(0, shake - dt * 70);
@@ -703,6 +873,9 @@ function update(dt) {
   if (freezeT > 0) freezeT -= dt;
   if (frenzyT > 0) frenzyT -= dt;
   if (waveBannerT > 0) waveBannerT -= dt;
+  if (comboT > 0) { comboT -= dt; if (comboT <= 0) combo = 0; }
+  if (player.slowT > 0) player.slowT -= dt;
+  for (let i = edgeBlood.length - 1; i >= 0; i--) { const b = edgeBlood[i]; b.life -= dt; if (b.life <= 0) edgeBlood.splice(i,1); }
   for (let i = parts.length - 1; i >= 0; i--) {
     const p = parts[i]; p.x += p.vx*dt; p.y += p.vy*dt; p.vx*=0.94; p.vy*=0.94;
     if (p.grav) { p.vy += 460*dt; if (p.y > H - 4) { p.y = H - 4; p.vy *= -0.18; p.vx *= 0.5; } }
@@ -775,12 +948,14 @@ function update(dt) {
   const slow = freezeT > 0 ? 0.35 : 1;
   for (const e of enemies) {
     if (e.flash > 0) e.flash -= dt;
+    if (e.slowT > 0) e.slowT -= dt;
+    const eslow = slow * (e.slowT > 0 ? 0.75 : 1);
     const dx = player.x - e.x, dy = player.y - e.y, d = Math.hypot(dx, dy) || 1;
 
     if (e.act === 'ranged') {
       const want = 260;
-      if (d > want+20) { e.vx = dx/d*e.spd*slow; e.vy = dy/d*e.spd*slow; }
-      else if (d < want-20) { e.vx = -dx/d*e.spd*slow; e.vy = -dy/d*e.spd*slow; }
+      if (d > want+20) { e.vx = dx/d*e.spd*eslow; e.vy = dy/d*e.spd*eslow; }
+      else if (d < want-20) { e.vx = -dx/d*e.spd*eslow; e.vy = -dy/d*e.spd*eslow; }
       else { e.vx *= 0.7; e.vy *= 0.7; }
       e.shootCd -= dt * (freezeT>0?0.5:1);
       if (e.shootCd <= 0 && d < 480) {
@@ -790,7 +965,7 @@ function update(dt) {
         sfx(300, 0.06, 'sawtooth', 0.02);
       }
     } else if (e.act === 'boss') {
-      e.vx = dx/d*e.spd*slow; e.vy = dy/d*e.spd*slow;
+      e.vx = dx/d*e.spd*eslow; e.vy = dy/d*e.spd*eslow;
       e.shootCd -= dt * (freezeT>0?0.5:1);
       if (e.shootCd <= 0) {
         e.shootCd = 2.2;
@@ -802,7 +977,7 @@ function update(dt) {
       e.bossSpawnCd -= dt;
       if (e.bossSpawnCd <= 0) { e.bossSpawnCd = 4.5; for (let k=0;k<2;k++) spawnEnemy('fast'); }
     } else if (e.type === 'exploder') {
-      e.vx = dx/d*e.spd*slow; e.vy = dy/d*e.spd*slow;
+      e.vx = dx/d*e.spd*eslow; e.vy = dy/d*e.spd*eslow;
       if (d < 78 && e.fuse === null) { e.fuse = 0.6; sfx(500, 0.1, 'square', 0.03); }
       if (e.fuse !== null) { e.fuse -= dt; if (e.fuse <= 0) {
         explodeAt(e.x, e.y, 92, 0, false);
@@ -811,11 +986,14 @@ function update(dt) {
         continue;
       } }
     } else {
-      e.vx = dx/d*e.spd*slow; e.vy = dy/d*e.spd*slow;
+      e.vx = dx/d*e.spd*eslow; e.vy = dy/d*e.spd*eslow;
     }
     e.x += e.vx*dt; e.y += e.vy*dt;
     e.vx *= 0.9; e.vy *= 0.9;
-    if (e.act !== 'ranged' && e.type !== 'exploder' && d < e.r + player.r && e.dmg > 0) hurtPlayer(e.dmg);
+    if (e.act !== 'ranged' && e.type !== 'exploder' && d < e.r + player.r && e.dmg > 0) {
+      hurtPlayer(e.dmg);
+      if (player.perkThorns) { damageEnemy(e, player.perkThorns, false); spray(player.x, player.y, 8, PLAYER_BLOOD, 200, 30); }
+    }
   }
 
   /* enemy bullets */
@@ -851,6 +1029,9 @@ function update(dt) {
     while (spawnQueue.length && spawnQueue[0].t <= spawnTimer) { const s = spawnQueue.shift(); spawnEnemy(s.type); }
     if (spawnQueue.length === 0 && enemies.length === 0) waveComplete();
   }
+
+  /* level-up mid-wave: pause and offer the perk draft */
+  if (state === 'playing' && pendingLevels > 0) openPerkDraft();
 }
 
 /* ============================ RENDER ============================ */
@@ -935,6 +1116,20 @@ function render() {
   // particles
   for (const p of parts) { ctx.globalAlpha = Math.max(0, p.life/p.max); ctx.fillStyle = p.col; circle(ctx, p.x, p.y, p.r); ctx.fill(); }
   ctx.globalAlpha = 1;
+  // edge blood (hit feedback)
+  for (const b of edgeBlood) {
+    const a = Math.min(1, b.life / 1.4);
+    ctx.globalAlpha = a * 0.5;
+    ctx.fillStyle = '#b3122a';
+    const rw = b.r * 2.2, rh = b.r * 2.6;
+    let bx, by;
+    if (b.side === 0) { bx = b.p * W; by = 0; }
+    else if (b.side === 1) { bx = W; by = b.p * H; }
+    else if (b.side === 2) { bx = b.p * W; by = H; }
+    else { bx = 0; by = b.p * H; }
+    ctx.beginPath(); ctx.ellipse(bx, by, rw, rh, 0, 0, 7); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
   // gibs (flying chunks)
   for (const g of gibs) {
     ctx.globalAlpha = Math.max(0, Math.min(1, g.life / 0.5));
@@ -988,7 +1183,16 @@ function drawPlayer() {
   }
 }
 function drawEnemy(e) {
+  if (e.elite) {
+    // glowing aura for elites
+    const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 160 + e.__id);
+    const gr = ctx.createRadialGradient(e.x, e.y, e.r * 0.4, e.x, e.y, e.r * 2.3);
+    gr.addColorStop(0, 'rgba(255,220,90,' + (0.42 * pulse).toFixed(2) + ')');
+    gr.addColorStop(1, 'rgba(255,180,40,0)');
+    ctx.fillStyle = gr; circle(ctx, e.x, e.y, e.r * 2.3); ctx.fill();
+  }
   ctx.save(); ctx.translate(e.x, e.y);
+  if (e.elite) { ctx.shadowColor = '#ffd93b'; ctx.shadowBlur = 16; }
   if (e.flash > 0) ctx.fillStyle = '#fff'; else ctx.fillStyle = e.color;
   if (e.type === 'boss') {
     ctx.rotate(performance.now()/800);
@@ -1015,10 +1219,19 @@ function drawEnemy(e) {
     if (e.fuse !== null) { ctx.strokeStyle='#ff3b3b'; ctx.lineWidth=3; ctx.stroke(); }
   } else { circle(ctx, 0, 0, e.r); ctx.fill(); }
   ctx.restore();
-  if (e.type === 'tank' || e.type === 'boss') {
+  if (e.elite) {
+    // crown marker
+    ctx.fillStyle = '#ffd93b'; ctx.strokeStyle = '#7a5200'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    const cy = e.y - e.r - 8, cw = e.r * 0.9;
+    ctx.moveTo(e.x - cw, cy + 6); ctx.lineTo(e.x - cw, cy - 4); ctx.lineTo(e.x - cw * 0.5, cy + 1);
+    ctx.lineTo(e.x, cy - 6); ctx.lineTo(e.x + cw * 0.5, cy + 1); ctx.lineTo(e.x + cw, cy - 4);
+    ctx.lineTo(e.x + cw, cy + 6); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  if (e.type === 'tank' || e.type === 'boss' || e.elite) {
     const bw = e.r*2.2, bh = 5;
     ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(e.x-bw/2, e.y-e.r-14, bw, bh);
-    ctx.fillStyle = e.type==='boss'?'#ff3b5c':'#a06bff';
+    ctx.fillStyle = e.type==='boss'?'#ff3b5c':(e.elite?'#ffd93b':'#a06bff');
     ctx.fillRect(e.x-bw/2, e.y-e.r-14, bw*Math.max(0,e.hp/e.maxHp), bh);
   }
 }
@@ -1057,6 +1270,27 @@ function drawHUD() {
   // status timers
   if (freezeT > 0) { ctx.textAlign='center'; ctx.fillStyle='#7ddcff'; ctx.font='bold 14px Trebuchet MS'; ctx.fillText('❄ FREEZE '+freezeT.toFixed(1), W/2, 72); }
   if (frenzyT > 0) { ctx.textAlign='center'; ctx.fillStyle='#ffd93b'; ctx.font='bold 14px Trebuchet MS'; ctx.fillText('⚡ FRENZY '+frenzyT.toFixed(1), W/2, 90); }
+
+  // level + XP bar (top centre)
+  const lw = 220, lx = W/2 - lw/2, ly = 60;
+  ctx.fillStyle = 'rgba(0,0,0,.5)'; roundRect(lx-2, ly-2, lw+4, 10, 5); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.12)'; roundRect(lx, ly, lw, 6, 3); ctx.fill();
+  ctx.fillStyle = '#7df9ff'; roundRect(lx, ly, lw * Math.min(1, xp / xpNeed), 6, 3); ctx.fill();
+  ctx.textAlign='center'; ctx.font='bold 11px Trebuchet MS'; ctx.fillStyle='#cfefff';
+  ctx.fillText('LV ' + level + (pendingLevels ? '  ⬆ LEVEL UP!' : ''), W/2, ly + 22);
+
+  // combo counter
+  if (combo >= 3 && state === 'playing') {
+    const t = Math.max(0, Math.min(1, comboT / 2.6));
+    ctx.textAlign='right'; ctx.globalAlpha = 0.35 + 0.65 * t;
+    const big = combo >= 20 ? 44 : combo >= 10 ? 38 : 32;
+    ctx.fillStyle = combo >= 20 ? '#ff5c5c' : combo >= 10 ? '#ff9d3c' : '#ffd97a';
+    ctx.font = 'bold ' + big + 'px Trebuchet MS';
+    ctx.fillText('x' + combo, W - 24, 120);
+    ctx.font = 'bold 12px Trebuchet MS'; ctx.fillStyle = '#ffe9b0';
+    ctx.fillText('COMBO  ' + comboMult().toFixed(2) + 'x loot', W - 24, 140);
+    ctx.globalAlpha = 1;
+  }
 
   if (waveBannerT > 0) {
     ctx.globalAlpha = Math.min(1, waveBannerT*2);
@@ -1164,7 +1398,7 @@ function buyPerm(p) {
 }
 
 /* ============================ SCREENS ============================ */
-const SCREENS = ['menu','how','armory','shop','gameover','pause','admin'];
+const SCREENS = ['menu','how','armory','shop','gameover','pause','admin','perk','deal'];
 function showScreen(id) { SCREENS.forEach(s => document.getElementById(s).classList.toggle('show', s === id)); }
 function hideAll() { SCREENS.forEach(s => document.getElementById(s).classList.remove('show')); }
 function toast(msg) {
@@ -1311,6 +1545,76 @@ function adminClearWave() {
   toast('💥 Wave cleared');
 }
 
+/* ============================ LEVEL-UP DRAFT UI ============================ */
+function pickPerkChoices(n) {
+  const pool = PERKS.slice();
+  // weight away from things already stacked to the moon
+  const picks = [];
+  for (let i = 0; i < n && pool.length; i++) {
+    const idx = Math.floor(Math.random() * pool.length);
+    picks.push(pool.splice(idx, 1)[0]);
+  }
+  return picks;
+}
+function openPerkDraft() {
+  const g = document.getElementById('perkGrid'); g.innerHTML = '';
+  document.getElementById('perkSub').textContent = 'PICK 1 OF 3' + (pendingLevels > 1 ? '  ·  (' + pendingLevels + ' LEVELS BANKED)' : '');
+  const picks = pickPerkChoices(3);
+  picks.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'card perk';
+    el.innerHTML = '<div class="ico">' + p.icon + '</div><div class="t">' + p.name + '</div><div class="d">' + p.desc + '</div>';
+    el.addEventListener('click', () => {
+      applyPerk(p);
+      pendingLevels--;
+      sfx(880, 0.16, 'square', 0.05); toast(p.icon + ' ' + p.name + ' acquired');
+      if (pendingLevels > 0) openPerkDraft();
+      else { state = 'playing'; hideAll(); updateChrome(); }
+    });
+    g.appendChild(el);
+  });
+  const owned = perkStacks();
+  const names = Object.keys(owned).map(k => {
+    const p = PERKS.find(x => x.id === k); return (p ? p.icon + ' ' + p.name : k) + (owned[k] > 1 ? ' x' + owned[k] : '');
+  });
+  document.getElementById('perkOwned').textContent = names.length ? names.join('  ·  ') : 'none yet';
+  state = 'perk';
+  hideAll(); showScreen('perk'); updateChrome();
+  sfx(660, 0.18, 'sine', 0.05);
+}
+
+/* ============================ CURSED DEAL UI ============================ */
+let currentDeal = null;
+function openDeal() {
+  currentDeal = DEALS[Math.floor(Math.random() * DEALS.length)];
+  const d = currentDeal;
+  document.getElementById('dealBox').innerHTML =
+    '<div class="dealbox"><div class="dealrow"><div class="em">' + d.icon + '</div><div><div style="font-size:18px;font-weight:bold;">' + d.name + '</div>' +
+    '<div class="dealbad">Selling your soul for power...</div></div></div>' +
+    '<div class="dealgood">✔ ' + d.up + '</div><div class="dealbad">✖ ' + d.down + '</div></div>';
+  dealPending = false;
+  state = 'deal'; hideAll(); showScreen('deal'); updateChrome();
+  sfx(300, 0.3, 'sawtooth', 0.05);
+}
+function acceptDeal() {
+  if (!currentDeal) return;
+  currentDeal.good(); currentDeal.bad();
+  toast(currentDeal.icon + ' ' + currentDeal.name + ' accepted');
+  sfx(180, 0.3, 'square', 0.05);
+  currentDeal = null;
+  goShop();
+}
+function declineDeal() {
+  scrap += 80; runScrap += 0;
+  toast('🙅 Played it safe — +80 scrap');
+  sfx(520, 0.12, 'square', 0.04);
+  currentDeal = null;
+  goShop();
+}
+function goShop() {
+  state = 'shop'; openShop(); updateChrome();
+}
+
 /* ============================ WIRING ============================ */
 window.addEventListener('keydown', e => {
   if (state === 'playing' && e.code === 'KeyQ') tryNova();
@@ -1327,6 +1631,14 @@ document.getElementById('adminMax').addEventListener('click', adminMaxAll);
 document.getElementById('adminWeapons').addEventListener('click', adminUnlockWeapons);
 document.getElementById('adminKill').addEventListener('click', adminClearWave);
 document.getElementById('adminBlood').addEventListener('click', toggleBlood);
+document.getElementById('dealAccept').addEventListener('click', acceptDeal);
+document.getElementById('dealDecline').addEventListener('click', declineDeal);
+window.addEventListener('keydown', e => {
+  if (state === 'perk' && /^[123]$/.test(e.key)) {
+    const cards = document.querySelectorAll('#perkGrid .card');
+    const c = cards[+e.key - 1]; if (c) c.click();
+  }
+});
 document.getElementById('btnArmory').addEventListener('click', () => { renderArmory(); showScreen('armory'); });
 document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => { showScreen('menu'); refreshMenuStats(); }));
 document.getElementById('btnNextWave').addEventListener('click', () => { startWave(wave + 1); hideAll(); updateChrome(); });
