@@ -492,6 +492,7 @@ let hitstop = 0, dmgFlash = 0, bloodOn = true;
 let combo = 0, comboT = 0, comboBest = 0;
 let xp = 0, level = 1, xpNeed = 6, pendingLevels = 0;
 let dealPending = false;
+let waveFinished = false;
 let anomaly = ANOMALIES[0];
 const waveMod = { hp:1, spd:1, dmg:1, scrap:1, count:1, elite:1, dark:0 };
 let bossRef = null, bossIntroT = 0, bossName = '', bossTitle = '', levelFlash = 0;
@@ -584,6 +585,7 @@ function resetRun() {
   freezeT = 0; frenzyT = 0; bulletId = 0; hitstop = 0; dmgFlash = 0;
   combo = 0; comboT = 0; comboBest = 0; xp = 0; level = 1; xpNeed = 6; pendingLevels = 0;
   dealPending = false; runPerks = []; blossomDepth = 0;
+  waveFinished = false;
   runMod.enemyHp = 1; runMod.enemySpd = 1; runMod.scrapMul = 1; runMod.dmgMul = 1; runMod.dropMul = 1;
   player.perkMulti = 0; player.perkVamp = 0; player.perkThorns = 0; player.perkBomb = 0;
   player.perkNovaR = 0; player.perkSlow = 0; player.perkSelfBomb = 0; player.slowT = 0;
@@ -604,6 +606,7 @@ function resetRun() {
 }
 function startWave(n) {
   wave = n; waveActive = true; spawnQueue = []; spawnTimer = 0;
+  waveFinished = false;
   bossRef = null; bossName = ''; bossTitle = '';
   anomaly = pickAnomaly(n);
   waveMod.hp = anomaly.hp || 1; waveMod.spd = anomaly.spd || 1; waveMod.dmg = anomaly.dmg || 1;
@@ -889,14 +892,20 @@ function floatScrap(txt) { floats.push({ x: player.x, y: player.y - 24, txt: txt
 /* ============================ WAVE COMPLETE ============================ */
 function waveComplete() {
   waveActive = false;
+  waveFinished = true;
   if (wave > save.bestWave) save.bestWave = wave;
   save.totalKills = (save.totalKills || 0) + kills;
   persist();
   scrap += runScrap; runScrap = 0;
+  progressFlow();
+  sfx(660, 0.2, 'square', 0.05);
+}
+/* Single funnel after a wave ends: cursed deal first, then any banked level-ups, then the shop. */
+function progressFlow() {
   if (dealPending) { openDeal(); return; }
   if (pendingLevels > 0) { openPerkDraft(); return; }
-  goShop();
-  sfx(660, 0.2, 'square', 0.05);
+  if (waveFinished) { waveFinished = false; goShop(); return; }
+  state = 'playing'; hideAll(); updateChrome();
 }
 function gameOver() {
   state = 'gameover';
@@ -1762,7 +1771,7 @@ function openPerkDraft() {
       pendingLevels--;
       sfx(880, 0.16, 'square', 0.05); toast(p.icon + ' ' + p.name + ' acquired');
       if (pendingLevels > 0) openPerkDraft();
-      else { state = 'playing'; hideAll(); updateChrome(); }
+      else progressFlow();
     });
     g.appendChild(el);
   });
@@ -1796,14 +1805,14 @@ function acceptDeal() {
   toast(currentDeal.icon + ' ' + currentDeal.name + ' accepted');
   sfx(180, 0.3, 'square', 0.05);
   currentDeal = null;
-  goShop();
+  progressFlow();
 }
 function declineDeal() {
-  scrap += 80; runScrap += 0;
+  scrap += 80;
   toast('🙅 Played it safe — +80 scrap');
   sfx(520, 0.12, 'square', 0.04);
   currentDeal = null;
-  goShop();
+  progressFlow();
 }
 function goShop() {
   state = 'shop'; openShop(); updateChrome();
