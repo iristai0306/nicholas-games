@@ -45,6 +45,20 @@
   .node.locked { opacity:.42; cursor:not-allowed; }
   .node.can { border-color:#ffd44d; box-shadow:0 0 0 2px rgba(255,212,77,.25); }
   .hint { position:absolute; bottom:16px; width:100%; text-align:center; opacity:.6; font-size:12px; z-index:9; }
+  /* on-screen controls */
+  #controls { position:fixed; left:0; right:0; bottom:0; display:none; z-index:8; padding:16px 18px 22px; justify-content:space-between; gap:16px; pointer-events:none; }
+  #controls.on { display:flex; }
+  .cbtn {
+    pointer-events:auto; width:clamp(96px,26vw,150px); height:clamp(96px,26vw,150px);
+    border-radius:50%; border:none; font-family:inherit; font-weight:bold;
+    font-size:clamp(15px,4.2vw,22px); color:#2a0f45; letter-spacing:.5px;
+    display:flex; align-items:center; justify-content:center; flex-direction:column; line-height:1.2;
+    user-select:none; touch-action:none; transition:transform .06s;
+  }
+  .cbtn small { font-size:.62em; font-weight:normal; opacity:.75; }
+  .cbtn:active, .cbtn.down { transform:scale(.92); }
+  #jumpBtn { background:#7be0c0; box-shadow:0 8px 0 #2e8f74; }
+  #slideBtn { background:#8fb4ff; box-shadow:0 8px 0 #3f63b0; }
 </style>
 </head>
 <body>
@@ -82,7 +96,11 @@
     <button class="btn alt" id="menuBtn" style="margin-top:10px">MENU</button>
   </div>
 </div>
-<div class="hint">Tap top of screen = JUMP · Tap bottom = SLIDE · (Keyboard: Space / ↓)</div>
+<div id="controls">
+  <button class="cbtn" id="slideBtn">SLIDE<small>tap me</small></button>
+  <button class="cbtn" id="jumpBtn">JUMP<small>tap me</small></button>
+</div>
+<div class="hint">Big JUMP + SLIDE buttons below 🩴 (or tap anywhere: top = jump, bottom = slide)</div>
 
 <script>
 (function(){
@@ -187,7 +205,7 @@ recompute();
 /* ---------- SCREENS ---------- */
 const scr = { menu:document.getElementById('menu'), tree:document.getElementById('treeScreen'), over:document.getElementById('over') };
 function show(name){ for(const k in scr) scr[k].classList.toggle('on', k===name); }
-function hideAll(){ for(const k in scr) scr[k].classList.remove('on'); }
+function hideAll(){ for(const k in scr) scr[k].classList.remove('on'); controls.classList.remove('on'); }
 document.getElementById('playBtn').onclick = start;
 document.getElementById('againBtn').onclick = start;
 document.getElementById('treeBtn').onclick = ()=>{ renderTree(); show('tree'); };
@@ -210,6 +228,7 @@ const SLIDE_H = ()=> PW()*0.85;
 
 function start(){
   hideAll();
+  controls.classList.add('on');
   G.run=true; G.t=0; G.dist=0; G.speed=300*S.speedMult; G.score=0; G.coins=0;
   G.obs=[]; G.coinsArr=[]; G.parts=[]; G.slipper=null; G.slipperTimer=2.6;
   G.shake=0; G.invin = S.startBoost?3:0; G.slowmo=0; G.rageUsed=false;
@@ -245,6 +264,14 @@ window.addEventListener('keyup',e=>onKey(e,false));
 cv.addEventListener('pointerdown',e=>{ const r=cv.getBoundingClientRect(); if((e.clientY-r.top) > r.height*0.55) slide(true); else jump(); });
 cv.addEventListener('pointerup',()=>slide(false));
 cv.addEventListener('pointercancel',()=>slide(false));
+
+/* on-screen buttons */
+const controls = document.getElementById('controls');
+const jumpBtn = document.getElementById('jumpBtn');
+const slideBtn = document.getElementById('slideBtn');
+function press(el, fn){ el.addEventListener('pointerdown', e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('down'); fn(); }); ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev, e=>{ e.stopPropagation(); el.classList.remove('down'); })); }
+press(jumpBtn, ()=>jump());
+press(slideBtn, ()=>{ slide(true); setTimeout(()=>slide(false), 420); });
 
 /* ---------- SPAWNING ---------- */
 let lastSpawn=0, spawnGap=1.25;
