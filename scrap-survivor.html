@@ -30,11 +30,12 @@
   @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} }
   .actbtn:active { transform:scale(.93); }
 
-  .overlay { position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center;
+  .overlay { position:fixed; inset:0; z-index:30; display:none; align-items:flex-start; justify-content:center;
              background:radial-gradient(circle at 50% 35%, rgba(20,40,80,.94), rgba(4,5,10,.98));
-             padding:16px; overflow-y:auto; }
+             padding:16px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
   .overlay.show { display:flex; }
-  .panel { width:min(760px,96vw); text-align:center; animation:pop .22s ease-out; }
+  /* margin:auto keeps panels centred when they fit, but lets the top stay reachable when they don't */
+  .panel { width:min(760px,96vw); text-align:center; animation:pop .22s ease-out; margin:auto; }
   @keyframes pop { from{transform:scale(.95);opacity:0;} to{transform:scale(1);opacity:1;} }
 
   .logo { font-size:clamp(38px,11vw,78px); font-weight:bold; letter-spacing:3px; line-height:.9;
@@ -104,6 +105,12 @@
   .arow input[type=range] { width:100%; accent-color:#39a8ff; height:22px; cursor:pointer; }
   .adminbtns { display:grid; grid-template-columns:repeat(auto-fit,minmax(196px,1fr)); gap:9px; }
   .adminbtn { border-color:#ff9d3c; color:#ffc988; }
+  /* admin panel: sticky header so BACK/APPLY are always reachable on small screens */
+  #admin .head { position:sticky; top:-16px; z-index:5; margin:0 -16px 12px; padding:14px 16px 11px;
+                 background:rgba(8,14,28,.94); border-bottom:1px solid rgba(57,168,255,.3);
+                 box-shadow:0 6px 18px rgba(0,0,0,.45); }
+  #adminUps { display:grid; grid-template-columns:repeat(auto-fit,minmax(272px,1fr)); gap:0 20px; }
+  @media (max-width:420px) { #admin .head h2 { font-size:17px; } #admin .head .mbtn { padding:8px 11px; font-size:13px; } }
   .godBtn.on { border-color:#4ade80 !important; color:#4ade80 !important; }
 </style>
 </head>
@@ -218,6 +225,8 @@
       <button class="mbtn" id="adminWeapons" style="font-size:15px;padding:13px;">🔫 Unlock All Weapons</button>
       <button class="mbtn" id="adminKill" style="font-size:15px;padding:13px;">💥 Clear Wave</button>
     </div>
+    <button class="mbtn primary" id="adminApply2" style="margin-top:16px;">APPLY ✓</button>
+    <div class="vsline" style="font-size:12px;opacity:.6;margin-top:8px;">Tip: press ESC to close this panel</div>
   </div>
 </div>
 
@@ -1098,7 +1107,9 @@ function openAdmin() {
   hideAll(); showScreen('admin');
 }
 function applyAdmin() {
-  const inRun = ['playing','paused','shop'].includes(state);
+  const wasRun = state === 'playing';
+  const wasShop = state === 'shop';
+  const inRun = wasRun || state === 'paused' || wasShop;
   const sv = +document.getElementById('ar_scrap').value;
   const cv = +document.getElementById('ar_cores').value;
   const wv = +document.getElementById('ar_wave').value;
@@ -1122,13 +1133,17 @@ function applyAdmin() {
   if (wv > 1) {
     startWave(wv); state = 'playing'; hideAll(); updateChrome();
     toast('⚙️ Warped to wave ' + wv);
-  } else if (state === 'shop') {
+  } else if (wasShop) {
+    state = 'shop'; hideAll(); showScreen('shop');
     renderUpgrades(); renderShopWeapons();
     document.getElementById('shopScrap').textContent = '💰 ' + scrap;
     toast('⚙️ Admin applied');
-  } else {
+  } else if (wasRun) {
     state = 'playing'; hideAll(); updateChrome();
     toast('⚙️ Admin applied');
+  } else {
+    state = 'menu'; hideAll(); showScreen('menu'); updateChrome(); refreshMenuStats();
+    toast('⚙️ Saved — hit START RUN to use it');
   }
 }
 function updateGodBtn() {
@@ -1164,6 +1179,7 @@ document.getElementById('btnHow').addEventListener('click', () => showScreen('ho
 document.getElementById('btnAdmin').addEventListener('click', openAdmin);
 document.getElementById('adminBack').addEventListener('click', () => { showScreen('menu'); refreshMenuStats(); });
 document.getElementById('adminApply').addEventListener('click', applyAdmin);
+document.getElementById('adminApply2').addEventListener('click', applyAdmin);
 document.getElementById('adminGod').addEventListener('click', toggleGod);
 document.getElementById('pauseGod').addEventListener('click', toggleGod);
 document.getElementById('adminMax').addEventListener('click', adminMaxAll);
@@ -1226,6 +1242,9 @@ window.addEventListener('keydown', e => {
   if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyP','Escape','KeyQ'].includes(e.code)) e.preventDefault();
   keys[e.code] = true;
   if ((e.code === 'Space') && state === 'playing') tryDash();
+  if (e.code === 'Escape' && document.getElementById('admin').classList.contains('show')) {
+    showScreen('menu'); refreshMenuStats(); return;
+  }
   if (e.code === 'Escape' || e.code === 'KeyP') togglePause();
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
