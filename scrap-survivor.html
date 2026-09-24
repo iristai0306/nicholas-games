@@ -96,6 +96,15 @@
            background:rgba(10,20,40,.95); border:2px solid #39a8ff; color:#bfe6ff; padding:10px 18px;
            border-radius:12px; font-weight:bold; font-size:14px; opacity:0; transition:opacity .25s; pointer-events:none; }
   .toast.show { opacity:1; }
+
+  /* admin panel */
+  .arow { text-align:left; margin:8px 0; }
+  .alabel { display:flex; justify-content:space-between; font-size:12.5px; color:rgba(255,255,255,.8); margin-bottom:3px; }
+  .alabel b { color:#7fd0ff; font-variant-numeric:tabular-nums; }
+  .arow input[type=range] { width:100%; accent-color:#39a8ff; height:22px; cursor:pointer; }
+  .adminbtns { display:grid; grid-template-columns:repeat(auto-fit,minmax(196px,1fr)); gap:9px; }
+  .adminbtn { border-color:#ff9d3c; color:#ffc988; }
+  .godBtn.on { border-color:#4ade80 !important; color:#4ade80 !important; }
 </style>
 </head>
 <body>
@@ -118,6 +127,7 @@
       <button class="mbtn primary" id="btnPlay">▶ START RUN</button>
       <button class="mbtn corebtn" id="btnArmory">🔩 ARMORY <span class="sub" id="armoryHint"></span></button>
       <button class="mbtn" id="btnHow">❓ HOW TO PLAY</button>
+      <button class="mbtn adminbtn" id="btnAdmin" style="font-size:15px;padding:12px;opacity:.7;">⚙️ ADMIN</button>
     </div>
     <div class="vsline" style="margin-top:16px;">🏆 Best Wave: <b id="bestWave" style="color:#ffd97a;">1</b>
       &nbsp;·&nbsp; 💀 Kills: <b id="totalKills" style="color:#ffd97a;">0</b>
@@ -189,11 +199,34 @@
   </div>
 </div>
 
+<div class="overlay" id="admin">
+  <div class="panel" style="width:min(700px,96vw);">
+    <div class="head">
+      <button class="mbtn" style="width:auto;padding:9px 15px;font-size:14px;" id="adminBack">‹ Back</button>
+      <h2>⚙️ ADMIN</h2>
+      <button class="mbtn" style="width:auto;padding:9px 15px;font-size:14px;border-color:#4ade80;color:#4ade80;" id="adminApply">APPLY ✓</button>
+    </div>
+    <div class="vsline" style="text-align:left;margin-bottom:10px;font-size:13px;">Cheat panel 😈 — drag the sliders, then hit <b>APPLY</b>. (Tip: God Mode is instant.)</div>
+    <div class="sec">RUN RESOURCES</div>
+    <div id="adminRes"></div>
+    <div class="sec">BOOST UPGRADES</div>
+    <div id="adminUps"></div>
+    <div class="sec">CHEATS</div>
+    <div class="adminbtns">
+      <button class="mbtn godBtn" id="adminGod" style="font-size:15px;padding:13px;">🛡️ God Mode: OFF</button>
+      <button class="mbtn" id="adminMax" style="font-size:15px;padding:13px;">⬆️ Max Everything</button>
+      <button class="mbtn" id="adminWeapons" style="font-size:15px;padding:13px;">🔫 Unlock All Weapons</button>
+      <button class="mbtn" id="adminKill" style="font-size:15px;padding:13px;">💥 Clear Wave</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="pause">
   <div class="panel" style="width:min(420px,92vw);">
     <div class="logo" style="font-size:clamp(32px,9vw,56px);">PAUSED</div>
     <div class="bigmenu">
       <button class="mbtn primary" id="resumeBtn">▶ RESUME</button>
+      <button class="mbtn godBtn" id="pauseGod" style="font-size:15px;padding:13px;">🛡️ God Mode: OFF</button>
       <button class="mbtn" id="btnPauseMenu">🏠 MAIN MENU</button>
     </div>
   </div>
@@ -303,6 +336,7 @@ let state = 'menu';
 let scrap = 0, kills = 0, runScrap = 0, runCores = 0;
 let wave = 1, waveActive = false, spawnQueue = [], spawnTimer = 0;
 let bulletId = 0, shake = 0, freezeT = 0, frenzyT = 0, waveBannerT = 0;
+let godMode = false;
 
 const player = {
   x: W/2, y: H/2, r: 15, hp: 100, maxHp: 100,
@@ -500,6 +534,7 @@ function spawnMini(x, y) {
     dmg: et.dmg, scrap: et.scrap, color: et.color, act:'chase', vx:0, vy:0, flash:0, shootCd:1, fuse:null, __id: ++bulletId });
 }
 function hurtPlayer(dmg) {
+  if (godMode) return;
   if (player.invuln > 0 || state !== 'playing') return;
   player.hp -= dmg; player.invuln = 0.6;
   shake = Math.max(shake, 9);
@@ -988,7 +1023,7 @@ function buyPerm(p) {
 }
 
 /* ============================ SCREENS ============================ */
-const SCREENS = ['menu','how','armory','shop','gameover','pause'];
+const SCREENS = ['menu','how','armory','shop','gameover','pause','admin'];
 function showScreen(id) { SCREENS.forEach(s => document.getElementById(s).classList.toggle('show', s === id)); }
 function hideAll() { SCREENS.forEach(s => document.getElementById(s).classList.remove('show')); }
 function toast(msg) {
@@ -1021,12 +1056,119 @@ function refreshMenuStats() {
   document.getElementById('armoryHint').textContent = (save.cores || 0) + ' cores';
 }
 
+/* ============================ ADMIN PANEL ============================ */
+const ADMIN_BASE = { scrap: 0, cores: 0, wave: 1, up: {} };
+function adminRow(label, k, cur, min, max, step) {
+  return '<div class="arow"><div class="alabel"><span>'+label+'</span><b id="alab_'+k+'">'+cur+'</b></div>'+
+    '<input type="range" id="ar_'+k+'" data-k="'+k+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+min+'"></div>';
+}
+function openAdmin() {
+  ADMIN_BASE.scrap = scrap + runScrap;
+  ADMIN_BASE.cores = save.cores || 0;
+  ADMIN_BASE.wave = wave;
+  ADMIN_BASE.up = Object.assign({}, player.up);
+
+  document.getElementById('adminRes').innerHTML =
+    adminRow('💰 Scrap', 'scrap', ADMIN_BASE.scrap, 0, 1000000, 500) +
+    adminRow('🔩 Cores', 'cores', ADMIN_BASE.cores, 0, 9999, 1) +
+    adminRow('🌊 Warp to Wave', 'wave', ADMIN_BASE.wave, 1, 200, 1);
+
+  const ups = document.getElementById('adminUps'); ups.innerHTML = '';
+  UPGRADES.forEach(u => {
+    const cur = ADMIN_BASE.up[u.id] || 0;
+    const room = Math.max(0, u.max - cur);
+    ups.insertAdjacentHTML('beforeend',
+      '<div class="arow"><div class="alabel"><span>'+u.name+'</span><b id="alab_'+u.id+'">L'+cur+'</b></div>'+
+      '<input type="range" id="ar_'+u.id+'" data-k="'+u.id+'" data-def="'+u.max+'" min="0" max="'+room+'" step="1" value="0"></div>');
+  });
+
+  document.querySelectorAll('#admin input[type=range]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const k = inp.dataset.k, v = +inp.value;
+      const lab = document.getElementById('alab_'+k);
+      if (inp.dataset.def !== undefined) {
+        const base = ADMIN_BASE.up[k] || 0;
+        lab.textContent = 'L'+base+' → L'+Math.min(+inp.dataset.def, base + v);
+      } else if (k === 'scrap') lab.textContent = ADMIN_BASE.scrap + ' → ' + v;
+      else if (k === 'cores') lab.textContent = ADMIN_BASE.cores + ' → ' + v;
+      else if (k === 'wave') lab.textContent = ADMIN_BASE.wave + ' → ' + v;
+    });
+  });
+  updateGodBtn();
+  hideAll(); showScreen('admin');
+}
+function applyAdmin() {
+  const inRun = ['playing','paused','shop'].includes(state);
+  const sv = +document.getElementById('ar_scrap').value;
+  const cv = +document.getElementById('ar_cores').value;
+  const wv = +document.getElementById('ar_wave').value;
+  const adds = {};
+  UPGRADES.forEach(u => { const el = document.getElementById('ar_'+u.id); const v = el ? +el.value : 0; if (v > 0) adds[u.id] = v; });
+
+  if (!inRun) resetRun();
+
+  if (sv > 0) { scrap = sv; runScrap = 0; }
+  if (cv > 0) { save.cores = cv; persist(); }
+  for (const id in adds) {
+    const u = UPGRADES.find(x => x.id === id);
+    const cur = player.up[id] || 0;
+    const nw = Math.min(u.max, cur + adds[id]);
+    if (id === 'hp') { player.maxHp += (nw - cur) * 25; player.hp += (nw - cur) * 25; }
+    player.up[id] = nw;
+  }
+  if (player.hp > player.maxHp) player.hp = player.maxHp;
+  refreshMenuStats();
+
+  if (wv > 1) {
+    startWave(wv); state = 'playing'; hideAll(); updateChrome();
+    toast('⚙️ Warped to wave ' + wv);
+  } else if (state === 'shop') {
+    renderUpgrades(); renderShopWeapons();
+    document.getElementById('shopScrap').textContent = '💰 ' + scrap;
+    toast('⚙️ Admin applied');
+  } else {
+    state = 'playing'; hideAll(); updateChrome();
+    toast('⚙️ Admin applied');
+  }
+}
+function updateGodBtn() {
+  document.querySelectorAll('.godBtn').forEach(b => {
+    b.textContent = '🛡️ God Mode: ' + (godMode ? 'ON' : 'OFF');
+    b.classList.toggle('on', godMode);
+  });
+}
+function toggleGod() { godMode = !godMode; updateGodBtn(); toast(godMode ? '🛡️ God Mode ON — you cannot die' : 'God Mode off'); }
+function adminMaxAll() {
+  document.getElementById('ar_scrap').value = 1000000; document.getElementById('ar_scrap').dispatchEvent(new Event('input'));
+  document.getElementById('ar_cores').value = 9999; document.getElementById('ar_cores').dispatchEvent(new Event('input'));
+  UPGRADES.forEach(u => { const el = document.getElementById('ar_'+u.id); if (el) { el.value = el.max; el.dispatchEvent(new Event('input')); } });
+  toast('⬆️ Sliders maxed — now hit APPLY');
+}
+function adminUnlockWeapons() {
+  player._ownedW = player._ownedW || {};
+  WORDER.forEach(id => player._ownedW[id] = true);
+  toast('🔫 All weapons unlocked (free to equip)');
+}
+function adminClearWave() {
+  spawnQueue = [];
+  for (const e of enemies.slice()) killEnemy(e);
+  toast('💥 Wave cleared');
+}
+
 /* ============================ WIRING ============================ */
 window.addEventListener('keydown', e => {
   if (state === 'playing' && e.code === 'KeyQ') tryNova();
 });
 document.getElementById('btnPlay').addEventListener('click', () => { resetRun(); hideAll(); updateChrome(); });
 document.getElementById('btnHow').addEventListener('click', () => showScreen('how'));
+document.getElementById('btnAdmin').addEventListener('click', openAdmin);
+document.getElementById('adminBack').addEventListener('click', () => { showScreen('menu'); refreshMenuStats(); });
+document.getElementById('adminApply').addEventListener('click', applyAdmin);
+document.getElementById('adminGod').addEventListener('click', toggleGod);
+document.getElementById('pauseGod').addEventListener('click', toggleGod);
+document.getElementById('adminMax').addEventListener('click', adminMaxAll);
+document.getElementById('adminWeapons').addEventListener('click', adminUnlockWeapons);
+document.getElementById('adminKill').addEventListener('click', adminClearWave);
 document.getElementById('btnArmory').addEventListener('click', () => { renderArmory(); showScreen('armory'); });
 document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => { showScreen('menu'); refreshMenuStats(); }));
 document.getElementById('btnNextWave').addEventListener('click', () => { startWave(wave + 1); hideAll(); updateChrome(); });
