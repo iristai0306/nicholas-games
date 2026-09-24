@@ -46,19 +46,20 @@
   .node.can { border-color:#ffd44d; box-shadow:0 0 0 2px rgba(255,212,77,.25); }
   .hint { position:absolute; bottom:16px; width:100%; text-align:center; opacity:.6; font-size:12px; z-index:9; }
   /* on-screen controls */
-  #controls { position:fixed; left:0; right:0; bottom:0; display:none; z-index:8; padding:16px 18px 22px; justify-content:space-between; gap:16px; pointer-events:none; }
+  #controls { position:fixed; left:0; right:0; bottom:0; display:none; z-index:8; padding:10px 12px 16px; justify-content:space-between; gap:10px; pointer-events:none; }
   #controls.on { display:flex; }
+  .cstack { display:flex; flex-direction:column; gap:12px; }
   .cbtn {
-    pointer-events:auto; width:clamp(96px,26vw,150px); height:clamp(96px,26vw,150px);
+    pointer-events:auto; width:clamp(78px,21vw,118px); height:clamp(78px,21vw,118px);
     border-radius:50%; border:none; font-family:inherit; font-weight:bold;
-    font-size:clamp(15px,4.2vw,22px); color:#2a0f45; letter-spacing:.5px;
-    display:flex; align-items:center; justify-content:center; flex-direction:column; line-height:1.2;
+    font-size:clamp(13px,3.4vw,18px); color:#2a0f45; letter-spacing:.5px;
+    display:flex; align-items:center; justify-content:center; flex-direction:column; line-height:1.15;
     user-select:none; touch-action:none; transition:transform .06s;
   }
-  .cbtn small { font-size:.62em; font-weight:normal; opacity:.75; }
-  .cbtn:active, .cbtn.down { transform:scale(.92); }
-  #jumpBtn { background:#7be0c0; box-shadow:0 8px 0 #2e8f74; }
-  #slideBtn { background:#8fb4ff; box-shadow:0 8px 0 #3f63b0; }
+  .cbtn small { font-size:1.35em; opacity:.85; margin-top:2px; }
+  .cbtn:active, .cbtn.down { transform:scale(.9); }
+  .cbtn.jump { background:#7be0c0; box-shadow:0 7px 0 #2e8f74; }
+  .cbtn.crouch { background:#8fb4ff; box-shadow:0 7px 0 #3f63b0; }
 </style>
 </head>
 <body>
@@ -97,10 +98,16 @@
   </div>
 </div>
 <div id="controls">
-  <button class="cbtn" id="slideBtn">SLIDE<small>tap me</small></button>
-  <button class="cbtn" id="jumpBtn">JUMP<small>tap me</small></button>
+  <div class="cstack">
+    <button class="cbtn crouch" data-act="crouch">CROUCH<small>⬇</small></button>
+    <button class="cbtn jump" data-act="jump">JUMP<small>⬆</small></button>
+  </div>
+  <div class="cstack">
+    <button class="cbtn crouch" data-act="crouch">CROUCH<small>⬇</small></button>
+    <button class="cbtn jump" data-act="jump">JUMP<small>⬆</small></button>
+  </div>
 </div>
-<div class="hint">Big JUMP + SLIDE buttons below 🩴 (or tap anywhere: top = jump, bottom = slide)</div>
+<div class="hint">JUMP + CROUCH buttons on both sides 🩴 (or tap anywhere: top = jump, bottom = crouch)</div>
 
 <script>
 (function(){
@@ -267,11 +274,24 @@ cv.addEventListener('pointercancel',()=>slide(false));
 
 /* on-screen buttons */
 const controls = document.getElementById('controls');
-const jumpBtn = document.getElementById('jumpBtn');
-const slideBtn = document.getElementById('slideBtn');
-function press(el, fn){ el.addEventListener('pointerdown', e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('down'); fn(); }); ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev, e=>{ e.stopPropagation(); el.classList.remove('down'); })); }
-press(jumpBtn, ()=>jump());
-press(slideBtn, ()=>{ slide(true); setTimeout(()=>slide(false), 420); });
+document.querySelectorAll('.cbtn').forEach(el=>{
+  const act = el.dataset.act;
+  let releaseTimer = null;
+  const down = e=>{
+    e.preventDefault(); e.stopPropagation();
+    el.classList.add('down');
+    if(releaseTimer){ clearTimeout(releaseTimer); releaseTimer=null; }
+    if(act==='jump') jump();
+    else slide(true);
+  };
+  const up = e=>{
+    if(e) e.stopPropagation();
+    el.classList.remove('down');
+    if(act==='crouch'){ releaseTimer = setTimeout(()=>slide(false), 220); }
+  };
+  el.addEventListener('pointerdown', down);
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev, up));
+});
 
 /* ---------- SPAWNING ---------- */
 let lastSpawn=0, spawnGap=1.25;
