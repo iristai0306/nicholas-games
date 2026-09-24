@@ -556,11 +556,15 @@ function drawPlayer(){
   const p=G.p, x=PX(), gy=GY();
   const bodyH = p.sliding? SLIDE_H() : PH();
   const bodyW = p.sliding? PW()*1.35 : PW();
-  const bx = x, by = gy-bodyH;
+  const bx = x, by = gy-bodyH + p.y;   // <-- apply jump offset so the sprite actually leaves the ground
+  const baseY = gy + p.y;
   const run = Math.sin(G.t*16)* (p.onGround?1:0);
 
-  // shadow
-  ctx.fillStyle='rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(x+bodyW/2, gy+2, bodyW*0.7, 7,0,0,7); ctx.fill();
+  // shadow (fades + shrinks as he goes up)
+  const lift = Math.max(0, -p.y);
+  const shScale = Math.max(0.35, 1 - lift/420);
+  ctx.fillStyle='rgba(0,0,0,'+(0.28*shScale)+')';
+  ctx.beginPath(); ctx.ellipse(x+bodyW/2, gy+2, bodyW*0.7*shScale, 7*shScale,0,0,7); ctx.fill();
 
   ctx.save();
   if(G.invin>0) ctx.globalAlpha = 0.55 + Math.sin(G.t*30)*0.3;
@@ -570,8 +574,8 @@ function drawPlayer(){
   if(p.sliding){
     ctx.beginPath(); ctx.moveTo(bx+bodyW*0.5, by+bodyH*0.6); ctx.lineTo(bx+bodyW*1.15, by+bodyH*0.85); ctx.stroke();
   } else {
-    ctx.beginPath(); ctx.moveTo(bx+bodyW*0.42, by+bodyH*0.72); ctx.lineTo(bx+bodyW*0.28+run*10, gy-2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(bx+bodyW*0.58, by+bodyH*0.72); ctx.lineTo(bx+bodyW*0.72-run*10, gy-2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx+bodyW*0.42, by+bodyH*0.72); ctx.lineTo(bx+bodyW*0.28+run*10, baseY-2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx+bodyW*0.58, by+bodyH*0.72); ctx.lineTo(bx+bodyW*0.72-run*10, baseY-2); ctx.stroke();
   }
 
   // body
