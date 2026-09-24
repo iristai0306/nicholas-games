@@ -1,12 +1,120 @@
 <!DOCTYPE html>
-<html>
-<head><title>Nicholas's Games</title>
-<style>body{font-family:sans-serif;max-width:800px;margin:50px auto;text-align:center;background:#111;color:#fff;}
-h1{color:#4ade80;}a{color:#86efac;text-decoration:none;font-size:1.2em;display:block;margin:10px;}
-a:hover{color:#fff;}</style>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nicholas's Games</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Trebuchet MS',system-ui,sans-serif;background:linear-gradient(180deg,#1b1035,#2b1a55 60%,#5a3a8f);color:#fff;min-height:100vh;padding:28px 18px 60px;}
+  h1{color:#ffd44d;text-align:center;font-size:clamp(28px,7vw,48px);text-shadow:0 4px 0 #7a2ea8;letter-spacing:1px;}
+  .sub{text-align:center;opacity:.8;margin:8px 0 26px;font-size:clamp(13px,3.5vw,16px);}
+  .grid{max-width:860px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+  a.card{display:block;text-decoration:none;color:#fff;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.14);border-radius:18px;padding:18px;transition:transform .12s,border-color .12s,background .12s;}
+  a.card:hover,a.card:active{transform:translateY(-3px);border-color:#ffd44d;background:rgba(255,212,77,.12);}
+  .card .emoji{font-size:30px;display:block;margin-bottom:8px;}
+  .card .name{font-size:clamp(16px,4.2vw,20px);font-weight:bold;margin-bottom:5px;}
+  .card .desc{font-size:12.5px;opacity:.75;line-height:1.4;}
+  .new{display:inline-block;background:#ffd44d;color:#3a1d5c;font-size:10.5px;font-weight:bold;border-radius:20px;padding:2px 9px;margin-left:6px;vertical-align:middle;letter-spacing:.5px;}
+  .section{max-width:860px;margin:30px auto 12px;font-size:clamp(15px,4vw,18px);font-weight:bold;color:#7be0c0;letter-spacing:.5px;}
+  .footer{text-align:center;opacity:.5;font-size:12px;margin-top:40px;}
+</style>
 </head>
 <body>
-<h1>🎮 Nicholas's Games</h1>
-<p>Games built by Nicholas & Wayne</p>
+  <h1>🎮 Nicholas's Games</h1>
+  <div class="sub">Games built by Nicholas &amp; Wayne 🚀</div>
+
+  <div class="section">⭐ Featured</div>
+  <div class="grid">
+    <a class="card" href="slipper-of-doom.html" style="border-color:#ffd44d;background:rgba(255,212,77,.14);">
+      <span class="emoji">🩴</span>
+      <span class="name">Slipper of Doom <span class="new">NEW</span></span>
+      <span class="desc">Mum found out. Endless runner — run, jump, crouch, dodge the flying chancla. Skill tree + upgrades.</span>
+    </a>
+  </div>
+
+  <div class="section">🎯 Action &amp; Fighting</div>
+  <div class="grid">
+    <a class="card" href="distorted.html">
+      <span class="emoji">🌀</span>
+      <span class="name">Distorted</span>
+      <span class="desc">Main game world.</span>
+    </a>
+    <a class="card" href="distorted-menu.html">
+      <span class="emoji">📜</span>
+      <span class="name">Distorted — Main Menu</span>
+      <span class="desc">The entry screen for Distorted.</span>
+    </a>
+    <a class="card" href="distorted-customise.html">
+      <span class="emoji">🎨</span>
+      <span class="name">Distorted — Customise</span>
+      <span class="desc">Build your own character.</span>
+    </a>
+    <a class="card" href="fighter.html">
+      <span class="emoji">🥊</span>
+      <span class="name">Platform Fighter 2.5D</span>
+      <span class="desc">Fight on platforms.</span>
+    </a>
+    <a class="card" href="smash.html">
+      <span class="emoji">💥</span>
+      <span class="name">Smash</span>
+      <span class="desc">Smash-style brawler.</span>
+    </a>
+    <a class="card" href="brawl-stars-inspired.html">
+      <span class="emoji">⭐</span>
+      <span class="name">Brawl Stars Inspired</span>
+      <span class="desc">Top-down arena combat.</span>
+    </a>
+  </div>
+
+  <div class="section">🌀 Anime Battles</div>
+  <div class="grid">
+    <a class="card" href="game.html">
+      <span class="emoji">🫸</span>
+      <span class="name">JJK — Gojo Open World</span>
+      <span class="desc">Explore an open world as Gojo.</span>
+    </a>
+    <a class="card" href="jjk-survivor.html">
+      <span class="emoji">👊</span>
+      <span class="name">JJK Survivor</span>
+      <span class="desc">Survive the curses.</span>
+    </a>
+    <a class="card" href="one-piece-start.html">
+      <span class="emoji">🏴‍☠️</span>
+      <span class="name">One Piece — Pirate King</span>
+      <span class="desc">Start your pirate adventure.</span>
+    </a>
+    <a class="card" href="one-piece-training.html">
+      <span class="emoji">⚓</span>
+      <span class="name">One Piece — Training Ground</span>
+      <span class="desc">Train up your powers.</span>
+    </a>
+  </div>
+
+  <div class="section">🦖 Platformers &amp; 3D</div>
+  <div class="grid">
+    <a class="card" href="pigeon-rex.html">
+      <span class="emoji">🐦</span>
+      <span class="name">Pigeon &amp; Rex</span>
+      <span class="desc">The original pigeon adventure.</span>
+    </a>
+    <a class="card" href="pigeon-rex-3d.html">
+      <span class="emoji">🦕</span>
+      <span class="name">Pigeon &amp; Rex 3D</span>
+      <span class="desc">Now in 3D!</span>
+    </a>
+    <a class="card" href="pigeon-rex-3d-v2.html">
+      <span class="emoji">🏙️</span>
+      <span class="name">Pigeon &amp; Rex 3D — City Escape</span>
+      <span class="desc">Escape the city.</span>
+    </a>
+    <a class="card" href="mario.html">
+      <span class="emoji">🍄</span>
+      <span class="name">Nicholas's Mario Game</span>
+      <span class="desc">A Mario-style platformer.</span>
+    </a>
+  </div>
+
+  <div class="footer">More games on the way 👀</div>
 </body>
 </html>
