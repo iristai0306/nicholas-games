@@ -31,7 +31,7 @@
   .actbtn:active { transform:scale(.93); }
 
   .overlay { position:fixed; inset:0; z-index:30; display:none; align-items:flex-start; justify-content:center;
-             background:radial-gradient(circle at 50% 35%, rgba(20,40,80,.94), rgba(4,5,10,.98));
+             background:radial-gradient(circle at 50% 35%, rgba(20,40,80,.985), rgba(4,5,10,1));
              padding:16px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
   .overlay.show { display:flex; }
   /* margin:auto keeps panels centred when they fit, but lets the top stay reachable when they don't */
@@ -118,6 +118,13 @@
   .adminbtns { display:grid; grid-template-columns:repeat(auto-fit,minmax(196px,1fr)); gap:9px; }
   .adminbtn { border-color:#ff9d3c; color:#ffc988; }
   .bloodBtn.on { border-color:#ff5c7a !important; color:#ffb3c4 !important; }
+  /* battle pass */
+  .card.passclaim { border-color:#ffd93b; background:rgba(255,217,59,.14); cursor:pointer; }
+  .card.passclaim .cost { color:#ffd93b; }
+  .card.passlocked { opacity:.4; cursor:not-allowed; }
+  .card.passlocked:hover { transform:none; border-color:rgba(255,255,255,.14); }
+  .card.passcurrent { border-color:#7df9ff; background:rgba(125,249,255,.12); }
+  .card.passcurrent .cost { color:#7df9ff; }
   /* admin panel: sticky header so BACK/APPLY are always reachable on small screens */
   #admin .head { position:sticky; top:-16px; z-index:5; margin:0 -16px 12px; padding:14px 16px 11px;
                  background:rgba(8,14,28,.94); border-bottom:1px solid rgba(57,168,255,.3);
@@ -146,6 +153,7 @@
     <div class="bigmenu">
       <button class="mbtn primary" id="btnPlay">▶ START RUN</button>
       <button class="mbtn corebtn" id="btnArmory">🔩 ARMORY <span class="sub" id="armoryHint"></span></button>
+      <button class="mbtn" id="btnPass" style="border-color:#ffd93b;color:#ffe38a;">🎫 BATTLE PASS <span class="sub" id="passHint"></span></button>
       <button class="mbtn" id="btnHow">❓ HOW TO PLAY</button>
       <button class="mbtn adminbtn" id="btnAdmin" style="font-size:15px;padding:12px;opacity:.7;">⚙️ ADMIN</button>
     </div>
@@ -170,6 +178,22 @@
       🔩 Bosses drop <b>Cores</b> — spend them in the ARMORY for permanent power<br>
       💀 A <b>BOSS</b> spawns every 5 waves. Survive as long as you can!
     </div>
+  </div>
+</div>
+
+<div class="overlay" id="pass">
+  <div class="panel">
+    <div class="head">
+      <button class="mbtn" style="width:auto;padding:9px 15px;font-size:14px;" id="passBack">‹ Back</button>
+      <h2>🎫 BATTLE PASS</h2>
+      <button class="mbtn" style="width:auto;padding:9px 15px;font-size:14px;border-color:#4ade80;color:#4ade80;" id="passClaimAll">CLAIM ALL ✓</button>
+    </div>
+    <div class="vsline" style="text-align:left;margin-bottom:6px;font-size:13px;">Earn XP every run (kills, waves, combos). Hit tiers, then tap a reward to claim it. <b>These are permanent.</b></div>
+    <div style="height:12px;background:rgba(255,255,255,.12);border-radius:7px;overflow:hidden;margin:8px 0 4px;">
+      <div id="passBar" style="height:100%;width:0;background:linear-gradient(90deg,#ffd93b,#ff9d3c);transition:width .3s;"></div>
+    </div>
+    <div class="badge" id="passSub" style="margin:6px auto 10px;display:inline-block;">TIER 1</div>
+    <div class="grid" id="passTrack" style="grid-template-columns:repeat(auto-fill,minmax(190px,1fr));"></div>
   </div>
 </div>
 
@@ -211,6 +235,7 @@
       <div class="stat"><span>Best Wave</span><b id="goBest">1</b></div>
       <div class="stat"><span>Best Combo</span><b id="goBestCombo">x0</b></div>
       <div class="stat"><span>Level Reached</span><b id="goLevel">LV 1</b></div>
+      <div class="stat"><span>🎫 Pass XP</span><b id="goPass" style="color:#ffe38a;">+0 XP</b></div>
       <div class="stat"><span>🔩 Cores Earned</span><b id="goCores" style="color:#ffb87a;">0</b></div>
       <div class="stat"><span>🔩 Total Cores</span><b id="goCoresTotal" style="color:#ffb87a;">0</b></div>
     </div>
@@ -316,9 +341,12 @@ function sfx(freq, dur, type, vol) {
 
 /* ============================ SAVE ============================ */
 const SAVE_KEY = 'scrap_survivor_v2';
-let save = { bestWave: 1, totalKills: 0, cores: 0, perm: {} };
+let save = { bestWave: 1, totalKills: 0, cores: 0, perm: {}, passXp: 0, passTier: 1, passClaimed: {} };
 try { const r = localStorage.getItem(SAVE_KEY); if (r) save = Object.assign(save, JSON.parse(r)); } catch (e) {}
 if (!save.perm) save.perm = {};
+if (!save.passClaimed) save.passClaimed = {};
+if (typeof save.passXp !== 'number') save.passXp = 0;
+if (typeof save.passTier !== 'number') save.passTier = 1;
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
 function permLvl(id) { return save.perm[id] || 0; }
 
@@ -334,9 +362,11 @@ const WEAPONS = {
   rocket:  { name:'Rocket',      dmg:22, rate:0.78,  spd:520,  spread:0.02, bullets:1, pierce:0, cost:400, color:'#ff5c5c', desc:'Explodes — damages a whole group.', explode:78 },
   plasma:  { name:'Plasma Cannon',dmg:46, rate:1.05, spd:470,  spread:0.01, bullets:1, pierce:1, cost:480, color:'#c08bff', desc:'Slow, huge, monstrous blast.', explode:120 },
   ricochet:{ name:'Ricochet',    dmg:16, rate:0.34,  spd:760,  spread:0.05, bullets:1, pierce:6, cost:520, color:'#5cffd0', desc:'Bounces off walls. Never stops.', ric:1 },
-  prism:   { name:'Prism Beam',  dmg:5,  rate:0.045, spd:1650, spread:0.0,  bullets:1, pierce:4, cost:560, color:'#ff7df0', desc:'Instant piercing beam of light.' }
+  prism:   { name:'Prism Beam',  dmg:5,  rate:0.045, spd:1650, spread:0.0,  bullets:1, pierce:4, cost:560, color:'#ff7df0', desc:'Instant piercing beam of light.' },
+  seeker:  { name:'Seeker',      dmg:15, rate:0.30,  spd:520,  spread:0.16, bullets:1, pierce:0, cost:600, color:'#a0ff6b', desc:'Smart missiles that hunt enemies down.', homing:5.5 },
+  swarm:   { name:'Swarm Pod',   dmg:9,  rate:0.42,  spd:480,  spread:0.30, bullets:4, pierce:0, cost:660, color:'#ff9d5c', desc:'Fires 4 homing micro-missiles at once.', homing:6.5 }
 };
-const WORDER = ['pistol','smg','shotgun','flame','rifle','tesla','laser','rocket','plasma','ricochet','prism'];
+const WORDER = ['pistol','smg','shotgun','flame','rifle','tesla','laser','rocket','plasma','ricochet','prism','seeker','swarm'];
 
 /* ============================ IN-RUN UPGRADES ============================ */
 const UPGRADES = [
@@ -355,6 +385,33 @@ const UPGRADES = [
   { id:'laser',  name:'Leech Rounds', desc:'Heal 3% of damage dealt',       max:12, base:130, grow:1.40 }
 ];
 function upgradeCost(u, lvl) { return Math.round(u.base * Math.pow(u.grow, lvl)); }
+
+/* ============================ BATTLE PASS ============================ */
+/* XP earned in runs feeds a persistent tier track. Each tier unlocks a reward you claim in the pass screen. */
+const PASS_XP_STEP = 120;                 // xp needed per tier (scales slowly)
+function passXpNeed(t) { return Math.round(PASS_XP_STEP * (1 + (t - 1) * 0.14)); }
+function grantPassXp(n) {
+  if (!n) return;
+  save.passXp += n;
+  let ups = 0;
+  while (save.passXp >= passXpNeed(save.passTier)) {
+    save.passXp -= passXpNeed(save.passTier);
+    save.passTier++;
+    ups++;
+  }
+  persist();
+  if (ups > 0 && state === 'playing') { toast('🎫 BATTLE PASS — TIER ' + save.passTier + '!'); levelFlash = 0.5; sfx(980, 0.2, 'square', 0.05); }
+}
+function passRewardsFor(tier) {
+  const t = tier;
+  if (t % 10 === 0) return { kind:'weapon', value:'random', label:'Random Weapon Unlock', icon:'🔫' };
+  if (t % 5 === 0) return { kind:'cores', value: 3 + Math.floor(t / 5), label:(3 + Math.floor(t / 5)) + ' Cores', icon:'🔩' };
+  if (t % 3 === 0) return { kind:'core', value: t, label:(4 + Math.floor(t / 3)) + ' Cores', icon:'🔩' };
+  if (t % 2 === 0) return { kind:'scrap', value: 0, label:'Start runs with +' + (40 + t * 12) + ' scrap', icon:'💰' };
+  return { kind:'perm', value: t, label:'A free Armory level', icon:'⭐' };
+}
+function passClaimed(id) { return !!save.passClaimed[id]; }
+const PASS_SEEN_KEY = 'pass';
 
 /* ============================ LEVEL-UP PERKS (draft 1 of 3) ============================ */
 const PERKS = [
@@ -375,7 +432,10 @@ const PERKS = [
   { id:'lucky',   name:'Lucky Charm',    icon:'🍀', desc:'+35% scrap + better power-up drops' },
   { id:'slow',    name:'Cryo Rounds',    icon:'❄', desc:'Hits slow enemies by 25% for 1.5s' },
   { id:'shield',  name:'Kinetic Shield', icon:'🔵', desc:'+35 max HP and heal that much' },
-  { id:'gold',    name:'Gold Rounds',    icon:'🟡', desc:'+25% damage' }
+  { id:'gold',    name:'Gold Rounds',    icon:'🟡', desc:'+25% damage' },
+  { id:'homing',  name:'Homing Rounds',  icon:'🎯', desc:'Your bullets home in on enemies' },
+  { id:'splash',  name:'Explosive Tips', icon:'🧨', desc:'Every hit splashes 12 damage around it' },
+  { id:'ghost',   name:'Ghost Step',     icon:'👻', desc:'+0.4s invulnerability after getting hit' }
 ];
 function perkStacks() {
   const s = {}; for (const p of runPerks) s[p.id] = (s[p.id] || 0) + 1; return s;
@@ -403,6 +463,9 @@ function applyPerk(p) {
     case 'slow':   player.perkSlow = 1; break;
     case 'shield': player.maxHp += 35; player.hp += 35; break;
     case 'gold':   runMod.dmgMul *= 1.25; break;
+    case 'homing': player.perkHoming = 1; break;
+    case 'splash': player.perkSplash = (player.perkSplash || 0) + 12; break;
+    case 'ghost':  player.perkGhost = (player.perkGhost || 0) + 0.4; break;
   }
   void st;
 }
@@ -581,7 +644,7 @@ function novaGain() { return 5 * (1 + player.up.nova * 0.30) * (1 + permLvl('nov
 /* ============================ RUN CONTROL ============================ */
 function resetRun() {
   bossRef = null; beams.length = 0;
-  scrap = permLvl('start') * 80; kills = 0; runScrap = 0; runCores = 0; wave = 1;
+  scrap = permLvl('start') * 80 + (save.passScrap || 0); kills = 0; runScrap = 0; runCores = 0; wave = 1;
   freezeT = 0; frenzyT = 0; bulletId = 0; hitstop = 0; dmgFlash = 0;
   combo = 0; comboT = 0; comboBest = 0; xp = 0; level = 1; xpNeed = 6; pendingLevels = 0;
   dealPending = false; runPerks = []; blossomDepth = 0;
@@ -589,6 +652,7 @@ function resetRun() {
   runMod.enemyHp = 1; runMod.enemySpd = 1; runMod.scrapMul = 1; runMod.dmgMul = 1; runMod.dropMul = 1;
   player.perkMulti = 0; player.perkVamp = 0; player.perkThorns = 0; player.perkBomb = 0;
   player.perkNovaR = 0; player.perkSlow = 0; player.perkSelfBomb = 0; player.slowT = 0;
+  player.perkHoming = 0; player.perkSplash = 0; player.perkGhost = 0;
   player.maxHp = 100 + permLvl('hp') * 15;
   player.hp = player.maxHp;
   player.x = W/2; player.y = H/2; player.vx = 0; player.vy = 0; player.angle = 0; player.fireCd = 0;
@@ -722,7 +786,8 @@ function fire() {
       vx: Math.cos(a) * w.spd, vy: Math.sin(a) * w.spd, r: w.shortRange ? 5 : 4,
       dmg: statDmg() * (crit ? 2.2 : 1), crit, pierce: statPierce(), hitIds: {},
       life: life, maxLife: life, col: crit ? '#fff' : w.color,
-      explode: w.explode || 0, chain: w.chain || 0, ric: w.ric || 0, fromDrone: false });
+      explode: w.explode || 0, chain: w.chain || 0, ric: w.ric || 0,
+      homing: (w.homing || 0) || (player.perkHoming ? 3.2 : 0), fromDrone: false });
   }
   sfx(w.name === 'Laser' ? 900 : (w.name === 'Flamethrower' ? 260 : 520), 0.03, 'square', 0.02);
 }
@@ -738,7 +803,7 @@ function droneFire(d) {
 }
 
 /* ============================ DAMAGE ============================ */
-function damageEnemy(e, dmg, crit) {
+function damageEnemy(e, dmg, crit, noSplash) {
   if (e.hp <= 0) return;
   dmg *= runMod.dmgMul;
   e.hp -= dmg; e.flash = 0.09;
@@ -750,6 +815,12 @@ function damageEnemy(e, dmg, crit) {
   sparks(e.x, e.y, crit ? 8 : 3);
   if (crit && dmg > 24) { hitstop = Math.max(hitstop, 0.035); shake = Math.max(shake, 4); }
   floats.push({ x: e.x, y: e.y - e.r, txt: (crit ? '✦' : '') + Math.round(dmg), life: 0.6, col: crit ? '#fff' : '#ffd97a' });
+  /* Explosive Tips — splash to nearby enemies (one hop, no chain) */
+  if (player.perkSplash && !noSplash && state === 'playing') {
+    for (const o of enemies) {
+      if (o !== e && dist2(o.x, o.y, e.x, e.y) < 42 * 42) damageEnemy(o, player.perkSplash, false, true);
+    }
+  }
   if (e.hp <= 0) killEnemy(e);
 }
 function killEnemy(e) {
@@ -834,7 +905,7 @@ function spawnMini(x, y) {
 function hurtPlayer(dmg) {
   if (godMode) return;
   if (player.invuln > 0 || state !== 'playing') return;
-  player.hp -= dmg; player.invuln = 0.6;
+  player.hp -= dmg; player.invuln = 0.6 + (player.perkGhost || 0);
   shake = Math.max(shake, 9);
   dmgFlash = 1; hitstop = Math.max(hitstop, 0.05);
   sfx(160, 0.14, 'square', 0.06);
@@ -889,6 +960,64 @@ function applyPowerup(p) {
 }
 function floatScrap(txt) { floats.push({ x: player.x, y: player.y - 24, txt: txt, life: 0.9, col: '#ffd97a' }); }
 
+/* ============================ BATTLE PASS UI ============================ */
+function passState() {
+  const t = save.passTier;
+  return { tier: t, xp: save.passXp, need: passXpNeed(t) };
+}
+function renderPass() {
+  const ps = passState();
+  const wrap = document.getElementById('passTrack'); wrap.innerHTML = '';
+  const claimable = Object.keys(save.passClaimed).length;
+  document.getElementById('passSub').textContent = 'TIER ' + ps.tier + '  ·  ' + ps.xp + ' / ' + ps.need + ' XP';
+  document.getElementById('passBar').style.width = Math.min(100, ps.xp / ps.need * 100) + '%';
+  document.getElementById('passClaimAll').style.display = 'none';
+  let anyClaimable = false;
+  const top = ps.tier + 7;
+  /* ascending: claimable rewards first, then current tier, then locked previews */
+  for (let t = 1; t <= top; t++) {
+    const rw = passRewardsFor(t);
+    const done = t < ps.tier;
+    const current = t === ps.tier;
+    const claimed = passClaimed('t' + t);
+    const el = document.createElement('div');
+    el.className = 'card' + (claimed ? ' max' : (done ? ' passclaim' : (current ? ' passcurrent' : ' passlocked')));
+    el.innerHTML = '<div class="t">' + rw.icon + ' TIER ' + t + (current ? '  ⬅' : '') + '</div>' +
+      '<div class="d">' + rw.label + '</div>' +
+      '<div class="cost">' + (claimed ? '✓ CLAIMED' : (done ? 'TAP TO CLAIM' : (current ? 'IN PROGRESS' : '🔒 LOCKED'))) + '</div>';
+    if (done && !claimed) { anyClaimable = true; const tt = t; el.addEventListener('click', () => claimPassTier(tt)); }
+    wrap.appendChild(el);
+  }
+  /* bring the current tier into view */
+  const cur = wrap.children[ps.tier - 1];
+  if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
+  if (anyClaimable) document.getElementById('passClaimAll').style.display = 'block';
+  void claimable;
+}
+function claimPassTier(t) {
+  if (t >= save.passTier || passClaimed('t' + t)) return;
+  const rw = passRewardsFor(t);
+  if (rw.kind === 'cores') { save.cores = (save.cores || 0) + rw.value; toast('🔩 +' + rw.value + ' Cores'); }
+  else if (rw.kind === 'core') { save.cores = (save.cores || 0) + rw.value; toast('🔩 +' + rw.value + ' Cores'); }
+  else if (rw.kind === 'scrap') { save.passScrap = (save.passScrap || 0) + (40 + t * 12); toast('💰 Starting scrap +' + (40 + t * 12)); }
+  else if (rw.kind === 'weapon') {
+    const pool = WORDER.filter(id => id !== 'pistol');
+    const w = pool[Math.floor(Math.random() * pool.length)];
+    save.bpUnlocks = save.bpUnlocks || {}; save.bpUnlocks[w] = true;
+    toast('🔫 Unlocked ' + WEAPONS[w].name + ' in the shop!');
+  } else if (rw.kind === 'perm') {
+    save.freePerk = (save.freePerk || 0) + 1;
+    save.cores = (save.cores || 0) + 1;
+    toast('⭐ +1 Core (free Armory level)');
+  }
+  save.passClaimed['t' + t] = 1; persist();
+  sfx(900, 0.12, 'square', 0.05);
+  renderPass(); refreshMenuStats();
+}
+function claimAllPass() {
+  for (let t = 1; t < save.passTier; t++) claimPassTier(t);
+}
+
 /* ============================ WAVE COMPLETE ============================ */
 function waveComplete() {
   waveActive = false;
@@ -897,6 +1026,7 @@ function waveComplete() {
   save.totalKills = (save.totalKills || 0) + kills;
   persist();
   scrap += runScrap; runScrap = 0;
+  grantPassXp(wave * 10);
   progressFlow();
   sfx(660, 0.2, 'square', 0.05);
 }
@@ -914,6 +1044,9 @@ function gameOver() {
   if ((comboBest || 0) > (save.bestCombo || 0)) save.bestCombo = comboBest;
   save.totalKills = (save.totalKills || 0) + kills;
   save.cores = (save.cores || 0) + runCores;
+  /* BATTLE PASS xp earned this run (waves awarded on clear, kills+combo at run end) */
+  const passXp = Math.round(kills * 2 + (comboBest || 0) + wave * 5);
+  grantPassXp(passXp);
   persist();
   document.getElementById('goWave').textContent = wave;
   document.getElementById('goKills').textContent = kills;
@@ -923,6 +1056,7 @@ function gameOver() {
   document.getElementById('goCoresTotal').textContent = save.cores;
   const gb = document.getElementById('goBestCombo'); if (gb) gb.textContent = 'x' + (comboBest || 0);
   const gl = document.getElementById('goLevel'); if (gl) gl.textContent = 'LV ' + level;
+  const gp = document.getElementById('goPass'); if (gp) gp.textContent = '+' + passXp + ' XP  (TIER ' + save.passTier + ')';
   hideAll(); showScreen('gameover'); updateChrome();
   sfx(120, 0.6, 'sawtooth', 0.06);
 }
@@ -996,6 +1130,22 @@ function update(dt) {
       sfx(880, 0.03, 'square', 0.02);
     }
     let dead = b.life <= 0 || (b.ric ? (b.bounces || 0) > 9 : (outX || outY));
+    /* homing — steer toward the nearest enemy */
+    if (!dead && b.homing) {
+      let hb = null, hd = Infinity;
+      for (const e of enemies) { const dd = dist2(b.x, b.y, e.x, e.y); if (dd < hd) { hd = dd; hb = e; } }
+      if (hb) {
+        const want = Math.atan2(hb.y - b.y, hb.x - b.x);
+        const cur = Math.atan2(b.vy, b.vx);
+        let diff = want - cur;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        const na = cur + clamp(diff, -b.homing * dt, b.homing * dt);
+        const sp = Math.hypot(b.vx, b.vy);
+        b.vx = Math.cos(na) * sp; b.vy = Math.sin(na) * sp;
+      }
+      if (Math.random() < 0.55) parts.push({ x: b.x, y: b.y, vx: rand(-25,25), vy: rand(-25,25), life: 0.22, max: 0.22, r: rand(1.2,2.6), col: b.col });
+    }
     if (!dead) {
       for (const e of enemies) {
         if (b.hitIds[e.__id] !== undefined) continue;
@@ -1228,6 +1378,11 @@ function render() {
   for (const b of bullets) {
     if (b.ric) {
       ctx.globalAlpha = 0.35; ctx.fillStyle = b.col; circle(ctx, b.x, b.y, b.r * 2.2); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    if (b.homing) {
+      ctx.globalAlpha = 0.30; ctx.fillStyle = b.col; circle(ctx, b.x, b.y, b.r * 2.6); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = b.col; ctx.lineWidth = 1.6; ctx.globalAlpha = 0.5;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 3, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
     }
     ctx.fillStyle = b.col; circle(ctx, b.x, b.y, b.r); ctx.fill();
     ctx.globalAlpha = 0.4; circle(ctx, b.x, b.y, b.r*2); ctx.fill(); ctx.globalAlpha = 1;
@@ -1553,7 +1708,7 @@ function renderShopWeapons() {
   const g = document.getElementById('wGrid'); g.innerHTML = '';
   WORDER.forEach(id => {
     const w = WEAPONS[id];
-    const owned = id === 'pistol' || (player._ownedW && player._ownedW[id]);
+    const owned = id === 'pistol' || (player._ownedW && player._ownedW[id]) || (save.bpUnlocks && save.bpUnlocks[id]);
     const equipped = player.weapon === id;
     const canBuy = !owned && id !== 'pistol' && scrap >= w.cost;
     const el = document.createElement('div');
@@ -1600,7 +1755,7 @@ function buyPerm(p) {
 }
 
 /* ============================ SCREENS ============================ */
-const SCREENS = ['menu','how','armory','shop','gameover','pause','admin','perk','deal'];
+const SCREENS = ['menu','how','armory','shop','gameover','pause','admin','perk','deal','pass'];
 function showScreen(id) { SCREENS.forEach(s => document.getElementById(s).classList.toggle('show', s === id)); }
 function hideAll() { SCREENS.forEach(s => document.getElementById(s).classList.remove('show')); }
 function toast(msg) {
@@ -1631,6 +1786,12 @@ function refreshMenuStats() {
   document.getElementById('totalKills').textContent = save.totalKills || 0;
   document.getElementById('totalCores').textContent = save.cores || 0;
   document.getElementById('armoryHint').textContent = (save.cores || 0) + ' cores';
+  const ph = document.getElementById('passHint');
+  if (ph) {
+    let claimable = 0;
+    for (let t = 1; t < save.passTier; t++) if (!save.passClaimed['t' + t]) claimable++;
+    ph.textContent = 'TIER ' + save.passTier + (claimable ? '  ·  ' + claimable + ' READY!' : '');
+  }
 }
 
 /* ============================ ADMIN PANEL ============================ */
@@ -1843,6 +2004,9 @@ window.addEventListener('keydown', e => {
   }
 });
 document.getElementById('btnArmory').addEventListener('click', () => { renderArmory(); showScreen('armory'); });
+document.getElementById('btnPass').addEventListener('click', () => { renderPass(); showScreen('pass'); });
+document.getElementById('passBack').addEventListener('click', () => { showScreen('menu'); refreshMenuStats(); });
+document.getElementById('passClaimAll').addEventListener('click', () => { claimAllPass(); });
 document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => { showScreen('menu'); refreshMenuStats(); }));
 document.getElementById('btnNextWave').addEventListener('click', () => { startWave(wave + 1); hideAll(); updateChrome(); });
 document.getElementById('btnRetry').addEventListener('click', () => { resetRun(); hideAll(); updateChrome(); });
