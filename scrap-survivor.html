@@ -87,6 +87,34 @@
   .card.passclaim { border-color:#ffd93b; background:rgba(255,217,59,.14); cursor:pointer; }
   .card.passcurrent { border-color:#7df9ff; background:rgba(125,249,255,.12); }
   .card.passlocked { opacity:.4; cursor:not-allowed; }
+  /* ---- battle pass hero ---- */
+  .passhero { display:flex; align-items:center; gap:16px; padding:14px 16px; border-radius:16px; text-align:left;
+    background:linear-gradient(135deg,rgba(255,217,59,.14),rgba(255,125,240,.10),rgba(125,249,255,.10));
+    border:2px solid rgba(255,217,59,.4); box-shadow:0 0 30px rgba(255,190,60,.18); margin-bottom:12px; }
+  .passring { width:78px; height:78px; border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+    background:conic-gradient(#ffd93b,#ff7df0,#7df9ff,#ffd93b); animation:spin 6s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .passringin { width:64px; height:64px; border-radius:50%; background:#0a0f1e; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .passringin span { font-size:26px; font-weight:bold; color:#ffe38a; line-height:1; }
+  .passringin small { font-size:9px; letter-spacing:2px; opacity:.6; }
+  .passhinfo { flex:1; min-width:0; }
+  .passNext { font-size:14px; margin-bottom:8px; }
+  .passNext b { color:#ffe38a; }
+  .passbar2 { height:14px; background:rgba(255,255,255,.12); border-radius:8px; overflow:hidden; }
+  #passBar { height:100%; width:0; border-radius:8px; transition:width .4s; background:linear-gradient(90deg,#ffd93b,#ff9d3c,#ff7df0); box-shadow:0 0 14px rgba(255,180,60,.6); }
+  .passNeed { display:flex; justify-content:space-between; align-items:center; margin-top:7px; font-size:12px; opacity:.85; }
+  .passpill { background:linear-gradient(90deg,#ffd93b,#ff9d3c); color:#2a1a00; font-weight:bold; border-radius:20px; padding:2px 11px; font-size:11px; }
+  .passpill.pulse { animation:evoPulse .8s infinite alternate; }
+  .streakcard { display:flex; gap:9px; justify-content:center; margin-bottom:12px; flex-wrap:wrap; }
+  .sday { width:52px; padding:8px 0 6px; border-radius:11px; border:1.5px solid rgba(255,255,255,.16); background:rgba(255,255,255,.04); font-size:11px; }
+  .sday b { display:block; font-size:19px; margin-bottom:3px; }
+  .sday.on { border-color:#ffd93b; background:linear-gradient(180deg,rgba(255,217,59,.28),rgba(255,140,60,.1)); box-shadow:0 0 16px rgba(255,190,60,.4); }
+  .sday.sel { border-color:#7df9ff; background:linear-gradient(180deg,rgba(125,249,255,.3),rgba(60,160,255,.1)); box-shadow:0 0 18px rgba(125,249,255,.5); cursor:pointer; }
+  .sday.sel:hover { transform:translateY(-2px); }
+  .sday.dis { opacity:.35; }
+  .passstats { display:flex; gap:8px; justify-content:center; margin-bottom:14px; flex-wrap:wrap; }
+  .pstat { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:6px 12px; font-size:12px; }
+  .pstat b { color:#7df9ff; }
   .badge { background:rgba(255,255,255,.09); border-radius:20px; padding:5px 14px; font-size:13px;
            letter-spacing:1px; border:1px solid rgba(255,255,255,.14); }
   .vsline { color:rgba(255,255,255,.72); font-size:13px; line-height:1.75; }
@@ -195,15 +223,20 @@
   <div class="panel">
     <div class="head">
       <button class="mbtn" style="width:auto;padding:9px 15px;font-size:14px;" id="passBack">‹ Back</button>
-      <h2>🎫 BATTLE PASS</h2>
+      <h2 style="background:linear-gradient(90deg,#ffd93b,#ff7df0,#7df9ff);-webkit-background-clip:text;background-clip:text;color:transparent;">🎫 BATTLE PASS</h2>
       <button class="mbtn" style="width:auto;padding:9px 15px;font-size:14px;border-color:#4ade80;color:#4ade80;" id="passClaimAll">CLAIM ALL ✓</button>
     </div>
-    <div class="vsline" style="text-align:left;margin-bottom:6px;font-size:13px;">Earn XP every run. Hit tiers, tap a reward to claim it. <b>Permanent.</b></div>
-    <div style="height:12px;background:rgba(255,255,255,.12);border-radius:7px;overflow:hidden;margin:8px 0 4px;">
-      <div id="passBar" style="height:100%;width:0;background:linear-gradient(90deg,#ffd93b,#ff9d3c);transition:width .3s;"></div>
+    <div class="passhero">
+      <div class="passring"><div class="passringin"><span id="passTierBig">1</span><small>TIER</small></div></div>
+      <div class="passhinfo">
+        <div class="passNext">Next reward: <b id="passNextRw">—</b></div>
+        <div class="passbar2"><div id="passBar"></div></div>
+        <div class="passNeed"><span id="passXpText">0 / 140 XP</span><span id="passClaimPill" class="passpill">0 ready</span></div>
+      </div>
     </div>
-    <div class="badge" id="passSub" style="margin:6px auto 10px;display:inline-block;">TIER 1</div>
-    <div class="grid" id="passTrack" style="grid-template-columns:repeat(auto-fill,minmax(190px,1fr));"></div>
+    <div class="streakcard" id="streakCard"></div>
+    <div class="passstats" id="passStats"></div>
+    <div class="grid" id="passTrack" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));"></div>
   </div>
 </div>
 
@@ -447,11 +480,16 @@ function resetRun() {
     orbAng:0, spinAng:0, trail:[]
   };
   PASSIVES.forEach(p => player.pas[p.id] = 0);
-  player.maxHp = 100 + permLvl('hp') * 20;
+  player.maxHp = 100 + permLvl('hp') * 20 + (save.hpBonus || 0);
   player.hp = player.maxHp;
   const start = STARTERS[randi(0, STARTERS.length-1)];
   player.arsenal[start] = { lvl:1 };
   player.weapon = start;
+  /* evolution token — instantly evolve a random starter next level-up */
+  if (save.evoTokens > 0) {
+    const w = WEAPONS[start];
+    if (w && w.evo) { save.evoTokens--; player.arsenal[start].lvl = w.max; player.pas[w.evo.with] = 5; persist(); toast('🌟 Evolution Token — path unlocked!'); }
+  }
 
   enemies=[]; bullets=[]; ebullets=[]; gems=[]; dmgNums=[]; parts=[]; rings=[]; decals=[]; beams=[]; pickups=[];
   propCells = {}; props = []; ambient = [];
@@ -490,7 +528,7 @@ function fmtTime(s) { const m = Math.floor(s/60), ss = Math.floor(s%60); return 
    XP / LEVEL
    ============================================================ */
 function gainXp(n) {
-  xp += n * (1 + player.pas.luck * 0.20);
+  xp += n * (1 + player.pas.luck * 0.20) * (1 + (save.xpBonus || 0));
   while (xp >= xpNeed) { xp -= xpNeed; level++; xpNeed = Math.round(5 + (level-1) * 3.2 + Math.pow(level,1.28)); pendingLevels++; }
 }
 function spawnGem(x, y, v) {
@@ -977,6 +1015,7 @@ function applyChoice(c) {
     delete player.arsenal[c.from];
     player.arsenal[c.id] = { lvl:1 };
     player.evolved[c.id] = 1;
+    save.evoOwned = save.evoOwned || {}; save.evoOwned[c.id] = 1; persist();
     toast('🌟 EVOLVED: ' + c.name); sfx(1100, 0.4, 'sine', 0.06); shake = Math.max(shake, 10);
   } else if (c.kind === 'wlv') { player.arsenal[c.id].lvl++; toast(c.icon + ' ' + c.name + ' Lv' + player.arsenal[c.id].lvl); }
   else if (c.kind === 'wnew') { player.arsenal[c.id] = { lvl:1 }; toast(c.icon + ' Unlocked ' + c.name); }
@@ -1027,38 +1066,115 @@ function grantPassXp(n) {
   let ups = 0;
   while (save.passXp >= passNeed(save.passTier)) { save.passXp -= passNeed(save.passTier); save.passTier++; ups++; }
   persist();
-  if (ups && state === 'playing') toast('🎫 BATTLE PASS TIER ' + save.passTier + '!');
+  if (ups && state === 'playing') { toast('🎫 BATTLE PASS TIER ' + save.passTier + '!'); levelUpFlash = 0.6; }
 }
+let levelUpFlash = 0;
+/* reward ladder: every tier is something. Milestones on 5s are BIG. */
 function passReward(t) {
-  if (t % 10 === 0) return { kind:'weapon', label:'Random Weapon Unlock', icon:'🔫' };
-  if (t % 5 === 0) return { kind:'cores', v:3+Math.floor(t/5), label:(3+Math.floor(t/5)) + ' Cores', icon:'🔩' };
-  if (t % 3 === 0) return { kind:'scrap', v:40+t*12, label:'+scrap next runs' , icon:'💰' };
-  if (t % 2 === 0) return { kind:'cores', v:2, label:'2 Cores', icon:'🔩' };
-  return { kind:'cores', v:1, label:'1 Core', icon:'🔩' };
+  if (t % 25 === 0) return { kind:'evo', label:'★ EVOLUTION TOKEN', icon:'🌟', big:true };
+  if (t % 10 === 0) return { kind:'weapon', label:'Weapon Unlock', icon:'🔫', big:true };
+  if (t % 5 === 0)  return { kind:'cores', v:4+Math.floor(t/4), label:(4+Math.floor(t/4)) + ' Cores', icon:'🔩', big:true };
+  const r = t % 6;
+  if (r === 0) return { kind:'scrap', v:60+t*14, label:'+'+(60+t*14)+' start scrap', icon:'💰' };
+  if (r === 1) return { kind:'cores', v:1+Math.floor(t/12), label:(1+Math.floor(t/12))+' Cores', icon:'🔩' };
+  if (r === 2) return { kind:'xp', v:1, label:'+10% XP forever', icon:'⭐' };
+  if (r === 3) return { kind:'hp', v:15, label:'+15 starting HP', icon:'❤️' };
+  if (r === 4) return { kind:'scrap', v:40+t*10, label:'+'+(40+t*10)+' start scrap', icon:'💰' };
+  return { kind:'cores', v:2, label:'2 Cores', icon:'🔩' };
 }
+function passClaimCount() { let c=0; for (let t=1;t<save.passTier;t++) if (!save.passClaimed['t'+t]) c++; return c; }
+
+/* ---- login streak ---- */
+function todayStr() { const d = new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function streakCheck() {
+  const today = todayStr();
+  if (save.lastDay === today) return;
+  const y = new Date(); y.setDate(y.getDate()-1);
+  const yStr = y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();
+  save.streak = (save.lastDay === yStr) ? (save.streak||0) + 1 : 1;
+  save.lastDay = today;
+  save.streakRewardReady = true;
+  persist();
+}
+const STREAK_REWARDS = [
+  { icon:'🔩', label:'2 Cores',    give:()=>{ save.cores=(save.cores||0)+2; } },
+  { icon:'💰', label:'+120 scrap',  give:()=>{ save.startScrap=(save.startScrap||0)+120; } },
+  { icon:'🔩', label:'5 Cores',    give:()=>{ save.cores=(save.cores||0)+5; } },
+  { icon:'⭐', label:'+10% XP',    give:()=>{ save.xpBonus=(save.xpBonus||0)+0.1; } },
+  { icon:'❤️', label:'+25 HP',     give:()=>{ save.hpBonus=(save.hpBonus||0)+25; } },
+  { icon:'🔩', label:'12 Cores',   give:()=>{ save.cores=(save.cores||0)+12; } },
+  { icon:'🌟', label:'MEGA: 25 Cores + Weapon', give:()=>{ save.cores=(save.cores||0)+25; save.bpUnlocks[pick(STARTERS)]=1; } }
+];
+
 function renderPass() {
+  const need = passNeed(save.passTier);
+  document.getElementById('passTierBig').textContent = save.passTier;
+  document.getElementById('passXpText').textContent = save.passXp + ' / ' + need + ' XP';
+  document.getElementById('passBar').style.width = Math.min(100, save.passXp/need*100) + '%';
+  const nxt = passReward(save.passTier);
+  document.getElementById('passNextRw').textContent = nxt.icon + ' ' + nxt.label;
+  const ready = passClaimCount();
+  const pill = document.getElementById('passClaimPill');
+  pill.textContent = ready + ' ready';
+  pill.className = 'passpill' + (ready ? ' pulse' : '');
+  document.getElementById('passClaimAll').style.display = ready ? 'block' : 'none';
+
+  // stats row
+  const evos = Object.keys(save.evoOwned||{}).length;
+  document.getElementById('passStats').innerHTML =
+    '<div class="pstat">TIER <b>' + save.passTier + '</b></div>' +
+    '<div class="pstat">🔥 STREAK <b>' + (save.streak||0) + '</b></div>' +
+    '<div class="pstat">🔩 <b>' + (save.cores||0) + '</b></div>' +
+    '<div class="pstat">🏆 BEST <b>' + fmtTime(save.bestTime||0) + '</b></div>';
+
+  // streak row (7 days)
+  const sc = document.getElementById('streakCard'); sc.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const day = i + 1;
+    const claimed = (save.streak||0) > i;
+    const isNext = (save.streak||0) === i && save.streakRewardReady;
+    const el = document.createElement('div');
+    el.className = 'sday' + (claimed?' on':'') + (isNext?' sel':(save.streak<=i?' dis':''));
+    el.innerHTML = '<b>' + STREAK_REWARDS[i].icon + '</b>Day ' + day + '<div style="opacity:.7;font-size:9px;">' + STREAK_REWARDS[i].label + '</div>';
+    if (isNext) el.addEventListener('click', () => claimStreak());
+    sc.appendChild(el);
+  }
+
+  // tier grid
   const wrap = document.getElementById('passTrack'); wrap.innerHTML = '';
-  document.getElementById('passSub').textContent = 'TIER ' + save.passTier + '  ·  ' + save.passXp + ' / ' + passNeed(save.passTier) + ' XP';
-  document.getElementById('passBar').style.width = Math.min(100, save.passXp/passNeed(save.passTier)*100) + '%';
-  let any = false;
-  const top = save.passTier + 7;
+  const top = save.passTier + 9;
   for (let t = 1; t <= top; t++) {
     const rw = passReward(t); const done = t < save.passTier; const cur = t === save.passTier; const cl = !!save.passClaimed['t'+t];
     const el = document.createElement('div');
     el.className = 'card' + (cl?' max':(done?' passclaim':(cur?' passcurrent':' passlocked')));
-    el.innerHTML = '<div class="t">' + rw.icon + ' TIER ' + t + (cur?'  ⬅':'') + '</div><div class="d">' + rw.label + '</div>' +
+    if (rw.big) el.style.borderColor = '#ffd93b';
+    el.innerHTML =
+      '<div class="t"' + (rw.big?' style="color:#ffe38a;"':'') + '>' + rw.icon + ' TIER ' + t + (cur?' ⬅':'') + '</div>' +
+      '<div class="d">' + rw.label + '</div>' +
       '<div class="cost">' + (cl?'✓ CLAIMED':(done?'TAP TO CLAIM':(cur?'IN PROGRESS':'🔒 LOCKED'))) + '</div>';
-    if (done && !cl) { any = true; const tt=t; el.addEventListener('click', ()=>claimTier(tt)); }
+    if (done && !cl) { const tt=t; el.addEventListener('click', ()=>claimTier(tt)); }
     wrap.appendChild(el);
   }
-  document.getElementById('passClaimAll').style.display = any ? 'block' : 'none';
+}
+function claimStreak() {
+  if (!save.streakRewardReady) return;
+  const idx = Math.min((save.streak||0) - 1, 6);
+  if (idx < 0) return;
+  STREAK_REWARDS[idx].give();
+  save.streakRewardReady = false; persist();
+  sfx(1000,0.18,'sine',0.06);
+  toast('🔥 Daily ' + STREAK_REWARDS[idx].icon + ' ' + STREAK_REWARDS[idx].label + ' claimed!');
+  renderPass(); refreshMenu();
 }
 function claimTier(t) {
   if (t >= save.passTier || save.passClaimed['t'+t]) return;
   const rw = passReward(t);
-  if (rw.kind === 'cores') { save.cores = (save.cores||0) + rw.v; toast('🔩 +' + rw.v); }
+  if (rw.kind === 'cores') { save.cores = (save.cores||0) + rw.v; toast('🔩 +' + rw.v + ' Cores'); }
   else if (rw.kind === 'scrap') { save.startScrap = (save.startScrap||0) + rw.v; toast('💰 +' + rw.v + ' start scrap'); }
-  else if (rw.kind === 'weapon') { const pool = STARTERS; const w = pick(pool); save.bpUnlocks[w] = 1; toast('🔫 Weapon unlocked: ' + WEAPONS[w].name); }
+  else if (rw.kind === 'xp') { save.xpBonus = (save.xpBonus||0) + 0.1; toast('⭐ +10% XP forever'); }
+  else if (rw.kind === 'hp') { save.hpBonus = (save.hpBonus||0) + 15; toast('❤️ +15 starting HP'); }
+  else if (rw.kind === 'weapon') { const w = pick(STARTERS); save.bpUnlocks[w] = 1; toast('🔫 ' + WEAPONS[w].name + ' unlocked for free!'); }
+  else if (rw.kind === 'evo') { save.evoTokens = (save.evoTokens||0) + 1; toast('🌟 EVOLUTION TOKEN — one free evolution next run!'); }
   save.passClaimed['t'+t] = 1; persist(); sfx(900,0.12,'square',0.05);
   renderPass(); refreshMenu();
 }
@@ -1242,9 +1358,9 @@ function drawAmbient() {
   ctx.globalAlpha = 1;
 }
 function drawEnemy(e) {
-  const s = worldToScreen(e.x, e.y);
-  if (s.x < -90 || s.x > W+90 || s.y < -90 || s.y > H+90) return;
-  ctx.save(); ctx.translate(s.x, s.y);
+  const sx = e.x - cam.x + W/2, sy = e.y - cam.y + H/2;
+  if (sx < -90 || sx > W+90 || sy < -90 || sy > H+90) return;
+  ctx.save(); ctx.translate(e.x, e.y);
   ctx.shadowColor = e.col; ctx.shadowBlur = (enemies.length > 70) ? 0 : (e.boss ? 30 : 14);
   ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 2.5;
   if (e.flash > 0) ctx.fillStyle = '#fff'; else ctx.fillStyle = e.col;
@@ -1268,18 +1384,17 @@ function drawEnemy(e) {
   // hp bar
   if ((e.hp < e.maxHp) || e.boss) {
     const bw = e.r*2.2, bh = e.boss?7:4;
-    ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(s.x-bw/2, s.y-e.r-13, bw, bh);
+    ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(e.x-bw/2, e.y-e.r-13, bw, bh);
     ctx.fillStyle = e.boss?'#ff3b5c':'#ff8c8c';
-    ctx.fillRect(s.x-bw/2, s.y-e.r-13, bw*Math.max(0,e.hp/e.maxHp), bh);
+    ctx.fillRect(e.x-bw/2, e.y-e.r-13, bw*Math.max(0,e.hp/e.maxHp), bh);
   }
-  if (e.boss) { ctx.fillStyle='#fff'; ctx.font='bold 14px Trebuchet MS'; ctx.textAlign='center'; ctx.fillText(e.name, s.x, s.y-e.r-20); }
+  if (e.boss) { ctx.fillStyle='#fff'; ctx.font='bold 14px Trebuchet MS'; ctx.textAlign='center'; ctx.fillText(e.name, e.x, e.y-e.r-20); }
 }
 function drawPlayer() {
-  const s = worldToScreen(player.x, player.y);
-  // trail
-  for (const t of player.trail) { const ts = worldToScreen(t.x,t.y); ctx.globalAlpha = (t.life/0.35)*0.25; ctx.fillStyle = '#8fd4ff'; circle(ctx,ts.x,ts.y,player.r*0.8); ctx.fill(); }
+  // trail (world space)
+  for (const t of player.trail) { ctx.globalAlpha = (t.life/0.35)*0.25; ctx.fillStyle = '#8fd4ff'; circle(ctx,t.x,t.y,player.r*0.8); ctx.fill(); }
   ctx.globalAlpha = 1;
-  ctx.save(); ctx.translate(s.x, s.y);
+  ctx.save(); ctx.translate(player.x, player.y);
   if (player.invuln > 0) ctx.globalAlpha = 0.6 + Math.sin(performance.now()/40)*0.25;
   const g = ctx.createRadialGradient(0,0,2,0,0,player.r+8);
   g.addColorStop(0,'#e8f8ff'); g.addColorStop(0.5,'#8fd4ff'); g.addColorStop(1,'#2f5cff');
@@ -1290,7 +1405,7 @@ function drawPlayer() {
   ctx.beginPath(); ctx.arc(0,0,player.r+5, -Math.PI/2, -Math.PI/2 + (1-player.invuln/0.7)*TAU); ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=2; ctx.stroke();
   ctx.globalAlpha = 1; ctx.restore();
   // dash ready ring
-  if (player.dashCd > 0) { ctx.strokeStyle='rgba(200,140,255,.9)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(s.x,s.y,player.r+9,-Math.PI/2,-Math.PI/2+(1-player.dashCd/2.2)*TAU); ctx.stroke(); }
+  if (player.dashCd > 0) { ctx.strokeStyle='rgba(200,140,255,.9)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(player.x,player.y,player.r+9,-Math.PI/2,-Math.PI/2+(1-player.dashCd/2.2)*TAU); ctx.stroke(); }
 }
 function drawHUD() {
   // HP bar top-left
@@ -1317,6 +1432,7 @@ function drawHUD() {
   // world name bottom-left
   ctx.textAlign='left'; ctx.fillStyle='rgba(255,255,255,.55)'; ctx.font='bold 12px Trebuchet MS';
   ctx.fillText('🌍 ' + currentBiome().name, 18, H-18);
+  drawMinimap();
   // combo
   if (combo >= 3) {
     const a = Math.min(1, comboT/2.4);
@@ -1338,6 +1454,40 @@ function drawHUD() {
     ctx.fillText('Lv ' + player.arsenal[id].lvl, ax+24, ay+43);
     ax += 54;
   }
+}
+function drawMinimap() {
+  const mw = 122, mh = 122, pad = 14;
+  const mx = W - mw - pad, my = H - mh - pad;
+  const range = 900;   // world units shown across the map
+  const sc = mw / (range * 2);
+  ctx.save();
+  rr(ctx, mx, my, mw, mh, 10); ctx.fillStyle = 'rgba(4,8,18,.62)'; ctx.fill();
+  ctx.save(); rr(ctx, mx, my, mw, mh, 10); ctx.clip();
+  // crosshair lines
+  ctx.strokeStyle = 'rgba(125,249,255,.16)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(mx+mw/2, my); ctx.lineTo(mx+mw/2, my+mh); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mx, my+mh/2); ctx.lineTo(mx+mw, my+mh/2); ctx.stroke();
+  // enemies
+  for (const e of enemies) {
+    const ex = mx + mw/2 + (e.x - player.x) * sc;
+    const ey = my + mh/2 + (e.y - player.y) * sc;
+    if (ex < mx || ex > mx+mw || ey < my || ey > my+mh) continue;
+    const s = e.boss ? 4.5 : (e.r > 20 ? 3 : 1.8);
+    ctx.fillStyle = e.boss ? '#ff3b5c' : (e.type==='shooter' ? '#4ade80' : '#ff7a8a');
+    circle(ctx, ex, ey, s); ctx.fill();
+  }
+  // gems
+  ctx.fillStyle = 'rgba(125,249,255,.7)';
+  for (const g of gems) { const gx = mx+mw/2+(g.x-player.x)*sc, gy = my+mh/2+(g.y-player.y)*sc; if (gx>mx&&gx<mx+mw&&gy>my&&gy<my+mh){ circle(ctx,gx,gy,1); ctx.fill(); } }
+  // player (with facing arrow)
+  const cx = mx+mw/2, cy = my+mh/2;
+  ctx.fillStyle = '#8fd4ff'; ctx.shadowColor='#7df9ff'; ctx.shadowBlur=8; circle(ctx,cx,cy,3.4); ctx.fill(); ctx.shadowBlur=0;
+  ctx.strokeStyle='#e8f8ff'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(player.angle)*9, cy+Math.sin(player.angle)*9); ctx.stroke();
+  ctx.restore();
+  rr(ctx, mx, my, mw, mh, 10); ctx.strokeStyle = 'rgba(125,249,255,.4)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.textAlign='center'; ctx.font='bold 9px Trebuchet MS'; ctx.fillStyle='rgba(255,255,255,.45)';
+  ctx.fillText('MAP', mx+mw/2, my-3);
+  ctx.restore();
 }
 function drawOverlays() {
   // low hp vignette
@@ -1443,6 +1593,7 @@ function tryDash() {
 
 /* boot */
 player = null;
+streakCheck();
 resetRun(); player.hp = player.maxHp;   // so menu render has state
 state = 'menu';
 refreshMenu(); updateChrome();
