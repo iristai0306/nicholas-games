@@ -1018,14 +1018,11 @@ function enterCity(){
   initAudio();
   if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   glitchBurst(0.35);
-  if(canvas.requestPointerLock) canvas.requestPointerLock();
+  // look-around is disabled in this menu — no pointer lock
   window.__entered = true;
 }
 
-// click the scene to (re)capture the mouse; Esc releases it so menus are clickable
-canvas.addEventListener('click', () => {
-  if(document.pointerLockElement !== canvas && canvas.requestPointerLock) canvas.requestPointerLock();
-});
+// (pointer-lock / click-to-look removed)
 entryEl.addEventListener('click', enterCity);
 entryEl.addEventListener('touchstart', e => { e.preventDefault(); enterCity(); }, { passive:false });
 
@@ -1071,14 +1068,7 @@ const keys = Object.create(null);
 addEventListener('keydown', e => { keys[e.code] = true; });
 addEventListener('keyup',   e => { keys[e.code] = false; });
 
-/* mouse look */
-document.addEventListener('mousemove', e => {
-  if(!document.pointerLockElement) return;
-  const s = (CFG.sensitivity/100) * 0.0022;
-  player.yaw   -= e.movementX * s;
-  player.pitch -= e.movementY * s;
-  player.pitch = Math.max(-1.3, Math.min(1.3, player.pitch));
-});
+/* mouse look: disabled in this menu */
 
 /* touch: left half = move, right half = look */
 let touchLook = null, touchMove = null;
@@ -1094,13 +1084,7 @@ addEventListener('touchmove', e => {
       touchMove.dx = t.clientX - touchMove.x;
       touchMove.dy = t.clientY - touchMove.y;
     }
-    if(touchLook && t.identifier === touchLook.id){
-      const s = (CFG.sensitivity/100) * 0.004;
-      player.yaw   -= (t.clientX - touchLook.x) * s;
-      player.pitch -= (t.clientY - touchLook.y) * s;
-      player.pitch = Math.max(-1.3, Math.min(1.3, player.pitch));
-      touchLook.x = t.clientX; touchLook.y = t.clientY;
-    }
+    // look-around disabled in this menu
   }
 }, { passive:true });
 addEventListener('touchend', e => {
