@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>NICHOLAS CITY — Neon Megacity</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;overflow:hidden;background:#05060c;font-family:'Trebuchet MS',system-ui,sans-serif;color:#fff;}
+  #app{position:fixed;inset:0;}
+  canvas{display:block;}
+
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:10;}
+  .panel{position:absolute;background:rgba(8,10,22,.62);border:1px solid rgba(120,220,255,.28);
+    border-radius:14px;padding:10px 13px;backdrop-filter:blur(6px);font-size:12.5px;line-height:1.55;}
+  #stats{top:12px;left:12px;min-width:170px;}
+  #stats .big{font-size:15px;font-weight:bold;color:#7be0ff;}
+  #controls{bottom:12px;left:12px;max-width:250px;}
+  #controls b{color:#ffd44d;}
+  kbd{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:5px;
+    padding:1px 6px;font-family:inherit;font-size:11.5px;}
+  #bottomright{bottom:12px;right:12px;pointer-events:auto;display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+  #tower-card{top:12px;right:12px;text-align:right;max-width:210px;}
+  #tower-card .n{font-size:15px;font-weight:bold;color:#ffd44d;letter-spacing:1px;}
+
+  button{font-family:inherit;font-size:12.5px;font-weight:bold;color:#04121c;cursor:pointer;
+    background:linear-gradient(180deg,#7be0ff,#39a7d8);border:0;border-radius:11px;padding:9px 13px;
+    box-shadow:0 3px 0 rgba(0,0,0,.45);}
+  button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.45);}
+  button.alt{background:linear-gradient(180deg,#ffd44d,#e0a324);}
+  button.ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);}
+  #verdict{font-size:11.5px;opacity:.75;}
+
+  #start{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 40%,rgba(40,20,80,.85),rgba(4,4,12,.97));text-align:center;padding:20px;}
+  #start .box{max-width:520px;}
+  #start h1{font-size:clamp(30px,9vw,58px);line-height:1;color:#ffd44d;
+    text-shadow:0 0 18px rgba(255,110,220,.85),0 0 46px rgba(90,200,255,.6);letter-spacing:2px;}
+  #start p{margin:14px 0 4px;opacity:.85;font-size:clamp(13px,3.6vw,15.5px);line-height:1.6;}
+  #start .keys{margin:18px auto;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+  #start .keys span{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+    border-radius:9px;padding:6px 10px;font-size:12px;}
+  #loading{margin-top:16px;font-size:13px;color:#7be0ff;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="hud">
+  <div class="panel" id="stats">
+    <div class="big" id="modeLabel">WALKING</div>
+    <div id="clock">🕐 22:00 — NIGHT</div>
+    <div id="where">📍 Street level</div>
+    <div id="verdict"></div>
+  </div>
+
+  <div class="panel" id="tower-card">
+    <div class="n">🗼 NICHOLAS TOWER</div>
+    <div style="opacity:.75">150 m landmark · head of the avenue</div>
+    <div id="towerDist" style="color:#7be0ff;margin-top:4px"></div>
+  </div>
+
+  <div class="panel" id="controls">
+    <b>WASD</b> move · <b>Mouse</b> look<br>
+    <b>Shift</b> sprint/boost · <b>Space</b> up · <b>C / Ctrl</b> down<br>
+    <kbd>F</kbd> walk ⚡ hover-car &nbsp; <kbd>T</kbd> time of day<br>
+    <kbd>N</kbd> night lock &nbsp; <kbd>H</kbd> hide UI
+  </div>
+
+  <div id="bottomright">
+    <button class="ghost" id="btnHelp">❔ Controls</button>
+    <button class="alt" id="btnNight">🌙 Force night</button>
+    <button id="btnMode">🚗 Hover-car</button>
+  </div>
+</div>
+
+<div id="start">
+  <div class="box">
+    <h1>NICHOLAS CITY</h1>
+    <p>You are standing in a futuristic megacity.<br>Streets full of people, flying cars overhead, and <b style="color:#ffd44d">NICHOLAS TOWER</b> at the end of the avenue.</p>
+    <div class="keys">
+      <span>WASD = move</span><span>Mouse = look</span><span>Shift = sprint</span>
+      <span>F = hover-car</span><span>T = time of day</span>
+    </div>
+    <p style="opacity:.6;font-size:12.5px">Click to start. Press Esc to get your mouse back.</p>
+    <div id="loading">Building the city…</div>
+    <button id="btnStart" style="margin-top:14px;font-size:16px;padding:13px 30px;display:none">▶ ENTER THE CITY</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+// ---------------------------------------------------------------- setup
+const app = document.getElementById('app');
+const renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+if (THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+app.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x0a0c1e, 0.0038);
+
+const camera = new THREE.PerspectiveCamera(68, innerWidth/innerHeight, 0.1, 3000);
+
+// ---------------------------------------------------------------- sky
+const skyGeo = new THREE.SphereGeometry(1600, 32, 20);
+const skyMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide, depthWrite:false,
+  uniforms:{
+    top:{value:new THREE.Color(0x05060f)},
+    mid:{value:new THREE.Color(0x1a1140)},
+    bot:{value:new THREE.Color(0x7a2b6a)},
+    glow:{value:new THREE.Color(0xff5fa2)},
+    sunDir:{value:new THREE.Vector3(0,1,0)},
+    sunAmt:{value:0.0}
+  },
+  vertexShader:`varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0);} `,
+  fragmentShader:`
+    uniform vec3 top, mid, bot, glow; uniform vec3 sunDir; uniform float sunAmt; varying vec3 vP;
+    void main(){
+      float h = clamp(vP.y*0.5+0.5, 0.0, 1.0);
+      vec3 c = mix(bot, mid, smoothstep(0.30,0.55,h));
+      c = mix(c, top, smoothstep(0.52,0.95,h));
+      float d = max(dot(normalize(vP), normalize(sunDir)), 0.0);
+      c += glow * pow(d, 9.0) * (0.55 + sunAmt*0.9);
+      c += glow * pow(d, 2.2) * 0.16 * (0.4 + sunAmt);
+      gl_FragColor = vec4(c, 1.0);
+    }`
+});
+scene.add(new THREE.Mesh(skyGeo, skyMat));
+
+// stars
+function dotTexture(){
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d');
+  const rg = g.createRadialGradient(32,32,0,32,32,32);
+  rg.addColorStop(0,'rgba(255,255,255,1)');
+  rg.addColorStop(0.25,'rgba(255,255,255,0.85)');
+  rg.addColorStop(0.55,'rgba(160,210,255,0.28)');
+  rg.addColorStop(1,'rgba(120,180,255,0)');
+  g.fillStyle = rg; g.fillRect(0,0,64,64);
+  const t = new THREE.CanvasTexture(c); return t;
+}
+const DOT = dotTexture();
+const starMat = new THREE.PointsMaterial({size:9, map:DOT, transparent:true, opacity:0.9,
+  blending:THREE.AdditiveBlending, depthWrite:false, color:0xdfe9ff});
+let stars;
+{
+  const N = 1400, pos = new Float32Array(N*3);
+  for (let i=0;i<N;i++){
+    const th = Math.random()*Math.PI*2, ph = Math.acos(Math.random()*0.95+0.02), r = 1200;
+    pos[i*3]   = r*Math.sin(ph)*Math.cos(th);
+    pos[i*3+1] = r*Math.cos(ph);
+    pos[i*3+2] = r*Math.sin(ph)*Math.sin(th);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  stars = new THREE.Points(g, starMat);
+  scene.add(stars);
+}
+
+// ---------------------------------------------------------------- lights
+const hemi = new THREE.HemisphereLight(0x445588, 0x120c22, 0.55);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffeedd, 0.0);
+scene.add(sun);
+const sunTarget = new THREE.Object3D(); scene.add(sunTarget); sun.target = sunTarget;
+const cityGlow = new THREE.DirectionalLight(0x7a6cff, 0.35);
+cityGlow.position.set(0, 200, -100); scene.add(cityGlow);
+
+// ---------------------------------------------------------------- assets
+const NEON = [0x1ad8ff, 0xff2fb0, 0x8a4dff, 0x2bffb0, 0xff9a2b, 0xff4d4d];
+
+function windowTexture(neonHex, warmth, cols, rows, litFrac){
+  const W = 128, H = Math.max(128, rows*10);
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  g.fillStyle = '#070a14'; g.fillRect(0,0,W,H);
+  const cw = W/cols, ch = H/rows;
+  const neon = new THREE.Color(neonHex), warm = new THREE.Color(warmth);
+  for (let y=0;y<rows;y++){
+    for (let x=0;x<cols;x++){
+      if (Math.random() > litFrac) continue;
+      const col = Math.random() < 0.62 ? warm : neon;
+      const k = 0.35 + Math.random()*0.65;
+      g.fillStyle = 'rgb('+[col.r*255*k|0, col.g*255*k|0, col.b*255*k|0].join(',')+')';
+      g.fillRect(x*cw + cw*0.20, y*ch + ch*0.22, cw*0.60, ch*0.52);
+    }
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.magFilter = THREE.NearestFilter; t.minFilter = THREE.LinearMipMapLinearFilter;
+  return t;
+}
+
+const buildingMats = [];
+for (let v=0; v<8; v++){
+  const tex = windowTexture(NEON[v%NEON.length], v%3===0?0xffe6b0:0xdff0ff, 8, 30, 0.55);
+  const m = new THREE.MeshStandardMaterial({
+    color:0x0d1120, roughness:0.42, metalness:0.55,
+    map:tex, emissiveMap:tex, emissive:0xffffff, emissiveIntensity:0.0
+  });
+  buildingMats.push(m);
+}
+buildingMats.forEach(m=>{ m.userData.tex = m.map; });
+
+const glowMats = NEON.map(c => new THREE.MeshBasicMaterial({color:c}));
+function neonMat(i, k){ return new THREE.MeshBasicMaterial({color:new THREE.Color(NEON[i%NEON.length]).multiplyScalar(k||1)}); }
+
+// ---------------------------------------------------------------- city data
+const CITY = { half: 210, cols: 15, spacing: 26 };
+const buildings = [];          // for collision {x,z,hw,hd}
+const roadW = 14;              // avenue half-width
+const cityGroup = new THREE.Group(); scene.add(cityGroup);
+
+// ground
+{
+  const g = new THREE.PlaneGeometry(1400, 1400);
+  const m = new THREE.MeshStandardMaterial({color:0x0a0c16, roughness:0.28, metalness:0.42});
+  const p = new THREE.Mesh(g,m); p.rotation.x = -Math.PI/2; p.position.y = 0; cityGroup.add(p);
+}
+
+// glowing road strips
+const stripMat = new THREE.MeshBasicMaterial({color:0x2ad8ff});
+const warmStripMat = new THREE.MeshBasicMaterial({color:0xffc46b});
+function strip(x,z,sx,sz,mat,y){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(sx, 0.12, sz), mat||stripMat);
+  m.position.set(x, y===undefined?0.07:y, z); cityGroup.add(m); return m;
+}
+for (let z=-CITY.half; z<=CITY.half; z+=34){
+  strip(-4.4, z, 1.0, 30); strip(4.4, z, 1.0, 30);
+}
+for (let x=-CITY.half; x<=CITY.half; x+=34){
+  strip(x, 0, 30, 1.0);
+}
+for (let z=-CITY.half; z<=CITY.half; z+=22){
+  strip(-13.4, z, 1.3, 20, warmStripMat); strip(13.4, z, 1.3, 20, warmStripMat);
+}
+
+// buildings
+function makeTower(x, z, w, d, h, variant){
+  const grp = new THREE.Group();
+  const segs = h > 60 ? 3 : (h > 30 ? 2 : 1);
+  let cz = 0, cw = w, cd = d, rem = h;
+  const parts = [];
+  for (let i=0;i<segs;i++){
+    let sh;
+    if (i === segs-1) sh = rem;
+    else { sh = rem * (0.34 + Math.random()*0.24); }
+    rem -= sh;
+    const shrink = 1 - 0.18*i;
+    const bw = Math.max(cw*shrink, 5), bd = Math.max(cd*shrink, 5);
+    const mat = buildingMats[(variant + i) % buildingMats.length];
+    const geo = Math.random() < 0.14 && i===0 && sh>26
+      ? new THREE.CylinderGeometry(bw/2, bw/2, sh, 18)
+      : new THREE.BoxGeometry(bw, sh, bd);
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, cz + sh/2, z);
+    grp.add(m);
+    parts.push(m);
+    // rooftop neon band
+    if (i === segs-1 || Math.random() < 0.5){
+      const band = new THREE.Mesh(new THREE.BoxGeometry(bw+0.9, 1.0, bd+0.9), neonMat(variant+i));
+      band.position.set(x, cz + sh - 0.5, z); grp.add(band);
+    }
+    cz += sh; cw = bw; cd = bd;
+  }
+  // antenna
+  if (Math.random() < 0.45){
+    const ah = 4 + Math.random()*10;
+    const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,ah,6), new THREE.MeshStandardMaterial({color:0x11162a, metalness:0.8, roughness:0.3}));
+    ant.position.set(x, h + ah/2, z); grp.add(ant);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.5,8,6), new THREE.MeshBasicMaterial({color:0xff3b3b}));
+    tip.position.set(x, h + ah, z); grp.add(tip);
+  }
+  // big vertical sign
+  if (Math.random() < 0.4 && h > 16){
+    const shs = Math.min(h*0.45, 22);
+    const side = Math.random()<0.5?-1:1;
+    const s = new THREE.Mesh(new THREE.BoxGeometry(0.5, shs, Math.min(d,3.4)), neonMat(variant+3, 2.2));
+    s.position.set(x + side*(cw/2+0.4), h*0.55, z); grp.add(s);
+  }
+  cityGroup.add(grp);
+  buildings.push({x, z, hw:w/2, hd:d/2, h});
+  return grp;
+}
+
+let bi = 0;
+for (let ix=0; ix<CITY.cols; ix++){
+  for (let iz=0; iz<CITY.cols; iz++){
+    const x = -CITY.half + ix*CITY.spacing + CITY.spacing/2;
+    const z = -CITY.half + iz*CITY.spacing + CITY.spacing/2;
+    if (Math.abs(x) < roadW + 6) continue;             // keep the avenue clear
+    if (Math.abs(x) < 3 && Math.abs(z) < 3) continue;
+    if (Math.random() < 0.09) continue;
+    const w = 9 + Math.random()*8, d = 9 + Math.random()*8;
+    const dist = Math.hypot(x,z);
+    let h = 12 + Math.random()*30 + Math.max(0, (230-dist))*0.28;
+    if (dist < 70) h *= 1.3;
+    makeTower(x, z, w, d, Math.min(h, 150), bi++);
+  }
+}
+console.log('towers', bi);
+
+// ---------------------------------------------------------------- NICHOLAS TOWER
+const TW = {x:0, z:118};
+let towerTop = 0;
+{
+  const grp = new THREE.Group();
+  const segs = [[30,52],[24,46],[18,42],[13,34]];
+  let z0 = 0;
+  segs.forEach(([w,h],i)=>{
+    const mat = buildingMats[i*2 % buildingMats.length];
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,w), mat);
+    m.position.set(TW.x, z0+h/2, TW.z); grp.add(m);
+    const band = new THREE.Mesh(new THREE.BoxGeometry(w+1.6,1.4,w+1.6), neonMat(i*3, 1.6));
+    band.position.set(TW.x, z0+h-0.7, TW.z); grp.add(band);
+    z0 += h;
+  });
+  towerTop = z0;
+  // crown rings
+  [[24,2],[18,10],[28,22]].forEach(([r,dz],i)=>{
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.8, 8, 40), neonMat(i*2+1, 2.0));
+    ring.rotation.x = Math.PI/2; ring.position.set(TW.x, z0+dz, TW.z); grp.add(ring);
+  });
+  // mast + beacon
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,14,8), new THREE.MeshStandardMaterial({color:0x141a30, metalness:0.85, roughness:0.25}));
+  mast.position.set(TW.x, z0+7, TW.z); grp.add(mast);
+  const beac = new THREE.Mesh(new THREE.SphereGeometry(1.6,12,10), new THREE.MeshBasicMaterial({color:0xff3b3b}));
+  beac.position.set(TW.x, z0+15, TW.z); grp.add(beac);
+  window.__beacon = beac;
+
+  // ---- glowing NICHOLAS name sign (canvas texture, billboard-ish) ----
+  function nameTexture(){
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 256;
+    const g = c.getContext('2d');
+    g.clearRect(0,0,1024,256);
+    g.font = 'bold 150px Trebuchet MS, sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.shadowColor = '#ffd44d'; g.shadowBlur = 40;
+    g.fillStyle = '#fff3c4'; g.fillText('NICHOLAS', 512, 132);
+    g.shadowBlur = 0; g.fillStyle = '#ffd44d'; g.fillText('NICHOLAS', 512, 132);
+    const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding;
+    return t;
+  }
+  const signMat = new THREE.MeshBasicMaterial({map:nameTexture(), transparent:true, side:THREE.DoubleSide, depthWrite:false});
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(46, 11.5), signMat);
+  sign.position.set(TW.x, z0 + 30, TW.z - 15.5); grp.add(sign);
+  // second sign facing the avenue start
+  const sign2 = sign.clone(); sign2.position.set(TW.x, z0+30, TW.z+15.5); sign2.rotation.y = Math.PI; grp.add(sign2);
+
+  // vertical stacked letters down the facade
+  const letters = 'NICHOLAS';
+  for (let i=0;i<letters.length;i++){
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d');
+    g.font='bold 96px Trebuchet MS, sans-serif'; g.textAlign='center'; g.textBaseline='middle';
+    g.shadowColor = i%2? '#ff2fb0':'#1ad8ff'; g.shadowBlur = 26;
+    g.fillStyle = '#ffffff'; g.fillText(letters[i], 64, 70);
+    const t = new THREE.CanvasTexture(c);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:t, transparent:true, depthWrite:false}));
+    sp.scale.set(9,9,9);
+    sp.position.set(TW.x - 15.6, z0 - 5 - i*9, TW.z + 8);
+    grp.add(sp);
+  }
+
+  // ground rings
+  [[16,0x1ad8ff],[22,0xff2fb0],[28,0xffd44d]].forEach(([r,c],i)=>{
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.35, 6, 64), new THREE.MeshBasicMaterial({color:c}));
+    ring.rotation.x = Math.PI/2; ring.position.set(TW.x, 0.3+i*0.05, TW.z); grp.add(ring);
+  });
+  // searchlight beams
+  const beamMat = new THREE.MeshBasicMaterial({color:0xbfe8ff, transparent:true, opacity:0.13, side:THREE.DoubleSide, depthWrite:false});
+  window.__beams = [];
+  for (let i=0;i<4;i++){
+    const beam = new THREE.Mesh(new THREE.ConeGeometry(7, 260, 18, 1, true), beamMat);
+    beam.geometry.translate(0,-130,0);
+    const pivot = new THREE.Object3D();
+    pivot.position.set(TW.x, z0+16, TW.z);
+    pivot.rotation.z = 0.55;
+    pivot.rotation.y = i*Math.PI/2;
+    pivot.add(beam); grp.add(pivot);
+    window.__beams.push(pivot);
+  }
+  cityGroup.add(grp);
+  buildings.push({x:TW.x, z:TW.z, hw:15, hd:15, h:towerTop});
+}
+console.log('tower top', towerTop);
+
+// ---------------------------------------------------------------- people
+const N_PEOPLE = 420;
+const bodyGeo = new THREE.BoxGeometry(0.44, 1.05, 0.3);
+const headGeo = new THREE.SphereGeometry(0.14, 8, 6);
+const bodyMat = new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.7});
+const headMat = new THREE.MeshStandardMaterial({color:0xb98a6a, roughness:0.75});
+const bodies = new THREE.InstancedMesh(bodyGeo, bodyMat, N_PEOPLE);
+const heads  = new THREE.InstancedMesh(headGeo, headMat, N_PEOPLE);
+bodies.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+heads.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+bodies.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(N_PEOPLE*3),3);
+heads.instanceColor  = new THREE.InstancedBufferAttribute(new Float32Array(N_PEOPLE*3),3);
+const COAT = [0xd93b4a,0x2f5fd9,0xe8c33a,0x3ad16f,0xc04ad1,0xe0842b,0xd8d8e0,0x2fb0c0];
+const people = [];
+{
+  const tmpC = new THREE.Color();
+  for (let i=0;i<N_PEOPLE;i++){
+    const onAve = i < 300;
+    let x, z, dir;
+    if (onAve){
+      const side = Math.random()<0.5?-1:1;
+      x = side * (15 + Math.random()*5.5);
+      z = -CITY.half + Math.random()*CITY.half*2;
+      dir = Math.random()<0.5?1:-1;
+    } else {
+      x = -CITY.half + Math.random()*CITY.half*2;
+      z = (Math.random()<0.5? 1:-1) * (16 + Math.random()*5);
+      dir = Math.random()<0.5?1:-1;
+    }
+    const scale = 0.9 + Math.random()*0.25;
+    const p = {x, z, dir, scale, speed: 1.1+Math.random()*1.5, phase: Math.random()*Math.PI*2,
+               rot: dir>0?0:Math.PI, axis: onAve?'z':'x'};
+    if (p.axis === 'x') { p.rot = dir>0? Math.PI/2 : -Math.PI/2; }
+    people.push(p);
+    tmpC.setHex(COAT[i%COAT.length]);
+    bodies.instanceColor.setXYZ(i, tmpC.r, tmpC.g, tmpC.b);
+    tmpC.setHSL(0.07, 0.42, 0.55 + Math.random()*0.2);
+    heads.instanceColor.setXYZ(i, tmpC.r, tmpC.g, tmpC.b);
+  }
+}
+bodies.instanceColor.needsUpdate = true; heads.instanceColor.needsUpdate = true;
+scene.add(bodies); scene.add(heads);
+window.__people = people;
+
+// ---------------------------------------------------------------- flying cars
+const cars = [];
+{
+  const carGeo = new THREE.BoxGeometry(6.2, 1.5, 2.4);
+  const carMat = new THREE.MeshStandardMaterial({color:0x121a33, metalness:0.85, roughness:0.25});
+  const lGeo = new THREE.SphereGeometry(0.42, 8, 6);
+  const redMat = new THREE.MeshBasicMaterial({color:0xff2b2b});
+  const whtMat = new THREE.MeshBasicMaterial({color:0xd8f0ff});
+  for (let i=0;i<34;i++){
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(carGeo, carMat));
+    const a = new THREE.Mesh(lGeo, redMat); a.position.set(-3.2,0,0); g.add(a);
+    const b = new THREE.Mesh(lGeo, whtMat); b.position.set(3.2,0,0); g.add(b);
+    const axisZ = Math.random()<0.62;
+    const c = {
+      g, axisZ,
+      y: 16 + Math.random()*80,
+      speed: 14 + Math.random()*26,
+      dir: Math.random()<0.5?1:-1,
+      lane: 0
+    };
+    if (axisZ){ c.x = -CITY.half + Math.random()*CITY.half*2; c.z = -CITY.half + Math.random()*CITY.half*2; }
+    else { c.x = -CITY.half + Math.random()*CITY.half*2; c.z = -CITY.half + Math.random()*CITY.half*2; }
+    g.rotation.y = axisZ ? (c.dir>0?0:Math.PI) : (c.dir>0?Math.PI/2:-Math.PI/2);
+    cars.push(c); scene.add(g);
+  }
+}
+
+// ---------------------------------------------------------------- floating orbs / light points
+let orbPoints;
+{
+  const N = 700, pos = new Float32Array(N*3), col = new Float32Array(N*3);
+  const c = new THREE.Color();
+  for (let i=0;i<N;i++){
+    pos[i*3]   = -CITY.half + Math.random()*CITY.half*2;
+    pos[i*3+1] = 14 + Math.random()*150;
+    pos[i*3+2] = -CITY.half + Math.random()*CITY.half*2;
+    c.setHex(NEON[i%NEON.length]);
+    col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  g.setAttribute('color', new THREE.BufferAttribute(col,3));
+  orbPoints = new THREE.Points(g, new THREE.PointsMaterial({size:5.5, map:DOT, vertexColors:true,
+    transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, opacity:0.95}));
+  scene.add(orbPoints);
+}
+
+// ---------------------------------------------------------------- day / night
+let timeOfDay = 0.90;      // 0..1  (0.25 = sunrise, 0.5 = noon, 0.75 = sunset)
+let autoTime = true, nightLock = false;
+const DAY_SKY = {top:new THREE.Color(0x2f6fd0), mid:new THREE.Color(0x6fa8e8), bot:new THREE.Color(0xd7e6ff), glow:new THREE.Color(0xfff0c0)};
+const NIGHT_SKY = {top:new THREE.Color(0x03040d), mid:new THREE.Color(0x150e38), bot:new THREE.Color(0x7a2b6a), glow:new THREE.Color(0xff5fa2)};
+const SUNSET_SKY = {top:new THREE.Color(0x1a1140), mid:new THREE.Color(0x8a3f6a), bot:new THREE.Color(0xff9a5c), glow:new THREE.Color(0xffa050)};
+function mixColor(a,b,t,out){ return out.copy(a).lerp(b, t); }
+const _c1=new THREE.Color(),_c2=new THREE.Color(),_tgt=new THREE.Color();
+const _nightAmb=new THREE.Color(0x8fb4ff), _dayAmb=new THREE.Color(0xdce8ff);
+function skySample(){
+  // sun elevation
+  const ang = (timeOfDay - 0.25) * Math.PI*2;
+  const elev = Math.sin(ang);
+  const dayness = Math.max(0, Math.min(1, elev*1.6 + 0.18));
+  const dusk = Math.max(0, 1 - Math.abs(elev)*3.4);
+  const u = skyMat.uniforms;
+  mixColor(NIGHT_SKY.top, DAY_SKY.top, dayness, u.top.value);
+  mixColor(NIGHT_SKY.mid, DAY_SKY.mid, dayness, u.mid.value);
+  mixColor(NIGHT_SKY.bot, DAY_SKY.bot, dayness, u.bot.value);
+  mixColor(u.glow.value.copy(NIGHT_SKY.glow), DAY_SKY.glow, Math.min(1, dayness*1.5));
+  u.sunAmt.value = dayness*0.9 + dusk*0.7;
+  // sun light
+  const sx = Math.cos(ang)*300, sy = elev*300, sz = Math.sin(ang*1.0)*180;
+  sun.position.set(sx, Math.max(sy,-40), sz);
+  sunTarget.position.set(0,0,0);
+  sun.intensity = Math.max(0, elev) * 1.5;
+  sun.color.setHSL(0.09, 0.35*(1-Math.max(0,elev)), 0.9);
+  hemi.intensity = 0.22 + dayness*0.75;
+  hemi.color.copy(_nightAmb).lerp(_dayAmb, dayness);
+  cityGlow.intensity = 0.5 - dayness*0.35;
+  // windows: bright at night, dim by day
+  const wGlow = 0.15 + (1-dayness)*2.3;
+  buildingMats.forEach(m => m.emissiveIntensity = wGlow);
+  stripMat.color.setRGB(0.16+wGlow*0.12, 0.75+wGlow*0.06, 1.0).multiplyScalar(0.55+wGlow*0.30);
+  starMat.opacity = Math.max(0, 1 - dayness*1.9);
+  scene.fog.color.copy(u.bot.value).multiplyScalar(dayness>0.5?1.0:0.55);
+  scene.fog.density = 0.0030 + (1-dayness)*0.0016;
+  return {elev, dayness};
+}
+function clockText(){
+  const mins = Math.floor(((timeOfDay*24)+6) % 24 * 60);
+  const hh = String(Math.floor(mins/60)).padStart(2,'0');
+  const mm = String(mins%60).padStart(2,'0');
+  const st = skySample();
+  const label = st.dayness > 0.62 ? 'DAY' : (st.dayness > 0.28 ? (st.elev>0?'GOLDEN HOUR':'DUSK') : 'NIGHT');
+  return '🕐 '+hh+':'+mm+' — '+label;
+}
+
+// ---------------------------------------------------------------- player / controls
+const keys = {};
+addEventListener('keydown', e=>{
+  keys[e.code] = true;
+  if (e.code==='KeyF') toggleMode();
+  if (e.code==='KeyT') { autoTime = !autoTime; if(!autoTime) {} }
+  if (e.code==='KeyN') { nightLock = !nightLock; autoTime = !nightLock; }
+  if (e.code==='KeyH') { const h=document.getElementById('hud'); h.style.display = h.style.display==='none'?'':'none'; }
+  if (e.code==='KeyR') { player.pos.set(0,-165,1.8); }
+  if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.code)>=0) e.preventDefault();
+});
+addEventListener('keyup', e=>{ keys[e.code] = false; });
+
+const player = {
+  pos: new THREE.Vector3(0, 1.8, -168),
+  yaw: 0, pitch: 0,
+  mode: 'walk',                 // 'walk' | 'car'
+  carH: 20
+};
+document.addEventListener('mousemove', e=>{
+  if (document.pointerLockElement !== renderer.domElement) return;
+  player.yaw   -= e.movementX * 0.0022;
+  player.pitch -= e.movementY * 0.0022;
+  player.pitch = Math.max(-1.45, Math.min(1.45, player.pitch));
+});
+renderer.domElement.addEventListener('click', ()=>{
+  if (started && !isTouch) renderer.domElement.requestPointerLock();
+});
+
+// ---------------- touch controls (phone / tablet) ----------------
+const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+if (isTouch){
+  document.getElementById('controls').innerHTML =
+    '<b>Left half</b> drag = move<br><b>Right half</b> drag = look around<br>' +
+    '<button class="ghost" id="btnUp" style="margin-top:6px">🛸 Up</button> ' +
+    '<button class="ghost" id="btnDown">⬇ Down</button>';
+  const touches = {};
+  const mk = (t, kind) => ({kind, x0:t.clientX, y0:t.clientY, dx:0, dy:0});
+  renderer.domElement.addEventListener('touchstart', e=>{
+    for (const t of e.changedTouches){
+      if (t.clientX < innerWidth*0.5) touches[t.identifier] = mk(t,'move');
+      else touches[t.identifier] = mk(t,'look');
+    }
+    e.preventDefault();
+  }, {passive:false});
+  renderer.domElement.addEventListener('touchmove', e=>{
+    for (const t of e.changedTouches){
+      const s = touches[t.identifier]; if (!s) continue;
+      s.dx = t.clientX - s.x0; s.dy = t.clientY - s.y0;
+    }
+    e.preventDefault();
+  }, {passive:false});
+  const end = e=>{ for (const t of e.changedTouches) delete touches[t.identifier]; };
+  renderer.domElement.addEventListener('touchend', end);
+  renderer.domElement.addEventListener('touchcancel', end);
+  window.__touchMove = ()=>{
+    let m = new THREE.Vector3(0,0,0), look = null;
+    for (const k in touches){
+      const s = touches[k];
+      if (s.kind === 'move'){
+        const vx = Math.max(-1,Math.min(1, s.dx/70)), vz = Math.max(-1,Math.min(1, s.dy/70));
+        m.set(vx, 0, vz);
+      } else { look = {dx:s.dx, dy:s.dy}; }
+    }
+    return {m, look};
+  };
+}
+
+function setBtn(id, on){ const b=document.getElementById(id); if (b) b.classList.toggle('on', on); }
+
+function toggleMode(){
+  player.mode = player.mode === 'walk' ? 'car' : 'walk';
+  document.getElementById('modeLabel').textContent = player.mode==='walk' ? 'WALKING' : 'HOVER-CAR';
+  document.getElementById('btnMode').textContent = player.mode==='walk' ? '🚗 Hover-car' : '🚶 Walk';
+  if (player.mode === 'car'){ player.carH = Math.max(player.carH, 22); }
+  else { player.pos.y = 1.8; }
+}
+
+function collide(nx, nz){
+  // simple AABB push-out against building footprints
+  const r = 0.7;
+  for (let i=0;i<buildings.length;i++){
+    const b = buildings[i];
+    if (nx > b.x - b.hw - r && nx < b.x + b.hw + r &&
+        nz > b.z - b.hd - r && nz < b.z + b.hd + r){
+      if (player.pos.y > b.h + 1.5) continue;
+      const dxl = Math.abs(nx - (b.x - b.hw - r));
+      const dxr = Math.abs((b.x + b.hw + r) - nx);
+      const dzl = Math.abs(nz - (b.z - b.hd - r));
+      const dzr = Math.abs((b.z + b.hd + r) - nz);
+      const m = Math.min(dxl,dxr,dzl,dzr);
+      if (m === dxl) nx = b.x - b.hw - r;
+      else if (m === dxr) nx = b.x + b.hw + r;
+      else if (m === dzl) nz = b.z - b.hd - r;
+      else nz = b.z + b.hd + r;
+    }
+  }
+  return [nx, nz];
+}
+
+// ---------------------------------------------------------------- loop
+const clock = new THREE.Clock();
+let started = false;
+const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpV = new THREE.Vector3(), tmpS = new THREE.Vector3();
+const elClock = document.getElementById('clock');
+const elWhere = document.getElementById('where');
+const elVerdict = document.getElementById('verdict');
+const elTowerDist = document.getElementById('towerDist');
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.05, clock.getDelta());
+
+  if (autoTime) timeOfDay = (timeOfDay + dt/140) % 1;
+  if (nightLock) timeOfDay = 0.90;
+
+  // --- movement
+  const fwd = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
+  const right = new THREE.Vector3(fwd.z, 0, -fwd.x);
+  let mv = new THREE.Vector3();
+  if (isTouch && window.__touchMove){
+    const t = window.__touchMove();
+    mv.set(t.m.x, 0, t.m.z);
+    if (mv.lengthSq()>0) mv.normalize();
+    if (t.look){ player.yaw -= (t.look.dx - (player._ldx||0)) * 0.004; player.pitch -= (t.look.dy - (player._ldy||0)) * 0.004;
+      player._ldx = t.look.dx; player._ldy = t.look.dy;
+      player.pitch = Math.max(-1.45, Math.min(1.45, player.pitch)); }
+    if (!t.look){ player._ldx = 0; player._ldy = 0; }
+  }
+  if (keys['KeyW']||keys['ArrowUp']) mv.add(fwd);
+  if (keys['KeyS']||keys['ArrowDown']) mv.sub(fwd);
+  if (keys['KeyD']||keys['ArrowRight']) mv.add(right);
+  if (keys['KeyA']||keys['ArrowLeft']) mv.sub(right);
+  if (mv.lengthSq() > 0) mv.normalize();
+
+  if (player.mode === 'walk'){
+    const sp = (keys['ShiftLeft']||keys['ShiftRight'] ? 15 : 6.2);
+    let nx = player.pos.x + mv.x*sp*dt, nz = player.pos.z + mv.z*sp*dt;
+    const c = collide(nx, nz); player.pos.x = c[0]; player.pos.z = c[1];
+    player.pos.y = 1.78;
+  } else {
+    const sp = (keys['ShiftLeft']||keys['ShiftRight'] ? 78 : 34);
+    player.pos.x += mv.x*sp*dt; player.pos.z += mv.z*sp*dt;
+    if (keys['Space']) player.carH += 26*dt;
+    if (keys['ControlLeft']||keys['KeyC']) player.carH -= 26*dt;
+    player.carH = Math.max(3, Math.min(230, player.carH));
+    player.pos.y += (player.carH - player.pos.y) * Math.min(1, dt*3.2);
+  }
+  player.pos.x = Math.max(-CITY.half-110, Math.min(CITY.half+110, player.pos.x));
+  player.pos.z = Math.max(-CITY.half-110, Math.min(CITY.half+110, player.pos.z));
+
+  // --- camera
+  camera.position.copy(player.pos);
+  const look = new THREE.Vector3(
+    player.pos.x - Math.sin(player.yaw)*Math.cos(player.pitch),
+    player.pos.y + Math.sin(player.pitch),
+    player.pos.z - Math.cos(player.yaw)*Math.cos(player.pitch)
+  );
+  camera.lookAt(look);
+
+  // --- people walk
+  for (let i=0;i<people.length;i++){
+    const p = people[i];
+    if (p.axis === 'z'){ p.z += p.dir*p.speed*dt; if (p.z > CITY.half) p.z = -CITY.half; if (p.z < -CITY.half) p.z = CITY.half; }
+    else { p.x += p.dir*p.speed*dt; if (p.x > CITY.half) p.x = -CITY.half; if (p.x < -CITY.half) p.x = CITY.half; }
+    const bob = Math.sin(performance.now()*0.006*p.speed + p.phase) * 0.06;
+    const s = p.scale;
+    tmpQ.setFromAxisAngle(new THREE.Vector3(0,1,0), p.rot + Math.sin(performance.now()*0.004+p.phase)*0.12);
+    tmpM.compose(tmpV.set(p.x, 0.95*s + bob, p.z), tmpQ, tmpS.set(s,s,s));
+    bodies.setMatrixAt(i, tmpM);
+    tmpM.compose(tmpV.set(p.x, 1.68*s + bob, p.z), tmpQ, tmpS.set(s,s,s));
+    heads.setMatrixAt(i, tmpM);
+  }
+  bodies.instanceMatrix.needsUpdate = true;
+  heads.instanceMatrix.needsUpdate = true;
+
+  // --- cars
+  cars.forEach(c=>{
+    if (c.axisZ){ c.z += c.dir*c.speed*dt; if (c.z > CITY.half+40) c.z = -CITY.half-40; if (c.z < -CITY.half-40) c.z = CITY.half+40; }
+    else { c.x += c.dir*c.speed*dt; if (c.x > CITY.half+40) c.x = -CITY.half-40; if (c.x < -CITY.half-40) c.x = CITY.half+40; }
+    c.g.position.set(c.x, c.y + Math.sin(performance.now()*0.001+c.y)*1.2, c.z);
+  });
+
+  // --- tower beams + beacon
+  if (window.__beams){
+    window.__beams.forEach((b,i)=>{ b.rotation.y = performance.now()*0.00022 + i*Math.PI/2; });
+  }
+  if (window.__beacon){
+    const k = 0.6 + 0.4*Math.sin(performance.now()*0.004);
+    window.__beacon.material.color.setRGB(k, k*0.18, k*0.18);
+  }
+  // orbs drift
+  if (orbPoints){
+    orbPoints.rotation.y += dt*0.006;
+    orbPoints.position.y = Math.sin(performance.now()*0.0003)*2.5;
+  }
+  // stars
+  if (stars) stars.rotation.y += dt*0.004;
+
+  // --- sky/lighting
+  skySample();
+
+  // --- HUD
+  if (hudTick++ % 12 === 0){
+    elClock.textContent = clockText();
+    const d = Math.hypot(player.pos.x - TW.x, player.pos.z - TW.z);
+    const inTower = player.pos.z > 74 && Math.abs(player.pos.x) < 34;
+    elWhere.textContent = '📍 ' + (inTower ? 'NICHOLAS TOWER PLAZA' : (Math.abs(player.pos.x) < 20 ? 'Neon Avenue' : 'Street grid'));
+    elTowerDist.textContent = Math.round(d) + ' m away';
+    elVerdict.textContent = (player.pos.y > 3 ? '🛸 altitude '+Math.round(player.pos.y)+' m' : '');
+  }
+  hudTick++;
+
+  renderer.render(scene, camera);
+}
+let hudTick = 0;
+
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// ---------------------------------------------------------------- start
+document.getElementById('btnStart').addEventListener('click', ()=>{
+  document.getElementById('start').style.display = 'none';
+  started = true;
+  if (!isTouch) renderer.domElement.requestPointerLock();
+  btnMode.textContent = '🚗 Hover-car';
+});
+document.getElementById('btnUp') && document.getElementById('btnUp').addEventListener('touchstart', e=>{ e.preventDefault(); keys['Space']=true; });
+document.getElementById('btnUp') && document.getElementById('btnUp').addEventListener('touchend', e=>{ keys['Space']=false; });
+document.getElementById('btnDown') && document.getElementById('btnDown').addEventListener('touchstart', e=>{ e.preventDefault(); keys['KeyC']=true; });
+document.getElementById('btnDown') && document.getElementById('btnDown').addEventListener('touchend', e=>{ keys['KeyC']=false; });
+document.getElementById('btnMode').addEventListener('click', toggleMode);
+document.getElementById('btnNight').addEventListener('click', ()=>{
+  nightLock = !nightLock; autoTime = !nightLock;
+  document.getElementById('btnNight').textContent = nightLock ? '☀️ Auto day/night' : '🌙 Force night';
+});
+document.getElementById('btnHelp').addEventListener('click', ()=>{
+  const h=document.getElementById('hud'); h.style.display = h.style.display==='none'?'':'none';
+  if (h.style.display === 'none') setTimeout(()=>{ h.style.display=''; }, 2500);
+});
+const btnMode = document.getElementById('btnMode');
+
+// warm up shaders, then reveal start button
+renderer.compile(scene, camera);
+animate();
+setTimeout(()=>{
+  document.getElementById('loading').textContent = '✅ City ready — '+biP()+ ' towers, '+N_PEOPLE+' people, 34 flying cars';
+  document.getElementById('btnStart').style.display = 'inline-block';
+}, 400);
+function biP(){ return bi; }
+
+})();
+</script>
+</body>
+</html>
