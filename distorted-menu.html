@@ -336,8 +336,8 @@ camera.position.set(0, 1.75, 26);
 // two-layer fog: near haze + far bleed, gives the "wrong distance" feel
 scene.fog = new THREE.FogExp2(0x070b14, 0.0055);
 
-const NIGHT = { sky:new THREE.Color(0x05070d), fog:new THREE.Color(0x070b14), fogD:0.0055, glow:0.35, city:1.0 };
-const DAY   = { sky:new THREE.Color(0x2c3f52), fog:new THREE.Color(0x4a5f70), fogD:0.0042, glow:0.10, city:0.25 };
+const NIGHT = { sky:new THREE.Color(0x000000), fog:new THREE.Color(0x000000), fogD:0.0, glow:0.0, city:0.0 };
+const DAY   = { sky:new THREE.Color(0x01020a), fog:new THREE.Color(0x01030c), fogD:0.0, glow:0.0, city:0.0 };
 
 let dayMix = 0, dayAuto = false;
 
@@ -347,9 +347,9 @@ let dayMix = 0, dayAuto = false;
 const skyMat = new THREE.ShaderMaterial({
   side: THREE.BackSide, depthWrite:false, fog:false,
   uniforms:{
-    uTop:{ value:new THREE.Color(0x04060c) },
-    uBot:{ value:new THREE.Color(0x0d2436) },
-    uAccent:{ value:new THREE.Color(0x00b7d8) },
+    uTop:{ value:new THREE.Color(0x000000) },
+    uBot:{ value:new THREE.Color(0x01030a) },
+    uAccent:{ value:new THREE.Color(0x061826) },
     uTime:{ value:0 }
   },
   vertexShader:`
@@ -365,10 +365,10 @@ const skyMat = new THREE.ShaderMaterial({
       vec3 col = mix(uBot, uTop, pow(h, 0.85));
       // horizon band
       float band = exp(-pow(abs(d.y)*7.0, 2.0));
-      col += uAccent * band * 0.09;
+      col += uAccent * band * 0.02;
       // slow drifting aurora distortion on the horizon
       float ang = atan(d.z, d.x);
-      col += uAccent * 0.03 * band * sin(ang*5.0 + uTime*0.25) * sin(ang*11.0 - uTime*0.17);
+      col += uAccent * 0.006 * band * sin(ang*5.0 + uTime*0.25) * sin(ang*11.0 - uTime*0.17);
       gl_FragColor = vec4(col, 1.0);
     }
   `
@@ -1405,6 +1405,27 @@ refreshStore();
 
   window.EARTH_WIDGET = { state(){ return { rotY:+earth.rotation.y.toFixed(3), sun:SUN.toArray() }; } };
 })();
+
+/* =========================================================
+   CLEAN SPACE MODE — no city, just the Earth + space
+   ========================================================= */
+{
+  const __h = location.hash.toLowerCase();
+  if(!__h.includes('city')){                // #city keeps the old cyber-city look
+    cityGroup.visible = false;
+    ground.visible    = false;
+    grid.visible      = false;
+    shards.visible    = false;
+    if(window.__motes) window.__motes.visible = false;
+  }
+  // subtle starfield so the space reads as space
+  const N = 1400, pos = new Float32Array(N*3);
+  for(let i=0;i<N;i++){ const v = new THREE.Vector3().randomDirection().multiplyScalar(400);
+    pos[i*3]=v.x; pos[i*3+1]=v.y; pos[i*3+2]=v.z; }
+  const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(sg, new THREE.PointsMaterial({
+    color:0xbcd3e6, size:1.5, transparent:true, opacity:0.6, depthWrite:false, sizeAttenuation:false })));
+}
 
 animate();
 
