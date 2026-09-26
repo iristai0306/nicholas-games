@@ -780,6 +780,12 @@ const btnMode = document.getElementById('btnMode');
 // warm up shaders, then reveal start button
 renderer.compile(scene, camera);
 animate();
+
+// jump straight in when opened with #auto (used for automated screenshots)
+if (/[?&#]auto/.test(location.href)){
+  document.getElementById('start').style.display = 'none';
+  started = true;
+}
 setTimeout(()=>{
   document.getElementById('loading').textContent = '✅ City ready — '+biP()+ ' towers, '+N_PEOPLE+' people, 34 flying cars';
   document.getElementById('btnStart').style.display = 'inline-block';
