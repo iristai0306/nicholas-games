@@ -107,6 +107,20 @@
   .lore .frag { display:block; margin-top:14px; padding-left:14px; border-left:2px solid rgba(255,80,140,.4); color:#7f9fb0; font-style:italic; }
   .lore .frag i { color:#ff5f96; font-style:normal; }
 
+  .store-hero { height:132px; margin:4px 0 20px; border:1px solid rgba(0,200,255,.3); position:relative; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 28% 32%, rgba(130,80,255,.55), transparent 62%),
+               radial-gradient(circle at 76% 72%, rgba(0,220,255,.5), transparent 62%),
+               linear-gradient(120deg,#0a1424,#171033); }
+  .store-hero b { font-family:'Orbitron',sans-serif; font-size:clamp(14px,4vw,20px); letter-spacing:6px; color:#e6faff;
+    text-shadow:0 0 26px rgba(130,200,255,.95); z-index:1; }
+  .store-hero::after { content:''; position:absolute; inset:0;
+    background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,.045) 3px,rgba(255,255,255,.045) 6px); }
+  .buy-row { display:flex; align-items:center; gap:20px; margin-top:20px; }
+  .price { font-family:'Orbitron',sans-serif; font-size:21px; color:#8ff8ff; letter-spacing:2px; }
+  .price.owned { color:#7dffb0; font-size:15px; letter-spacing:4px; }
+  .menu-item.owned .hint { color:#7dffb0; }
+
   /* ---------- splash / entry ---------- */
   #splash { position:fixed; inset:0; z-index:9; background:#05060c; display:flex; align-items:center; justify-content:center;
     flex-direction:column; transition:opacity .8s ease; font-family:'Orbitron',sans-serif; }
@@ -150,17 +164,17 @@
 <div id="ui">
   <div class="title-block">
     <div class="title-line main" id="titleMain">DISTORTED</div>
-    <div class="title-line sub">AN OPEN-WORLD DESCENT <em>//</em> THE CITY REMEMBERS YOU</div>
+    <div class="title-line sub">A 3D OPEN-WORLD ADVENTURE</div>
   </div>
 
   <div class="menu" id="menu">
-    <div class="menu-item active" data-action="new"><span class="sel"></span>CHRONO-JOURNEY<span class="hint">[New Game]</span></div>
-    <div class="menu-item" data-action="load"><span class="sel"></span>RE-ANCHOR REALITY<span class="hint">[Continue]</span></div>
-    <div class="menu-item" data-action="custom"><span class="sel"></span>SHIFTER OUTFITTING<span class="hint">[Customization]</span></div>
-    <div class="menu-item" data-action="settings"><span class="sel"></span>PROTOCOL CALIBRATION<span class="hint">[Settings]</span></div>
-    <div class="menu-item" data-action="lore"><span class="sel"></span>ANOMALY DATABASE<span class="hint">[Lore &amp; Logs]</span></div>
-    <div class="menu-item locked" data-action="dlc"><span class="sel"></span>EXPANSION PORTAL<span class="hint">[Locked]</span></div>
-    <div class="menu-item" data-action="quit"><span class="sel"></span>EXIT TO REALITY<span class="hint">[Quit]</span></div>
+    <div class="menu-item active" data-action="new"><span class="sel"></span>New Game</div>
+    <div class="menu-item" data-action="load"><span class="sel"></span>Continue</div>
+    <div class="menu-item" data-action="custom"><span class="sel"></span>Customise</div>
+    <div class="menu-item" data-action="settings"><span class="sel"></span>Settings</div>
+    <div class="menu-item" data-action="lore"><span class="sel"></span>Lore</div>
+    <div class="menu-item" data-action="dlc"><span class="sel"></span>Hyperluminal Expansion<span class="hint">[Store]</span></div>
+    <div class="menu-item" data-action="quit"><span class="sel"></span>Quit</div>
   </div>
 </div>
 
@@ -182,8 +196,8 @@
 <!-- ============ SETTINGS ============ -->
 <div class="panel" id="panel-settings">
   <div class="panel-inner">
-    <h2>PROTOCOL CALIBRATION</h2>
-    <div class="ptag">System / Settings</div>
+    <h2>SETTINGS</h2>
+    <div class="ptag">Options</div>
 
     <div class="row"><label>Master Volume</label><input type="range" id="s-vol" min="0" max="100" value="45"><span class="val" id="v-vol">45</span></div>
     <div class="row"><label>Distortion Intensity</label><input type="range" id="s-dist" min="0" max="100" value="55"><span class="val" id="v-dist">55</span></div>
@@ -199,8 +213,8 @@
 <!-- ============ LORE ============ -->
 <div class="panel" id="panel-lore">
   <div class="panel-inner">
-    <h2>ANOMALY DATABASE</h2>
-    <div class="ptag">Recovered fragments // clearance: DRIFTER</div>
+    <h2>LORE</h2>
+    <div class="ptag">The story so far</div>
     <div class="lore">
       The city was built to hold a single memory, and the memory <b>won't stop growing</b>.
       Streets fold into themselves. Towers you passed an hour ago are now standing where you were.
@@ -218,16 +232,37 @@
 <!-- ============ NEW / LOAD ============ -->
 <div class="panel" id="panel-brief">
   <div class="panel-inner">
-    <h2 id="briefTitle">CHRONO-JOURNEY</h2>
-    <div class="ptag" id="briefTag">New descent</div>
+    <h2 id="briefTitle">NEW GAME</h2>
+    <div class="ptag" id="briefTag">Start a new game</div>
     <div class="lore" id="briefBody">
       You wake at the edge of the city with a suit you don't remember putting on and a loop number you can't explain.
       <br><br>
       <b>The world is not finished yet.</b> The city framework exists — streets, towers, skyline, the distortion field —
       and you can already walk it. Quests, the beast, and the endings get built next.
     </div>
-    <button class="btn" id="briefGo">BEGIN DESCENT</button>
+    <button class="btn" id="briefGo">PLAY</button>
     <button class="btn" data-close style="margin-left:10px;border-color:rgba(120,120,140,.4);color:#7c8b99;">BACK</button>
+  </div>
+</div>
+
+<!-- ============ STORE: HYPERLUMINAL EXPANSION ============ -->
+<div class="panel" id="panel-store">
+  <div class="panel-inner">
+    <h2>HYPERLUMINAL EXPANSION</h2>
+    <div class="ptag">Expansion pack</div>
+    <div class="store-hero"><b>HYPERLUMINAL</b></div>
+    <div class="lore">
+      Go faster than light. The <b>Hyperluminal Expansion</b> opens a whole new region beyond the city —
+      the dark-space highway, three new districts, and the <b>Hyperluminal Drive</b> that lets you
+      punch through reality gaps at full speed.
+      <br><br>
+      <b>Includes:</b> new region + 12 missions, the Hyperluminal Drive, 8 new outfits, and a new boss.
+    </div>
+    <div class="buy-row">
+      <span class="price" id="buyPrice">$9.99</span>
+      <button class="btn" id="buyBtn" style="margin-top:0;">BUY NOW</button>
+    </div>
+    <button class="btn" data-close style="border-color:rgba(120,120,140,.4);color:#7c8b99;">BACK</button>
   </div>
 </div>
 
@@ -880,25 +915,50 @@ const ACTIONS = {
   custom:   () => { glitchBurst(0.3); location.href = 'distorted-customise.html'; },
   settings: () => openPanel('panel-settings'),
   lore:     () => openPanel('panel-lore'),
-  dlc:      () => { glitchBurst(0.5); toast('PORTAL SEALED — //EXPANSION LOCKED'); },
+  dlc:      () => { openPanel('panel-store'); refreshStore(); },
   quit:     () => { glitchBurst(0.6); document.body.innerHTML =
       '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#05060c;color:#2f5567;font-family:Orbitron,sans-serif;letter-spacing:8px;font-size:14px;">DISCONNECTED FROM THE LOOP</div>'; }
 };
 
 function showBrief(kind){
   if(kind === 'new'){
-    $('#briefTitle').textContent = 'CHRONO-JOURNEY';
-    $('#briefTag').textContent   = 'New descent';
-    $('#briefBody').innerHTML = "You wake at the edge of the city in a suit you don't remember putting on, holding a loop number you can't explain.<br><br><b>The world is not finished yet.</b> The city framework exists — streets, towers, skyline, the distortion field — and you can already walk it. Quests, the beast, and the endings get built next.";
+    $('#briefTitle').textContent = 'NEW GAME';
+    $('#briefTag').textContent   = 'Start a new game';
+    $('#briefBody').innerHTML = "You start at the edge of the city in a suit you don't remember putting on.<br><br><b>The world is not finished yet.</b> The city exists — streets, towers, skyline, the distortion — and you can already walk around it. Quests, monsters and endings get built next.";
     $('#briefGo').onclick = () => location.href = 'distorted.html';
   } else {
-    $('#briefTitle').textContent = 'RE-ANCHOR REALITY';
-    $('#briefTag').textContent   = 'Continue';
-    $('#briefBody').innerHTML = "<b>No anchor found.</b><br><br>You haven't survived past the first loop yet. Nothing has been written to the suit's memory.<br><br>Start a <b>Chrono-Journey</b> to create your first checkpoint.";
-    $('#briefGo').onclick = () => { closePanels(); toast('//NO SAVE DATA'); };
+    $('#briefTitle').textContent = 'CONTINUE';
+    $('#briefTag').textContent   = 'Load your save';
+    $('#briefBody').innerHTML = "<b>No save found.</b><br><br>You haven't played yet, so there's nothing to load.<br><br>Start a <b>New Game</b> to begin your first run.";
+    $('#briefGo').onclick = () => { closePanels(); toast('NO SAVE FOUND'); };
   }
   openPanel('panel-brief');
 }
+
+/* ---- Hyperluminal Expansion store ---- */
+const STORE_KEY = 'distorted_hyperluminal_owned';
+function isOwned(){ try { return localStorage.getItem(STORE_KEY) === '1'; } catch(e){ return false; } }
+function refreshStore(){
+  const owned = isOwned();
+  const dlcItem = items.find(el => el.dataset.action === 'dlc');
+  if(dlcItem){
+    dlcItem.classList.toggle('owned', owned);
+    const hint = dlcItem.querySelector('.hint');
+    if(hint) hint.textContent = owned ? '[Owned]' : '[Store]';
+  }
+  const p = $('#buyPrice');
+  if(p){ p.textContent = owned ? 'OWNED' : '$9.99'; p.classList.toggle('owned', owned); }
+  const b = $('#buyBtn');
+  if(b){ b.textContent = owned ? 'OPEN EXPANSION' : 'BUY NOW'; }
+}
+function buyExpansion(){
+  if(isOwned()){ glitchBurst(0.4); toast('OPENING HYPERLUMINAL...'); return; }
+  try { localStorage.setItem(STORE_KEY, '1'); } catch(e){}
+  glitchBurst(0.85);
+  toast('PURCHASE COMPLETE — HYPERLUMINAL UNLOCKED');
+  setTimeout(refreshStore, 350);
+}
+window.__buyExpansion = buyExpansion;
 
 function toast(msg){
   const t = document.createElement('div');
@@ -918,6 +978,7 @@ items.forEach((el, i) => {
 
 document.querySelectorAll('.panel [data-close]').forEach(b => b.addEventListener('click', () => { closePanels(); uiBlip(420); }));
 document.querySelectorAll('.panel').forEach(p => p.addEventListener('click', e => { if(e.target === p) closePanels(); }));
+{ const b = document.getElementById('buyBtn'); if(b) b.addEventListener('click', buyExpansion); }
 
 /* keyboard */
 addEventListener('keydown', e => {
@@ -1201,6 +1262,7 @@ addEventListener('resize', () => {
 });
 
 setSelected(0, true);
+refreshStore();
 
 /* URL flags: #enter (skip gate) #day #night #ui (clean shot) #auto (auto-walk) */
 {
@@ -1213,6 +1275,8 @@ setSelected(0, true);
     document.querySelectorAll('.status,.footer,.nav-hint').forEach(e => e.style.display='none');
     entryEl.style.display = 'none';
   }
+  if(h.includes('store')){ entryEl.classList.add('hidden'); window.__entered = true; splashEl.classList.add('hidden'); openPanel('panel-store'); refreshStore(); }
+  if(h.includes('pnew')){ entryEl.classList.add('hidden'); splashEl.classList.add('hidden'); showBrief('new'); }
 }
 
 animate();
