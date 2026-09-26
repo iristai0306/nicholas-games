@@ -16,10 +16,10 @@
   canvas#bg { position:fixed; inset:0; width:100vw; height:100vh; z-index:0; display:block; }
 
   /* ---------- live 3D Earth widget (bottom-right, top-right quarter of the globe) ---------- */
-  #earth-gl { position:fixed; right:0; bottom:0; width:50vw; height:50vh;
+  #earth-gl { position:fixed; right:0; bottom:0; width:54vw; height:54vh;
     z-index:1; pointer-events:none; display:block; }
   @media (max-width:640px){
-    #earth-gl { width:64vw; height:44vh; }
+    #earth-gl { width:70vw; height:48vh; }
   }
 
   /* ---------- atmosphere overlays ---------- */
@@ -71,7 +71,7 @@
     font-size:11px; letter-spacing:2px; color:#3c6474; text-transform:uppercase; text-shadow:0 2px 10px rgba(0,0,0,.9); }
   .footer b { color:#69a6bd; font-weight:600; }
 
-  .nav-hint { position:fixed; bottom:calc(50vh + 18px); right:clamp(16px,4vw,40px); z-index:2;
+  .nav-hint { position:fixed; bottom:calc(54vh + 16px); right:clamp(16px,4vw,40px); z-index:2;
     font-size:10.5px; letter-spacing:1.6px; color:#2c4a5c; text-align:right; line-height:1.7; opacity:.85; }
   .nav-hint kbd { color:#5f97b1; font-family:inherit; }
 
@@ -1303,7 +1303,7 @@ refreshStore();
   ec.lookAt(0, 0, 0);
 
   // The sun is HIDDEN — we only ever see its effect (light + ocean glare + rim), never the disk.
-  const SUN = new THREE.Vector3(0.55, 0.42, 0.72).normalize();
+  const SUN = new THREE.Vector3(-0.52, 0.46, 0.72).normalize();
 
   const TL = new THREE.TextureLoader();
   const TX = 'earth/tex2/';
@@ -1376,18 +1376,19 @@ refreshStore();
     er.setSize(w, h, false);
     ec.aspect = w/h;
     const tan = Math.tan(THREE.MathUtils.degToRad(ec.fov/2));
-    // want the globe's on-screen radius ≈ the canvas width (so its limb runs through
-    // the outer corner and the body fills the corner) -> pick the camera distance for that
-    // globe's on-screen radius ~= 0.80 * canvas width -> its curved limb sweeps through
-    // the widget (enters the top edge and the left edge), giving a clean quarter arc
-    const Rpx = 0.72 * w;
-    const D = (h/2) / (Rpx * tan);               // camera distance for that radius
+    // want the globe's on-screen radius ≈ the widget width -> its curved limb sweeps
+    // through the widget as one clean quarter arc
+    const Rpx = 1.0 * w;
+    // exact sphere projection: Rpx = (h/2)*tan(theta)/tan(fov/2), with sin(theta) = r/D (r = 1)
+    const tanT = (Rpx * tan) / (h/2);
+    const sinT = tanT / Math.sqrt(1 + tanT*tanT);
+    const D = 1 / sinT;                          // camera distance (stays outside the sphere)
     const halfH = D * tan;
     const halfW = halfH * ec.aspect;
-    // shift the camera up-right so world-origin (the globe's centre) projects onto this
-    // canvas's BOTTOM-LEFT corner => we only ever see the globe's TOP-RIGHT QUARTER
-    ec.position.set(halfW, halfH, D);
-    ec.lookAt(halfW, halfH, 0);
+    // put world-origin (the globe's centre) on this canvas's BOTTOM-RIGHT corner
+    // => we only ever see the globe's TOP-LEFT QUARTER, hugging the screen's bottom-right corner
+    ec.position.set(-halfW, halfH, D);
+    ec.lookAt(-halfW, halfH, 0);
     ec.updateProjectionMatrix();
   }
   sizeWidget();
