@@ -15,6 +15,15 @@
   }
   canvas#bg { position:fixed; inset:0; width:100vw; height:100vh; z-index:0; display:block; }
 
+  /* ---------- live 3D Earth widget (bottom-left) ---------- */
+  #earth-gl { position:fixed; left:clamp(18px,4vw,58px); bottom:clamp(18px,3.2vh,38px);
+    width:clamp(150px,15vw,206px); height:clamp(150px,15vw,206px);
+    z-index:1; pointer-events:none; display:block;
+    filter:drop-shadow(0 0 34px rgba(0,160,235,.55)); }
+  @media (max-width:640px){
+    #earth-gl { left:14px; bottom:40px; width:clamp(118px,32vw,150px); height:clamp(118px,32vw,150px); }
+  }
+
   /* ---------- atmosphere overlays ---------- */
   .overlay { position:fixed; inset:0; pointer-events:none; }
   #scanlines { z-index:1;
@@ -29,7 +38,7 @@
 
   /* ---------- UI ---------- */
   #ui { position:fixed; inset:0; z-index:2; pointer-events:none;
-    display:flex; flex-direction:column; justify-content:center; padding:0 0 0 clamp(24px,7vw,110px); }
+    display:flex; flex-direction:column; justify-content:center; padding:0 0 clamp(64px,10vh,120px) clamp(24px,7vw,110px); }
 
   .title-block { margin-bottom:clamp(22px,5vh,54px); }
   .title-line { font-family:'Orbitron',sans-serif; font-weight:900; text-transform:uppercase; line-height:.88; }
@@ -160,6 +169,8 @@
 <div class="overlay" id="scrimtop"></div>
 <div class="overlay" id="noise"></div>
 <div class="overlay" id="glitchflash"></div>
+
+<canvas id="earth-gl"></canvas>
 
 <div id="ui">
   <div class="title-block">
@@ -1278,6 +1289,129 @@ refreshStore();
   if(h.includes('store')){ entryEl.classList.add('hidden'); window.__entered = true; splashEl.classList.add('hidden'); openPanel('panel-store'); refreshStore(); }
   if(h.includes('pnew')){ entryEl.classList.add('hidden'); splashEl.classList.add('hidden'); showBrief('new'); }
 }
+
+/* =========================================================
+   EARTH WIDGET (bottom-left) — self-spinning, hidden sun (glare only)
+   ========================================================= */
+(function initEarthWidget(){
+  const cv = document.getElementById('earth-gl');
+  if(!cv) return;
+  if(location.hash.toLowerCase().includes('noearth')) return;   // test flag: hide widget to measure layout
+  const er = new THREE.WebGLRenderer({ canvas:cv, antialias:true, alpha:true, powerPreference:'high-performance' });
+  er.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const es = new THREE.Scene();
+  const ec = new THREE.PerspectiveCamera(30, 1, 0.01, 400);
+  ec.position.set(0, 0.55, 5.2);
+  ec.lookAt(0, 0, 0);
+
+  // The sun is HIDDEN — we only ever see its effect (light + ocean glare + rim), never the disk.
+  const SUN = new THREE.Vector3(-0.52, 0.34, 0.82).normalize();
+
+  const TL = new THREE.TextureLoader();
+  const TX = 'earth/tex/';
+  const texDay    = TL.load(TX+'day.jpg');    texDay.colorSpace = THREE.SRGBColorSpace;
+  const texNight  = TL.load(TX+'night.jpg');  texNight.colorSpace = THREE.SRGBColorSpace;
+  const texClouds = TL.load(TX+'clouds.jpg');
+  const texSpec   = TL.load(TX+'spec.jpg');
+
+  const uSun = { value: SUN.clone() };
+
+  const earth = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 48), new THREE.ShaderMaterial({
+    uniforms:{ dayMap:{value:texDay}, nightMap:{value:texNight}, specMap:{value:texSpec}, uSun },
+    vertexShader:`
+      varying vec2 vUv; varying vec3 vN; varying vec3 vP;
+      void main(){ vUv=uv; vN=normalize(mat3(modelMatrix)*normal);
+        vec4 wp=modelMatrix*vec4(position,1.0); vP=wp.xyz;
+        gl_Position=projectionMatrix*viewMatrix*wp; }`,
+    fragmentShader:`
+      uniform sampler2D dayMap, nightMap, specMap; uniform vec3 uSun;
+      varying vec2 vUv; varying vec3 vN; varying vec3 vP;
+      void main(){
+        vec3 N=normalize(vN), L=normalize(uSun), V=normalize(cameraPosition-vP);
+        float d=dot(N,L);
+        vec3 day=texture2D(dayMap,vUv).rgb;
+        vec3 night=texture2D(nightMap,vUv).rgb;
+        float spec=texture2D(specMap,vUv).r;
+        float lit=smoothstep(-0.10,0.20,d);
+        vec3 col=day*(0.055+1.55*lit);
+        float nm=1.0-smoothstep(-0.40,-0.02,d);
+        col+=night*3.0*nm*(1.0-spec*0.85);
+        vec3 H=normalize(L+V);
+        float g=pow(max(dot(N,H),0.0),110.0)*spec*lit;
+        col+=vec3(1.0,0.97,0.9)*g*0.9;                        // ocean sun-glint (the glare)
+        float rim=pow(1.0-max(dot(N,V),0.0),2.6);
+        col+=vec3(0.28,0.58,1.0)*rim*(0.20+0.80*lit)*0.85;    // atmosphere
+        col=pow(max(col,vec3(0.0)),vec3(1.0/2.2));
+        gl_FragColor=vec4(col,1.0);
+      }`
+  }));
+  const TILT = 0.30;
+  earth.rotation.z = TILT;
+  es.add(earth);
+
+  const clouds = new THREE.Mesh(new THREE.SphereGeometry(1.008, 80, 40), new THREE.ShaderMaterial({
+    transparent:true, depthWrite:false,
+    uniforms:{ cloudMap:{value:texClouds}, uSun },
+    vertexShader:`
+      varying vec2 vUv; varying vec3 vN;
+      void main(){ vUv=uv; vN=normalize(mat3(modelMatrix)*normal);
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader:`
+      uniform sampler2D cloudMap; uniform vec3 uSun; varying vec2 vUv; varying vec3 vN;
+      void main(){ vec4 t=texture2D(cloudMap,vUv);
+        float a=max(t.r,max(t.g,t.b));
+        float d=dot(normalize(vN),normalize(uSun));
+        float lit=smoothstep(-0.12,0.30,d);
+        vec3 c=mix(vec3(0.02,0.04,0.08),vec3(1.0),lit);
+        c=pow(max(c,vec3(0.0)),vec3(1.0/2.2));
+        gl_FragColor=vec4(c, a*(0.10+0.90*lit)*0.9); }`
+  }));
+  clouds.rotation.z = TILT;
+  es.add(clouds);
+
+  es.add(new THREE.Mesh(new THREE.SphereGeometry(1.10, 72, 36), new THREE.ShaderMaterial({
+    transparent:true, blending:THREE.AdditiveBlending, side:THREE.BackSide, depthWrite:false,
+    uniforms:{ uSun },
+    vertexShader:`
+      varying vec3 vN; varying vec3 vP;
+      void main(){ vN=normalize(mat3(modelMatrix)*normal); vec4 wp=modelMatrix*vec4(position,1.0); vP=wp.xyz;
+        gl_Position=projectionMatrix*viewMatrix*wp; }`,
+    fragmentShader:`
+      uniform vec3 uSun; varying vec3 vN; varying vec3 vP;
+      void main(){ vec3 N=normalize(vN), V=normalize(cameraPosition-vP);
+        float edge=pow(clamp(1.0-abs(dot(N,V)),0.0,1.0),2.2);
+        float lit=smoothstep(-0.6,0.5,dot(N,normalize(uSun)));
+        vec3 col=mix(vec3(0.05,0.14,0.36),vec3(0.34,0.62,1.0),lit);
+        gl_FragColor=vec4(col, edge*(0.12+0.88*lit)*0.95); }`
+  })));
+
+  (function stars(){
+    const N=420, pos=new Float32Array(N*3);
+    for(let i=0;i<N;i++){ const v=new THREE.Vector3().randomDirection().multiplyScalar(80);
+      pos[i*3]=v.x; pos[i*3+1]=v.y; pos[i*3+2]=v.z; }
+    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    es.add(new THREE.Points(g, new THREE.PointsMaterial({ color:0xbfe0ff, size:0.5, transparent:true, opacity:0.7, depthWrite:false })));
+  })();
+
+  function sizeWidget(){
+    const w = cv.clientWidth || 300, h = cv.clientHeight || 300;
+    er.setSize(w, h, false);
+    ec.aspect = w/h; ec.updateProjectionMatrix();
+  }
+  sizeWidget();
+  addEventListener('resize', sizeWidget);
+  setTimeout(sizeWidget, 60);
+
+  function earthTick(){
+    requestAnimationFrame(earthTick);
+    earth.rotation.y  += 0.0026;                 // the Earth spins on its own
+    clouds.rotation.y  = earth.rotation.y*1.05 + 0.35;
+    er.render(es, ec);
+  }
+  earthTick();
+
+  window.EARTH_WIDGET = { state(){ return { rotY:+earth.rotation.y.toFixed(3), sun:SUN.toArray() }; } };
+})();
 
 animate();
 
