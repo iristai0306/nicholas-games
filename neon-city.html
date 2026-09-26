@@ -604,12 +604,84 @@ if (isTouch){
 
 function setBtn(id, on){ const b=document.getElementById(id); if (b) b.classList.toggle('on', on); }
 
+// ---------------- YOUR HOVER-CAR (visible third-person vehicle) ----------------
+const hoverCar = new THREE.Group();
+let carBody = null, carGlow = [];
+{
+  const bodyMat  = new THREE.MeshStandardMaterial({color:0x16203c, metalness:0.92, roughness:0.22});
+  const trimMat  = new THREE.MeshStandardMaterial({color:0x2b3a66, metalness:0.95, roughness:0.15});
+  const glassMat = new THREE.MeshStandardMaterial({color:0x0a1830, metalness:0.6, roughness:0.05,
+    transparent:true, opacity:0.55});
+  const cyan = new THREE.MeshBasicMaterial({color:0x1ad8ff});
+  const pink = new THREE.MeshBasicMaterial({color:0xff2fb0});
+
+  // main hull
+  const hull = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.85, 7.6), bodyMat);
+  hoverCar.add(hull);
+  // nose wedge
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.55, 2.2), trimMat);
+  nose.position.set(0, -0.09, -4.5); hoverCar.add(nose);
+  // cabin canopy
+  const cab = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.72, 3.0), glassMat);
+  cab.position.set(0, 0.68, 0.35); hoverCar.add(cab);
+  const cabRoof = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.16, 3.0), trimMat);
+  cabRoof.position.set(0, 1.08, 0.35); hoverCar.add(cabRoof);
+  // side wings / thruster pods
+  [-1, 1].forEach(s=>{
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.22, 2.6), trimMat);
+    wing.position.set(s*2.35, -0.05, 1.5); hoverCar.add(wing);
+    const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2.0, 12), bodyMat);
+    pod.rotation.x = Math.PI/2; pod.position.set(s*2.5, -0.2, 2.3); hoverCar.add(pod);
+    const podGlow = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 8), cyan);
+    podGlow.position.set(s*2.5, -0.2, 3.35); hoverCar.add(podGlow); carGlow.push(podGlow);
+  });
+  // rear engine glow
+  const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.05, 1.0, 14), pink);
+  engine.rotation.x = Math.PI/2; engine.position.set(0, -0.05, 3.95); hoverCar.add(engine); carGlow.push(engine);
+  // headlights + light strips
+  const hl = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.18, 0.2), cyan);
+  hl.position.set(0, -0.18, -5.6); hoverCar.add(hl); carGlow.push(hl);
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.1, 0.1), cyan);
+  strip.position.set(0, 0.32, -4.4); hoverCar.add(strip); carGlow.push(strip);
+  // under-glow pad
+  const pad = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.08, 6.0),
+    new THREE.MeshBasicMaterial({color:0x1ad8ff, transparent:true, opacity:0.5}));
+  pad.position.set(0, -0.55, 0); hoverCar.add(pad); carGlow.push(pad);
+
+  // headlight cones so you can see where you're going
+  const beamMat = new THREE.MeshBasicMaterial({color:0xbfe8ff, transparent:true, opacity:0.10,
+    side:THREE.DoubleSide, depthWrite:false});
+  [-1, 1].forEach(s=>{
+    const b = new THREE.Mesh(new THREE.ConeGeometry(3.2, 46, 14, 1, true), beamMat);
+    b.geometry.translate(0, -23, 0);
+    b.rotation.x = -Math.PI/2; b.rotation.z = s*0.16;
+    b.position.set(s*1.0, -0.2, -5.6); hoverCar.add(b);
+  });
+  // real light so the street lights up as you fly
+  const head = new THREE.SpotLight(0xcfe6ff, 0, 190, Math.PI/5.5, 0.45, 1.4);
+  head.position.set(0, 0.2, -4.5);
+  const headTgt = new THREE.Object3D(); headTgt.position.set(0, -6, -60);
+  hoverCar.add(head); hoverCar.add(headTgt); head.target = headTgt;
+  hoverCar.userData.head = head;
+
+  const carLight = new THREE.PointLight(0x9fd8ff, 2.2, 34, 1.6);
+  carLight.position.set(0, 0.4, 0); hoverCar.add(carLight);
+
+  hoverCar.visible = false;
+  scene.add(hoverCar);
+}
+
 function toggleMode(){
   player.mode = player.mode === 'walk' ? 'car' : 'walk';
   document.getElementById('modeLabel').textContent = player.mode==='walk' ? 'WALKING' : 'HOVER-CAR';
   document.getElementById('btnMode').textContent = player.mode==='walk' ? '🚗 Hover-car' : '🚶 Walk';
-  if (player.mode === 'car'){ player.carH = Math.max(player.carH, 22); }
-  else { player.pos.y = 1.8; }
+  if (player.mode === 'car'){
+    player.carH = Math.max(player.carH, 24);
+    hoverCar.visible = true;
+  } else {
+    player.pos.y = 1.8;
+    hoverCar.visible = false;
+  }
 }
 
 function collide(nx, nz){
@@ -685,14 +757,45 @@ function animate(){
   player.pos.x = Math.max(-CITY.half-110, Math.min(CITY.half+110, player.pos.x));
   player.pos.z = Math.max(-CITY.half-110, Math.min(CITY.half+110, player.pos.z));
 
-  // --- camera
-  camera.position.copy(player.pos);
-  const look = new THREE.Vector3(
-    player.pos.x - Math.sin(player.yaw)*Math.cos(player.pitch),
-    player.pos.y + Math.sin(player.pitch),
-    player.pos.z - Math.cos(player.yaw)*Math.cos(player.pitch)
-  );
-  camera.lookAt(look);
+  // --- camera + vehicle
+  const fwdX = -Math.sin(player.yaw), fwdZ = -Math.cos(player.yaw);
+  if (player.mode === 'car'){
+    // park the car under the player position, nose pointing where you look
+    hoverCar.position.copy(player.pos);
+    hoverCar.rotation.y = player.yaw;
+    hoverCar.rotation.z = -mv.x * 0.12;
+    hoverCar.rotation.x = mv.z * 0.08;
+    const t = performance.now() * 0.001;
+    hoverCar.position.y += Math.sin(t*2.2) * 0.18;
+    player.yawTilt = player.yawTilt || 0;
+    // chase camera: behind and above the car
+    const camBack = 11.5, camUp = 4.6;
+    const desired = new THREE.Vector3(
+      player.pos.x - fwdX*camBack,
+      player.pos.y + camUp,
+      player.pos.z - fwdZ*camBack
+    );
+    camera.position.lerp(desired, Math.min(1, dt*6.5));
+    const look = new THREE.Vector3(
+      player.pos.x + fwdX*14 + mv.x*6,
+      player.pos.y - 1.2 + Math.sin(player.pitch)*10,
+      player.pos.z + fwdZ*14 + mv.z*6
+    );
+    camera.lookAt(look);
+    if (hoverCar.userData.head) hoverCar.userData.head.intensity = 190;
+    camera.fov = 74;
+  } else {
+    if (hoverCar.userData.head) hoverCar.userData.head.intensity = 0;
+    camera.position.copy(player.pos);
+    const look = new THREE.Vector3(
+      player.pos.x - Math.sin(player.yaw)*Math.cos(player.pitch),
+      player.pos.y + Math.sin(player.pitch),
+      player.pos.z - Math.cos(player.yaw)*Math.cos(player.pitch)
+    );
+    camera.lookAt(look);
+    camera.fov = 68;
+  }
+  camera.updateProjectionMatrix();
 
   // --- people walk
   for (let i=0;i<people.length;i++){
@@ -796,6 +899,8 @@ if (/[?&#]auto/.test(location.href)){
 // #day / #night snap the clock for demos
 if (/[?&#]day/.test(location.href)){ timeOfDay = 0.42; autoTime = false; }
 if (/[?&#]night/.test(location.href)){ timeOfDay = 0.90; autoTime = false; }
+// #car starts you already flying the hover-car
+if (/[?&#]car/.test(location.href)){ setTimeout(()=>{ if (player.mode==='walk') toggleMode(); player.carH = 34; player.pos.y = 34; }, 60); }
 setTimeout(()=>{
   document.getElementById('loading').textContent = '✅ City ready — '+biP()+ ' towers, '+N_PEOPLE+' people, 34 flying cars';
   document.getElementById('btnStart').style.display = 'inline-block';
