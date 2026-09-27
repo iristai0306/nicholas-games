@@ -93,6 +93,21 @@
   .panel-inner { width:min(560px,88vw); max-height:82vh; overflow:auto; border:1px solid rgba(0,200,255,.28);
     background:linear-gradient(160deg,rgba(10,18,30,.96),rgba(6,10,18,.96)); padding:30px clamp(20px,4vw,38px) 26px;
     box-shadow:0 0 60px rgba(0,200,255,.14), inset 0 0 80px rgba(0,60,90,.16); }
+  /* Big settings screen — covers most of the screen, easy to read */
+  .panel.wide .panel-inner { width:min(1320px,94vw); max-height:94vh; padding:36px clamp(24px,3.2vw,56px) 32px; }
+  .panel.wide .panel-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:0 46px; }
+  .panel.wide .panel-inner h2 { font-size:26px; letter-spacing:8px; }
+  .panel.wide .panel-inner .ptag { margin-bottom:20px; }
+  .panel.wide .row label { font-size:14.5px; }
+  .panel.wide input[type=range] { width:100%; max-width:230px; }
+  .setting-title { font-family:'Orbitron',sans-serif; font-size:11.5px; letter-spacing:3px; color:#ff5f96;
+    text-transform:uppercase; margin:20px 0 6px; padding-bottom:7px; border-bottom:1px solid rgba(255,80,140,.25); }
+  .setting-title:first-child { margin-top:0; }
+  .seg { display:flex; gap:6px; flex:0 0 auto; }
+  .seg button { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:11.5px; letter-spacing:1.6px; text-transform:uppercase;
+    color:#5f8ba0; background:transparent; border:1px solid #2a4d61; padding:8px 14px; cursor:pointer; transition:.18s; }
+  .seg button:hover { color:#cfe9f5; border-color:#3d7a99; }
+  .seg button.active { color:#04121c; background:#00c8ff; border-color:#00c8ff; box-shadow:0 0 16px rgba(0,200,255,.5); }
   .panel h2 { font-family:'Orbitron',sans-serif; font-size:19px; letter-spacing:5px; color:#fff; margin-bottom:4px; }
   .panel .ptag { font-size:11px; letter-spacing:2.4px; color:#3f6a80; text-transform:uppercase; margin-bottom:22px; }
   .row { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:11px 0;
@@ -212,19 +227,50 @@
 </div>
 
 <!-- ============ SETTINGS ============ -->
-<div class="panel" id="panel-settings">
+<div class="panel wide" id="panel-settings">
   <div class="panel-inner">
     <h2>SETTINGS</h2>
     <div class="ptag">Options</div>
+    <div class="panel-grid">
 
-    <div class="row"><label>Master Volume</label><input type="range" id="s-vol" min="0" max="100" value="45"><span class="val" id="v-vol">45</span></div>
-    <div class="row"><label>Distortion Intensity</label><input type="range" id="s-dist" min="0" max="100" value="55"><span class="val" id="v-dist">55</span></div>
-    <div class="row"><label>Mouse Sensitivity</label><input type="range" id="s-sens" min="10" max="300" value="100"><span class="val" id="v-sens">100</span></div>
-    <div class="row"><label>Field of View</label><input type="range" id="s-fov" min="55" max="105" value="72"><span class="val" id="v-fov">72</span></div>
-    <div class="row"><label>Head Bob</label><div class="toggle on" id="t-bob"></div></div>
-    <div class="row"><label>Film Grain</label><div class="toggle on" id="t-grain"></div></div>
+      <div class="col">
+        <div class="setting-title">Audio</div>
+        <div class="row"><label>Master Volume</label><input type="range" id="s-vol" min="0" max="100" value="45"><span class="val" id="v-vol">45</span></div>
+        <div class="row"><label>Music Volume</label><input type="range" id="s-mus" min="0" max="100" value="40"><span class="val" id="v-mus">40</span></div>
+        <div class="row"><label>SFX Volume</label><input type="range" id="s-sfx" min="0" max="100" value="70"><span class="val" id="v-sfx">70</span></div>
 
-    <button class="btn" data-close>APPLY &amp; RETURN</button>
+        <div class="setting-title">Graphics</div>
+        <div class="row"><label>Field of View</label><input type="range" id="s-fov" min="55" max="105" value="72"><span class="val" id="v-fov">72</span></div>
+        <div class="row"><label>Distortion Intensity</label><input type="range" id="s-dist" min="0" max="100" value="55"><span class="val" id="v-dist">55</span></div>
+        <div class="row"><label>Render Scale</label>
+          <div class="seg" id="s-quality">
+            <button type="button" data-q="0.7">Performance</button>
+            <button type="button" data-q="1" class="active">Balanced</button>
+            <button type="button" data-q="1.4">High</button>
+          </div></div>
+        <div class="row"><label>Render Distance</label><input type="range" id="s-far" min="300" max="1400" value="900"><span class="val" id="v-far">900</span></div>
+        <div class="row"><label>Film Grain</label><div class="toggle on" id="t-grain"></div></div>
+      </div>
+
+      <div class="col">
+        <div class="setting-title">Controls</div>
+        <div class="row"><label>Look Sensitivity</label><input type="range" id="s-sens" min="10" max="300" value="100"><span class="val" id="v-sens">100</span></div>
+        <div class="row"><label>Invert Y Axis</label><div class="toggle" id="t-invertY"></div></div>
+        <div class="row"><label>Walk Speed</label><input type="range" id="s-speed" min="40" max="160" value="100"><span class="val" id="v-speed">100</span></div>
+        <div class="row"><label>Sprint Speed</label><input type="range" id="s-sprint" min="80" max="220" value="100"><span class="val" id="v-sprint">100</span></div>
+        <div class="row"><label>Head Bob</label><div class="toggle on" id="t-bob"></div></div>
+
+        <div class="setting-title">Interface</div>
+        <div class="row"><label>HUD Visible</label><div class="toggle on" id="t-hud"></div></div>
+        <div class="row"><label>Screen Shake</label><div class="toggle on" id="t-shake"></div></div>
+        <div class="row"><label>Subtitles</label><div class="toggle on" id="t-subs"></div></div>
+        <div class="row"><label>Show FPS</label><div class="toggle" id="t-fps"></div></div>
+      </div>
+
+    </div>
+
+    <button class="btn" data-close style="margin-top:26px;">APPLY &amp; RETURN</button>
+    <button class="btn" id="resetCfg" style="margin-left:10px;border-color:rgba(255,80,140,.45);color:#ff8fb6;">RESET DEFAULTS</button>
   </div>
 </div>
 
@@ -320,10 +366,15 @@
 <script type="module">
 import * as THREE from 'three';
 
-const CFG = {
-  volume: 45, distortion: 55, sensitivity: 100, fov: 72, headBob: true, grain: true
+const CFG_DEFAULTS = {
+  volume: 45, music: 40, sfx: 70, distortion: 55, sensitivity: 100, fov: 72,
+  quality: 1, far: 900, invertY: false, speed: 100, sprint: 100,
+  headBob: true, grain: true, hud: true, shake: true, subs: true, fps: false
 };
+const CFG = Object.assign({}, CFG_DEFAULTS);
+try { const saved = JSON.parse(localStorage.getItem('distorted.cfg') || 'null'); if(saved) Object.assign(CFG, saved); } catch(e){}
 window.CFG = CFG;
+function saveCfg(){ try { localStorage.setItem('distorted.cfg', JSON.stringify(CFG)); } catch(e){} }
 
 /* =========================================================
    0. RENDERER / SCENE
@@ -1038,29 +1089,85 @@ entryEl.addEventListener('touchstart', e => { e.preventDefault(); enterCity(); }
 /* =========================================================
    9. SETTINGS BINDINGS
    ========================================================= */
+// --- helpers ---
+function setQuality(q){ renderer.setPixelRatio(Math.min(devicePixelRatio, 2) * q); renderer.setSize(innerWidth, innerHeight); rt.setSize(innerWidth, innerHeight); }
+function applyFar(f){ camera.far = f; camera.updateProjectionMatrix(); }
+function toggleHud(on){ document.querySelectorAll('.status,.footer,.nav-hint').forEach(e => e.style.display = on ? '' : 'none'); }
+function ensureFps(){ let el = document.getElementById('fpsHud');
+  if(!el){ el = document.createElement('div'); el.id = 'fpsHud';
+    el.style.cssText = 'position:fixed;top:12px;left:14px;z-index:8;font-family:monospace;font-size:12px;color:#00ffa6;letter-spacing:1px;text-shadow:0 0 8px #00ffa6;pointer-events:none;';
+    document.body.appendChild(el); } return el; }
+
 function bindSlider(id, valId, key, apply){
   const s = $('#'+id), v = $('#'+valId);
+  if(!s) return;
   s.addEventListener('input', () => {
     v.textContent = s.value;
     CFG[key] = Number(s.value);
+    saveCfg();
     if(apply) apply(Number(s.value));
   });
 }
 bindSlider('s-vol','v-vol','volume', val => { if(masterGain) masterGain.gain.value = val/100 * 0.5; });
+bindSlider('s-mus','v-mus','music');
+bindSlider('s-sfx','v-sfx','sfx');
 bindSlider('s-dist','v-dist','distortion', val => { distortMat.uniforms.uDistortion.value = val/100; });
 bindSlider('s-sens','v-sens','sensitivity');
 bindSlider('s-fov','v-fov','fov', val => { camera.fov = val; camera.updateProjectionMatrix(); });
+bindSlider('s-far','v-far','far', applyFar);
+bindSlider('s-speed','v-speed','speed');
+bindSlider('s-sprint','v-sprint','sprint');
 
 function bindToggle(id, key, apply){
   const t = $('#'+id);
+  if(!t) return;
   t.addEventListener('click', () => {
     t.classList.toggle('on');
     CFG[key] = t.classList.contains('on');
+    saveCfg();
     if(apply) apply(CFG[key]);
   });
 }
 bindToggle('t-bob','headBob');
 bindToggle('t-grain','grain', on => { $('#noise').style.display = on ? 'block' : 'none'; });
+bindToggle('t-invertY','invertY');
+bindToggle('t-hud','hud', toggleHud);
+bindToggle('t-shake','shake');
+bindToggle('t-subs','subs');
+bindToggle('t-fps','fps', on => { ensureFps().style.display = on ? 'block' : 'none'; });
+
+{ const q = document.getElementById('s-quality');
+  if(q) q.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    CFG.quality = Number(b.dataset.q); saveCfg(); setQuality(CFG.quality); uiBlip(620);
+    q.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+  })); }
+
+// --- sync the Settings UI to saved values and apply them on load ---
+function syncSettingsUI(){
+  const set = (id, key) => { const s = $('#'+id); if(s) s.value = CFG[key]; };
+  set('s-vol','volume'); set('s-mus','music'); set('s-sfx','sfx'); set('s-dist','distortion');
+  set('s-sens','sensitivity'); set('s-fov','fov'); set('s-far','far'); set('s-speed','speed'); set('s-sprint','sprint');
+  ['vol','mus','sfx','dist','sens','fov','far','speed','sprint'].forEach(k => { const v = $('#v-'+k); const s = $('#s-'+k); if(v && s) v.textContent = s.value; });
+  const q = document.getElementById('s-quality');
+  if(q) q.querySelectorAll('button').forEach(b => b.classList.toggle('active', Number(b.dataset.q) === Number(CFG.quality)));
+  const tog = (id, val) => { const el = $('#'+id); if(el) el.classList.toggle('on', !!val); };
+  tog('t-bob',CFG.headBob); tog('t-grain',CFG.grain); tog('t-invertY',CFG.invertY);
+  tog('t-hud',CFG.hud); tog('t-shake',CFG.shake); tog('t-subs',CFG.subs); tog('t-fps',CFG.fps);
+}
+function applyAllSettings(){
+  applyFar(CFG.far); setQuality(CFG.quality);
+  camera.fov = CFG.fov; camera.updateProjectionMatrix();
+  distortMat.uniforms.uDistortion.value = CFG.distortion/100;
+  if(masterGain) masterGain.gain.value = CFG.volume/100 * 0.5;
+  $('#noise').style.display = CFG.grain ? 'block' : 'none';
+  toggleHud(CFG.hud);
+  ensureFps().style.display = CFG.fps ? 'block' : 'none';
+}
+syncSettingsUI();
+applyAllSettings();
+
+{ const r = document.getElementById('resetCfg');
+  if(r) r.addEventListener('click', () => { Object.assign(CFG, CFG_DEFAULTS); saveCfg(); syncSettingsUI(); applyAllSettings(); uiBlip(520); toast('SETTINGS RESET'); }); }
 
 /* =========================================================
    10. PLAYER  (walk the city)
@@ -1132,7 +1239,7 @@ function updatePlayer(dt){
   if(want.lengthSq() > 0) want.normalize();
 
   const sprint = keys['ShiftLeft'] || keys['ShiftRight'];
-  const speed  = sprint ? player.sprint : player.speed;
+  const speed  = (sprint ? player.sprint : player.speed) * ((sprint ? CFG.sprint : CFG.speed)/100);
 
   player.vel.lerp(want.multiplyScalar(speed), 1 - Math.pow(0.0015, dt));
 
@@ -1164,7 +1271,8 @@ function updatePlayer(dt){
   player.bobT += dt * (sprint ? 13 : 9) * (moving ? 1 : 0.2);
   const bob = (CFG.headBob && moving) ? Math.sin(player.bobT) * (sprint ? 0.055 : 0.032) : 0;
 
-  camera.position.set(player.pos.x, player.pos.y + bob, player.pos.z);
+  const sh = CFG.shake ? (Math.sin(t0*13.7)*0.5 + Math.sin(t0*7.3)*0.5) * 0.012 * (sprint ? 1.6 : 1) : 0;
+  camera.position.set(player.pos.x + sh, player.pos.y + bob + sh*0.6, player.pos.z);
   camera.rotation.order = 'YXZ';
   camera.rotation.y = player.yaw;
   camera.rotation.x = player.pitch + Math.sin(player.bobT*0.5)*0.002;
@@ -1247,6 +1355,16 @@ function animate(){
     glitchBurst(0.12 + Math.random()*0.14);
   }
 
+  // FPS readout
+  if(CFG.fps){
+    window.__fc = (window.__fc || 0) + 1;
+    if(t0 - (window.__ft || 0) >= 0.5){
+      const fpsEl = document.getElementById('fpsHud');
+      if(fpsEl) fpsEl.textContent = Math.round(window.__fc / (t0 - window.__ft)) + ' FPS';
+      window.__fc = 0; window.__ft = t0;
+    }
+  }
+
   renderer.setRenderTarget(rt);
   renderer.render(scene, camera);
   renderer.setRenderTarget(null);
@@ -1279,6 +1397,7 @@ refreshStore();
   }
   if(h.includes('store')){ entryEl.classList.add('hidden'); window.__entered = true; splashEl.classList.add('hidden'); openPanel('panel-store'); refreshStore(); }
   if(h.includes('pnew')){ entryEl.classList.add('hidden'); splashEl.classList.add('hidden'); showBrief('new'); }
+  if(h.includes('settings')){ entryEl.classList.add('hidden'); window.__entered = true; splashEl.classList.add('hidden'); openPanel('panel-settings'); }
 }
 
 /* =========================================================
