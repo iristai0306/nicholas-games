@@ -691,7 +691,13 @@ document.getElementById('confirm-btn').addEventListener('click', () => {
   const btn = document.getElementById('confirm-btn');
   btn.textContent = '✓ SAVED';
   btn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
-  setTimeout(() => { btn.textContent = 'CONFIRM'; btn.style.background = 'linear-gradient(135deg, #6c5ce7, #a855f7)'; }, 1400);
+  // If we came from "New Game", drop straight into the menu to begin the run.
+  const fromNew = /(?:[?&#])from=newgame/.test(location.href);
+  if (fromNew) {
+    setTimeout(() => { window.location.href = 'distorted-menu.html#enter'; }, 700);
+  } else {
+    setTimeout(() => { btn.textContent = 'CONFIRM'; btn.style.background = 'linear-gradient(135deg, #6c5ce7, #a855f7)'; }, 1400);
+  }
 });
 document.getElementById('back-btn').addEventListener('click', () => { window.location.href = 'distorted-menu.html'; });
 
