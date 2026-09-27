@@ -1080,10 +1080,10 @@ const ACTIONS = {
 function showBrief(kind){
   if(kind === 'new'){
     $('#briefTitle').textContent = 'NEW GAME';
-    $('#briefTag').textContent   = 'Create your character';
-    $('#briefBody').innerHTML = "Before you step into the city, you need a body.<br><br><b>Next step: the customiser.</b> Choose your look — body type, skin tone, height, hair and outfit — and save it to your character.<br><br>The world is still being built. Once you've made your person, the streets are yours to walk.";
-    $('#briefGo').textContent = 'CUSTOMISE';
-    $('#briefGo').onclick = () => { glitchBurst(0.35); location.href = 'distorted-customise.html'; };
+    $('#briefTag').textContent   = 'Start your run';
+    $('#briefBody').innerHTML = "You wake at the edge of the city with a suit you don't remember putting on and a loop number you can't explain.<br><br><b>You start here — in the menu.</b> The city framework is already walkable. Quests, the beast and the endings get built next.<br><br>Want a different look? Open <b>Customise</b> from the menu any time — it won't interrupt your run.";
+    $('#briefGo').textContent = 'START';
+    $('#briefGo').onclick = () => { closePanels(); glitchBurst(0.35); toast('WELCOME TO THE CITY'); };
   } else {
     $('#briefTitle').textContent = 'CONTINUE';
     $('#briefTag').textContent   = 'Load your save';
