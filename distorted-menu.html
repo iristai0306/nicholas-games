@@ -103,6 +103,21 @@
   .setting-title { font-family:'Orbitron',sans-serif; font-size:11.5px; letter-spacing:3px; color:#ff5f96;
     text-transform:uppercase; margin:20px 0 6px; padding-bottom:7px; border-bottom:1px solid rgba(255,80,140,.25); }
   .setting-title:first-child { margin-top:0; }
+  .keybind { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:12px; letter-spacing:2px; text-transform:uppercase;
+    color:#cfe9f5; background:#0a1420; border:1px solid #2a4d61; padding:7px 16px; min-width:96px; cursor:pointer; transition:.18s; }
+  .keybind:hover { border-color:#3d7a99; color:#fff; }
+  .keybind.listening { border-color:#ffcf3f; color:#ffcf3f; box-shadow:0 0 14px rgba(255,207,63,.4); animation:kbpulse 1s infinite; }
+  @keyframes kbpulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .changelog { font-size:13.5px; line-height:1.7; color:#9cbdcd; }
+  .changelog h4 { font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:3px; color:#00c8ff; margin:0 0 8px; }
+  .changelog .ver { margin-bottom:20px; }
+  .changelog ul { margin:0; padding-left:18px; }
+  .changelog li { margin-bottom:4px; }
+  .changelog li b { color:#e8f6ff; }
+  .tag { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:1.6px; padding:4px 10px; border:1px solid; }
+  .tag.done { color:#7dffb0; border-color:rgba(125,255,176,.4); background:rgba(125,255,176,.08); }
+  .tag.wip { color:#ffcf3f; border-color:rgba(255,207,63,.4); background:rgba(255,207,63,.08); }
+  .tag.planned { color:#6e93a6; border-color:rgba(110,147,166,.35); }
   .seg { display:flex; gap:6px; flex:0 0 auto; }
   .seg button { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:11.5px; letter-spacing:1.6px; text-transform:uppercase;
     color:#5f8ba0; background:transparent; border:1px solid #2a4d61; padding:8px 14px; cursor:pointer; transition:.18s; }
@@ -206,6 +221,8 @@
     <div class="menu-item" data-action="load"><span class="sel"></span>Continue</div>
     <div class="menu-item" data-action="custom"><span class="sel"></span>Customise</div>
     <div class="menu-item" data-action="settings"><span class="sel"></span>Settings</div>
+    <div class="menu-item" data-action="controls"><span class="sel"></span>Controls</div>
+    <div class="menu-item" data-action="updates"><span class="sel"></span>Update Log</div>
     <div class="menu-item" data-action="lore"><span class="sel"></span>Lore</div>
     <div class="menu-item" data-action="dlc"><span class="sel"></span>Hyperluminal Expansion<span class="hint">[Store]</span></div>
     <div class="menu-item" data-action="quit"><span class="sel"></span>Quit</div>
@@ -253,11 +270,9 @@
       </div>
 
       <div class="col">
-        <div class="setting-title">Controls</div>
+        <div class="setting-title">Camera</div>
         <div class="row"><label>Look Sensitivity</label><input type="range" id="s-sens" min="10" max="300" value="100"><span class="val" id="v-sens">100</span></div>
         <div class="row"><label>Invert Y Axis</label><div class="toggle" id="t-invertY"></div></div>
-        <div class="row"><label>Walk Speed</label><input type="range" id="s-speed" min="40" max="160" value="100"><span class="val" id="v-speed">100</span></div>
-        <div class="row"><label>Sprint Speed</label><input type="range" id="s-sprint" min="80" max="220" value="100"><span class="val" id="v-sprint">100</span></div>
         <div class="row"><label>Head Bob</label><div class="toggle on" id="t-bob"></div></div>
 
         <div class="setting-title">Interface</div>
@@ -271,6 +286,76 @@
 
     <button class="btn" data-close style="margin-top:26px;">APPLY &amp; RETURN</button>
     <button class="btn" id="resetCfg" style="margin-left:10px;border-color:rgba(255,80,140,.45);color:#ff8fb6;">RESET DEFAULTS</button>
+  </div>
+</div>
+
+<!-- ============ CONTROLS ============ -->
+<div class="panel wide" id="panel-controls">
+  <div class="panel-inner">
+    <h2>CONTROLS</h2>
+    <div class="ptag">Key bindings &amp; input</div>
+    <div class="panel-grid">
+
+      <div class="col">
+        <div class="setting-title">Movement</div>
+        <div class="row"><label>Move Forward</label><button class="keybind" data-bind="forward">W</button></div>
+        <div class="row"><label>Move Back</label><button class="keybind" data-bind="back">S</button></div>
+        <div class="row"><label>Strafe Left</label><button class="keybind" data-bind="left">A</button></div>
+        <div class="row"><label>Strafe Right</label><button class="keybind" data-bind="right">D</button></div>
+        <div class="row"><label>Sprint</label><button class="keybind" data-bind="sprint">SHIFT</button></div>
+        <div class="row"><label>Jump</label><button class="keybind" data-bind="jump">SPACE</button></div>
+
+        <div class="setting-title">Camera / View</div>
+        <div class="row"><label>Look Up</label><button class="keybind" data-bind="lookUp">↑</button></div>
+        <div class="row"><label>Look Down</label><button class="keybind" data-bind="lookDown">↓</button></div>
+        <div class="row"><label>Look Left</label><button class="keybind" data-bind="lookLeft">←</button></div>
+        <div class="row"><label>Look Right</label><button class="keybind" data-bind="lookRight">→</button></div>
+      </div>
+
+      <div class="col">
+        <div class="setting-title">Actions</div>
+        <div class="row"><label>Interact</label><button class="keybind" data-bind="interact">E</button></div>
+        <div class="row"><label>Attack</label><button class="keybind" data-bind="attack">LMB</button></div>
+        <div class="row"><label>Distort / Ability</label><button class="keybind" data-bind="ability">F</button></div>
+        <div class="row"><label>Inventory</label><button class="keybind" data-bind="inventory">I</button></div>
+        <div class="row"><label>Map</label><button class="keybind" data-bind="map">M</button></div>
+        <div class="row"><label>Pause / Back</label><button class="keybind" data-bind="pause">ESC</button></div>
+
+        <div class="setting-title">Input Options</div>
+        <div class="row"><label>Look Sensitivity</label><input type="range" id="s-sens2" min="10" max="300" value="100"><span class="val" id="v-sens2">100</span></div>
+        <div class="row"><label>Toggle Sprint</label><div class="toggle" id="t-tsprint"></div></div>
+        <div class="row"><label>Auto-Run</label><div class="toggle" id="t-autorun"></div></div>
+        <div class="row"><label>Aim Mode</label><div class="toggle" id="t-aim"></div></div>
+      </div>
+
+    </div>
+    <div style="font-size:11px;letter-spacing:1.6px;color:#4a6b7c;margin-top:14px;">CLICK A KEY, THEN PRESS THE NEW KEY TO REBIND</div>
+    <button class="btn" data-close style="margin-top:22px;">DONE</button>
+    <button class="btn" id="resetKeys" style="margin-left:10px;border-color:rgba(255,80,140,.45);color:#ff8fb6;">RESET KEYS</button>
+  </div>
+</div>
+
+<!-- ============ UPDATE LOG ============ -->
+<div class="panel wide" id="panel-updates">
+  <div class="panel-inner">
+    <h2>UPDATE LOG</h2>
+    <div class="ptag">Patch notes</div>
+    <div class="panel-grid">
+      <div class="col">
+        <div class="changelog" id="changelog"></div>
+      </div>
+      <div class="col">
+        <div class="setting-title">Roadmap</div>
+        <div class="row"><label>Character customiser</label><span class="tag done">DONE</span></div>
+        <div class="row"><label>Full settings + controls</label><span class="tag done">DONE</span></div>
+        <div class="row"><label>Hair &amp; outfits</label><span class="tag wip">IN PROGRESS</span></div>
+        <div class="row"><label>Walkable open world</label><span class="tag planned">PLANNED</span></div>
+        <div class="row"><label>Quests &amp; the beast</label><span class="tag planned">PLANNED</span></div>
+        <div class="row"><label>Hyperluminal region</label><span class="tag planned">PLANNED</span></div>
+        <div class="row"><label>Save games</label><span class="tag planned">PLANNED</span></div>
+      </div>
+    </div>
+    <button class="btn" data-close style="margin-top:22px;">CLOSE</button>
   </div>
 </div>
 
@@ -368,8 +453,9 @@ import * as THREE from 'three';
 
 const CFG_DEFAULTS = {
   volume: 45, music: 40, sfx: 70, distortion: 55, sensitivity: 100, fov: 72,
-  quality: 1, far: 900, invertY: false, speed: 100, sprint: 100,
-  headBob: true, grain: true, hud: true, shake: true, subs: true, fps: false
+  quality: 1, far: 900, invertY: false,
+  headBob: true, grain: true, hud: true, shake: true, subs: true, fps: false,
+  toggleSprint: false, autoRun: false, aimMode: false
 };
 const CFG = Object.assign({}, CFG_DEFAULTS);
 try { const saved = JSON.parse(localStorage.getItem('distorted.cfg') || 'null'); if(saved) Object.assign(CFG, saved); } catch(e){}
@@ -983,6 +1069,8 @@ const ACTIONS = {
   load:     () => showBrief('load'),
   custom:   () => { glitchBurst(0.3); location.href = 'distorted-customise.html'; },
   settings: () => openPanel('panel-settings'),
+  controls: () => openPanel('panel-controls'),
+  updates:  () => { renderChangelog(); openPanel('panel-updates'); },
   lore:     () => openPanel('panel-lore'),
   dlc:      () => { openPanel('panel-store'); refreshStore(); },
   quit:     () => { glitchBurst(0.6); document.body.innerHTML =
@@ -992,9 +1080,10 @@ const ACTIONS = {
 function showBrief(kind){
   if(kind === 'new'){
     $('#briefTitle').textContent = 'NEW GAME';
-    $('#briefTag').textContent   = 'Start a new game';
-    $('#briefBody').innerHTML = "You start at the edge of the city in a suit you don't remember putting on.<br><br><b>The world is not finished yet.</b> The city exists — streets, towers, skyline, the distortion — and you can already walk around it. Quests, monsters and endings get built next.";
-    $('#briefGo').onclick = () => location.href = 'distorted.html';
+    $('#briefTag').textContent   = 'Create your character';
+    $('#briefBody').innerHTML = "Before you step into the city, you need a body.<br><br><b>Next step: the customiser.</b> Choose your look — body type, skin tone, height, hair and outfit — and save it to your character.<br><br>The world is still being built. Once you've made your person, the streets are yours to walk.";
+    $('#briefGo').textContent = 'CUSTOMISE';
+    $('#briefGo').onclick = () => { glitchBurst(0.35); location.href = 'distorted-customise.html'; };
   } else {
     $('#briefTitle').textContent = 'CONTINUE';
     $('#briefTag').textContent   = 'Load your save';
@@ -1115,8 +1204,7 @@ bindSlider('s-dist','v-dist','distortion', val => { distortMat.uniforms.uDistort
 bindSlider('s-sens','v-sens','sensitivity');
 bindSlider('s-fov','v-fov','fov', val => { camera.fov = val; camera.updateProjectionMatrix(); });
 bindSlider('s-far','v-far','far', applyFar);
-bindSlider('s-speed','v-speed','speed');
-bindSlider('s-sprint','v-sprint','sprint');
+bindSlider('s-sens2','v-sens2','sensitivity', val => { const a = $('#s-sens'); if(a){ a.value = val; $('#v-sens').textContent = val; } });
 
 function bindToggle(id, key, apply){
   const t = $('#'+id);
@@ -1135,6 +1223,78 @@ bindToggle('t-hud','hud', toggleHud);
 bindToggle('t-shake','shake');
 bindToggle('t-subs','subs');
 bindToggle('t-fps','fps', on => { ensureFps().style.display = on ? 'block' : 'none'; });
+bindToggle('t-tsprint','toggleSprint');
+bindToggle('t-autorun','autoRun');
+bindToggle('t-aim','aimMode');
+
+/* =====================
+   CONTROLS: KEY BINDINGS
+   ===================== */
+const DEFAULT_KEYS = {
+  forward:'W', back:'S', left:'A', right:'D', sprint:'SHIFT', jump:'SPACE',
+  lookUp:'↑', lookDown:'↓', lookLeft:'←', lookRight:'→',
+  interact:'E', attack:'LMB', ability:'F', inventory:'I', map:'M', pause:'ESC'
+};
+CFG.keys = Object.assign({}, DEFAULT_KEYS, CFG.keys || {});
+let listeningBtn = null;
+function renderKeys(){
+  document.querySelectorAll('.keybind').forEach(b => {
+    const k = b.dataset.bind;
+    b.textContent = CFG.keys[k] || DEFAULT_KEYS[k];
+  });
+}
+document.querySelectorAll('.keybind').forEach(b => {
+  b.addEventListener('click', () => {
+    if(listeningBtn){ listeningBtn.classList.remove('listening'); listeningBtn.textContent = CFG.keys[listeningBtn.dataset.bind] || DEFAULT_KEYS[listeningBtn.dataset.bind]; }
+    listeningBtn = b; b.classList.add('listening'); b.textContent = 'PRESS KEY…'; uiBlip(600);
+  });
+});
+addEventListener('keydown', e => {
+  if(!listeningBtn) return;
+  e.preventDefault(); e.stopPropagation();
+  let name = e.key;
+  if(e.code === 'Space') name = 'SPACE';
+  else if(e.key === 'Shift') name = 'SHIFT';
+  else if(e.key === 'Escape') name = 'ESC';
+  else if(e.key === 'ArrowUp') name = '↑'; else if(e.key === 'ArrowDown') name = '↓';
+  else if(e.key === 'ArrowLeft') name = '←'; else if(e.key === 'ArrowRight') name = '→';
+  else if(e.key.length === 1) name = e.key.toUpperCase();
+  CFG.keys[listeningBtn.dataset.bind] = name; saveCfg();
+  listeningBtn.classList.remove('listening'); listeningBtn.textContent = name;
+  listeningBtn = null; uiBlip(760);
+}, true);
+{ const r = document.getElementById('resetKeys');
+  if(r) r.addEventListener('click', () => { CFG.keys = Object.assign({}, DEFAULT_KEYS); saveCfg(); renderKeys(); uiBlip(520); toast('CONTROLS RESET'); }); }
+renderKeys();
+
+/* =====================
+   UPDATE LOG / PATCH NOTES
+   ===================== */
+const CHANGELOG = [
+  { v:'v2.03', date:'27 Sep 2026', items:[
+    'Character customiser is now the first step when you press <b>Play</b>',
+    'New <b>Controls</b> page — rebind every key, toggle sprint / auto-run / aim',
+    'New <b>Update Log</b> so you can see what changed',
+    'Walk &amp; sprint speed locked to fair values (no cheating 😉)',
+    'Fully customisable character: body type, height, build, skin tone, hair, outfit']},
+  { v:'v2.02', date:'27 Sep 2026', items:[
+    'Settings screen now covers most of the display and is easy to read',
+    'Split audio into Master / Music / SFX',
+    'Added Render Scale, Render Distance, HUD &amp; FPS toggles',
+    'Settings now save between sessions + Reset Defaults button']},
+  { v:'v2.01', date:'26 Sep 2026', items:[
+    'Fixed the Earth being sliced off on wide screens',
+    'Starfield + distortion field polish']},
+  { v:'v2.00', date:'25 Sep 2026', items:['Distorted menu first build — title, Earth, distortion shader']}
+];
+function renderChangelog(){
+  const el = document.getElementById('changelog');
+  if(!el || el.dataset.done) return;
+  el.innerHTML = CHANGELOG.map(c =>
+    '<div class="ver"><h4>'+c.v+' &nbsp;·&nbsp; '+c.date+'</h4><ul>'
+    + c.items.map(i => '<li>'+i+'</li>').join('') + '</ul></div>').join('');
+  el.dataset.done = '1';
+}
 
 { const q = document.getElementById('s-quality');
   if(q) q.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
@@ -1146,13 +1306,16 @@ bindToggle('t-fps','fps', on => { ensureFps().style.display = on ? 'block' : 'no
 function syncSettingsUI(){
   const set = (id, key) => { const s = $('#'+id); if(s) s.value = CFG[key]; };
   set('s-vol','volume'); set('s-mus','music'); set('s-sfx','sfx'); set('s-dist','distortion');
-  set('s-sens','sensitivity'); set('s-fov','fov'); set('s-far','far'); set('s-speed','speed'); set('s-sprint','sprint');
-  ['vol','mus','sfx','dist','sens','fov','far','speed','sprint'].forEach(k => { const v = $('#v-'+k); const s = $('#s-'+k); if(v && s) v.textContent = s.value; });
+  set('s-sens','sensitivity'); set('s-fov','fov'); set('s-far','far');
+  set('s-sens2','sensitivity');
+  ['vol','mus','sfx','dist','sens','fov','far'].forEach(k => { const v = $('#v-'+k); const s = $('#s-'+k); if(v && s) v.textContent = s.value; });
+  { const a = $('#s-sens2'); if(a){ a.value = CFG.sensitivity; $('#v-sens2').textContent = CFG.sensitivity; } }
   const q = document.getElementById('s-quality');
   if(q) q.querySelectorAll('button').forEach(b => b.classList.toggle('active', Number(b.dataset.q) === Number(CFG.quality)));
   const tog = (id, val) => { const el = $('#'+id); if(el) el.classList.toggle('on', !!val); };
   tog('t-bob',CFG.headBob); tog('t-grain',CFG.grain); tog('t-invertY',CFG.invertY);
   tog('t-hud',CFG.hud); tog('t-shake',CFG.shake); tog('t-subs',CFG.subs); tog('t-fps',CFG.fps);
+  tog('t-tsprint',CFG.toggleSprint); tog('t-autorun',CFG.autoRun); tog('t-aim',CFG.aimMode);
 }
 function applyAllSettings(){
   applyFar(CFG.far); setQuality(CFG.quality);
@@ -1239,7 +1402,7 @@ function updatePlayer(dt){
   if(want.lengthSq() > 0) want.normalize();
 
   const sprint = keys['ShiftLeft'] || keys['ShiftRight'];
-  const speed  = (sprint ? player.sprint : player.speed) * ((sprint ? CFG.sprint : CFG.speed)/100);
+  const speed  = sprint ? player.sprint : player.speed;   // locked — no speed cheating
 
   player.vel.lerp(want.multiplyScalar(speed), 1 - Math.pow(0.0015, dt));
 
