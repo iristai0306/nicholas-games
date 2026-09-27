@@ -126,6 +126,16 @@
       background: #a855f7; cursor: pointer; box-shadow: 0 0 10px rgba(168,85,247,0.6);
     }
 
+    .name-input {
+      width: 100%; font-family: 'Orbitron', monospace; font-size: 14px; font-weight: 700;
+      letter-spacing: 3px; color: #fff; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; padding: 11px 14px;
+      outline: none; text-transform: uppercase; transition: border-color .18s, box-shadow .18s;
+    }
+    .name-input::placeholder { color: #4a5876; letter-spacing: 2px; font-weight: 600; }
+    .name-input:focus { border-color: #a855f7; box-shadow: 0 0 16px rgba(168,85,247,0.35); }
+    .name-hint { font-size: 11px; letter-spacing: 1.4px; color: #4a5876; margin-top: 6px; }
+
     .swatch-row { display: flex; flex-wrap: wrap; gap: 7px; }
     .swatch {
       width: 32px; height: 32px; border-radius: 8px; border: 2px solid transparent;
@@ -183,6 +193,13 @@
   </div>
 
   <div id="options-panel">
+    <div class="option-group">
+      <h3>Name</h3>
+      <input type="text" id="char-name" class="name-input" maxlength="16"
+             placeholder="NAME YOUR CHARACTER" value="DRIFTER" spellcheck="false" autocomplete="off">
+      <div class="name-hint">THIS IS WHAT THE CITY WILL CALL YOU</div>
+    </div>
+
     <div class="option-group">
       <h3>Body</h3>
       <div class="slider-row">
@@ -324,6 +341,7 @@ const SLIDERS = [
 ];
 
 const DEFAULT_STATE = {
+  name:'DRIFTER',
   height:0.5, build:0.5, muscle:0.5, shoulders:0.5, chest:0.5, waist:0.5, hips:0.5,
   glutes:0.5, headsize:0.5, jaw:0.5, cheeks:0.5, nose:0.5,
   skin:2, hair:'short01', hairCol:0, eye:0, briefCol:0
@@ -481,7 +499,20 @@ function buildUI() {
   swatches('briefcols', BRIEFCOLS, 'briefCol', applyBriefs, 'c-briefcols');
   buildHairs();
   for (const [id, vid, key] of SLIDERS) slider(id, vid, key, applyMorphs);
+  const nameEl = document.getElementById('char-name');
+  if (nameEl) {
+    nameEl.value = state.name || 'DRIFTER';
+    nameEl.addEventListener('input', () => {
+      state.name = nameEl.value.trim() || 'DRIFTER';
+      applyName();
+    });
+  }
   refreshUI();
+}
+
+function applyName() {
+  const el = document.getElementById('preview-name');
+  if (el) el.textContent = (state.name || 'DRIFTER').toUpperCase();
 }
 
 function refreshUI() {
@@ -494,6 +525,9 @@ function refreshUI() {
     const s = document.getElementById(id); if (s) s.value = state[key];
     const v = document.getElementById(vid); if (v) v.textContent = Number(state[key]).toFixed(2);
   }
+  const nameEl = document.getElementById('char-name');
+  if (nameEl) nameEl.value = state.name || 'DRIFTER';
+  applyName();
 }
 
 // ─── randomise / reset ───
@@ -507,7 +541,9 @@ document.getElementById('random-btn').addEventListener('click', () => {
   applyAll(); refreshUI();
 });
 document.getElementById('reset-btn').addEventListener('click', () => {
+  const keepName = state.name;          // keep your character's name on reset
   Object.assign(state, DEFAULT_STATE);
+  state.name = keepName || 'DRIFTER';
   applyAll(); refreshUI();
 });
 
