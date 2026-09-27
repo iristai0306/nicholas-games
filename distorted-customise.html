@@ -323,7 +323,7 @@ function applyHairVisibility() {
 
 // ─── load model ───
 const loader = new THREE.GLTFLoader();
-loader.load('distorted-char.glb?v=3', (gltf) => {
+loader.load('distorted-char.glb?v=4', (gltf) => {
   const model = gltf.scene;
   model.traverse(o => {
     if (!o.isMesh) return;
