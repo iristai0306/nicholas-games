@@ -40,11 +40,6 @@
     }
     #top-bar h1 { font-family: 'Orbitron', monospace; font-size: 18px; letter-spacing: 6px; color: #a0a0cc; }
     #top-bar h1 span { color: #fff; }
-    .pc-badge {
-      font-size: 10px; letter-spacing: 2px; font-weight: 700; color: #7be0c0;
-      border: 1px solid rgba(123,224,192,.4); border-radius: 20px; padding: 3px 10px;
-      white-space: nowrap;
-    }
 
     .nav-btn {
       font-family: 'Rajdhani', sans-serif;
@@ -170,10 +165,7 @@
 <div id="top-bar">
   <button id="back-btn" class="nav-btn">← BACK</button>
   <h1><span>//</span> DISTORTED <span>//</span></h1>
-  <div style="display:flex;align-items:center;gap:14px">
-    <span class="pc-badge">🖥️ PC ONLY</span>
-    <button id="confirm-btn">CONFIRM</button>
-  </div>
+  <button id="confirm-btn">CONFIRM</button>
 </div>
 
 <div id="main">
@@ -670,6 +662,5 @@ document.getElementById('back-btn').addEventListener('click', () => { window.loc
 // ─── initial UI (buttons work even before the model finishes loading) ───
 buildUI();
 </script>
-<script src="pc-gate.js"></script>
 </body>
 </html>
