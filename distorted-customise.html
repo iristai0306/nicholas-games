@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Distorted — Customise</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
@@ -21,11 +21,9 @@
     }
 
     #scanlines {
-      position: fixed;
-      top: 0; left: 0;
+      position: fixed; top: 0; left: 0;
       width: 100vw; height: 100vh;
-      z-index: 999;
-      pointer-events: none;
+      z-index: 999; pointer-events: none;
       background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
     }
     #scanlines::after {
@@ -42,6 +40,11 @@
     }
     #top-bar h1 { font-family: 'Orbitron', monospace; font-size: 18px; letter-spacing: 6px; color: #a0a0cc; }
     #top-bar h1 span { color: #fff; }
+    .pc-badge {
+      font-size: 10px; letter-spacing: 2px; font-weight: 700; color: #7be0c0;
+      border: 1px solid rgba(123,224,192,.4); border-radius: 20px; padding: 3px 10px;
+      white-space: nowrap;
+    }
 
     .nav-btn {
       font-family: 'Rajdhani', sans-serif;
@@ -64,7 +67,8 @@
     #main { display: flex; flex: 1; min-height: 0; z-index: 50; }
 
     #preview-area { flex: 1; position: relative; background: radial-gradient(ellipse at 50% 42%, #1a1a2e 0%, #0a0a12 70%); }
-    #preview-canvas { width: 100%; height: 100%; display: block; }
+    #preview-canvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+    #preview-canvas.grabbing { cursor: grabbing; }
 
     #preview-name {
       position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
@@ -74,7 +78,19 @@
     #hint {
       position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
       font-size: 12px; letter-spacing: 2px; color: #667799; pointer-events: none;
+      text-align: center; line-height: 1.7;
     }
+    #hint b { color: #9aa8c8; font-weight: 600; }
+    #view-tools {
+      position: absolute; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .tool-btn {
+      font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 11.5px; letter-spacing: 1.4px;
+      color: #cfe9f5; background: rgba(16,16,26,0.75); backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; padding: 8px 12px; cursor: pointer;
+      min-width: 118px; text-align: center; transition: .16s;
+    }
+    .tool-btn:hover { border-color: #6c5ce7; color: #fff; background: rgba(108,92,231,0.22); }
     #loading {
       position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
       flex-direction: column; gap: 14px; background: #0a0a12; z-index: 200; transition: opacity .5s;
@@ -85,18 +101,20 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     #options-panel {
-      width: 330px; background: rgba(255,255,255,0.02);
+      width: 360px; background: rgba(255,255,255,0.02);
       border-left: 1px solid rgba(255,255,255,0.06);
-      padding: 20px; overflow-y: auto; flex-shrink: 0;
+      padding: 18px 20px 40px; overflow-y: auto; flex-shrink: 0;
     }
-    .option-group { margin-bottom: 22px; }
+    .option-group { margin-bottom: 20px; }
     .option-group h3 {
       font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase;
       color: #667799; margin-bottom: 10px; padding-bottom: 4px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; justify-content: space-between; align-items: center;
     }
+    .option-group h3 .count { color: #3a4560; letter-spacing: 1px; font-size: 10px; }
 
-    .slider-row { margin-bottom: 14px; }
+    .slider-row { margin-bottom: 13px; }
     .slider-row label { display: flex; justify-content: space-between; font-size: 13px; letter-spacing: 1px; color: #9aa8c8; margin-bottom: 5px; }
     .slider-row label .val { color: #a855f7; font-weight: 700; }
     input[type=range] {
@@ -113,18 +131,18 @@
       background: #a855f7; cursor: pointer; box-shadow: 0 0 10px rgba(168,85,247,0.6);
     }
 
-    .swatch-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .swatch-row { display: flex; flex-wrap: wrap; gap: 7px; }
     .swatch {
-      width: 34px; height: 34px; border-radius: 8px; border: 2px solid transparent;
+      width: 32px; height: 32px; border-radius: 8px; border: 2px solid transparent;
       cursor: pointer; transition: all 0.15s;
     }
     .swatch:hover { transform: scale(1.12); }
     .swatch.active { border-color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.4); transform: scale(1.12); }
 
     .hair-card {
-      width: 52px; height: 52px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.08);
+      width: 50px; height: 50px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.08);
       cursor: pointer; display: flex; align-items: center; justify-content: center;
-      font-size: 22px; transition: all 0.15s; background: rgba(255,255,255,0.03);
+      font-size: 21px; transition: all 0.15s; background: rgba(255,255,255,0.03);
     }
     .hair-card:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.06); }
     .hair-card.active { border-color: #6c5ce7; box-shadow: 0 0 16px rgba(108,92,231,0.4); background: rgba(108,92,231,0.12); }
@@ -143,14 +161,6 @@
     #options-panel::-webkit-scrollbar { width: 4px; }
     #options-panel::-webkit-scrollbar-track { background: transparent; }
     #options-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
-
-    @media (max-width: 760px) {
-      #main { flex-direction: column-reverse; }
-      #options-panel { width: 100%; max-height: 46vh; border-left: none; border-top: 1px solid rgba(255,255,255,0.06); }
-      #top-bar h1 { font-size: 13px; letter-spacing: 3px; }
-      #confirm-btn { padding: 6px 16px; font-size: 13px; }
-      .nav-btn { padding: 6px 12px; font-size: 12px; }
-    }
   </style>
 </head>
 <body>
@@ -160,13 +170,22 @@
 <div id="top-bar">
   <button id="back-btn" class="nav-btn">← BACK</button>
   <h1><span>//</span> DISTORTED <span>//</span></h1>
-  <button id="confirm-btn">CONFIRM</button>
+  <div style="display:flex;align-items:center;gap:14px">
+    <span class="pc-badge">🖥️ PC ONLY</span>
+    <button id="confirm-btn">CONFIRM</button>
+  </div>
 </div>
 
 <div id="main">
   <div id="preview-area">
     <canvas id="preview-canvas"></canvas>
-    <div id="hint">DRAG TO ROTATE · SCROLL TO ZOOM</div>
+    <div id="hint"><b>DRAG</b> rotate · <b>RIGHT-DRAG / SHIFT-DRAG</b> move · <b>SCROLL</b> zoom (zooms where your cursor is)</div>
+    <div id="view-tools">
+      <button class="tool-btn" id="view-reset">⟲ RESET VIEW</button>
+      <button class="tool-btn" id="view-head">🙂 HEAD</button>
+      <button class="tool-btn" id="view-feet">🦶 FEET</button>
+      <button class="tool-btn" id="view-full">🧍 FULL BODY</button>
+    </div>
     <div id="preview-name">YOUR CHARACTER</div>
     <div id="loading"><div class="spinner"></div>BUILDING YOUR BODY…</div>
   </div>
@@ -189,27 +208,71 @@
     </div>
 
     <div class="option-group">
-      <h3>Skin Tone</h3>
+      <h3>Build Shape</h3>
+      <div class="slider-row">
+        <label>Shoulders <span class="val" id="v-shoulders">0.50</span></label>
+        <input type="range" id="s-shoulders" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <div class="slider-row">
+        <label>Chest <span class="val" id="v-chest">0.50</span></label>
+        <input type="range" id="s-chest" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <div class="slider-row">
+        <label>Waist <span class="val" id="v-waist">0.50</span></label>
+        <input type="range" id="s-waist" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <div class="slider-row">
+        <label>Hips <span class="val" id="v-hips">0.50</span></label>
+        <input type="range" id="s-hips" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <div class="slider-row">
+        <label>Glutes <span class="val" id="v-glutes">0.50</span></label>
+        <input type="range" id="s-glutes" min="0" max="1" step="0.01" value="0.5">
+      </div>
+    </div>
+
+    <div class="option-group">
+      <h3>Face</h3>
+      <div class="slider-row">
+        <label>Head Size <span class="val" id="v-headsize">0.50</span></label>
+        <input type="range" id="s-headsize" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <div class="slider-row">
+        <label>Jaw <span class="val" id="v-jaw">0.50</span></label>
+        <input type="range" id="s-jaw" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <div class="slider-row">
+        <label>Cheeks <span class="val" id="v-cheeks">0.50</span></label>
+        <input type="range" id="s-cheeks" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <div class="slider-row">
+        <label>Nose <span class="val" id="v-nose">0.50</span></label>
+        <input type="range" id="s-nose" min="0" max="1" step="0.01" value="0.5">
+      </div>
+    </div>
+
+    <div class="option-group">
+      <h3>Skin Tone <span class="count" id="c-skins"></span></h3>
       <div class="swatch-row" id="skins"></div>
     </div>
 
     <div class="option-group">
-      <h3>Hair Style</h3>
+      <h3>Hair Style <span class="count" id="c-hairs"></span></h3>
       <div class="option-row" id="hairs"></div>
     </div>
 
     <div class="option-group">
-      <h3>Hair Colour</h3>
+      <h3>Hair Colour <span class="count" id="c-haircols"></span></h3>
       <div class="swatch-row" id="haircols"></div>
     </div>
 
     <div class="option-group">
-      <h3>Eye Colour</h3>
+      <h3>Eye Colour <span class="count" id="c-eyecols"></span></h3>
       <div class="swatch-row" id="eyecols"></div>
     </div>
 
     <div class="option-group">
-      <h3>Briefs Colour</h3>
+      <h3>Shorts Colour <span class="count" id="c-briefcols"></span></h3>
       <div class="swatch-row" id="briefcols"></div>
     </div>
 
@@ -227,12 +290,16 @@
 <script>
 // ═══════════════════════════════════════════════
 // DISTORTED — Character Customisation (Blender model)
+// PC-only build: full free camera (orbit + pan + zoom-anywhere)
 // ═══════════════════════════════════════════════
 
-const SKINS = ['#f5dcc6','#eec9a8','#e0b083','#cd9a63','#b87f4a','#9a6533','#7c4f27','#5e3a1c','#442a12'];
-const HAIRCOLS = ['#2b1c12','#4a2f18','#7a4a22','#b07a3a','#d9b26a','#e8d9a0','#8a8a8a','#3a3a3a','#a83a2a','#2a4a8a'];
-const EYECOLS = ['#4a2f14','#6b4423','#2e6b4f','#3a6ea5','#5b8db8','#808080','#3d7a4a'];
-const BRIEFCOLS = ['#12141c','#2a2d3a','#6c5ce7','#a855f7','#4a9eff','#ef4444','#22c55e','#facc15','#ec4899'];
+const SKINS = ['#fbe3cf','#f5dcc6','#eec9a8','#e6bd97','#e0b083','#d3a273',
+               '#cd9a63','#b87f4a','#a06a3a','#9a6533','#7c4f27','#5e3a1c'];
+const HAIRCOLS = ['#1a1208','#2b1c12','#4a2f18','#653e1d','#7a4a22','#96602c','#b07a3a',
+                  '#c99a55','#d9b26a','#e8d9a0','#8a8a8a','#3a3a3a','#a83a2a','#2a4a8a'];
+const EYECOLS = ['#2a1c10','#4a2f14','#6b4423','#2e6b4f','#3d7a4a','#3a6ea5','#5b8db8','#7a9bb8','#808080','#5a4632'];
+const BRIEFCOLS = ['#12141c','#22252f','#2a2d3a','#4a4d5e','#6c5ce7','#a855f7',
+                   '#4a9eff','#1ad8ff','#ef4444','#22c55e','#facc15','#ec4899'];
 
 const HAIRS = [
   { id: 'none',       label: '🚫', name: 'None' },
@@ -244,26 +311,54 @@ const HAIRS = [
   { id: 'long01',     label: '💇', name: 'Long' },
   { id: 'ponytail01', label: '🎀', name: 'Ponytail' },
   { id: 'bob01',      label: '💇‍♀️', name: 'Bob' },
+  { id: 'bob02',      label: '🌸', name: 'Bob 2' },
+  { id: 'braid01',    label: '🪢', name: 'Braid' },
 ];
 
-const state = {
-  height: 0.5, build: 0.5, muscle: 0.5,
-  skin: 2, hair: 'short01', hairCol: 0, eye: 0, briefCol: 0
+// every slider -> morph target name on the model
+const SLIDERS = [
+  ['s-height','v-height','height','Height'],
+  ['s-build','v-build','build','Build'],
+  ['s-muscle','v-muscle','muscle','Muscle'],
+  ['s-shoulders','v-shoulders','shoulders','Shoulders'],
+  ['s-chest','v-chest','chest','Chest'],
+  ['s-waist','v-waist','waist','Waist'],
+  ['s-hips','v-hips','hips','Hips'],
+  ['s-glutes','v-glutes','glutes','Glutes'],
+  ['s-headsize','v-headsize','headsize','Head Size'],
+  ['s-jaw','v-jaw','jaw','Jaw'],
+  ['s-cheeks','v-cheeks','cheeks','Cheeks'],
+  ['s-nose','v-nose','nose','Nose'],
+];
+
+const DEFAULT_STATE = {
+  height:0.5, build:0.5, muscle:0.5, shoulders:0.5, chest:0.5, waist:0.5, hips:0.5,
+  glutes:0.5, headsize:0.5, jaw:0.5, cheeks:0.5, nose:0.5,
+  skin:2, hair:'short01', hairCol:0, eye:0, briefCol:0
 };
+const state = Object.assign({}, DEFAULT_STATE);
+try {
+  const saved = JSON.parse(localStorage.getItem('distorted_custom') || 'null');
+  if (saved) Object.assign(state, saved);
+} catch (e) {}
 
 // ─── three.js scene ───
 const canvas = document.getElementById('preview-canvas');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+let renderer = null;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+} catch (e) {
+  console.error('WebGL unavailable', e);
+  document.getElementById('loading').innerHTML =
+    '<div style="color:#ff7597;text-align:center;padding:0 24px;line-height:1.6">3D not supported here.<br>Open this on a PC with a normal browser.</div>';
+}
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-let camDist = 3.4;
-const camTarget = new THREE.Vector3(0, 0.92, 0);
-camera.position.set(0, 1.0, camDist);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.03, 200);
 
 scene.add(new THREE.HemisphereLight(0xbfd4ff, 0x2a2a3a, 1.05));
 const key = new THREE.DirectionalLight(0xfff2e6, 2.2); key.position.set(2.5, 4, 4); scene.add(key);
@@ -294,36 +389,26 @@ function allMorphMeshes() {
 }
 
 function applyMorphs() {
-  const h = state.height * 2 - 1;
-  const b = state.build * 2 - 1;
-  const m = state.muscle * 2 - 1;
-  for (const mesh of allMorphMeshes()) {
-    setMorph(mesh, 'Height', h);
-    setMorph(mesh, 'Build', b);
-    setMorph(mesh, 'Muscle', m);
+  const meshes = allMorphMeshes();
+  for (const [, , key, target] of SLIDERS) {
+    const v = state[key] * 2 - 1;
+    for (const mesh of meshes) setMorph(mesh, target, v);
   }
 }
 
-function applySkin() {
-  if (matSkin) matSkin.color.set(SKINS[state.skin]);
-}
-function applyHairCol() {
-  const c = HAIRCOLS[state.hairCol];
-  for (const k in matHair) if (matHair[k]) matHair[k].color.set(c);
-}
-function applyEye() {
-  if (matEye) matEye.color.set(EYECOLS[state.eye]);
-}
-function applyBriefs() {
-  if (matBriefs) matBriefs.color.set(BRIEFCOLS[state.briefCol]);
-}
-function applyHairVisibility() {
-  for (const k in OBJ.hairs) OBJ.hairs[k].visible = (k === state.hair);
+function applySkin()    { if (matSkin) matSkin.color.set(SKINS[state.skin]); }
+function applyHairCol() { const c = HAIRCOLS[state.hairCol]; for (const k in matHair) if (matHair[k]) matHair[k].color.set(c); }
+function applyEye()     { if (matEye) matEye.color.set(EYECOLS[state.eye]); }
+function applyBriefs()  { if (matBriefs) matBriefs.color.set(BRIEFCOLS[state.briefCol]); }
+function applyHairVisibility() { for (const k in OBJ.hairs) OBJ.hairs[k].visible = (k === state.hair); }
+
+function applyAll() {
+  applyMorphs(); applySkin(); applyHairCol(); applyEye(); applyBriefs(); applyHairVisibility();
 }
 
 // ─── load model ───
 const loader = new THREE.GLTFLoader();
-loader.load('distorted-char.glb?v=4', (gltf) => {
+loader.load('distorted-char.glb?v=6', (gltf) => {
   const model = gltf.scene;
   model.traverse(o => {
     if (!o.isMesh) return;
@@ -340,15 +425,16 @@ loader.load('distorted-char.glb?v=4', (gltf) => {
     }
   });
   root.add(model);
-  applyMorphs(); applySkin(); applyHairCol(); applyEye(); applyBriefs(); applyHairVisibility();
+  applyAll();
+  refreshUI();
   document.getElementById('loading').classList.add('hidden');
 }, undefined, (err) => {
   document.getElementById('loading').innerHTML = '<div style="color:#ff7597">FAILED TO LOAD MODEL</div>';
   console.error(err);
 });
 
-// ─── UI builders ───
-function swatches(containerId, arr, key, apply) {
+// ─── UI ───
+function swatches(containerId, arr, key, apply, countId) {
   const c = document.getElementById(containerId);
   c.innerHTML = '';
   arr.forEach((col, i) => {
@@ -363,11 +449,8 @@ function swatches(containerId, arr, key, apply) {
     });
     c.appendChild(el);
   });
+  if (countId) document.getElementById(countId).textContent = arr.length + ' options';
 }
-swatches('skins', SKINS, 'skin', applySkin);
-swatches('haircols', HAIRCOLS, 'hairCol', applyHairCol);
-swatches('eyecols', EYECOLS, 'eye', applyEye);
-swatches('briefcols', BRIEFCOLS, 'briefCol', applyBriefs);
 
 function buildHairs() {
   const c = document.getElementById('hairs');
@@ -385,8 +468,8 @@ function buildHairs() {
     });
     c.appendChild(el);
   });
+  document.getElementById('c-hairs').textContent = HAIRS.length + ' styles';
 }
-buildHairs();
 
 function slider(id, vid, key, apply, fmt) {
   const s = document.getElementById(id), v = document.getElementById(vid);
@@ -398,38 +481,163 @@ function slider(id, vid, key, apply, fmt) {
     apply();
   });
 }
-slider('s-height','v-height','height', applyMorphs);
-slider('s-build','v-build','build', applyMorphs);
-slider('s-muscle','v-muscle','muscle', applyMorphs);
 
-// ─── randomise / reset ───
+function buildUI() {
+  swatches('skins', SKINS, 'skin', applySkin, 'c-skins');
+  swatches('haircols', HAIRCOLS, 'hairCol', applyHairCol, 'c-haircols');
+  swatches('eyecols', EYECOLS, 'eye', applyEye, 'c-eyecols');
+  swatches('briefcols', BRIEFCOLS, 'briefCol', applyBriefs, 'c-briefcols');
+  buildHairs();
+  for (const [id, vid, key] of SLIDERS) slider(id, vid, key, applyMorphs);
+  refreshUI();
+}
+
 function refreshUI() {
-  document.querySelectorAll('#skins .swatch').forEach((e,i)=>e.classList.toggle('active', i===state.skin));
-  document.querySelectorAll('#haircols .swatch').forEach((e,i)=>e.classList.toggle('active', i===state.hairCol));
-  document.querySelectorAll('#eyecols .swatch').forEach((e,i)=>e.classList.toggle('active', i===state.eye));
-  document.querySelectorAll('#briefcols .swatch').forEach((e,i)=>e.classList.toggle('active', i===state.briefCol));
-  document.querySelectorAll('#hairs .hair-card').forEach((e,i)=>e.classList.toggle('active', HAIRS[i].id===state.hair));
-  for (const [id,vid,key] of [['s-height','v-height','height'],['s-build','v-build','build'],['s-muscle','v-muscle','muscle']]) {
-    document.getElementById(id).value = state[key];
-    document.getElementById(vid).textContent = Number(state[key]).toFixed(2);
+  const pairs = [['skins','skin'],['haircols','hairCol'],['eyecols','eye'],['briefcols','briefCol']];
+  for (const [cid, key] of pairs) {
+    document.querySelectorAll('#' + cid + ' .swatch').forEach((e, i) => e.classList.toggle('active', i === state[key]));
+  }
+  document.querySelectorAll('#hairs .hair-card').forEach((e, i) => e.classList.toggle('active', HAIRS[i].id === state.hair));
+  for (const [id, vid, key] of SLIDERS) {
+    const s = document.getElementById(id); if (s) s.value = state[key];
+    const v = document.getElementById(vid); if (v) v.textContent = Number(state[key]).toFixed(2);
   }
 }
+
+// ─── randomise / reset ───
 document.getElementById('random-btn').addEventListener('click', () => {
   state.skin = Math.floor(Math.random()*SKINS.length);
   state.hairCol = Math.floor(Math.random()*HAIRCOLS.length);
   state.eye = Math.floor(Math.random()*EYECOLS.length);
   state.briefCol = Math.floor(Math.random()*BRIEFCOLS.length);
   state.hair = HAIRS[Math.floor(Math.random()*HAIRS.length)].id;
-  state.height = Math.random(); state.build = Math.random(); state.muscle = Math.random();
-  applyMorphs(); applySkin(); applyHairCol(); applyEye(); applyBriefs(); applyHairVisibility(); refreshUI();
+  for (const [, , key] of SLIDERS) state[key] = Math.random();
+  applyAll(); refreshUI();
 });
 document.getElementById('reset-btn').addEventListener('click', () => {
-  Object.assign(state, { height:0.5, build:0.5, muscle:0.5, skin:2, hair:'short01', hairCol:0, eye:0, briefCol:0 });
-  applyMorphs(); applySkin(); applyHairCol(); applyEye(); applyBriefs(); applyHairVisibility(); refreshUI();
+  Object.assign(state, DEFAULT_STATE);
+  applyAll(); refreshUI();
+});
+
+// ═══════════════════════════════════════════════
+// FREE CAMERA — orbit + pan + zoom-anywhere
+// ═══════════════════════════════════════════════
+const HOME = { theta: 0, phi: 1.42, radius: 3.5, target: new THREE.Vector3(0, 0.95, 0) };
+let theta = HOME.theta, phi = HOME.phi, radius = HOME.radius;
+const camTarget = HOME.target.clone();
+
+const PHI_MIN = 0.06, PHI_MAX = Math.PI - 0.06;
+const R_MIN = 0.18, R_MAX = 16;
+
+function applyCamera() {
+  if (!renderer) return;
+  const sp = Math.sin(phi), cp = Math.cos(phi);
+  camera.position.set(
+    camTarget.x + radius * sp * Math.sin(theta),
+    camTarget.y + radius * cp,
+    camTarget.z + radius * sp * Math.cos(theta)
+  );
+  camera.lookAt(camTarget);
+}
+
+function resetView() {
+  theta = HOME.theta; phi = HOME.phi; radius = HOME.radius;
+  camTarget.copy(HOME.target);
+  applyCamera();
+}
+function focusOn(y, dist) {
+  camTarget.set(0, y, 0);
+  radius = dist;
+  theta = 0; phi = 1.42;
+  applyCamera();
+}
+
+// drag state
+let drag = null;
+canvas.addEventListener('pointerdown', e => {
+  try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+  drag = { x: e.clientX, y: e.clientY, btn: e.button, shift: e.shiftKey };
+  canvas.classList.add('grabbing');
+});
+canvas.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  drag.x = e.clientX; drag.y = e.clientY;
+  if (drag.btn === 2 || drag.btn === 1 || drag.shift) {
+    panByPixels(dx, dy);
+  } else {
+    theta -= dx * 0.008;
+    phi = Math.max(PHI_MIN, Math.min(PHI_MAX, phi - dy * 0.008));
+    applyCamera();
+  }
+});
+function endDrag() {
+  drag = null;
+  canvas.classList.remove('grabbing');
+  try { canvas.releasePointerCapture(0); } catch (_) {}
+}
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+window.addEventListener('blur', endDrag);
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+// pan: slide the focus point along the camera's screen plane
+function panByPixels(dx, dy) {
+  const fovR = camera.fov * Math.PI / 180;
+  const worldPerPx = (2 * Math.tan(fovR / 2) * radius) / canvas.clientHeight;
+  const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
+  const right = new THREE.Vector3().crossVectors(fwd, camera.up).normalize();
+  const up = new THREE.Vector3().crossVectors(right, fwd).normalize();
+  camTarget.addScaledVector(right, -dx * worldPerPx);
+  camTarget.addScaledVector(up, dy * worldPerPx);
+  applyCamera();
+}
+
+// zoom — zooms toward whatever is under the cursor (zoom "anywhere")
+const raycaster = new THREE.Raycaster();
+function zoomAt(clientX, clientY, factor) {
+  const r = canvas.getBoundingClientRect();
+  const ndc = new THREE.Vector2(
+    ((clientX - r.left) / r.width) * 2 - 1,
+    -((clientY - r.top) / r.height) * 2 + 1
+  );
+  const newR = Math.max(R_MIN, Math.min(R_MAX, radius * factor));
+  raycaster.setFromCamera(ndc, camera);
+  const hits = raycaster.intersectObject(root, true);
+  if (hits.length) {
+    const t = THREE.MathUtils.clamp(1 - newR / radius, 0, 1);
+    if (t > 0) camTarget.lerp(hits[0].point, t * 0.6);   // zoom in toward the cursor
+  }
+  radius = newR;
+  applyCamera();
+}
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const mag = Math.min(Math.abs(e.deltaY), 120);
+  const factor = Math.exp((e.deltaY > 0 ? 1 : -1) * mag * 0.0022);
+  zoomAt(e.clientX, e.clientY, factor);
+}, { passive: false });
+
+// view buttons
+document.getElementById('view-reset').addEventListener('click', resetView);
+document.getElementById('view-head').addEventListener('click', () => focusOn(1.62, 0.95));
+document.getElementById('view-feet').addEventListener('click', () => focusOn(0.16, 1.1));
+document.getElementById('view-full').addEventListener('click', () => focusOn(0.95, 3.5));
+
+// keyboard: R = reset view, arrows = orbit
+document.addEventListener('keydown', e => {
+  if (e.key === 'r' || e.key === 'R') resetView();
+  if (e.key === 'ArrowLeft')  { theta += 0.08; applyCamera(); }
+  if (e.key === 'ArrowRight') { theta -= 0.08; applyCamera(); }
+  if (e.key === 'ArrowUp')    { phi = Math.max(PHI_MIN, phi - 0.06); applyCamera(); }
+  if (e.key === 'ArrowDown')  { phi = Math.min(PHI_MAX, phi + 0.06); applyCamera(); }
+  if (e.key === 'Enter') document.getElementById('confirm-btn').click();
+  if (e.key === 'Escape') document.getElementById('back-btn').click();
 });
 
 // ─── resize ───
 function resize() {
+  if (!renderer) return;
   const a = document.getElementById('preview-area').getBoundingClientRect();
   renderer.setSize(a.width, a.height, false);
   camera.aspect = a.width / a.height;
@@ -437,32 +645,14 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 resize();
-
-// ─── orbit (drag rotate + wheel zoom) ───
-let dragging = false, lastX = 0, rotY = 0, rotX = 0;
-function down(x){ dragging = true; lastX = x; }
-function move(x){ if(!dragging) return; rotY += (x-lastX)*0.01; lastX = x; root.rotation.y = rotY; }
-function up(){ dragging = false; }
-canvas.addEventListener('mousedown', e => down(e.clientX));
-window.addEventListener('mousemove', e => move(e.clientX));
-window.addEventListener('mouseup', up);
-canvas.addEventListener('touchstart', e => down(e.touches[0].clientX), {passive:true});
-canvas.addEventListener('touchmove', e => move(e.touches[0].clientX), {passive:true});
-canvas.addEventListener('touchend', up);
-canvas.addEventListener('wheel', e => {
-  e.preventDefault();
-  camDist = Math.min(6, Math.max(1.8, camDist + e.deltaY*0.002));
-  camera.position.z = camDist;
-}, {passive:false});
+applyCamera();
 
 // ─── render loop ───
-let t0 = performance.now();
-function loop(now) {
-  const dt = (now - t0) / 1000; t0 = now;
-  // gentle idle sway
-  if (!dragging) root.rotation.y += Math.sin(now*0.00035)*0.0006;
-  camera.lookAt(camTarget);
-  renderer.render(scene, camera);
+let spin = 0;
+function loop() {
+  if (!drag) { spin += 0.0009; }        // gentle idle turn only when idle
+  root.rotation.y = spin;
+  if (renderer) renderer.render(scene, camera);
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -476,10 +666,10 @@ document.getElementById('confirm-btn').addEventListener('click', () => {
   setTimeout(() => { btn.textContent = 'CONFIRM'; btn.style.background = 'linear-gradient(135deg, #6c5ce7, #a855f7)'; }, 1400);
 });
 document.getElementById('back-btn').addEventListener('click', () => { window.location.href = 'distorted-menu.html'; });
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') document.getElementById('confirm-btn').click();
-  if (e.key === 'Escape') document.getElementById('back-btn').click();
-});
+
+// ─── initial UI (buttons work even before the model finishes loading) ───
+buildUI();
 </script>
+<script src="pc-gate.js"></script>
 </body>
 </html>
