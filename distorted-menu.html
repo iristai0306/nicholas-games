@@ -224,7 +224,6 @@
   <div class="menu" id="menu">
     <div class="menu-item active" data-action="new"><span class="sel"></span>New Game</div>
     <div class="menu-item" data-action="load"><span class="sel"></span>Continue</div>
-    <div class="menu-item" data-action="custom"><span class="sel"></span>Customise</div>
     <div class="menu-item" data-action="settings"><span class="sel"></span>Settings</div>
     <div class="menu-item" data-action="controls"><span class="sel"></span>Controls</div>
     <div class="menu-item" data-action="updates"><span class="sel"></span>Update Log</div>
@@ -1072,7 +1071,6 @@ function closePanels(){
 const ACTIONS = {
   new:      () => showBrief('new'),
   load:     () => showBrief('load'),
-  custom:   () => { glitchBurst(0.3); location.href = 'distorted-customise.html'; },
   settings: () => openPanel('panel-settings'),
   controls: () => openPanel('panel-controls'),
   updates:  () => { renderChangelog(); openPanel('panel-updates'); },
@@ -1085,10 +1083,10 @@ const ACTIONS = {
 function showBrief(kind){
   if(kind === 'new'){
     $('#briefTitle').textContent = 'NEW GAME';
-    $('#briefTag').textContent   = 'Start your run';
-    $('#briefBody').innerHTML = "Your run starts <b>here, in the city</b> — this menu is a real place you can walk around.<br><br>Want to change how you look? Open <b>CUSTOMISE</b> from the menu any time — body, face, hair, colours and your <b>name</b>.";
-    $('#briefGo').textContent = 'START';
-    $('#briefGo').onclick = () => { closePanels(); glitchBurst(0.35); enterCity(); toast('WELCOME TO THE CITY — PRESS CUSTOMISE TO BUILD YOUR LOOK'); };
+    $('#briefTag').textContent   = 'Create your character';
+    $('#briefBody').innerHTML = "Every run starts with a body.<br><br>Build your look — body type, skin tone, height, hair and outfit — and give him a <b>name</b>.<br><br>When you <b>CONFIRM</b>, you drop into the menu and your run begins.";
+    $('#briefGo').textContent = 'CUSTOMISE';
+    $('#briefGo').onclick = () => { glitchBurst(0.35); location.href = 'distorted-customise.html?from=newgame'; };
   } else {
     $('#briefTitle').textContent = 'CONTINUE';
     $('#briefTag').textContent   = 'Load your save';
@@ -1276,6 +1274,9 @@ renderKeys();
    UPDATE LOG / PATCH NOTES
    ===================== */
 const CHANGELOG = [
+  { v:'v2.04', date:'28 Sep 2026', items:[
+    'Customise is now only when you start a <b>New Game</b> — removed from the menu',
+    'Stronger body &amp; face sliders (jaw, nose, cheeks, hips, glutes now clearly move)']},
   { v:'v2.03', date:'27 Sep 2026', items:[
     'Character customiser is now the first step when you press <b>Play</b>',
     'New <b>Controls</b> page — rebind every key, toggle sprint / auto-run / aim',
