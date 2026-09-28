@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bg" gradientUnits="userSpaceOnUse" cx="512" cy="430" r="820">
+      <stop offset="0%" stop-color="#0c1426"/>
+      <stop offset="55%" stop-color="#070a16"/>
+      <stop offset="100%" stop-color="#05060c"/>
+    </radialGradient>
+    <radialGradient id="core" cx="50%" cy="45%" r="48%">
+      <stop offset="0%" stop-color="#00c8ff" stop-opacity="0.28"/>
+      <stop offset="60%" stop-color="#00c8ff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#00c8ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00c8ff" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#00c8ff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9ffaff"/>
+      <stop offset="42%" stop-color="#00c8ff"/>
+      <stop offset="100%" stop-color="#009fd6"/>
+    </linearGradient>
+    <filter id="glow" x="-45%" y="-45%" width="190%" height="190%">
+      <feGaussianBlur stdDeviation="16" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="40"/>
+    </filter>
+    <pattern id="scan" width="6" height="6" patternUnits="userSpaceOnUse">
+      <rect width="6" height="3" fill="#000"/>
+    </pattern>
+    <radialGradient id="vig" gradientUnits="userSpaceOnUse" cx="512" cy="470" r="760">
+      <stop offset="52%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.60"/>
+    </radialGradient>
+
+    <path id="DP" d="M362 262 L516 262 A250 250 0 0 1 516 762 L362 762 Z"
+          fill="none" stroke-width="64" stroke-linejoin="round" stroke-linecap="round"/>
+
+    <clipPath id="squircle"><rect x="0" y="0" width="1024" height="1024" rx="230" ry="230"/></clipPath>
+    <clipPath id="band1"><rect x="318" y="300" width="344" height="52"/></clipPath>
+    <clipPath id="band2"><rect x="318" y="560" width="344" height="38"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#squircle)">
+    <rect width="1024" height="1024" fill="url(#bg)"/>
+    <rect width="1024" height="1024" fill="url(#core)"/>
+
+    <!-- faint skyline -->
+    <g>
+      <g fill="#0a1526">
+        <rect x="34"  y="706" width="68"  height="318"/>
+        <rect x="114" y="768" width="52"  height="256"/>
+        <rect x="180" y="664" width="84"  height="360"/>
+        <rect x="278" y="786" width="58"  height="238"/>
+        <rect x="352" y="724" width="70"  height="300"/>
+        <rect x="436" y="806" width="98"  height="218"/>
+        <rect x="552" y="694" width="64"  height="330"/>
+        <rect x="630" y="776" width="86"  height="248"/>
+        <rect x="730" y="656" width="72"  height="368"/>
+        <rect x="816" y="756" width="60"  height="268"/>
+        <rect x="890" y="706" width="88"  height="318"/>
+      </g>
+      <g fill="#00c8ff" opacity="0.45">
+        <rect x="52"  y="728" width="7" height="7"/><rect x="72" y="758" width="7" height="7"/>
+        <rect x="198" y="690" width="7" height="7"/><rect x="226" y="720" width="7" height="7"/>
+        <rect x="198" y="748" width="7" height="7"/>
+        <rect x="370" y="748" width="7" height="7"/><rect x="396" y="778" width="7" height="7"/>
+        <rect x="570" y="718" width="7" height="7"/><rect x="594" y="748" width="7" height="7"/>
+        <rect x="748" y="682" width="7" height="7"/><rect x="774" y="712" width="7" height="7"/>
+        <rect x="908" y="732" width="7" height="7"/><rect x="936" y="762" width="7" height="7"/>
+      </g>
+      <rect x="0" y="640" width="1024" height="384" fill="url(#sky)"/>
+    </g>
+
+    <rect x="0" y="1006" width="1024" height="18" fill="#00c8ff" opacity="0.30" filter="url(#softglow)"/>
+
+    <!-- ===== glyph ===== -->
+    <g filter="url(#glow)">
+      <use href="#DP" x="-15" stroke="#ff2d78" opacity="0.9"/>
+      <use href="#DP" x="15"  stroke="#00fff0" opacity="0.9"/>
+      <use href="#DP" stroke="url(#neon)"/>
+    </g>
+
+    <!-- clean slice bands: erase band to bg, redraw displaced glyph inside -->
+    <g clip-path="url(#band1)">
+      <rect x="318" y="300" width="344" height="52" fill="url(#bg)"/>
+      <g filter="url(#glow)">
+        <use href="#DP" x="20"  stroke="#ff2d78" opacity="0.85"/>
+        <use href="#DP" x="40"  stroke="#00fff0" opacity="0.85"/>
+        <use href="#DP" x="30"  stroke="url(#neon)"/>
+      </g>
+    </g>
+    <g clip-path="url(#band2)">
+      <rect x="318" y="560" width="344" height="38" fill="url(#bg)"/>
+      <g filter="url(#glow)">
+        <use href="#DP" x="-34" stroke="#00fff0" opacity="0.85"/>
+        <use href="#DP" x="-18" stroke="url(#neon)"/>
+      </g>
+    </g>
+
+    <!-- scanlines + vignette -->
+    <rect width="1024" height="1024" fill="url(#scan)" opacity="0.10"/>
+    <rect width="1024" height="1024" fill="url(#vig)"/>
+  </g>
+
+  <rect x="6" y="6" width="1012" height="1012" rx="226" ry="226"
+        fill="none" stroke="#7be0c0" stroke-opacity="0.26" stroke-width="4"/>
+</svg>
