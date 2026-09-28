@@ -189,6 +189,7 @@
     <div id="hint"><b>DRAG</b> rotate · <b>RIGHT-DRAG / SHIFT-DRAG</b> move · <b>SCROLL</b> zoom (zooms where your cursor is)</div>
     <div id="view-tools">
       <button class="tool-btn" id="view-reset">⟲ RESET VIEW</button>
+      <button class="tool-btn" id="view-face">😐 FACE</button>
       <button class="tool-btn" id="view-head">🙂 HEAD</button>
       <button class="tool-btn" id="view-feet">🦶 FEET</button>
       <button class="tool-btn" id="view-full">🧍 FULL BODY</button>
@@ -423,7 +424,7 @@ function applyAll() {
 
 // ─── load model ───
 const loader = new THREE.GLTFLoader();
-loader.load('distorted-char.glb?v=8', (gltf) => {
+loader.load('distorted-char.glb?v=9', (gltf) => {
   const model = gltf.scene;
   model.traverse(o => {
     if (!o.isMesh) return;
@@ -653,7 +654,8 @@ canvas.addEventListener('wheel', e => {
 
 // view buttons
 document.getElementById('view-reset').addEventListener('click', resetView);
-document.getElementById('view-head').addEventListener('click', () => focusOn(1.62, 0.95));
+document.getElementById('view-face').addEventListener('click', () => focusOn(1.70, 0.42));
+document.getElementById('view-head').addEventListener('click', () => focusOn(1.74, 0.62));
 document.getElementById('view-feet').addEventListener('click', () => focusOn(0.16, 1.1));
 document.getElementById('view-full').addEventListener('click', () => focusOn(0.95, 3.5));
 
