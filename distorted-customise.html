@@ -423,7 +423,7 @@ function applyAll() {
 
 // ─── load model ───
 const loader = new THREE.GLTFLoader();
-loader.load('distorted-char.glb?v=6', (gltf) => {
+loader.load('distorted-char.glb?v=7', (gltf) => {
   const model = gltf.scene;
   model.traverse(o => {
     if (!o.isMesh) return;
