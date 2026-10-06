@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Distorted — Loading Screen v7</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;color:#dff4ff}
+  canvas{display:block;width:100vw;height:100vh}
+  .ov{position:fixed;inset:0;pointer-events:none}
+  #scan{background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,.022) 3px,rgba(255,255,255,.022) 6px);z-index:6}
+  #vig{background:radial-gradient(ellipse at 50% 54%,transparent 38%,rgba(0,0,0,.86) 104%);z-index:7}
+  #flash{background:#8ff8ff;opacity:0;z-index:8}
+  /* cinematic letterbox */
+  #lbTop,#lbBot{position:fixed;left:0;right:0;height:0;background:#000;z-index:9;transition:height .9s cubic-bezier(.6,0,.2,1)}
+  #lbTop{top:0} #lbBot{bottom:0}
+  #lbTop.on,#lbBot.on{height:7.5vh}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+  #brand{position:fixed;left:30px;top:calc(7.5vh + 22px);z-index:5;opacity:0;transition:opacity 1s}
+  #brand.on{opacity:1}
+  #brand .t{font-weight:900;letter-spacing:.34em;font-size:clamp(15px,2.4vw,22px);color:#eafcff;text-shadow:0 0 22px rgba(0,200,255,.55)}
+  #brand .s{margin-top:6px;font-size:9.5px;letter-spacing:.42em;color:#3f6a80;text-transform:uppercase}
+
+  #beat{position:fixed;left:0;right:0;bottom:190px;z-index:5;text-align:center;pointer-events:none}
+  #beat div{font-size:clamp(11px,1.5vw,13px);letter-spacing:2.8px;text-transform:uppercase;
+    color:#7fd6f0;text-shadow:0 0 14px rgba(0,180,255,.5)}
+  #beat .warn{color:#ff8fb8;text-shadow:0 0 18px rgba(255,95,150,.75)}
+  #tip{position:fixed;left:0;right:0;bottom:216px;z-index:5;text-align:center;pointer-events:none;
+    font-size:11px;letter-spacing:1.4px;color:#6f92a4;transition:opacity .45s}
+  #tip b{color:#8ff8ff;font-weight:600}
+
+  #load{position:fixed;left:50%;transform:translateX(-50%);bottom:70px;z-index:5;width:min(62vw,560px)}
+  #bar{height:2px;background:#0c1a24;position:relative;overflow:hidden;border-radius:2px}
+  #bar .fl{position:absolute;inset:0;width:0%;background:linear-gradient(90deg,#005f7d,#00c8ff,#8ff8ff);box-shadow:0 0 14px rgba(0,200,255,.85)}
+  #bar .fl::after{content:'';position:absolute;right:0;top:-3px;width:3px;height:8px;background:#fff;box-shadow:0 0 12px #fff}
+  #bar .ticks{position:absolute;inset:0}
+  #bar .ticks i{position:absolute;top:0;height:100%;width:1px;background:rgba(0,0,0,.55)}
+  #info{display:flex;justify-content:space-between;align-items:flex-end;margin-top:8px}
+  #task{font-size:10px;letter-spacing:.26em;color:#5c8ba3;text-transform:uppercase}
+  #task b{color:#8ff8ff;font-weight:600}
+  #pct{font-size:20px;font-weight:800;letter-spacing:.06em;color:#eafcff;text-shadow:0 0 18px rgba(0,200,255,.7)}
+  #sub{font-size:9.5px;letter-spacing:.22em;color:#3f6a80;text-transform:uppercase;margin-top:2px;text-align:right}
+
+  #footer{position:fixed;left:30px;bottom:calc(7.5vh + 22px);z-index:5;font-size:9.5px;letter-spacing:.24em;color:#3f6a80;text-transform:uppercase;opacity:0;transition:opacity 1s}
+  #footer.on{opacity:1}
+  #footer b{color:#8ff8ff;font-weight:600}
+
+  #enter{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;flex-direction:column;
+    background:rgba(3,5,10,.30);cursor:pointer}
+  #enter .cta{font-weight:700;font-size:clamp(15px,3.2vw,22px);letter-spacing:.32em;color:#fff;
+    text-shadow:0 0 30px rgba(0,200,255,.7);animation:flick 2.4s infinite}
+  @keyframes flick{0%,100%{opacity:.55}48%{opacity:1}52%{opacity:.35}56%{opacity:1}}
+  #enter .l{font-size:10px;letter-spacing:.4em;color:#5c8ba3;margin-top:14px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ov" id="scan"></div>
+<div class="ov" id="vig"></div>
+<div class="ov" id="flash"></div>
+<div id="lbTop"></div><div id="lbBot"></div>
+
+<div id="brand"><div class="t mono">DISTORTED</div><div class="s">A 3D OPEN-WORLD ADVENTURE</div></div>
+<div id="beat"></div>
+<div id="tip"></div>
+
+<div id="load">
+  <div id="bar"><div class="fl"></div><div class="ticks" id="ticks"></div></div>
+  <div id="info">
+    <div><div id="task">Initialising</div><div id="sub">booting</div></div>
+    <div id="pct">0%</div>
+  </div>
+</div>
+
+<div id="footer">[SHIFT-CLASS: <b>DRIFTER</b>] &nbsp;•&nbsp; [ANCHOR <b id="anchorState">SYNCING</b>]</div>
+
+<div id="enter"><div class="cta mono">▶ PRESS TO ENTER</div><div class="l">Reality seam stabilised</div></div>
+
+<script>
+/* =====================================================================
+   DISTORTED — loading v7
+   - real byte-driven loading, PACED to a 5s cinematic minimum
+   - PERFORMANCE: static bg pre-rendered, sprite-based clouds + glows,
+     no shadowBlur, flat-shaded buildings, capped windows, adaptive res.
+   ===================================================================== */
+const MIN_MS = 5000;            // cinematic minimum (never faster than this)
+const ASSET_TIMEOUT_MS = 4500;   // per-file stall guard
+const MAX_MS = 8000;             // absolute cap — force-ready, never hang
+
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+let W,H,S;                                   // S = internal scale (DPR, adaptively lowered)
+let bg=null;                                 // pre-rendered background canvas (set by buildBG)
+function setup(){
+  S = 0.92;   // fixed internal scale — never changes mid-run (rescale was causing the jump)
+  W=cv.width =Math.floor(innerWidth *S);
+  H=cv.height=Math.floor(innerHeight*S);
+  cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px';
+  buildBG();
+}
+setup(); addEventListener('resize', setup);
+
+let t0=performance.now(), started=false;
+let P=0, realP=0;
+let drawLast=t0;
+let glitchAmt=0, seam=0, seamSpike=0, done=false, entered=false;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- adaptive quality watchdog ---------- */
+let frames=0, lastCheck=performance.now(), qStable=0;
+function watchdog(){ /* disabled: mid-run resolution changes made the scene jump */ }
+
+/* ---------- assets to REALLY load ---------- */
+const FALLBACK={'vendor/three.min.js':603445,'vendor/GLTFLoader.js':96550,
+  'earth/tex2/day.jpg':830627,'earth/tex2/night.jpg':484833,
+  'earth/tex2/clouds.jpg':658811,'earth/tex2/spec.jpg':221151,'distorted-char.glb':6993676};
+const ASSETS=[
+  {label:'three.js engine',   url:'vendor/three.min.js',   grp:'engine',  phase:'Booting runtime'},
+  {label:'GLTF loader',       url:'vendor/GLTFLoader.js',  grp:'engine',  phase:'Booting runtime'},
+  {label:'surface — day',     url:'earth/tex2/day.jpg',    grp:'texture', phase:'Streaming surfaces'},
+  {label:'surface — night',   url:'earth/tex2/night.jpg',  grp:'texture', phase:'Streaming surfaces'},
+  {label:'surface — clouds',  url:'earth/tex2/clouds.jpg', grp:'texture', phase:'Streaming surfaces'},
+  {label:'surface — specular',url:'earth/tex2/spec.jpg',   grp:'texture', phase:'Streaming surfaces'},
+  {label:'character rig',     url:'distorted-char.glb',    grp:'char',    phase:'Assembling character'},
+];
+let totalBytes=0;
+
+const beatEl=document.getElementById('beat'), pctEl=document.getElementById('pct'),
+      taskEl=document.getElementById('task'), subEl=document.getElementById('sub'),
+      barFl=document.querySelector('#bar .fl'), ticksEl=document.getElementById('ticks'),
+      flashEl=document.getElementById('flash'), anchorEl=document.getElementById('anchorState');
+for(let i=1;i<20;i++){const s=document.createElement('i');s.style.left=(i*5)+'%';ticksEl.appendChild(s);}
+
+/* ---------- rotating tips ---------- */
+const tipEl=document.getElementById('tip');
+const TIPS=[
+  'TIP: Sweep your view — the <b>distortion field</b> bends where you look.',
+  'TIP: Loops reset the world. What you learn, you <b>keep</b>.',
+  'TIP: Double-tap to <b>sprint</b>. Momentum is your friend.',
+  'TIP: The seam at grid <b>0x7F</b> isn\'t always a wall.',
+  'TIP: Towers you can climb hide the best <b>loot</b>.',
+  'TIP: Look up at night — the skyline <b>changes</b> between loops.',
+  'TIP: Every district hides one <b>secret</b> district.',
+  'TIP: Your rig recharges in the shade. <b>Time</b> your moves.',
+];
+let tipI=-1;
+function showTip(){
+  tipEl.style.opacity=0;
+  setTimeout(()=>{ tipEl.innerHTML=TIPS[tipI]; tipEl.style.opacity=1; },320);
+}
+tipI=0; tipEl.innerHTML=TIPS[0]; tipEl.style.opacity=1;
+setInterval(()=>{ if(done) return; tipI=(tipI+1)%TIPS.length; showTip(); }, 2400);
+
+const mb=b=>(b/1048576).toFixed(1)+' MB';
+function glitch(a=.9){glitchAmt=a;setTimeout(()=>glitchAmt=Math.min(glitchAmt,.3),70);setTimeout(()=>glitchAmt=0,140);}
+function flash(a,c='#8ff8ff'){flashEl.style.background=c;flashEl.style.transition='none';flashEl.style.opacity=a;
+  requestAnimationFrame(()=>{flashEl.style.transition='opacity .5s';flashEl.style.opacity=0;});}
+
+async function fetchAsset(a,group){
+  const AC=('AbortController' in window)?new AbortController():null;
+  const to=AC?setTimeout(()=>AC.abort(),ASSET_TIMEOUT_MS):null;
+  try{
+    const r=await fetch(a.url,{cache:'no-store', signal:AC?AC.signal:undefined});
+    if(!r.body||!r.body.getReader){const b=await r.arrayBuffer();group.loaded+=(b.byteLength||a.sz);return;}
+    const rd=r.body.getReader();
+    while(true){const{done,value}=await rd.read(); if(done)break; group.loaded+=value.length;}
+  } finally { if(to) clearTimeout(to); }
+}
+async function pace(frac){const target=frac*MIN_MS, el=performance.now()-t0; if(el<target) await sleep(target-el);}
+
+let forced=false;
+async function runLoader(){
+  await Promise.all(ASSETS.map(async a=>{
+    try{
+      const AC=('AbortController' in window)?new AbortController():null;
+      const to=AC?setTimeout(()=>AC.abort(),2500):null;
+      const r=await fetch(a.url,{method:'HEAD', signal:AC?AC.signal:undefined});
+      const cl=+(r.headers.get('content-length')||0); a.sz=cl||FALLBACK[a.url]||0;
+      if(to) clearTimeout(to);
+    }catch(e){a.sz=FALLBACK[a.url]||0;}
+  }));
+  totalBytes=ASSETS.reduce((s,a)=>s+a.sz,0)||1;
+  let doneBytes=0;
+  for(let i=0;i<ASSETS.length;i++){
+    if(forced) return;
+    const a=ASSETS[i];
+    taskEl.innerHTML=a.phase;
+    subEl.textContent=(a.grp==='char'?'CHRONO-SCOUT MK IV':a.label);
+    const g={base:doneBytes,loaded:0};
+    try{await fetchAsset(a,g);}catch(e){g.loaded=a.sz;}
+    if(forced) return;
+    doneBytes+=(g.loaded||a.sz);
+    realP=Math.min(99.4, doneBytes/totalBytes*100);
+    if(a.grp!=='engine') glitch(.3);
+    await pace((i+1)/ASSETS.length*0.94);
+  }
+  realP=100; await pace(1);
+}
+runLoader().catch(()=>{realP=100;});
+/* absolute safety: never hang — if anything stalls, force-ready after MAX_MS */
+setTimeout(()=>{ forced=true; realP=100; }, MAX_MS);
+/* visible error net: if anything ever throws, show text instead of a black screen */
+window.addEventListener('error', e=>{
+  let el=document.getElementById('jsErr');
+  if(!el){ el=document.createElement('div'); el.id='jsErr';
+    el.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:50;padding:10px 14px;background:#2a0a12;color:#ff9fbf;font:11px ui-monospace,monospace;letter-spacing:.5px';
+    document.body.appendChild(el); }
+  el.textContent='load error: '+(e.message||'unknown');
+});
+
+/* ---------- pre-rendered background (sky + horizon + stars) ---------- */
+function buildBG(){
+  bg=document.createElement('canvas'); bg.width=W; bg.height=H;
+  const b=bg.getContext('2d');
+  const sky=b.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'#040713'); sky.addColorStop(.45,'#081226');
+  sky.addColorStop(.62,'#0c2038'); sky.addColorStop(1,'#03050c');
+  b.fillStyle=sky; b.fillRect(0,0,W,H);
+  const hz=H*0.52;
+  const gb=b.createLinearGradient(0,hz-50*S,0,hz+180*S);
+  gb.addColorStop(0,'rgba(0,120,180,0)'); gb.addColorStop(.5,'rgba(0,150,210,.15)'); gb.addColorStop(1,'rgba(0,60,100,0)');
+  b.fillStyle=gb; b.fillRect(0,hz-50*S,W,240*S);
+  // stars
+  for(let i=0;i<170;i++){
+    const x=Math.random()*W, y=Math.random()*H*0.75, r=(Math.random()*1.3+.4)*S;
+    b.fillStyle=`rgba(150,190,255,${0.15+Math.random()*0.5})`;
+    b.beginPath(); b.arc(x,y,r,0,6.29); b.fill();
+  }
+}
+/* cloud sprite */
+const cloudSprite=(()=>{
+  const c=document.createElement('canvas'); c.width=c.height=256;
+  const g=c.getContext('2d'); const rg=g.createRadialGradient(128,128,0,128,128,128);
+  rg.addColorStop(0,'rgba(200,235,255,1)'); rg.addColorStop(.5,'rgba(190,225,255,.5)'); rg.addColorStop(1,'rgba(190,225,255,0)');
+  g.fillStyle=rg; g.fillRect(0,0,256,256); return c;
+})();
+/* pink glow sprite */
+const glowSprite=(()=>{
+  const c=document.createElement('canvas'); c.width=c.height=64;
+  const g=c.getContext('2d'); const rg=g.createRadialGradient(32,32,0,32,32,32);
+  rg.addColorStop(0,'rgba(255,120,170,1)'); rg.addColorStop(.4,'rgba(255,95,150,.5)'); rg.addColorStop(1,'rgba(255,95,150,0)');
+  g.fillStyle=rg; g.fillRect(0,0,64,64); return c;
+})();
+
+/* ---------- assets ---------- */
+const clouds=Array.from({length:26},()=>({x:(Math.random()-.5)*2.4,y:(Math.random()-.5)*2.6,z:Math.random(),r:150+Math.random()*300,a:.06+Math.random()*.12,v:.4+Math.random()*1.0}));
+
+const FOCAL=780;
+let camX=0, camY=430, camZ=0;
+function proj(wx,wy,wz){ const dz=wz-camZ; if(dz<=1)return null; const s=FOCAL/dz;
+  return {x:W/2+(wx-camX)*s*S, y:H*0.52+(camY-wy)*s*S, s:s*S, dz}; }
+
+/* city — flat shaded, few windows */
+const buildings=[];
+(function seed(){
+  const N=26, span=2800, cell=span/N;
+  const cols=['24,46,72','20,38,62','28,52,80'];
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){
+    const bx=(i-N/2)*cell+(Math.random()-.5)*cell*.42;
+    const bz=(j+1)*cell+(Math.random()-.5)*cell*.42;
+    const dc=Math.hypot(bx,bz); if(dc<240)continue;
+    const far=Math.min(1,dc/1700);
+    let h=(80+Math.random()*170)*(0.5+far); if(Math.random()<0.05)h*=2.2;
+    buildings.push({x:bx,z:bz,w:cell*(0.42+Math.random()*0.3),h,
+      at:Math.random()*0.74, glow:Math.random()<0.09,
+      col:cols[(Math.random()*cols.length)|0], win:Math.random()});
+  }
+  buildings.sort((a,b)=>b.z-a.z);
+})();
+const roads=[];
+(function(){const N=26,span=2800,step=span/N;
+  for(let i=0;i<=N;i++){roads.push({axis:'z',p:(i-N/2)*step,at:Math.random()*0.45});roads.push({axis:'x',p:i*step,at:Math.random()*0.45});}})();
+
+/* reality seam — world object, no shadowBlur (fake glow with stacked strokes) */
+const SEAM={x:-560,z:1900,h:2800,seg:24};
+const seamJag=(()=>{let s=90210;const r=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
+  return Array.from({length:SEAM.seg+1},()=>r()*2-1);})();
+const seamBranch=[{f:0.35,len:0.30,dir:1},{f:0.62,len:0.22,dir:-1},{f:0.80,len:0.16,dir:1}];
+function seamPoints(t){
+  const base=proj(SEAM.x,0,SEAM.z), top=proj(SEAM.x,SEAM.h,SEAM.z); if(!base||!top)return null;
+  const amp=Math.max(3,30*base.s*0.5)*(0.5+0.9*seam), pts=[];
+  for(let i=0;i<=SEAM.seg;i++){const f=i/SEAM.seg;
+    pts.push([top.x+(base.x-top.x)*f+seamJag[i]*amp+Math.sin(i*0.9+t*2.4)*amp*0.1, top.y+(base.y-top.y)*f]);}
+  return pts;
+}
+function strokePts(p,w,c){ctx.beginPath();for(let i=0;i<p.length;i++)i?ctx.lineTo(p[i][0],p[i][1]):ctx.moveTo(p[i][0],p[i][1]);ctx.lineWidth=w;ctx.strokeStyle=c;ctx.stroke();}
+function drawSeam(t){
+  if(seam<=0.02||!proj(SEAM.x,0,SEAM.z))return;
+  const pts=seamPoints(t); if(!pts)return;
+  ctx.save(); ctx.lineCap='round'; ctx.lineJoin='round';
+  strokePts(pts,(10+22*seam)*S,`rgba(255,95,150,${0.05+0.09*seam})`);
+  strokePts(pts,(4+7*seam)*S,`rgba(255,110,165,${0.14+0.30*seam})`);
+  strokePts(pts,(1.3+2.2*seam)*S,`rgba(255,195,220,${0.40+0.55*seam})`);
+  for(const b of seamBranch){const idx=Math.round(b.f*SEAM.seg),o=pts[idx];
+    const len=(pts[SEAM.seg][1]-pts[0][1])*b.len*0.35;
+    strokePts([[o[0],o[1]],[o[0]+b.dir*30*S,o[1]+len*.5],[o[0]+b.dir*52*S,o[1]+len]],(1.6+3*seam)*S,`rgba(255,150,190,${0.10+0.3*seam})`);}
+  ctx.restore();
+}
+
+const BEATS=[{p:0,s:'Descent initiated'},{p:10,s:'Runtime online — reading the field'},
+  {p:24,s:'Anchoring city geometry'},{p:50,s:'⚠ reality seam detected at grid 0x7F',warn:true},
+  {p:70,s:'Assembling the drifter'},{p:90,s:'Loop integrity 98% — holding'},{p:100,s:'Seam stabilised'}];
+
+const ease=x=>x<0.5?2*x*x:1-Math.pow(-2*x+2,2)/2;   // easeInOutQuad
+const smooth=(x,a,b)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a))); return t*t*(3-2*t);};
+
+function draw(now){
+  watchdog();
+  const t=(now-t0)/1000;
+
+  /* ---- cinematic intro fades + letterbox ---- */
+  if(!started && now-t0>60){
+    started=true;
+    document.getElementById('lbTop').classList.add('on');
+    document.getElementById('lbBot').classList.add('on');
+    document.getElementById('brand').classList.add('on');
+    document.getElementById('footer').classList.add('on');
+  }
+
+  /* ---- progress: rate-limited so it GLIDES (never jumps when a file finishes) ---- */
+  const dt=Math.min(0.1,(now-drawLast)/1000); drawLast=now;
+  const allowed=Math.min(100,((now-t0)/MIN_MS)*100);
+  const target=Math.min(realP, allowed);
+  if(target>P) P=Math.min(target, P+18*dt);        // cap at ~18%/s so steps become a glide
+  else if(Math.abs(target-P)<0.25) P=target;
+  const p=Math.max(0,Math.min(100,P)); const bp=p/100;
+
+  /* ---- CAMERA (cinematic: descend -> smooth push -> gentle crane) ---- */
+  const descE=1-ease(smooth(bp,0,0.16));            // 1 at start -> 0
+  camY = 150 + 300*descE + 60*smooth(bp,0.7,1);      // settle low, then slight rise
+  camZ = 120 + ease(bp)*880;                          // dolly FORWARD (eased)
+  camX = Math.sin(bp*2.0)*160*(0.4+0.6*bp);           // slow lateral drift
+
+  const baseSeam=(p>44&&p<100)?smooth(p,44,54)*(0.30+0.22*Math.abs(Math.sin(t*1.3))):(p>=100?0.06:0);
+  seamSpike*=0.94; if(seamSpike<0.01)seamSpike=0;
+  seam=Math.max(baseSeam,seamSpike);
+
+  /* ---- background (pre-rendered) ---- */
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.drawImage(bg,0,0);
+
+  drawSeam(t);
+
+  /* ---- roads ---- */
+  ctx.lineWidth=1*S;
+  for(const r of roads){
+    if(bp<r.at)continue; const lit=Math.min(1,(bp-r.at)*4);
+    ctx.strokeStyle=`rgba(0,200,255,${0.04+0.2*lit})`; ctx.beginPath();
+    if(r.axis==='x'){const a=proj(-1400,0,r.p),b=proj(1400,0,r.p);if(a&&b){ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);}}
+    else{const a=proj(r.p,0,0),b=proj(r.p,0,2800);if(a&&b){ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);}}
+    ctx.stroke();
+  }
+
+  /* ---- city (flat fills, capped windows) ---- */
+  for(const b of buildings){
+    if(bp<b.at)continue;
+    const grow=Math.min(1,(bp-b.at)/0.18); const h=b.h*grow; if(h<1)continue;
+    const base=proj(b.x,0,b.z),top=proj(b.x,h,b.z); if(!base||!top)continue;
+    const w=b.w*base.s*0.5; if(w<0.7)continue;
+    ctx.fillStyle=`rgba(${b.col},0.97)`;
+    ctx.fillRect(base.x-w/2,top.y,w,base.y-top.y);
+    ctx.fillStyle=`rgba(0,200,255,${0.22+0.32*Math.min(1,grow*1.5)})`;
+    ctx.fillRect(base.x-w/2,top.y,w,Math.max(1,1.4*S));
+    if(w>11*S && grow>.7){                          // few windows only
+      const rows=Math.min(7,Math.floor((base.y-top.y)/(13*S)));
+      const cols=Math.min(4,Math.max(1,Math.floor(w/(13*S))));
+      const seedi=(b.win*97)|0;
+      ctx.fillStyle=`rgba(150,240,255,${0.10+0.18*b.win})`;
+      for(let rr=1;rr<rows;rr++)for(let cc=1;cc<cols;cc++){
+        if(((rr*5+cc*9+seedi)%4)===0) ctx.fillRect(base.x-w/2+cc*(w/cols), top.y+rr*13*S, Math.max(1,w/cols-4*S), 3*S);
+      }
+    }
+    if(b.glow && grow>.9){ const r=16*S; ctx.globalAlpha=0.9; ctx.drawImage(glowSprite,base.x-r,top.y-r,r*2,r*2); ctx.globalAlpha=1; }
+  }
+
+  /* ---- clouds (sprite) ---- */
+  if(descE>0.02){
+    for(const c of clouds){
+      c.z-=0.0016*c.v*(0.4+descE); if(c.z<-0.05)c.z=1.02;
+      const nearFade=Math.max(0,Math.min(1,(c.z-0.03)/0.22));   // fade out before wrap (kills the pop)
+      if(nearFade<=0) continue;
+      const sc=Math.min(1/(c.z+0.15),5.0);                     // clamp size
+      const px=W/2+c.x*sc*W*0.42;
+      const py=H*0.5+c.y*sc*H*0.42+(1-descE)*H*0.28;
+      const rad=c.r*sc*S*0.5;
+      ctx.globalAlpha=c.a*(0.35+descE*0.9)*nearFade;
+      ctx.drawImage(cloudSprite,px-rad,py-rad,rad*2,rad*2);
+    }
+    ctx.globalAlpha=1;
+  }
+
+  /* bottom fade */
+  const bf=ctx.createLinearGradient(0,H*0.62,0,H);
+  bf.addColorStop(0,'rgba(3,5,12,0)'); bf.addColorStop(1,'rgba(3,5,12,.92)');
+  ctx.fillStyle=bf; ctx.fillRect(0,H*0.62,W,H*0.38);
+
+  /* (self-copy glitch slices removed — reading/drawing the same canvas caused jumps;
+     the seam beat still flashes via the DOM #flash overlay) */
+
+  /* ---- UI ---- */
+  barFl.style.width=p+'%';
+  pctEl.textContent=Math.round(p)+'%';
+  if(totalBytes){const loaded=Math.min(totalBytes,totalBytes*p/100);
+    subEl.textContent = p<100 ? mb(loaded)+' / '+mb(totalBytes) : 'anchor locked';}
+
+  let bt=BEATS[0]; BEATS.forEach(b=>{if(p>=b.p)bt=b;});
+  if(beatEl.dataset.cur!==bt.s){
+    beatEl.dataset.cur=bt.s;
+    beatEl.innerHTML=`<div class="${bt.warn?'warn':''}">${bt.s}</div>`;
+    if(bt.warn){glitch(1);flash(.3,'#ff8fbf');seamSpike=1;} else if(p<100) glitch(.4);
+  }
+  anchorEl.textContent=p>=100?'LOCKED':(p>=56&&p<72)?'SEAM FAULT':'SYNCING';
+  anchorEl.style.color=p>=100?'#7dffb0':(p>=56&&p<72)?'#ff5f96':'#8ff8ff';
+
+  if(p>=100&&!done){
+    done=true; seamSpike=1; glitch(1);
+    setTimeout(()=>{flash(.35,'#8ff8ff');glitch(1);},110);
+    setTimeout(()=>{document.getElementById('enter').style.display='flex';},900);
+  }
+
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+document.getElementById('enter').addEventListener('click',()=>{ if(entered)return; entered=true; location.reload(); });
+</script>
+</body>
+</html>
