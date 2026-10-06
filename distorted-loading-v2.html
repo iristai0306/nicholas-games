@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Distorted — Loading Screen v2 (descent + build)</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#04060d;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;color:#dff4ff}
+  canvas{display:block;width:100vw;height:100vh}
+  .ov{position:fixed;inset:0;pointer-events:none}
+  #scan{background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.025) 2px,rgba(255,255,255,.025) 4px);mix-blend-mode:overlay;z-index:6;opacity:.7}
+  #vig{background:radial-gradient(ellipse at 50% 55%,transparent 40%,rgba(0,0,0,.82) 105%);z-index:7}
+  #flash{background:#8ff8ff;opacity:0;z-index:8}
+
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+  /* top-left title */
+  #brand{position:fixed;left:30px;top:26px;z-index:5}
+  #brand .t{font-weight:900;letter-spacing:.34em;font-size:clamp(15px,2.4vw,22px);color:#eafcff;
+    text-shadow:0 0 22px rgba(0,200,255,.55)}
+  #brand .s{margin-top:6px;font-size:9.5px;letter-spacing:.42em;color:#3f6a80;text-transform:uppercase}
+
+  /* story beat text (centre-low) */
+  #beat{position:fixed;left:0;right:0;bottom:150px;z-index:5;text-align:center;pointer-events:none}
+  #beat div{font-size:clamp(11px,1.5vw,13px);letter-spacing:2.6px;color:#7fd6f0;text-transform:uppercase;
+    text-shadow:0 0 14px rgba(0,180,255,.5)}
+  #beat .warn{color:#ffcf6b;text-shadow:0 0 14px rgba(255,190,60,.5)}
+
+  /* character card (bottom-left) */
+  #card{position:fixed;left:30px;bottom:30px;z-index:5;width:290px;max-width:60vw;
+    border:1px solid rgba(0,200,255,.28);background:linear-gradient(160deg,rgba(9,20,32,.92),rgba(6,10,20,.86));
+    padding:14px 16px;backdrop-filter:blur(3px);opacity:0;transform:translateY(14px);transition:opacity .6s, transform .6s}
+  #card.on{opacity:1;transform:none}
+  #card .hdr{display:flex;align-items:center;justify-content:space-between}
+  #card .lbl{font-size:9px;letter-spacing:.4em;color:#4d7f96;text-transform:uppercase}
+  #card .suit{font-size:13px;font-weight:700;letter-spacing:.14em;color:#8ff8ff;margin-top:3px}
+  #card .chip{font-size:8.5px;letter-spacing:.22em;color:#7dffb0;border:1px solid rgba(125,255,176,.35);padding:2px 6px}
+  .stat{margin-top:9px}
+  .stat .row{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.16em;color:#6f96a8;text-transform:uppercase}
+  .stat .track{height:3px;background:#0e1c26;margin-top:4px;position:relative;overflow:hidden}
+  .stat .fill{position:absolute;inset:0;width:0%;background:linear-gradient(90deg,#005f7d,#00c8ff);box-shadow:0 0 10px rgba(0,200,255,.7)}
+
+  /* progress bar (bottom centre) */
+  #barwrap{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:5;width:min(56vw,520px);text-align:center}
+  #bar{height:2px;background:#0e1c26;position:relative;overflow:hidden}
+  #bar .fl{position:absolute;inset:0;width:0%;background:linear-gradient(90deg,#005f7d,#00c8ff,#8ff8ff)}
+  #bar .fl::after{content:'';position:absolute;right:0;top:-3px;width:3px;height:8px;background:#fff;box-shadow:0 0 10px #fff}
+  #barinfo{display:flex;justify-content:space-between;margin-top:7px;font-size:10px;letter-spacing:.28em;color:#4d7f96;text-transform:uppercase}
+  #barinfo b{color:#8ff8ff;font-weight:600}
+
+  /* enter */
+  #enter{position:fixed;inset:0;z-index:9;display:none;align-items:center;justify-content:center;flex-direction:column;
+    background:rgba(3,5,10,.3);cursor:pointer}
+  #enter .cta{font-weight:700;font-size:clamp(15px,3.2vw,22px);letter-spacing:.32em;color:#fff;
+    text-shadow:0 0 30px rgba(0,200,255,.6);animation:flick 2.4s infinite}
+  @keyframes flick{0%,100%{opacity:.5}48%{opacity:1}52%{opacity:.35}56%{opacity:1}}
+  #enter .l{font-size:10px;letter-spacing:.4em;color:#5c8ba3;margin-top:14px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ov" id="scan"></div>
+<div class="ov" id="vig"></div>
+<div class="ov" id="flash"></div>
+
+<div id="brand"><div class="t mono">DISTORTED</div><div class="s">A 3D OPEN-WORLD ADVENTURE</div></div>
+
+<div id="beat"></div>
+
+<div id="card">
+  <div class="hdr">
+    <div>
+      <div class="lbl">Active Rig</div>
+      <div class="suit">CHRONO-SCOUT MK IV</div>
+    </div>
+    <div class="chip" id="cardChip">SYNCING</div>
+  </div>
+  <div class="stat"><div class="row"><span>Integrity</span><span id="v0">0%</span></div><div class="track"><div class="fill" data-fill="0"></div></div></div>
+  <div class="stat"><div class="row"><span>Anchor Lock</span><span id="v1">0%</span></div><div class="track"><div class="fill" data-fill="1"></div></div></div>
+  <div class="stat"><div class="row"><span>Distortion Resist</span><span id="v2">0%</span></div><div class="track"><div class="fill" data-fill="2"></div></div></div>
+  <div class="stat"><div class="row"><span>Loop Sync</span><span id="v3">0%</span></div><div class="track"><div class="fill" data-fill="3"></div></div></div>
+</div>
+
+<div id="barwrap">
+  <div id="bar"><div class="fl"></div></div>
+  <div id="barinfo"><span id="phase">Descent</span><span><b id="pct">0%</b></span></div>
+</div>
+
+<div id="enter"><div class="cta mono">▶ PRESS TO ENTER</div><div class="l">Reality seam stabilised</div></div>
+
+<script>
+/* =====================================================================
+   DISTORTED — loading v2
+   #2 cinematic descent  +  #4 live city build = progress
+   #5 character card     +  #6 lore beats / seam glitch
+   ===================================================================== */
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+let W,H,DPR;
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;
+  cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';}
+resize(); addEventListener('resize',resize);
+
+const COL={glow:'#00c8ff',lit:'#8ff8ff'};
+let t0=performance.now();
+let P=0, Pt=0;            // progress current / target 0..100
+let camZ=0, camY=190, camX=0;
+let descend=0;            // 0..1 how far through the cloud descent
+let glitchAmt=0, enterShown=false, done=false;
+
+/* ---------- starfield (visible in descent) ---------- */
+const stars=Array.from({length:180},()=>({x:Math.random(),y:Math.random(),z:Math.random()*.8+.2,tw:Math.random()*6.28}));
+
+/* ---------- clouds (descent) ---------- */
+const clouds=Array.from({length:46},()=>({
+  x:(Math.random()-.5)*2.2, y:(Math.random()-.5)*2.4, z:Math.random(),
+  r:120+Math.random()*260, a:.05+Math.random()*.12, v:0.4+Math.random()*0.9
+}));
+
+/* ---------- city ---------- */
+const FOCAL= 760;
+const buildings=[];
+(function seed(){
+  const N=30, span=2600, cell=span/N;
+  for(let i=0;i<N;i++){
+    for(let j=0;j<N;j++){
+      const bx=(i-N/2)*cell + (Math.random()-.5)*cell*.4;
+      const bz=(j+1)*cell + (Math.random()-.5)*cell*.4;
+      const dc=Math.hypot(bx,bz);
+      if(dc<180) continue;                    // leave a plaza in the middle
+      const far=Math.min(1, dc/1600);
+      let h=(60+Math.random()*150)*(0.5+far); // taller further out
+      if(Math.random()<0.04) h*=2.1;          // landmark towers
+      const w=cell*(0.42+Math.random()*0.3);
+      buildings.push({x:bx,z:bz,w,h,gh:0,
+        buildAt: Math.random()*0.78,          // when it starts rising (of progress)
+        glow: Math.random()<0.12,
+        col: Math.random()<0.5?'24,46,72':'18,34,58',
+        win: Math.random()});
+    }
+  }
+  // sort far->near so painting order is correct
+  buildings.sort((a,b)=>b.z-a.z);
+})();
+
+/* ---------- road grid lines ---------- */
+const roads=[];
+(function(){
+  const span=2600, step=2600/30;
+  for(let i=0;i<=30;i++){
+    roads.push({axis:'x', p:(i-15)*step, at:Math.random()*0.5});
+    roads.push({axis:'z', p:(i)*step, at:Math.random()*0.5});
+  }
+})();
+
+/* ---------- lore beats (#6) ---------- */
+const BEATS=[
+  {p:0,  s:'Descent initiated', c:''},
+  {p:14, s:'Reading suit telemetry', c:''},
+  {p:30, s:'Anchoring city geometry', c:''},
+  {p:52, s:'⚠ reality seam detected at grid 0x7F', c:'warn'},
+  {p:70, s:'Re-weaving the distortion field', c:''},
+  {p:88, s:'Loop integrity 98% — holding', c:''},
+  {p:100,s:'Seam stabilised', c:''},
+];
+const beatEl=document.getElementById('beat');
+const pctEl=document.getElementById('pct'), phaseEl=document.getElementById('phase');
+const barFl=document.querySelector('#bar .fl');
+const cardEl=document.getElementById('card'), chipEl=document.getElementById('cardChip');
+const flashEl=document.getElementById('flash');
+const fillEls=[...document.querySelectorAll('.fill')], vEls=[0,1,2,3].map(i=>document.getElementById('v'+i));
+
+/* stat targets per bar */
+const STAT4=[
+  (p)=>Math.min(100, p*1.05),          // integrity
+  (p)=>Math.min(100, Math.max(0,(p-15)*1.25)),  // anchor lock (lags)
+  (p)=>Math.min(100, Math.max(0,(p-35)*1.5)),   // distortion resist
+  (p)=>Math.min(100, Math.max(0,(p-55)*2.1)),   // loop sync
+];
+
+/* ---------- progress schedule ---------- */
+const STEPS=[[0,4],[400,11],[900,20],[1400,28],[1900,36],[2400,44],[2900,53],[3400,61],
+             [3900,69],[4400,77],[4900,85],[5400,92],[5900,97],[6300,100]];
+STEPS.forEach(([ms,v])=>setTimeout(()=>Pt=v,ms));
+
+function glitch(a=.9){ glitchAmt=a; setTimeout(()=>glitchAmt=Math.min(glitchAmt,.3),80); setTimeout(()=>glitchAmt=0,160); }
+function flash(a){ flashEl.style.transition='none'; flashEl.style.opacity=a;
+  requestAnimationFrame(()=>{flashEl.style.transition='opacity .5s';flashEl.style.opacity=0;}); }
+
+/* ---------- projection ---------- */
+function proj(wx,wy,wz){
+  const dz=wz-camZ;
+  if(dz<=1) return null;
+  const s=FOCAL/dz;
+  return { x:W/2 + (wx-camX)*s*DPR, y:H*0.52 + (camY-wy)*s*DPR, s:s*DPR, dz };
+}
+
+function draw(now){
+  const t=(now-t0)/1000;
+  ctx.setTransform(1,0,0,1,0,0);
+  // sky gradient
+  const sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'#040713'); sky.addColorStop(.45,'#081226'); sky.addColorStop(.62,'#0c2038');
+  sky.addColorStop(1,'#03050c');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+
+  /* ---- stars ---- */
+  const starA=Math.max(0, 1-descend*1.5);
+  if(starA>0.01){
+    for(const s of stars){
+      const tw=.5+.5*Math.sin(t*1.5+s.tw);
+      ctx.fillStyle=`rgba(150,190,255,${(0.1+0.5*s.z)*tw*starA})`;
+      ctx.beginPath(); ctx.arc(s.x*W,s.y*H,s.z*1.4*DPR,0,6.29); ctx.fill();
+    }
+  }
+
+  /* ---- ground plane glow band (city horizon) ---- */
+  const horizon=H*0.52;
+  const gb=ctx.createLinearGradient(0,horizon-40*DPR,0,horizon+160*DPR);
+  gb.addColorStop(0,'rgba(0,120,180,0)'); gb.addColorStop(.5,'rgba(0,150,210,.16)');
+  gb.addColorStop(1,'rgba(0,60,100,0)');
+  ctx.fillStyle=gb; ctx.fillRect(0,horizon-40*DPR,W,220*DPR);
+
+  const bp=P/100;
+
+  /* ---- roads (build with progress) ---- */
+  ctx.lineWidth=1*DPR;
+  for(const r of roads){
+    if(bp < r.at) continue;
+    const lit=Math.min(1,(bp-r.at)*4);
+    ctx.strokeStyle=`rgba(0,200,255,${0.05+0.22*lit})`;
+    ctx.beginPath();
+    if(r.axis==='x'){
+      const a=proj(-1300,0,r.p), b=proj(1300,0,r.p);
+      if(a&&b){ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);}
+    }else{
+      const a=proj(r.p,0,0), b=proj(r.p,0,2600);
+      if(a&&b){ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);}
+    }
+    ctx.stroke();
+  }
+
+  /* ---- buildings (live build) ---- */
+  for(const b of buildings){
+    if(bp < b.buildAt) continue;
+    const grow=Math.min(1,(bp-b.buildAt)/0.20);       // rise over ~20% progress
+    const h=b.h*grow;
+    if(h<1) continue;
+    const base=proj(b.x,0,b.z), top=proj(b.x,h,b.z);
+    if(!base||!top) continue;
+    const w=(b.w)*base.s*0.5;
+    if(w<0.6) continue;
+    // body
+    const g=ctx.createLinearGradient(0,top.y,0,base.y);
+    g.addColorStop(0,`rgba(${b.col},${0.95})`);
+    g.addColorStop(1,`rgba(6,12,22,0.95)`);
+    ctx.fillStyle=g;
+    ctx.fillRect(base.x-w/2, top.y, w, base.y-top.y);
+    // top edge accent
+    ctx.fillStyle=`rgba(0,200,255,${0.25+0.35*Math.min(1,grow*1.4)})`;
+    ctx.fillRect(base.x-w/2, top.y, w, Math.max(1,1.4*DPR));
+    // windows
+    if(w>7*DPR && grow>.65){
+      const rows=Math.min(14, Math.floor((base.y-top.y)/(9*DPR)));
+      const cols=Math.max(1, Math.floor(w/(7*DPR)));
+      const on=Math.floor((b.win*3.7)%3)+1;
+      for(let rr=0;rr<rows;rr++)for(let cc=0;cc<cols;cc++){
+        if(((rr*7+cc*13+on)%5)===0){
+          ctx.fillStyle=`rgba(140,240,255,${0.06+0.24*b.win})`;
+          ctx.fillRect(base.x-w/2+cc*(w/cols)+1.4*DPR, top.y+rr*9*DPR+2*DPR, Math.max(1,w/cols-3*DPR), 3*DPR);
+        }
+      }
+    }
+    // landmark glow beacon
+    if(b.glow && grow>.9){
+      ctx.beginPath(); ctx.arc(base.x, top.y, 2.2*DPR,0,6.29);
+      ctx.fillStyle= '#ff5f96'; ctx.shadowColor='#ff5f96'; ctx.shadowBlur=16*DPR; ctx.fill(); ctx.shadowBlur=0;
+    }
+  }
+
+  /* ---- clouds overlay (descent #2) ---- */
+  if(descend<1){
+    const cd=1-descend;
+    for(const c of clouds){
+      c.z -= 0.0022*c.v*(0.5+cd); if(c.z<-0.1) c.z=1.05;
+      const s=1/(c.z+0.15);
+      const px=W/2 + c.x*s*W*0.42;
+      const py=H*0.5 + c.y*s*H*0.42 + (1-cd)*H*0.3;
+      const rad=c.r*s*DPR*0.5;
+      const cg=ctx.createRadialGradient(px,py,0,px,py,rad);
+      const al=c.a*(0.4+cd*0.8);
+      cg.addColorStop(0,`rgba(190,230,255,${al})`);
+      cg.addColorStop(1,'rgba(190,230,255,0)');
+      ctx.fillStyle=cg;
+      ctx.beginPath(); ctx.arc(px,py,rad,0,6.29); ctx.fill();
+    }
+  }
+
+  /* ---- bottom fade so UI reads ---- */
+  const bf=ctx.createLinearGradient(0,H*0.6,0,H);
+  bf.addColorStop(0,'rgba(3,5,12,0)'); bf.addColorStop(1,'rgba(3,5,12,.9)');
+  ctx.fillStyle=bf; ctx.fillRect(0,H*0.6,W,H*0.4);
+
+  /* ---- glitch slice (#6) ---- */
+  if(glitchAmt>0.01){
+    for(let i=0;i<7;i++){
+      const yy=Math.random()*H, hh=(2+Math.random()*16)*DPR, dx=(Math.random()-.5)*46*DPR*glitchAmt;
+      ctx.drawImage(cv,0,yy,W,hh,dx,yy,W,hh);
+    }
+  }
+
+  /* =================== update numbers / UI =================== */
+  P += (Pt-P)*0.055; if(Math.abs(Pt-P)<0.35)P=Pt;
+  const p=Math.max(0,Math.min(100,P));
+
+  // camera: descent then slow forward drift into city
+  descend=Math.min(1, P/22);
+  camY = 190 + descend*(150-190)* (1) ;         // settle lower
+  camY = 320*(1-descend*0.55);
+  camZ = -(1-descend)*0 - 0;                    // start at origin
+  camZ = (bp)*900;                              // drift forward with build
+  camY = (1-descend)*330 + 150*bp*0 + 150;      // keep a lowish eye line
+  // gentle sway
+  camX = Math.sin(t*0.25)*14;
+  camY += Math.sin(t*0.4)*6;
+
+  // bar + pct
+  barFl.style.width=p+'%';
+  pctEl.textContent=Math.round(p)+'%';
+  phaseEl.textContent = p<22 ? 'Descent' : p<100 ? 'Building city' : 'Ready';
+
+  // beat text
+  let btxt=BEATS[0].s, bcls='';
+  for(const b of BEATS){ if(p>=b.p){btxt=b.s; bcls=b.c;} }
+  if(beatEl.dataset.cur!==btxt){
+    beatEl.dataset.cur=btxt;
+    beatEl.innerHTML=`<div class="${bcls}">${btxt}</div>`;
+    if(bcls==='warn'){ glitch(1); flash(.18); }
+    else if(p<100) glitch(.45);
+  }
+
+  // character card (#5)
+  if(p>=10 && !cardEl.classList.contains('on')) cardEl.classList.add('on');
+  for(let i=0;i<4;i++){
+    const val=Math.round(STAT4[i](p));
+    fillEls[i].style.width=val+'%';
+    vEls[i].textContent=val+'%';
+  }
+  if(p>=100){ chipEl.textContent='LOCKED'; chipEl.style.color='#7dffb0'; }
+  else if(p>=52 && p<70){ chipEl.textContent='SEAM FAULT'; chipEl.style.color='#ff5f96'; }
+  else if(p>=10){ chipEl.textContent='SYNCING'; }
+
+  // finish
+  if(p>=100 && !done){
+    done=true;
+    setTimeout(()=>glitch(1),100); setTimeout(()=>flash(.25),140);
+    setTimeout(()=>{ document.getElementById('enter').style.display='flex'; }, 800);
+  }
+
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+document.getElementById('enter').addEventListener('click',()=>{
+  if(enterShown) return; enterShown=true;
+  location.reload();
+});
+</script>
+</body>
+</html>
