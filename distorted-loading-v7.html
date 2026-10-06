@@ -86,6 +86,7 @@ const MIN_MS = 5000;
 
 const cv=document.getElementById('c'), ctx=cv.getContext('2d');
 let W,H,S;                                   // S = internal scale (DPR, adaptively lowered)
+let bg=null;                                 // pre-rendered background canvas (set by buildBG)
 function setup(){
   S = Math.min(devicePixelRatio||1, 1.5);
   W=cv.width =Math.floor(innerWidth *S);
@@ -169,7 +170,6 @@ async function runLoader(){
 runLoader().catch(()=>{realP=100;});
 
 /* ---------- pre-rendered background (sky + horizon + stars) ---------- */
-let bg;
 function buildBG(){
   bg=document.createElement('canvas'); bg.width=W; bg.height=H;
   const b=bg.getContext('2d');
