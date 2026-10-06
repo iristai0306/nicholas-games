@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Distorted — Loading Screen Concept</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#05060c;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif}
+  canvas{display:block;width:100vw;height:100vh}
+  #wrap{position:fixed;inset:0}
+  /* scanlines + vignette */
+  .ov{position:fixed;inset:0;pointer-events:none}
+  #scan{background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.028) 2px,rgba(255,255,255,.028) 4px);mix-blend-mode:overlay;z-index:5}
+  #vig{background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.75) 100%);z-index:6}
+  #glitch{background:linear-gradient(0deg,rgba(255,0,90,.0),rgba(0,200,255,.0));z-index:7;opacity:0}
+  /* boot log */
+  #log{position:fixed;left:34px;bottom:96px;z-index:4;font-family:ui-monospace,Menlo,Consolas,monospace;
+    font-size:11px;line-height:1.85;color:#4d7f96;letter-spacing:.6px;text-shadow:0 0 8px rgba(0,180,255,.25)}
+  #log .ok{color:#7dffb0}
+  #log .warn{color:#ffcf6b}
+  #log .glitch{color:#ff5f96}
+  #log b{color:#8ff8ff;font-weight:600}
+  /* centre readout */
+  #hud{position:fixed;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+  #pct{font-family:ui-monospace,monospace;font-size:44px;font-weight:800;letter-spacing:3px;color:#e8faff;
+    text-shadow:0 0 26px rgba(0,200,255,.75);margin-top:14px}
+  #msg{font-family:ui-monospace,monospace;font-size:12px;letter-spacing:5px;color:#5c8ba3;text-transform:uppercase;margin-top:10px}
+  #barwrap{width:min(58vw,440px);height:3px;background:#0e1c26;margin-top:22px;position:relative;overflow:hidden;border-radius:2px}
+  #bar{position:absolute;inset:0;width:0%;background:linear-gradient(90deg,#005f7d,#00c8ff,#8ff8ff);box-shadow:0 0 16px rgba(0,200,255,.9)}
+  #bar::after{content:'';position:absolute;right:0;top:-2px;width:3px;height:7px;background:#fff;box-shadow:0 0 12px #fff}
+  /* tip */
+  #tip{position:fixed;left:0;right:0;bottom:34px;z-index:4;text-align:center;font-size:12px;letter-spacing:1.2px;color:#6f8fa0}
+  #tip b{color:#8ff8ff}
+  /* enter prompt */
+  #enter{position:fixed;inset:0;z-index:8;display:none;align-items:center;justify-content:center;flex-direction:column;
+    background:rgba(3,5,10,.35);cursor:pointer}
+  #enter .cta{font-family:ui-monospace,monospace;font-weight:700;font-size:clamp(15px,3.4vw,22px);letter-spacing:clamp(5px,1.4vw,11px);
+    color:#fff;text-shadow:0 0 30px rgba(0,200,255,.6);animation:flick 2.4s infinite}
+  @keyframes flick{0%,100%{opacity:.5}48%{opacity:1}52%{opacity:.35}56%{opacity:1}}
+  #enter .l{font-size:11px;letter-spacing:4px;color:#5c8ba3;margin-top:14px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ov" id="scan"></div>
+<div class="ov" id="vig"></div>
+<div class="ov" id="glitch"></div>
+
+<div id="log"></div>
+
+<div id="hud">
+  <div id="pct">0%</div>
+  <div id="msg">Initialising dream-loop</div>
+  <div id="barwrap"><div id="bar"></div></div>
+</div>
+
+<div id="tip"></div>
+
+<div id="enter">
+  <div class="cta">▶ PRESS TO ENTER</div>
+  <div class="l">Distorted — spatial anchor locked</div>
+</div>
+
+<script>
+/* ============================================================
+   DISTORTED — loading screen concept
+   canvas: starfield + rotating wireframe globe + distortion
+   ============================================================ */
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let W,H,DPR;
+function resize(){
+  DPR = Math.min(devicePixelRatio||1, 2);
+  W = cv.width  = innerWidth  * DPR;
+  H = cv.height = innerHeight * DPR;
+  cv.style.width = innerWidth+'px'; cv.style.height = innerHeight+'px';
+}
+resize(); addEventListener('resize', resize);
+
+// ---- starfield ----
+const stars = Array.from({length:220}, () => ({
+  x: Math.random(), y: Math.random(), z: Math.random()*.8+.2,
+  tw: Math.random()*Math.PI*2
+}));
+// ---- dust particles ----
+const dust = Array.from({length:90}, () => ({
+  x: Math.random(), y: Math.random(), s: Math.random()*1.6+.4,
+  vx:(Math.random()-.5)*.00025, vy:(Math.random()-.5)*.00025, a: Math.random()*.5+.15
+}));
+// ---- ripples (click) ----
+const ripples = [];
+addEventListener('pointerdown', e => ripples.push({x:e.clientX*DPR, y:e.clientY*DPR, r:0, a:1}));
+
+const COL = {a:'#00c8ff', b:'#8ff8ff', dim:'rgba(0,160,220,'};
+
+let t0 = performance.now();
+let progress = 0;              // 0..progressTarget
+let progressTarget = 0;        // jumps in steps
+let glitchAmt = 0;
+
+// boot log script
+const LOG = [
+  {t:120,  s:'> boot: DISTORTED runtime v2.00'},
+  {t:520,  s:'> mount //dream-loop/recursion_01', c:'ok'},
+  {t:980,  s:'> spatial anchors ......... <b>LOCKED</b>', c:'ok'},
+  {t:1450, s:'> distortion field ........ <b>UNSTABLE</b>', c:'warn'},
+  {t:1950, s:'> warning: reality seam detected at grid 0x7F', c:'glitch'},
+  {t:2450, s:'> re-weaving geometry ...... <b>OK</b>', c:'ok'},
+  {t:3000, s:'> loading city framework ... <b>OK</b>', c:'ok'},
+  {t:3550, s:'> compiling skyline ......... <b>OK</b>', c:'ok'},
+  {t:4100, s:'> player suit: CHRONO-SCOUT MK IV', c:'ok'},
+  {t:4650, s:'> entering the city .........', c:'ok'},
+];
+const MSGS = [
+  [0,    'Initialising dream-loop'],
+  [18,   'Calibrating spatial anchors'],
+  [38,   'Weaving the distortion field'],
+  [58,   'Rendering the city'],
+  [76,   'Stabilising reality seam'],
+  [90,   'Dream-loop integrity 98%'],
+  [100,  'BLINK — entering the city'],
+];
+const TIPS = [
+  'TIP: Sweep your <b>pointer</b> across the field — reality bends where you look.',
+  'TIP: The city is unfinished. The <b>distortion field</b> is live.',
+  'TIP: Recursion counter shows how many <b>loops</b> you have run.',
+  'TIP: Everything you see is being anchored in real time.'
+];
+
+// progress step scheduler
+const STEPS = [ [0,6],[300,14],[900,26],[1500,33],[2100,41],[2700,48],[3100,57],[3500,66],[3900,74],[4300,83],[4700,91],[5000,96],[5400,100] ];
+STEPS.forEach(([ms,val]) => setTimeout(()=>progressTarget=val, ms));
+
+// glitch pulses
+function glitchPulse(){ glitchAmt = 1; setTimeout(()=>glitchAmt=.35,90); setTimeout(()=>glitchAmt=0,180); }
+
+const logEl = document.getElementById('log');
+LOG.forEach(({t,s,c}) => setTimeout(()=>{
+  const d = document.createElement('div');
+  if(c) d.className = c;
+  d.innerHTML = s;
+  logEl.appendChild(d);
+  if(logEl.children.length>8) logEl.removeChild(logEl.firstChild);
+  if(c==='glitch'||c==='warn') glitchPulse();
+}, t));
+
+const pctEl = document.getElementById('pct'), msgEl = document.getElementById('msg'),
+      barEl = document.getElementById('bar'), tipEl = document.getElementById('tip'), enterEl = document.getElementById('enter');
+let tipI = 0;
+tipEl.innerHTML = TIPS[0];
+setInterval(()=>{ tipI=(tipI+1)%TIPS.length; tipEl.innerHTML=TIPS[tipI]; }, 2600);
+
+let entered=false, done=false;
+
+function draw(now){
+  const t = (now - t0)/1000;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle='#05060c'; ctx.fillRect(0,0,W,H);
+
+  const cx=W/2, cy=H*0.44;
+  const R=Math.min(W,H)*0.20;
+
+  // soft core glow behind globe
+  const gg=ctx.createRadialGradient(cx,cy,0,cx,cy,R*2.6);
+  gg.addColorStop(0,'rgba(0,90,140,.55)');
+  gg.addColorStop(.5,'rgba(20,30,70,.28)');
+  gg.addColorStop(1,'rgba(5,6,12,0)');
+  ctx.fillStyle=gg; ctx.fillRect(0,0,W,H);
+
+  // ---- stars ----
+  for(const s of stars){
+    const tw = .55+.45*Math.sin(t*1.6+s.tw);
+    ctx.fillStyle = `rgba(150,190,255,${(0.12+0.5*s.z)*tw})`;
+    ctx.beginPath(); ctx.arc(s.x*W, s.y*H, s.z*1.5*DPR, 0, 6.29); ctx.fill();
+  }
+  // ---- dust ----
+  for(const p of dust){
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0)p.x=1; if(p.x>1)p.x=0; if(p.y<0)p.y=1; if(p.y>1)p.y=0;
+    ctx.fillStyle=`rgba(120,220,255,${p.a*0.5})`;
+    ctx.beginPath(); ctx.arc(p.x*W,p.y*H,p.s*DPR,0,6.29); ctx.fill();
+  }
+
+  // ---- rotating wireframe globe ----
+  ctx.save();
+  ctx.translate(cx,cy);
+  const a = t*0.35;
+  // latitudes
+  ctx.lineWidth = 1*DPR;
+  for(let lat=-75; lat<=75; lat+=15){
+    const lr = lat*Math.PI/180;
+    const ry = Math.sin(lr)*R;
+    const rx = Math.cos(lr)*R;
+    ctx.beginPath();
+    ctx.ellipse(0, -ry, rx, Math.max(rx*0.28,1), 0, 0, 6.29);
+    ctx.strokeStyle = `rgba(0,200,255,${0.10+0.10*Math.cos(lr)})`;
+    ctx.stroke();
+  }
+  // meridians
+  for(let k=0;k<12;k++){
+    const ph = a + k*Math.PI/12;
+    const rx = Math.abs(Math.cos(ph))*R;
+    ctx.beginPath();
+    ctx.ellipse(0,0,Math.max(rx,1),R,0,0,6.29);
+    ctx.strokeStyle = `rgba(0,200,255,${0.10+0.12*Math.abs(Math.cos(ph))})`;
+    ctx.stroke();
+  }
+  // rim
+  ctx.beginPath(); ctx.arc(0,0,R,0,6.29);
+  ctx.strokeStyle='rgba(143,248,255,.55)'; ctx.lineWidth=1.5*DPR;
+  ctx.shadowColor='rgba(0,200,255,.9)'; ctx.shadowBlur=26*DPR; ctx.stroke();
+  ctx.shadowBlur=0;
+  // orbiting node
+  const oa = t*1.1;
+  ctx.beginPath();
+  ctx.arc(Math.cos(oa)*R*1.18, Math.sin(oa)*R*0.42, 2.4*DPR, 0, 6.29);
+  ctx.fillStyle='#8ff8ff'; ctx.shadowColor='#8ff8ff'; ctx.shadowBlur=14*DPR; ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.restore();
+
+  // ---- title (glitch snap) ----
+  ctx.save();
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  const fs = Math.min(W*0.085, 92*DPR);
+  ctx.font = `900 ${fs}px ui-monospace,monospace`;
+  const titleY = cy - R*2.35;
+  const settle = Math.min(1, t/1.4);
+  // letters jitter in
+  const chars = 'DISTORTED'.split('');
+  const total = chars.length;
+  let x = cx - (total-1)*(fs*0.62)/2*0; // we'll do centred text w/ layered offset instead
+  // layered chromatic title
+  const g = glitchAmt;
+  const off = (1-settle)*10*DPR*Math.sin(t*40) + g*6*DPR*Math.sin(t*60);
+  ctx.globalAlpha = 0.35+0.65*settle;
+  ctx.fillStyle='rgba(255,0,90,.45)';
+  ctx.fillText('DISTORTED', cx+off+2*DPR, titleY+2*DPR);
+  ctx.fillStyle='rgba(0,180,255,.45)';
+  ctx.fillText('DISTORTED', cx-off-2*DPR, titleY-2*DPR);
+  ctx.fillStyle='#fff'; ctx.shadowColor='rgba(0,200,255,.7)'; ctx.shadowBlur = 24*DPR*(0.4+0.6*settle);
+  ctx.fillText('DISTORTED', cx, titleY);
+  ctx.shadowBlur=0; ctx.globalAlpha=1;
+  // subtitle
+  ctx.font=`${Math.min(W*0.017,15*DPR)}px ui-monospace,monospace`;
+  ctx.fillStyle=`rgba(180,180,255,${0.35+0.3*Math.sin(t*2)})`;
+  ctx.fillText('A 3D OPEN-WORLD ADVENTURE', cx, titleY + fs*0.85);
+  ctx.restore();
+
+  // ---- distortion slices over whole frame (glitch) ----
+  if(g>0.01 || Math.random()<0.012){
+    const n=6;
+    for(let i=0;i<n;i++){
+      const yy=Math.random()*H, hh=(2+Math.random()*14)*DPR, dx=(Math.random()-.5)*40*DPR*(0.4+g);
+      ctx.drawImage(cv, 0, yy, W, hh, dx, yy, W, hh);
+    }
+    document.getElementById('glitch').style.background =
+      `linear-gradient(0deg, rgba(255,0,90,${.05*g}), rgba(0,200,255,${.05*g}))`;
+    document.getElementById('glitch').style.opacity=g;
+  } else {
+    document.getElementById('glitch').style.opacity=0;
+  }
+
+  // ---- ripples ----
+  for(let i=ripples.length-1;i>=0;i--){
+    const rp=ripples[i]; rp.r += 7*DPR; rp.a *= 0.965;
+    ctx.beginPath(); ctx.arc(rp.x,rp.y,rp.r,0,6.29);
+    ctx.strokeStyle=`rgba(143,248,255,${rp.a*0.5})`; ctx.lineWidth=1.5*DPR; ctx.stroke();
+    if(rp.a<0.03) ripples.splice(i,1);
+  }
+
+  // ---- progress ----
+  progress += (progressTarget - progress) * 0.06;
+  if(Math.abs(progressTarget-progress)<0.4) progress=progressTarget;
+  const p = Math.max(0, Math.min(100, Math.round(progress)));
+  pctEl.textContent = p + '%';
+  barEl.style.width = p + '%';
+  // msg by threshold
+  let m = MSGS[0][1];
+  for(const [th,s] of MSGS) if(p>=th) m=s;
+  if(msgEl.textContent!==m){ msgEl.textContent=m; if(p<100) glitchPulse(); }
+
+  if(p>=100 && !done){
+    done=true; glitchPulse(); setTimeout(glitchPulse,220); setTimeout(glitchPulse,460);
+    setTimeout(()=>{ enterEl.style.display='flex'; }, 700);
+  }
+
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+// enter
+enterEl.addEventListener('click', ()=>{ if(entered) return; entered=true; enterEl.classList.add('hidden');
+  document.body.style.transition='opacity .6s'; document.body.style.opacity='0';
+  setTimeout(()=>{ document.body.style.opacity='1'; enterEl.style.display='none'; }, 700);
+  setTimeout(()=>{ /* reset for demo */ location.reload(); }, 2500);
+});
+</script>
+</body>
+</html>
