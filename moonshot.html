@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>MOONSHOT — Trading Game</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --bg:#0b0e14; --card:#121722; --card2:#161d2b; --line:#222c3f;
+    --txt:#e8ecf3; --mut:#8b97a8; --up:#22e08a; --down:#ff5d6c; --acc:#5ad1ff;
+  }
+  html,body{height:100%;}
+  body{
+    background:radial-gradient(1200px 700px at 50% -10%, #16203a 0%, var(--bg) 55%);
+    color:var(--txt); font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    min-height:100vh; padding:14px 12px 34px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .brand{font-weight:800;letter-spacing:3px;font-size:19px;
+    background:linear-gradient(90deg,#22e08a,#5ad1ff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .brand small{display:block;letter-spacing:1px;font-size:9px;color:var(--mut);font-weight:600;-webkit-text-fill-color:var(--mut);}
+  .stats{display:flex;gap:8px;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:7px 11px;text-align:right;min-width:96px;}
+  .stat .k{font-size:9px;letter-spacing:1px;color:var(--mut);text-transform:uppercase;}
+  .stat .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .stat.win .v{color:var(--up);}
+  .goal{background:linear-gradient(90deg,rgba(34,224,138,.14),rgba(90,209,255,.08));
+    border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:12px;color:#cfe8e0;
+    display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .goal b{color:#fff;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px;box-shadow:0 10px 30px rgba(0,0,0,.28);}
+  .chartwrap{position:relative;}
+  #chart{display:block;width:100%;height:190px;}
+  .charthead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;}
+  .charthead .nm{font-size:14px;font-weight:700;}
+  .charthead .nm span{color:var(--mut);font-weight:600;font-size:11px;margin-left:6px;}
+  .charthead .px{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .charthead .ch{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .watch{display:grid;grid-template-columns:1fr;gap:8px;}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;transition:.12s;}
+  .row:hover{border-color:#33415c;}
+  .row.sel{border-color:var(--acc);background:rgba(90,209,255,.08);}
+  .row .l{display:flex;align-items:center;gap:10px;}
+  .dot{width:9px;height:9px;border-radius:50%;}
+  .tk{font-weight:800;font-size:13px;letter-spacing:.5px;}
+  .cn{font-size:10.5px;color:var(--mut);}
+  .hold{font-size:10px;color:var(--mut);margin-top:2px;}
+  .row .r{text-align:right;}
+  .row .r .p{font-weight:800;font-variant-numeric:tabular-nums;font-size:14px;}
+  .row .r .c{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .up{color:var(--up);} .down{color:var(--down);}
+  .flash-up{animation:fu .5s;} .flash-down{animation:fd .5s;}
+  @keyframes fu{0%{color:var(--up);}100%{}}
+  @keyframes fd{0%{color:var(--down);}100%{}}
+  .trade{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .btn{border:1px solid var(--line);background:var(--card2);color:var(--txt);
+    border-radius:12px;padding:13px 10px;font-size:13px;font-weight:800;letter-spacing:.4px;cursor:pointer;transition:.12s;font-family:inherit;}
+  .btn:hover{border-color:#33415c;transform:translateY(-1px);}
+  .btn:active{transform:translateY(0);}
+  .btn.buy{background:linear-gradient(180deg,rgba(34,224,138,.18),rgba(34,224,138,.06));border-color:rgba(34,224,138,.4);}
+  .btn.sell{background:linear-gradient(180deg,rgba(255,93,108,.18),rgba(255,93,108,.06));border-color:rgba(255,93,108,.4);}
+  .btn.mini{padding:11px 10px;font-size:12px;}
+  .news{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:12px;min-height:38px;display:flex;align-items:center;gap:8px;overflow:hidden;}
+  .news .tag{flex:none;font-size:9px;letter-spacing:1px;background:#233;border-radius:6px;padding:3px 7px;color:var(--mut);font-weight:700;}
+  .news .tx{color:#cdd6e4;}
+  .ctrl{display:flex;gap:8px;margin-top:10px;}
+  .ctrl .btn{flex:1;padding:10px;font-size:12px;}
+  .overlay{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+    background:rgba(5,7,12,.86);backdrop-filter:blur(6px);padding:20px;}
+  .overlay.on{display:flex;}
+  .ovcard{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px 22px;max-width:360px;text-align:center;
+    box-shadow:0 30px 80px rgba(0,0,0,.6);}
+  .ovcard h2{font-size:24px;margin-bottom:8px;background:linear-gradient(90deg,#22e08a,#5ad1ff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .ovcard p{color:var(--mut);font-size:13px;line-height:1.5;margin-bottom:16px;}
+  .ovcard b{color:#fff;}
+  .howto{font-size:11px;color:var(--mut);text-align:center;margin-top:6px;line-height:1.6;}
+  .howto b{color:#aab6c7;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">MOONSHOT<small>TURN $1,000 INTO $1,000,000</small></div>
+    <div class="stats">
+      <div class="stat"><div class="k">Cash</div><div class="v" id="cash">$1,000</div></div>
+      <div class="stat win"><div class="k">Net worth</div><div class="v" id="net">$1,000</div></div>
+    </div>
+  </header>
+
+  <div class="goal">
+    <span>🎯 Goal: reach <b>$1,000,000</b></span>
+    <span>📅 Day <b id="day">1</b></span>
+  </div>
+
+  <div class="card">
+    <div class="charthead">
+      <div class="nm" id="cName">Nova Corp<span id="cTk">NVA</span></div>
+      <div style="text-align:right">
+        <div class="px" id="cPx">$0.00</div>
+        <div class="ch" id="cCh">0.00%</div>
+      </div>
+    </div>
+    <div class="chartwrap"><canvas id="chart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="watch" id="watch"></div>
+  </div>
+
+  <div class="card">
+    <div class="trade">
+      <button class="btn buy" onclick="buy(1)">BUY 1</button>
+      <button class="btn sell" onclick="sell(1)">SELL 1</button>
+      <button class="btn buy mini" onclick="buyMax()">BUY MAX</button>
+      <button class="btn sell mini" onclick="sellAll()">SELL ALL</button>
+    </div>
+    <div class="ctrl">
+      <button class="btn mini" id="pauseBtn" onclick="togglePause()">⏸ PAUSE</button>
+      <button class="btn mini" onclick="resetGame()">↺ RESTART</button>
+    </div>
+  </div>
+
+  <div class="news"><span class="tag">LIVE</span><span class="tx" id="newsTx">Markets open. Buy low, sell high, don't panic.</span></div>
+
+  <div class="howto">
+    Tap a stock to select it · <b>BUY</b> when it's low, <b>SELL</b> when it's high · watch the news for clues 📰
+  </div>
+</div>
+
+<div class="overlay" id="ov">
+  <div class="ovcard">
+    <h2 id="ovTitle">🚀 TO THE MOON</h2>
+    <p id="ovBody"></p>
+    <button class="btn buy" style="width:100%" onclick="resetGame()">PLAY AGAIN</button>
+  </div>
+</div>
+
+<script>
+// ───────── MOONSHOT — trading game ─────────
+const START_CASH = 1000, GOAL = 1000000, MAXPTS = 140;
+
+function mkStock(name, ticker, price, color, vol){
+  return { name, ticker, color, price, open: price, vol,
+           shares:0, drift:(Math.random()-0.5)*0.01, event:0, eventLeft:0,
+           history:[price] };
+}
+
+let state;
+function freshState(){
+  return {
+    cash: START_CASH, day: 1, sel: 0, paused:false, won:false,
+    stocks: [
+      mkStock('Nova Corp',  'NVA', 42, '#5ad1ff', 0.045),
+      mkStock('Orbit AI',   'ORB', 18, '#b07cff', 0.065),
+      mkStock('Pulse Energy','PLS', 76, '#ffd166', 0.035),
+    ],
+    news: 'Markets open. Buy low, sell high, don’t panic.'
+  };
+}
+
+// ── formatting ──
+const money = n => '$' + Math.round(n).toLocaleString('en-US');
+const money2 = n => '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+function netWorth(){
+  let v = state.cash;
+  for(const s of state.stocks) v += s.shares * s.price;
+  return v;
+}
+
+// ── events ──
+const GOOD = [
+  ['{t} smashes earnings — investors thrilled', 0.030],
+  ['{t} lands a huge new deal 🚀', 0.045],
+  ['Analysts upgrade {t} to BUY', 0.022],
+  ['{t} unveils a game-changing product', 0.055],
+  ['Big investor buys into {t}', 0.026],
+];
+const BAD = [
+  ['{t} misses targets — shares slide', 0.028],
+  ['Scandal at {t} — trust shaken', 0.045],
+  ['Analysts downgrade {t} to SELL', 0.022],
+  ['{t} recalls its new product', 0.050],
+  ['Rumours of layoffs at {t}', 0.030],
+];
+function fireEvent(){
+  const s = state.stocks[Math.floor(Math.random()*state.stocks.length)];
+  const good = Math.random() < 0.52;
+  const [msg, mag] = (good?GOOD:BAD)[Math.floor(Math.random()*(good?GOOD:BAD).length)];
+  const dir = good ? 1 : -1;
+  s.event = dir * mag * (0.7 + Math.random()*0.8);
+  s.eventLeft = 3 + Math.floor(Math.random()*4);
+  state.news = msg.replace('{t}', s.name);
+  document.getElementById('newsTx').textContent = state.news;
+}
+
+// ── tick ──
+function tick(){
+  if(state.paused || state.won) return;
+  state.day++;
+  for(const s of state.stocks){
+    s.drift += (Math.random()-0.5)*0.006;
+    s.drift = Math.max(-0.018, Math.min(0.018, s.drift));
+    let change = s.drift + (Math.random()-0.5)*s.vol;
+    if(s.eventLeft > 0){ change += s.event; s.eventLeft--; if(s.eventLeft===0) s.event=0; }
+    s.price = Math.max(0.4, s.price * (1 + change));
+    s.history.push(s.price);
+    if(s.history.length > MAXPTS) s.history.shift();
+  }
+  if(Math.random() < 0.14) fireEvent();
+  render();
+  if(netWorth() >= GOAL){ win(); }
+}
+
+function win(){
+  state.won = true;
+  document.getElementById('ovBody').innerHTML =
+    `You turned <b>${money(START_CASH)}</b> into <b>${money(netWorth())}</b> in <b>${state.day} days</b>. Legend. 🚀`;
+  document.getElementById('ov').classList.add('on');
+}
+
+// ── trading ──
+function buy(n){
+  const s = state.stocks[state.sel];
+  const qty = Math.min(n, Math.floor(state.cash / s.price));
+  if(qty <= 0) return;
+  state.cash -= qty * s.price;
+  s.shares += qty;
+  render();
+}
+function buyMax(){ buy(1e9); }
+function sell(n){
+  const s = state.stocks[state.sel];
+  const qty = Math.min(n, s.shares);
+  if(qty <= 0) return;
+  s.shares -= qty;
+  state.cash += qty * s.price;
+  render();
+}
+function sellAll(){ sell(1e9); }
+function togglePause(){
+  state.paused = !state.paused;
+  document.getElementById('pauseBtn').textContent = state.paused ? '▶ PLAY' : '⏸ PAUSE';
+}
+function resetGame(){
+  state = freshState();
+  const ov = document.getElementById('ov'); ov.classList.remove('on');
+  document.getElementById('pauseBtn').textContent = '⏸ PAUSE';
+  document.getElementById('newsTx').textContent = state.news;
+  render();
+}
+
+// ── render ──
+function pct(s){
+  const h = s.history;
+  const prev = h.length>1 ? h[h.length-2] : s.open;
+  return (s.price - prev)/prev*100;
+}
+function render(){
+  document.getElementById('cash').textContent = money(state.cash);
+  document.getElementById('net').textContent  = money(netWorth());
+  document.getElementById('day').textContent  = state.day;
+
+  const s = state.stocks[state.sel];
+  document.getElementById('cName').innerHTML = s.name + '<span id="cTk">'+s.ticker+'</span>';
+  document.getElementById('cPx').textContent = money2(s.price);
+  const ch = pct(s);
+  const chEl = document.getElementById('cCh');
+  chEl.textContent = (ch>=0?'+':'') + ch.toFixed(2) + '%';
+  chEl.className = 'ch ' + (ch>=0?'up':'down');
+
+  // watchlist
+  const w = document.getElementById('watch');
+  w.innerHTML = state.stocks.map((st,i)=>{
+    const c = pct(st);
+    const held = st.shares ? ` · you hold ${st.shares} (${money(st.shares*st.price)})` : '';
+    return `<div class="row ${i===state.sel?'sel':''}" onclick="select(${i})">
+      <div class="l">
+        <span class="dot" style="background:${st.color}"></span>
+        <div><div class="tk">${st.ticker}</div><div class="cn">${st.name}</div><div class="hold">${st.shares?'Holding '+st.shares:'No shares'}${held?'':''}</div></div>
+      </div>
+      <div class="r">
+        <div class="p">${money2(st.price)}</div>
+        <div class="c ${c>=0?'up':'down'}">${(c>=0?'+':'')+c.toFixed(2)}%</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  drawChart();
+}
+function select(i){ state.sel = i; render(); }
+
+// ── chart ──
+const chart = document.getElementById('chart');
+const cx = chart.getContext('2d');
+function drawChart(){
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  const w = chart.clientWidth, h = chart.clientHeight;
+  if(!w||!h) return;
+  if(chart.width !== Math.round(w*dpr) || chart.height !== Math.round(h*dpr)){
+    chart.width = Math.round(w*dpr); chart.height = Math.round(h*dpr);
+  }
+  cx.setTransform(dpr,0,0,dpr,0,0);
+  cx.clearRect(0,0,w,h);
+
+  const s = state.stocks[state.sel];
+  const hist = s.history;
+  const pad = {l:6,r:6,t:12,b:16};
+  let min = Math.min(...hist), max = Math.max(...hist);
+  if(max - min < 1e-6){ max += 1; min -= 1; }
+  const rng = max - min;
+  const X = i => pad.l + (w-pad.l-pad.r) * (i/Math.max(1,hist.length-1));
+  const Y = v => pad.t + (h-pad.t-pad.b) * (1-(v-min)/rng);
+
+  // grid
+  cx.strokeStyle = '#1b2334'; cx.lineWidth = 1;
+  for(let g=0; g<=4; g++){
+    const yy = pad.t + (h-pad.t-pad.b)*g/4;
+    cx.beginPath(); cx.moveTo(pad.l, yy); cx.lineTo(w-pad.r, yy); cx.stroke();
+  }
+
+  const up = hist[hist.length-1] >= hist[0];
+  const col = up ? '#22e08a' : '#ff5d6c';
+
+  // area fill
+  const grad = cx.createLinearGradient(0, pad.t, 0, h-pad.b);
+  grad.addColorStop(0, up ? 'rgba(34,224,138,.30)' : 'rgba(255,93,108,.30)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  cx.beginPath();
+  cx.moveTo(X(0), Y(hist[0]));
+  for(let i=1;i<hist.length;i++) cx.lineTo(X(i), Y(hist[i]));
+  cx.lineTo(X(hist.length-1), h-pad.b);
+  cx.lineTo(X(0), h-pad.b);
+  cx.closePath();
+  cx.fillStyle = grad; cx.fill();
+
+  // line
+  cx.beginPath();
+  cx.moveTo(X(0), Y(hist[0]));
+  for(let i=1;i<hist.length;i++) cx.lineTo(X(i), Y(hist[i]));
+  cx.strokeStyle = col; cx.lineWidth = 2.2; cx.lineJoin='round'; cx.lineCap='round';
+  cx.shadowColor = col; cx.shadowBlur = 10; cx.stroke(); cx.shadowBlur = 0;
+
+  // last dot
+  const lx = X(hist.length-1), ly = Y(hist[hist.length-1]);
+  cx.beginPath(); cx.arc(lx, ly, 4, 0, Math.PI*2);
+  cx.fillStyle = col; cx.fill();
+  cx.beginPath(); cx.arc(lx, ly, 8, 0, Math.PI*2);
+  cx.strokeStyle = col; cx.lineWidth = 1; cx.globalAlpha = .35; cx.stroke(); cx.globalAlpha = 1;
+}
+
+// ── boot ──
+state = freshState();
+window.addEventListener('resize', ()=>render());
+document.getElementById('newsTx').textContent = state.news;
+render();
+setInterval(()=>{ tick(); }, 1000);
+
+// keyboard
+addEventListener('keydown', e=>{
+  if(e.key==='b'||e.key==='B') buy(1);
+  if(e.key==='s'||e.key==='S') sell(1);
+  if(e.key===' '){ e.preventDefault(); togglePause(); }
+  if(e.key==='1') select(0);
+  if(e.key==='2') select(1);
+  if(e.key==='3') select(2);
+});
+</script>
+</body>
+</html>
