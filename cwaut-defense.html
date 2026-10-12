@@ -84,11 +84,12 @@
   .cp-bar{flex:1;min-width:130px;height:20px;border-radius:12px;background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.18);overflow:hidden}
   .cp-fill{height:100%;width:0%;border-radius:10px;background:linear-gradient(90deg,#7be0ff,#b06bff,#ff9f43);transition:width .5s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 14px rgba(150,120,255,.7)}
   .cp-xp{font-weight:800;font-size:clamp(11px,1.8vw,14px);color:#cfe0ff;white-space:nowrap}
-  .cp-prem{margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .cp-gem{font-size:clamp(11px,1.8vw,13px);color:#9be7ff;font-weight:800;white-space:nowrap}
   .cp-prembtn{font-family:inherit;font-weight:900;font-size:clamp(13px,2.2vw,17px);cursor:pointer;border:none;color:#2a0f4a;
     background:linear-gradient(180deg,#e6c6ff,#b06bff);border-radius:14px;padding:11px 22px;
     box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 5px 0 #6d34b5,0 9px 18px rgba(0,0,0,.4)}
   .cp-prembtn.owned{background:linear-gradient(180deg,#7be0ff,#2f9fe0);color:#062033;box-shadow:0 5px 0 #14506e,0 9px 18px rgba(0,0,0,.4);cursor:default}
+  .cp-prembtn.locked{background:linear-gradient(180deg,#9aa0ae,#5c616e);color:#e8ecf5;box-shadow:0 5px 0 #3a3e48,0 9px 18px rgba(0,0,0,.4);cursor:not-allowed}
   .cp-prembtn:active{transform:translateY(4px)}
   .cp-track{margin-top:14px;flex:1;overflow-x:auto;overflow-y:hidden;display:flex;gap:12px;padding:6px 2px 14px;scroll-snap-type:x proximity}
   .cp-card{scroll-snap-align:start;flex:0 0 auto;width:clamp(124px,17vw,160px);background:rgba(12,18,34,.92);
@@ -305,8 +306,9 @@
         <div class="cp-xp" id="cp-xp">0 / 100 XP</div>
       </div>
       <div class="cp-prem">
-        <button class="cp-prembtn" id="cp-prembtn">🎫 UNLOCK PAWSOME PASS</button>
-        <span style="font-size:12px;color:#c9b6ff;font-weight:700">Premium track: skins + gems 🎁</span>
+        <button class="cp-prembtn" id="cp-prembtn">🎫 PAWSOME PASS</button>
+        <span class="cp-gem" id="cp-gemwallet">💎 0</span>
+        <span style="font-size:12px;color:#c9b6ff;font-weight:700">Buy the Pawsome Pass for 💎150 — earns profit + exclusive skins</span>
       </div>
       <div class="cp-track" id="cp-track"></div>
       <div class="cp-tip">Earn XP by popping mice 🐭 and clearing waves 🌊 — then claim your rewards!</div>
@@ -403,6 +405,7 @@ function newGame(){
 
 // ---------------- CATAPASS ----------------
 const PASS_MAX=10, PASS_STEP=100;   // 100 XP per tier, 10 tiers
+const PREMIUM_COST=150;             // 💎 to buy the Pawsome Pass
 // each tier: free reward + premium reward
 // kinds: fish | gems | skin
 const PASS_TIERS=[
@@ -444,7 +447,10 @@ function renderPass(){
   if(!el('cp-track')) return;
   const t=passTier();
   el('cp-prembtn').classList.toggle('owned',PASS.premium);
-  el('cp-prembtn').textContent=PASS.premium?'🎫 PAWSOME PASS ACTIVE ✓':'🎫 UNLOCK PAWSOME PASS';
+  const walletGems=(PASS.wallet?PASS.wallet.gems:0);
+  const gw=el('cp-gemwallet'); if(gw) gw.textContent='\ud83d\udc8e '+walletGems;
+  el('cp-prembtn').classList.toggle('locked',!PASS.premium && walletGems<PREMIUM_COST);
+  el('cp-prembtn').textContent = PASS.premium ? '🎫 PAWSOME PASS ACTIVE ✓' : '🎫 PAWSOME PASS — 💎'+PREMIUM_COST;
   const track=el('cp-track'); track.innerHTML='';
   for(let i=0;i<PASS_MAX;i++){
     const tier=PASS_TIERS[i]; const unlocked=(i<t); const current=(i===t);
@@ -651,17 +657,19 @@ function startWave(){
 }
 function endWave(){
   S.waveActive=false;
-  const bonus=25+S.wave*10; S.fish+=bonus; gainXp(25); syncHud();
+  const bonus=25+S.wave*10; S.fish+=bonus; const gemDrop=2+S.wave; PASS.wallet.gems+=gemDrop; passSave(); gainXp(25); syncHud();
   if(S.wave>=S.maxWaves){ win(); return; }
   ui.wavebtn.disabled=false;
   ui.wavebtn.textContent='START WAVE '+(S.wave+1);
   ui.wavebtn.classList.add('ready');
-  flashBanner('Wave cleared!  +🐟'+bonus,1400);
+  flashBanner('Wave cleared!  +🐟'+bonus+'  +💎'+gemDrop,1600);
 }
 function win(){
   S.over=true;
+  PASS.wallet.gems+=50; passSave();
   ui.overlay.classList.remove('hidden');
   ui.overlay.innerHTML=`<h2>🏆 YOU WIN!</h2><p>Cwaut Defense — World 1: Backyard cleared.</p>
+    <p style="margin-top:6px;color:#9be7ff;font-weight:800">+50 💎 earned — save up for the Pawsome Pass!</p>
     <p style="margin-top:6px">Next up… 🐕 the dogs are coming.</p>
     <button class="btn" id="o-again" style="margin-top:16px">🔁 PLAY AGAIN</button>
     <button class="btn ghost" id="o-menu">🏠 MENU</button>`;
@@ -1098,7 +1106,13 @@ if(el('m-cats')) el('m-cats').onclick=()=>menuToast('Cats collection coming soon
 if(el('m-settings')) el('m-settings').onclick=()=>menuToast('Settings coming soon! ⚙️');
 if(el('m-pass')) el('m-pass').onclick=()=>openPass();
 if(el('cp-close')) el('cp-close').onclick=()=>closePass();
-if(el('cp-prembtn')) el('cp-prembtn').onclick=()=>{ if(PASS.premium) return; PASS.premium=true; passSave(); renderPass(); menuToast('🎫 PAWSOME PASS unlocked! Claim your premium loot!'); };
+if(el('cp-prembtn')) el('cp-prembtn').onclick=()=>{
+  if(PASS.premium){ menuToast('Pawsome Pass is already active ✓'); return; }
+  const g=PASS.wallet.gems||0;
+  if(g<PREMIUM_COST){ menuToast('Not enough gems — need 💎'+PREMIUM_COST+' (you have 💎'+g+')'); return; }
+  PASS.wallet.gems-=PREMIUM_COST; PASS.premium=true; passSave(); syncMenuCur(); renderPass();
+  menuToast('🎫 PAWSOME PASS bought! Claim your premium loot! 👑');
+};
 
 // boot
 window.__dbg=()=>S;
