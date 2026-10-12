@@ -12,30 +12,50 @@
   .hidden{display:none!important}
 
   /* ---------- MENU ---------- */
-  #menu{overflow:hidden;background:#070d18}
-  #menu .bg{position:absolute;inset:0;z-index:0;background:
-    radial-gradient(circle at 50% -8%,#2f63ad 0%,#153055 38%,#0b1730 68%,#070d18 100%)}
-  #menu .bg::after{content:'';position:absolute;inset:0;
-    background:radial-gradient(circle at 50% 122%,rgba(255,170,50,.20),transparent 58%)}
-  .floats{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
-  .floats span{position:absolute;bottom:-48px;animation:rise linear infinite}
-  @keyframes rise{from{transform:translateY(0) rotate(0deg)}to{transform:translateY(-118vh) rotate(320deg)}}
-  .menu-inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-  .mascot{font-size:clamp(48px,12vw,96px);line-height:1;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5));animation:bob 2.3s ease-in-out infinite}
-  @keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-12px) rotate(3deg)}}
-  .logo{font-size:clamp(46px,12vw,110px);font-weight:900;letter-spacing:3px;text-align:center;line-height:.88;margin-top:2px;
-    background:linear-gradient(180deg,#fff6c0 0%,#ffd23f 46%,#ff941a 100%);
+  #menu{overflow:hidden;background:#060b14}
+  #menu .scene{position:absolute;inset:0;z-index:0}
+  #menu .scene svg{width:100%;height:100%;display:block}
+  #menu .vig{position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(130% 95% at 50% 42%,transparent 42%,rgba(4,8,16,.62) 100%)}
+  #m-fx{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+  #m-fx span{position:absolute;width:6px;height:6px;border-radius:50%;background:#ffe680;
+    box-shadow:0 0 10px 3px rgba(255,220,120,.75);animation:fw linear infinite;opacity:0}
+  @keyframes fw{0%{transform:translateY(24px);opacity:0}20%{opacity:.9}80%{opacity:.9}100%{transform:translateY(-96px);opacity:0}}
+  .menu-top{position:absolute;top:0;left:0;right:0;z-index:4;display:flex;justify-content:flex-end;
+    padding:14px 18px;gap:10px;flex-wrap:wrap}
+  .cur{display:flex;gap:8px}
+  .cur .c{display:flex;align-items:center;gap:6px;font-weight:800;font-size:clamp(12px,2vw,16px);
+    background:rgba(6,12,24,.7);border:2px solid rgba(255,255,255,.16);border-radius:22px;padding:7px 15px;backdrop-filter:blur(5px)}
+  .cur .gold{color:#ffd23f}.cur .gem{color:#7be0ff}
+  .menu-side{position:absolute;z-index:4;left:0;top:50%;transform:translateY(-50%);
+    padding:0 clamp(16px,4vw,58px);display:flex;flex-direction:column;gap:11px;
+    width:min(430px,88vw);max-height:96vh;overflow:auto}
+  .logo{font-weight:900;letter-spacing:2px;line-height:.86;text-align:left;margin-bottom:8px;font-size:clamp(38px,6.8vw,72px);
+    background:linear-gradient(180deg,#fff6c0 0%,#ffd23f 48%,#ff941a 100%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
-    filter:drop-shadow(0 0 30px rgba(255,170,50,.5)) drop-shadow(0 5px 0 rgba(0,0,0,.22))}
-  .logo .l2{display:block;font-size:.66em;letter-spacing:10px;margin-top:.06em}
-  .sub{font-size:clamp(11px,2.2vw,16px);color:#9fd0ff;letter-spacing:6px;margin-top:10px;font-weight:700}
-  .menu-btns{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:24px}
-  .btn.big{font-size:clamp(19px,3.4vw,27px);padding:18px 58px}
-  .worldtag{margin-top:24px;font-size:clamp(10px,1.9vw,13px);letter-spacing:2px;color:#7ea3d0;
-    border:1.5px solid rgba(120,160,220,.28);border-radius:20px;padding:7px 18px;background:rgba(10,20,40,.5)}
-  .parade{position:absolute;bottom:0;left:0;right:0;height:64px;z-index:2;overflow:hidden;pointer-events:none}
-  .parade span{position:absolute;bottom:8px;animation:walk linear infinite;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
-  @keyframes walk{from{transform:translateX(-14vw)}to{transform:translateX(112vw)}}
+    filter:drop-shadow(0 0 26px rgba(255,170,50,.5)) drop-shadow(0 4px 0 rgba(0,0,0,.22))}
+  .logo .l2{display:block;font-size:.62em;letter-spacing:9px;margin-top:.04em}
+  .sub{font-size:clamp(10px,1.9vw,14px);color:#dbe9ff;letter-spacing:5px;font-weight:700;margin:-2px 0 8px;
+    text-shadow:0 2px 6px rgba(0,0,0,.7)}
+  .mbtn{font-family:inherit;font-weight:800;font-size:clamp(14px,2.3vw,19px);letter-spacing:.6px;cursor:pointer;
+    border:none;border-radius:14px;padding:14px 20px;display:flex;align-items:center;gap:12px;text-align:left;color:#3a2405;
+    background:linear-gradient(180deg,#e9c877,#c99a45);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 5px 0 #7d5a22,0 9px 18px rgba(0,0,0,.45);
+    transition:transform .08s,box-shadow .08s}
+  .mbtn .ic{font-size:1.3em}
+  .mbtn .lo{margin-left:auto;font-size:.8em;opacity:.65}
+  .mbtn:active{transform:translateY(4px);box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 1px 0 #7d5a22,0 3px 8px rgba(0,0,0,.45)}
+  .mbtn.play{font-size:clamp(18px,3vw,25px);padding:16px 24px;
+    background:linear-gradient(180deg,#ffe37a,#ffab1f);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 6px 0 #b5660b,0 12px 24px rgba(0,0,0,.5)}
+  .mbtn.play:active{box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 2px 0 #b5660b,0 5px 12px rgba(0,0,0,.5)}
+  .mbtn.lock{filter:saturate(.45) brightness(.92)}
+  .ver{position:absolute;z-index:4;left:18px;bottom:14px;font-size:11px;color:#9fbcda;letter-spacing:1px;
+    text-shadow:0 1px 4px rgba(0,0,0,.8)}
+  #m-toast{position:absolute;z-index:6;left:50%;top:70px;transform:translateX(-50%);
+    background:rgba(255,210,63,.95);color:#20130a;font-weight:800;padding:8px 18px;border-radius:20px;font-size:14px;
+    opacity:0;transition:opacity .2s;pointer-events:none}
+  #m-toast.show{opacity:1}
   .btn{font-family:inherit;font-weight:800;font-size:clamp(15px,2.6vw,22px);letter-spacing:1px;cursor:pointer;border:none;
     border-radius:16px;padding:16px 42px;margin:8px;color:#20130a;background:linear-gradient(180deg,#ffd23f,#ff9f1c);
     box-shadow:0 6px 0 #b5660b,0 10px 22px rgba(0,0,0,.4);transition:transform .08s,box-shadow .08s}
@@ -99,19 +119,114 @@
 
   <!-- ================= MENU ================= -->
   <div id="menu" class="screen">
-    <div class="bg"></div>
-    <div class="floats" id="m-floats"></div>
-    <div class="menu-inner">
-      <div class="mascot">🐱</div>
+    <div class="scene">
+      <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#0b1c3a"/><stop offset="45%" stop-color="#1d3f6b"/>
+            <stop offset="72%" stop-color="#3c6f93"/><stop offset="100%" stop-color="#7fa86f"/>
+          </linearGradient>
+          <linearGradient id="hillb" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#2f5a52"/><stop offset="100%" stop-color="#1b3a34"/>
+          </linearGradient>
+          <linearGradient id="hillf" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#2b6b4a"/><stop offset="100%" stop-color="#123023"/>
+          </linearGradient>
+          <linearGradient id="stone" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#8f93a0"/><stop offset="55%" stop-color="#cbcfda"/><stop offset="100%" stop-color="#767b88"/>
+          </linearGradient>
+          <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0" stop-color="#bfe9ff" stop-opacity=".95"/><stop offset="70%" stop-color="#5fc7ff" stop-opacity=".32"/><stop offset="100%" stop-color="#5fc7ff" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="moong" cx="50%" cy="50%" r="50%">
+            <stop offset="0" stop-color="#fff7d6" stop-opacity=".9"/><stop offset="100%" stop-color="#ffe9a0" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <rect width="1600" height="900" fill="url(#sky)"/>
+
+        <g fill="#eaf3ff" opacity=".8">
+          <circle cx="120" cy="90" r="2"/><circle cx="240" cy="160" r="1.6"/><circle cx="520" cy="70" r="2.2"/>
+          <circle cx="700" cy="140" r="1.4"/><circle cx="860" cy="60" r="2"/><circle cx="1040" cy="120" r="1.7"/>
+          <circle cx="1180" cy="70" r="2.3"/><circle cx="1320" cy="150" r="1.5"/><circle cx="1460" cy="90" r="2"/>
+          <circle cx="600" cy="220" r="1.4"/><circle cx="980" cy="230" r="1.6"/><circle cx="1400" cy="240" r="1.5"/>
+          <circle cx="80" cy="250" r="1.6"/><circle cx="300" cy="60" r="1.5"/><circle cx="1120" cy="200" r="1.3"/>
+        </g>
+
+        <circle cx="330" cy="165" r="130" fill="url(#moong)"/>
+        <circle cx="330" cy="165" r="48" fill="#fdf3cf"/>
+
+        <path d="M0 640 C 260 570 520 670 820 610 C 1120 550 1380 630 1600 580 L1600 900 L0 900 Z" fill="url(#hillb)"/>
+        <path d="M0 730 C 300 690 560 770 860 730 C 1180 686 1400 770 1600 730 L1600 900 L0 900 Z" fill="url(#hillf)"/>
+
+        <g fill="#0d2a1c">
+          <path d="M60 760 l40 -120 l40 120 z"/><path d="M150 780 l34 -100 l34 100 z"/>
+          <path d="M300 770 l42 -128 l42 128 z"/><path d="M1380 760 l40 -120 l40 120 z"/>
+          <path d="M1480 780 l34 -100 l34 100 z"/><path d="M1560 770 l42 -128 l42 128 z"/>
+          <path d="M520 790 l30 -90 l30 90 z"/><path d="M1180 785 l32 -96 l32 96 z"/>
+        </g>
+
+        <path d="M0 870 C 320 830 520 890 760 850 C 980 812 1020 772 1050 730" stroke="#c49a6c" stroke-width="74" fill="none" stroke-linecap="round" opacity=".95"/>
+        <path d="M0 870 C 320 830 520 890 760 850 C 980 812 1020 772 1050 730" stroke="#dcb684" stroke-width="46" fill="none" stroke-linecap="round" opacity=".9"/>
+
+        <g>
+          <rect x="895" y="432" width="240" height="340" rx="10" fill="url(#stone)"/>
+          <g fill="#b9bdc9">
+            <rect x="895" y="412" width="40" height="34"/><rect x="955" y="412" width="40" height="34"/>
+            <rect x="1015" y="412" width="40" height="34"/><rect x="1075" y="412" width="40" height="34"/>
+            <rect x="1135" y="412" width="0.1" height="0"/>
+          </g>
+          <g stroke="#6d7280" stroke-width="2" opacity=".5">
+            <line x1="895" y1="520" x2="1135" y2="520"/><line x1="895" y1="610" x2="1135" y2="610"/><line x1="895" y1="700" x2="1135" y2="700"/>
+            <line x1="975" y1="466" x2="975" y2="772"/><line x1="1055" y1="466" x2="1055" y2="772"/>
+          </g>
+          <rect x="985" y="520" width="60" height="82" rx="30" fill="#1b2a4a"/>
+          <rect x="990" y="526" width="50" height="70" rx="25" fill="#ffd66e" opacity=".6"/>
+          <path d="M995 772 v-70 a35 35 0 0 1 70 0 v70 z" fill="#5a3d22"/>
+          <line x1="1015" y1="412" x2="1015" y2="300" stroke="#6b6f7a" stroke-width="8"/>
+          <path d="M1015 305 L1100 330 L1015 356 Z" fill="#ff9f1c"/>
+          <g fill="#2f7d4f" opacity=".95">
+            <circle cx="905" cy="470" r="20"/><circle cx="918" cy="520" r="16"/><circle cx="905" cy="575" r="18"/>
+            <circle cx="1120" cy="490" r="18"/><circle cx="1128" cy="545" r="15"/><circle cx="1118" cy="600" r="17"/>
+          </g>
+        </g>
+
+        <ellipse cx="1130" cy="742" rx="95" ry="42" fill="url(#glow)"/>
+        <path d="M1130 690 L1162 745 L1130 802 L1098 745 Z" fill="#7be0ff" stroke="#bfe9ff" stroke-width="3"/>
+        <path d="M1130 690 L1130 802" stroke="#eafaff" stroke-width="2" opacity=".7"/>
+
+        <g text-anchor="middle">
+          <text x="820" y="812" font-size="54">🐱</text>
+          <text x="886" y="842" font-size="46">🎯</text>
+          <text x="762" y="852" font-size="48">💥</text>
+          <text x="122" y="842" font-size="34">🐭</text>
+          <text x="206" y="862" font-size="30">🐭</text>
+          <text x="1500" y="150" font-size="42" opacity=".92">🐕</text>
+          <text x="1430" y="245" font-size="36" opacity=".85">🤖</text>
+        </g>
+      </svg>
+    </div>
+    <div class="vig"></div>
+    <div id="m-fx"></div>
+
+    <div class="menu-top">
+      <div class="cur">
+        <div class="c gold">🐟 <span id="m-gold">0</span></div>
+        <div class="c gem">💎 <span id="m-gem">0</span></div>
+      </div>
+    </div>
+
+    <div class="menu-side">
       <div class="logo">CWAUT<span class="l2">DEFENSE</span></div>
       <div class="sub">CATS · TOWERS · CHAOS</div>
-      <div class="menu-btns">
-        <button class="btn big" id="m-play">▶ PLAY</button>
-        <button class="btn ghost" id="m-how">❔ HOW TO PLAY</button>
-      </div>
-      <div class="worldtag">WORLD 1 · BACKYARD 🐭</div>
+      <button class="mbtn play" id="m-play"><span class="ic">▶</span> PLAY</button>
+      <button class="mbtn" id="m-how"><span class="ic">❔</span> HOW TO PLAY</button>
+      <button class="mbtn lock" id="m-campaign"><span class="ic">🗺️</span> CAMPAIGN <span class="lo">🔒</span></button>
+      <button class="mbtn lock" id="m-cats"><span class="ic">🐱</span> CATS <span class="lo">🔒</span></button>
+      <button class="mbtn" id="m-settings"><span class="ic">⚙️</span> SETTINGS</button>
     </div>
-    <div class="parade" id="m-parade"></div>
+    <div class="ver">v1 · World 1: Backyard 🐭</div>
+    <div id="m-toast"></div>
   </div>
 
   <!-- ================= HOW TO ================= -->
@@ -621,36 +736,39 @@ function loop(now){
 
 // ---------------- MENU DECOR ----------------
 function setupMenu(){
-  const floats=el('m-floats'); floats.innerHTML='';
-  const glyphs=['🐾','🐟','🐾','🐱','🐾','🐭','🐾','🐾'];
-  for(let i=0;i<22;i++){
+  const fx=el('m-fx'); if(fx){ fx.innerHTML=''; for(let i=0;i<26;i++){
     const s=document.createElement('span');
-    s.textContent=glyphs[i%glyphs.length];
-    s.style.left=(Math.random()*100)+'%';
-    s.style.fontSize=(15+Math.random()*22)+'px';
-    s.style.animationDuration=(9+Math.random()*11)+'s';
-    s.style.animationDelay=(-Math.random()*18)+'s';
-    s.style.opacity=(0.13+Math.random()*0.28).toFixed(2);
-    floats.appendChild(s);
-  }
-  const parade=el('m-parade'); parade.innerHTML='';
-  for(let i=0;i<8;i++){
-    const s=document.createElement('span');
-    s.textContent=i===4?'🐭':'🐱';
-    s.style.animationDuration=(8+Math.random()*8)+'s';
-    s.style.animationDelay=(-Math.random()*16)+'s';
-    s.style.fontSize=(22+Math.random()*12)+'px';
-    s.style.bottom=(4+Math.random()*16)+'px';
-    parade.appendChild(s);
-  }
+    s.style.left=(3+Math.random()*94)+'%';
+    s.style.bottom=(4+Math.random()*40)+'%';
+    s.style.animationDuration=(3.4+Math.random()*4)+'s';
+    s.style.animationDelay=(-Math.random()*7)+'s';
+    s.style.background=Math.random()<0.35?'#bfe9ff':'#ffe680';
+    s.style.boxShadow='0 0 10px 3px '+(Math.random()<0.35?'rgba(150,220,255,.7)':'rgba(255,220,120,.75)');
+    fx.appendChild(s);
+  } }
+  syncMenuCur();
+}
+function syncMenuCur(){
+  const g=el('m-gold'), m=el('m-gem');
+  if(g) g.textContent=(S.fish||0);
+  if(m) m.textContent=(S.gems||0);
+}
+let toastT;
+function menuToast(txt){
+  const t=el('m-toast'); if(!t) return;
+  t.textContent=txt; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1400);
 }
 
 // ---------------- SCREENS ----------------
-function toMenu(){ newGame(); el('game').classList.add('hidden'); el('menu').classList.remove('hidden'); }
+function toMenu(){ newGame(); el('game').classList.add('hidden'); el('menu').classList.remove('hidden'); syncMenuCur(); }
 el('m-play').onclick=()=>{ el('menu').classList.add('hidden'); el('game').classList.remove('hidden');
   restart(); };
 el('m-how').onclick=()=>{ el('menu').classList.add('hidden'); el('howto').classList.remove('hidden'); };
 el('h-back').onclick=()=>{ el('howto').classList.add('hidden'); el('menu').classList.remove('hidden'); };
+if(el('m-campaign')) el('m-campaign').onclick=()=>menuToast('Campaign is coming soon! 🗺️');
+if(el('m-cats')) el('m-cats').onclick=()=>menuToast('Cats collection coming soon! 🐱');
+if(el('m-settings')) el('m-settings').onclick=()=>menuToast('Settings coming soon! ⚙️');
 
 // boot
 window.__dbg=()=>S;
