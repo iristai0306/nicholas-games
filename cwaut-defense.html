@@ -193,7 +193,7 @@ newGame();
 function waveDef(n){
   const count = 5 + n*3;                 // 8,11,14,17,20
   const hp = 12 + (n-1)*9;               // grows
-  const speed = 52 + (n-1)*7;
+  const speed = 96 + (n-1)*10;
   const bounty = 6 + n;
   return {count,hp,speed,bounty};
 }
@@ -526,6 +526,7 @@ el('m-how').onclick=()=>{ el('menu').classList.add('hidden'); el('howto').classL
 el('h-back').onclick=()=>{ el('howto').classList.add('hidden'); el('menu').classList.remove('hidden'); };
 
 // boot
+window.__dbg=()=>S;
 buildBar(); syncHud();
 requestAnimationFrame(loop);
 })();
