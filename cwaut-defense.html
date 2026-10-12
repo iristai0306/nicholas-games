@@ -483,6 +483,7 @@
 // CWAUT DEFENSE — Phase 1 prototype (World 1: Backyard, enemies = mice)
 // ------------------------------------------------------------------
 const CV = document.getElementById('cv');
+const el=id=>document.getElementById(id);
 let ctx = CV.getContext('2d');
 const W = 960, H = 600, TS = 60;          // logical size, tile size
 const COLS = W/TS, ROWS = H/TS;           // 16 x 10
@@ -808,7 +809,6 @@ function waveDef(n){
 }
 
 // ---------------- HELPERS ----------------
-const el=id=>document.getElementById(id);
 const ui={lives:el('ui-lives'),wave:el('ui-wave'),fish:el('ui-fish'),tuna:el('ui-tuna'),hint:el('hint'),banner:el('banner'),
   overlay:el('overlay'),panel:el('panel'),bar:el('buildbar'),wavebtn:el('wavebtn')};
 
