@@ -180,6 +180,13 @@
   .sitem.feat .s-price{color:#ffd23f}
   .mbtn.shop{background:linear-gradient(180deg,#bff0c0,#43c86a);color:#0d2410;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 5px 0 #1f7a3c,0 9px 18px rgba(0,0,0,.45)}
   .mbtn.shop:active{box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 1px 0 #1f7a3c,0 3px 8px rgba(0,0,0,.45)}
+  .sh-sec{grid-column:1/-1;font-weight:900;font-size:clamp(12px,2vw,15px);letter-spacing:1.5px;color:#9fe6c0;margin-top:8px;padding-left:2px;border-left:4px solid rgba(120,220,150,.6);padding:2px 0 2px 10px}
+  .sh-sec.gold{color:#ffd23f;border-left-color:rgba(255,210,63,.6)}
+  .sitem.bundle{border-color:rgba(255,210,63,.4);background:linear-gradient(180deg,rgba(50,44,18,.7),rgba(22,20,12,.95))}
+  .sitem.bundle .s-price{color:#ffd23f}
+  .sbtn.rm{background:linear-gradient(180deg,#ffe680,#ffab2e);color:#3a2200;box-shadow:0 4px 0 #a5660c}
+  .sbtn.rm:active{transform:translateY(3px);box-shadow:0 1px 0 #a5660c}
+  .sitem.bundle .s-ribbon{position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:900;letter-spacing:1px;color:#3a2200;background:linear-gradient(180deg,#ffe680,#ffab2e);border-radius:8px;padding:2px 9px;white-space:nowrap}
 
   .mbtn.pass{background:linear-gradient(180deg,#e6c6ff,#b06bff);color:#2a0f4a;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 5px 0 #6d34b5,0 9px 18px rgba(0,0,0,.45)}
   .mbtn.pass:active{box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 1px 0 #6d34b5,0 3px 8px rgba(0,0,0,.45)}
@@ -199,7 +206,7 @@
     padding:8px 10px;pointer-events:none;font-weight:800;font-size:clamp(12px,2vw,17px)}
   .chip{background:rgba(8,14,26,.78);border:2px solid rgba(255,255,255,.14);border-radius:12px;padding:6px 12px;
     display:flex;align-items:center;gap:6px;backdrop-filter:blur(4px)}
-  #topbar .lives{color:#ff6b81}#topbar .fish{color:#5ad1ff}#topbar .wave{color:#ffd23f}
+  #topbar .lives{color:#ff6b81}#topbar .fish{color:#5ad1ff}#topbar .wave{color:#ffd23f}#topbar .tuna{color:#bfe0ff}
 
   #buildbar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:8px}
   .card{position:relative;width:clamp(74px,13vw,110px);background:rgba(10,18,32,.9);border:2px solid rgba(255,255,255,.15);
@@ -431,6 +438,18 @@
       </div>
       <div class="sh-grid" id="sh-grid"></div>
     </div>
+    <div class="cp-buy hidden" id="pay">
+      <div class="cp-buycard">
+        <div class="cp-buytitle" id="pay-title">Tuna Bundle</div>
+        <div class="cp-buyprice" id="pay-price">$0.99</div>
+        <div id="pay-desc" style="font-size:clamp(13px,2.4vw,17px);font-weight:900;color:#bfe0ff;margin-top:4px">+50 🥫 tuna</div>
+        <div class="cp-buynote">🔒 Demo store — no real payment is taken</div>
+        <div class="cp-buybtns">
+          <button class="cp-cancel" id="pay-cancel">Cancel</button>
+          <button class="cp-confirm" id="pay-confirm">Buy</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ================= GAME ================= -->
@@ -442,6 +461,7 @@
         <div class="chip lives">❤️ <span id="ui-lives">10</span></div>
         <div class="chip wave">🌊 WAVE <span id="ui-wave">0</span>/5</div>
         <div class="chip fish">🐟 <span id="ui-fish">100</span></div>
+        <div class="chip tuna">🥫 <span id="ui-tuna">0</span></div>
       </div>
 
       <button class="btn" id="wavebtn">START WAVE</button>
@@ -604,6 +624,12 @@ function dmgMult(){ return BOOSTS.dmg?1.25:1; }
 function startBonus(){ return BOOSTS.start?180:0; }
 // once: true = permanent unlock (b flag). trade:true = spends FISH instead of tuna.
 const SHOP_ITEMS=[
+  // ---- real-money tuna bundles ----
+  {id:'tun_s',  ic:'🥫', nm:'Handful of Tuna',  desc:'A tasty starter pack to get going', money:'$0.99', tuna:60,  rm:true},
+  {id:'tun_m',  ic:'📦', nm:'Bucket of Tuna',   desc:'Most popular! Keeps the cats fed',  money:'$2.99', tuna:220, rm:true, best:true},
+  {id:'tun_l',  ic:'🚚', nm:'Truckload of Tuna',desc:'+180 bonus tuna thrown in 🎁',      money:'$4.99', tuna:700, rm:true},
+  {id:'tun_xl', ic:'🐟', nm:'Mega Tuna Catch',  desc:'The biggest pile! +800 bonus 🏆',   money:'$9.99', tuna:2300,rm:true},
+  // ---- boosts & items (tuna / fish) ----
   {id:'dmg',      ic:'⚔️', nm:'Sharp Claws',  desc:'+25% damage for all cats',             price:30, once:true, b:'dmg'},
   {id:'xp',       ic:'⭐', nm:'XP Booster',    desc:'+50% Catapass XP (permanent)',         price:40, once:true, b:'xp'},
   {id:'fish',     ic:'💰', nm:'Fish Finder',   desc:'+50% fish from every mouse (permanent)',price:35, once:true, b:'fish'},
@@ -614,9 +640,10 @@ const SHOP_ITEMS=[
   {id:'gemskin',  ic:'🎨', nm:'Golden Skin',   desc:'Unlock the Golden Cat in your collection', price:80, once:true, effect:'skin'},
 ];
 function shopOwned(it){ if(!it.once) return false; return !!BOOSTS[it.b]; }
-function shopCanAfford(it){ if(it.trade) return (PASS.wallet.fish||0)>=it.price; return (PASS.wallet.tuna||0)>=it.price; }
+function shopCanAfford(it){ if(it.rm) return true; if(it.trade) return (PASS.wallet.fish||0)>=it.price; return (PASS.wallet.tuna||0)>=it.price; }
 function buyShopItem(it){
   if(shopOwned(it)) return;
+  if(it.rm){ payOpen(it); return; }
   if(it.trade){
     if((PASS.wallet.fish||0)<it.price){ menuToast('Need 🐟'+it.price+' fish'); return; }
     PASS.wallet.fish-=it.price; PASS.wallet.tuna+=10; passSave();
@@ -631,30 +658,51 @@ function buyShopItem(it){
   syncMenuCur(); renderShop();
   menuToast('Bought '+it.nm+'! '+it.ic);
 }
+function shopCard(it){
+  const owned=shopOwned(it);
+  const afford=shopCanAfford(it);
+  const d=document.createElement('div'); d.className='sitem'+(it.rm?' bundle':'')+(it.once&&it.price>=35&&!it.rm?' feat':'');
+  if(it.rm&&it.best) d.innerHTML+='<div class="s-ribbon">BEST VALUE</div>';
+  d.innerHTML+='<div class="s-ic">'+it.ic+'</div><div class="s-nm">'+it.nm+'</div><div class="s-desc">'+it.desc+'</div>'+
+    '<div class="s-price">'+(it.rm?it.money:(owned?'✓ OWNED':(it.trade?'🐟':'🥫')+it.price))+'</div>';
+  const b=document.createElement('button');
+  if(owned){ b.className='sbtn owned'; b.textContent='OWNED ✓'; b.disabled=true; }
+  else if(it.rm){ b.className='sbtn rm'; b.textContent='BUY  '+it.money; b.onclick=()=>payOpen(it); }
+  else if(!afford){ b.className='sbtn cant'; b.textContent='NEED '+(it.trade?'🐟':'🥫')+it.price; b.disabled=true; }
+  else { b.className='sbtn'; b.textContent='BUY  '+(it.trade?'🐟':'🥫')+it.price; b.onclick=()=>buyShopItem(it); }
+  d.appendChild(b);
+  return d;
+}
+function shopSection(txt,gold){ const s=document.createElement('div'); s.className='sh-sec'+(gold?' gold':''); s.textContent=txt; return s; }
 function renderShop(){
   const grid=el('sh-grid'); if(!grid) return;
   if(el('sh-tuna')) el('sh-tuna').textContent=(PASS.wallet.tuna||0);
   if(el('sh-fish')) el('sh-fish').textContent=(PASS.wallet.fish||0);
   const ml=el('m-shoplvl'); if(ml) ml.textContent='🥫'+(PASS.wallet?PASS.wallet.tuna:0);
   grid.innerHTML='';
-  SHOP_ITEMS.forEach(it=>{
-    const owned=shopOwned(it);
-    const afford=shopCanAfford(it);
-    const cur=it.trade?'🐟':'🥫';
-    const d=document.createElement('div'); d.className='sitem'+(it.once&&it.price>=35?' feat':'');
-    d.innerHTML='<div class="s-ic">'+it.ic+'</div><div class="s-nm">'+it.nm+'</div><div class="s-desc">'+it.desc+'</div>'+
-      '<div class="s-price">'+(owned?'✓ OWNED':(cur+it.price))+'</div>';
-    const b=document.createElement('button');
-    if(owned){ b.className='sbtn owned'; b.textContent='OWNED ✓'; b.disabled=true; }
-    else if(!afford){ b.className='sbtn cant'; b.textContent='NEED '+cur+it.price; b.disabled=true; }
-    else { b.className='sbtn'; b.textContent='BUY  '+cur+it.price; b.onclick=()=>buyShopItem(it); }
-    d.appendChild(b); grid.appendChild(d);
-  });
+  grid.appendChild(shopSection('🥫 TUNA BUNDLES — real money',true));
+  SHOP_ITEMS.filter(it=>it.rm).forEach(it=> grid.appendChild(shopCard(it)));
+  grid.appendChild(shopSection('⚡ BOOSTS & ITEMS — spend tuna 🥫',false));
+  SHOP_ITEMS.filter(it=>!it.rm).forEach(it=> grid.appendChild(shopCard(it)));
 }
+let payItem=null;
+function payOpen(it){ payItem=it;
+  const t=el('pay-title'), p=el('pay-price'), ds=el('pay-desc'), c=el('pay-confirm');
+  if(t) t.textContent=it.ic+' '+it.nm.toUpperCase();
+  if(p) p.textContent=it.money;
+  if(ds) ds.textContent='+'+it.tuna+' 🥫 tuna cans'+(it.best?'  (best value!)':'');
+  if(c) c.textContent='Buy  '+it.money;
+  const m=el('pay'); if(m) m.classList.remove('hidden');
+}
+function payClose(){ const m=el('pay'); if(m) m.classList.add('hidden'); payItem=null; }
 function openShop(){ ['howto','catapass','cats'].forEach(id=>{ const e=el(id); if(e) e.classList.add('hidden'); });
   el('menu').classList.add('hidden'); el('game').classList.add('hidden');
   el('shop').classList.remove('hidden'); renderShop(); }
-function closeShop(){ el('shop').classList.add('hidden'); el('menu').classList.remove('hidden'); refreshPassBadge(); syncMenuCur(); }
+function closeShop(){ payClose(); el('shop').classList.add('hidden'); el('menu').classList.remove('hidden'); refreshPassBadge(); syncMenuCur(); }
+if(el('pay-cancel')) el('pay-cancel').onclick=()=>payClose();
+if(el('pay-confirm')) el('pay-confirm').onclick=()=>{ if(!payItem) return;
+  PASS.wallet.tuna+=payItem.tuna; passSave(); syncMenuCur(); renderShop();
+  menuToast('Bought '+payItem.nm+' — +'+payItem.tuna+' 🥫 (demo)'); payClose(); };
 boostsLoad();
 
 // ---------------- STATE ----------------
@@ -765,7 +813,7 @@ function waveDef(n){
 
 // ---------------- HELPERS ----------------
 const el=id=>document.getElementById(id);
-const ui={lives:el('ui-lives'),wave:el('ui-wave'),fish:el('ui-fish'),hint:el('hint'),banner:el('banner'),
+const ui={lives:el('ui-lives'),wave:el('ui-wave'),fish:el('ui-fish'),tuna:el('ui-tuna'),hint:el('hint'),banner:el('banner'),
   overlay:el('overlay'),panel:el('panel'),bar:el('buildbar'),wavebtn:el('wavebtn')};
 
 function flashBanner(txt,ms){
@@ -774,6 +822,7 @@ function flashBanner(txt,ms){
 }
 function syncHud(){
   ui.lives.textContent=S.lives; ui.wave.textContent=S.wave; ui.fish.textContent=Math.floor(S.fish);
+  if(ui.tuna) ui.tuna.textContent=(PASS.wallet?PASS.wallet.tuna:0);
 }
 
 // ---------------- BUILD BAR ----------------
@@ -1035,13 +1084,15 @@ function update(dt){
   const dead=S.enemies.filter(e=>e.hp<=0);
   for(const e of dead){
     S.fish+=Math.round(e.bounty*fishMult());
+    const tuna=Math.round((e.big?2:1)*fishMult()); PASS.wallet.tuna+=tuna;
     gainXp(e.big?12:5);
     const p=posAt(e.d);
     burst(p.x,p.y,e.big?'#ffd23f':'#cfd3e6', e.big?24:16, e.big?300:240, e.big?5:3.8);
-    S.dmgText.push({x:p.x,y:p.y-22,vy:-46,life:0.95,max:0.95,text:'+'+e.bounty,color:'#5ad1ff',bold:true});
+    S.dmgText.push({x:p.x,y:p.y-22,vy:-46,life:0.95,max:0.95,text:'+'+e.bounty+'🐟',color:'#5ad1ff',bold:true});
+    S.dmgText.push({x:p.x+ (Math.random()-0.5)*10,y:p.y-38,vy:-52,life:1.0,max:1.0,text:'+'+tuna+'🥫',color:'#bfe0ff',bold:false});
     if(e.big){ S.shake=Math.min(12,S.shake+5); S.pops.push({x:p.x,y:p.y,r:8,max:40,color:'#ffd23f',life:0.4}); }
   }
-  if(dead.length) syncHud();
+  if(dead.length){ syncHud(); passSave(); }
   S.enemies=S.enemies.filter(e=>e.hp>0);
 
   // pops
