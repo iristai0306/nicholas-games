@@ -595,10 +595,13 @@ function distSeg(px,py,s){
 let maxUnlocked=0;
 function worldsLoad(){ try{ const v=parseInt(localStorage.getItem('cwaut_world')||'0',10); if(!isNaN(v)) maxUnlocked=Math.max(0,Math.min(WORLDS.length-1,v)); }catch(e){} }
 function worldsSave(){ try{ localStorage.setItem('cwaut_world',String(maxUnlocked)); }catch(e){} }
-function setWorld(i){ WORLD=Math.max(0,Math.min(WORLDS.length-1,i)); buildPath(WORLDS[WORLD].wp); }
+function setWorld(i){ WORLD=Math.max(0,Math.min(WORLDS.length-1,i)); buildPath(WORLDS[WORLD].wp); curWorldSave&&curWorldSave(); }
 function worldObj(){ return WORLDS[WORLD]; }
 worldsLoad();
-setWorld(0);
+let curWorld=0;
+try{ const v=parseInt(localStorage.getItem('cwaut_curworld')||'0',10); if(!isNaN(v)) curWorld=Math.max(0,Math.min(WORLDS.length-1,v)); }catch(e){}
+function curWorldSave(){ try{ localStorage.setItem('cwaut_curworld',String(WORLD)); }catch(e){} }
+setWorld(Math.min(curWorld,maxUnlocked));
 
 // ---------------- CAT TYPES ----------------
 const CATS={
