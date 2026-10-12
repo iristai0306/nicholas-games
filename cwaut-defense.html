@@ -572,9 +572,9 @@ function update(dt){
       S.shots.push({x:mx,y:my,tx:target.x,ty:target.y,dmg,splash:def.splash,
         color:def.color,life:0.09,speed:def.speed,target:null, tgtD:best});
       // muzzle spark
-      for(let i=0;i<3;i++){ const a=t.angle+(Math.random()-0.5)*0.8;
-        S.parts.push({x:mx,y:my,vx:Math.cos(a)*(60+Math.random()*90),vy:Math.sin(a)*(60+Math.random()*90)-20,
-          life:0.22,max:0.22,color:def.color,r:2.5+Math.random()*2}); }
+      for(let i=0;i<4;i++){ const a=t.angle+(Math.random()-0.5)*0.9;
+        S.parts.push({x:mx,y:my,vx:Math.cos(a)*(80+Math.random()*120),vy:Math.sin(a)*(80+Math.random()*120)-24,
+          life:0.26,max:0.26,color:def.color,r:3.5+Math.random()*3}); }
     }
   }
 
@@ -591,13 +591,13 @@ function update(dt){
           for(const e of S.enemies){ const p=posAt(e.d);
             if(Math.hypot(p.x-s.tx,p.y-s.ty)<s.splash){ e.hp-=s.dmg; e.hitT=0.12; } }
           S.pops.push({x:s.tx,y:s.ty,r:6,max:s.splash,color:s.color,life:0.32});
-          burst(s.tx,s.ty,s.color,10,180,3);
+          burst(s.tx,s.ty,s.color,14,220,4.5);
         } else {
           hit.hp-=s.dmg; hit.hitT=0.12;
-          S.pops.push({x:s.tx,y:s.ty,r:2,max:14,color:s.color,life:0.2});
-          burst(s.tx,s.ty,s.color,4,120,2.2);
+          S.pops.push({x:s.tx,y:s.ty,r:2,max:16,color:s.color,life:0.2});
+          burst(s.tx,s.ty,s.color,7,150,3.4);
         }
-        S.dmgText.push({x:s.tx,y:s.ty-14,vy:-34,life:0.7,max:0.7,text:''+Math.round(s.dmg),color:s.color,bold:false});
+        S.dmgText.push({x:s.tx+ (Math.random()-0.5)*8,y:s.ty-16,vy:-42,life:0.75,max:0.75,text:''+Math.round(s.dmg),color:s.color,bold:false});
       }
     }
   }
@@ -608,8 +608,8 @@ function update(dt){
   for(const e of dead){
     S.fish+=e.bounty;
     const p=posAt(e.d);
-    burst(p.x,p.y,e.big?'#ffd23f':'#cfd3e6', e.big?18:11, e.big?260:200, e.big?4:3);
-    S.dmgText.push({x:p.x,y:p.y-20,vy:-40,life:0.9,max:0.9,text:'+'+e.bounty,color:'#5ad1ff',bold:true});
+    burst(p.x,p.y,e.big?'#ffd23f':'#cfd3e6', e.big?24:16, e.big?300:240, e.big?5:3.8);
+    S.dmgText.push({x:p.x,y:p.y-22,vy:-46,life:0.95,max:0.95,text:'+'+e.bounty,color:'#5ad1ff',bold:true});
     if(e.big){ S.shake=Math.min(12,S.shake+5); S.pops.push({x:p.x,y:p.y,r:8,max:40,color:'#ffd23f',life:0.4}); }
   }
   if(dead.length) syncHud();
@@ -887,8 +887,8 @@ function render(){
   for(const d of S.dmgText){
     const a=Math.max(0,d.life/d.max);
     ctx.globalAlpha=a;
-    ctx.font=(d.bold?'bold 16px':'bold 14px')+' Verdana';
-    ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.strokeText(d.text,d.x,d.y);
+    ctx.font=(d.bold?'bold 19px':'bold 16px')+' Verdana';
+    ctx.lineWidth=3.5; ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.strokeText(d.text,d.x,d.y);
     ctx.fillStyle=d.color; ctx.fillText(d.text,d.x,d.y);
   }
   ctx.globalAlpha=1;
