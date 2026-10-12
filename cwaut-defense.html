@@ -699,10 +699,6 @@ function openShop(){ ['howto','catapass','cats'].forEach(id=>{ const e=el(id); i
   el('menu').classList.add('hidden'); el('game').classList.add('hidden');
   el('shop').classList.remove('hidden'); renderShop(); }
 function closeShop(){ payClose(); el('shop').classList.add('hidden'); el('menu').classList.remove('hidden'); refreshPassBadge(); syncMenuCur(); }
-if(el('pay-cancel')) el('pay-cancel').onclick=()=>payClose();
-if(el('pay-confirm')) el('pay-confirm').onclick=()=>{ if(!payItem) return;
-  PASS.wallet.tuna+=payItem.tuna; passSave(); syncMenuCur(); renderShop();
-  menuToast('Bought '+payItem.nm+' — +'+payItem.tuna+' 🥫 (demo)'); payClose(); };
 boostsLoad();
 
 // ---------------- STATE ----------------
@@ -1425,6 +1421,10 @@ if(el('m-campaign')) el('m-campaign').onclick=()=>menuToast('Campaign is coming 
 if(el('m-cats')) el('m-cats').onclick=()=>openCats();
 if(el('m-shop')) el('m-shop').onclick=()=>openShop();
 if(el('sh-close')) el('sh-close').onclick=()=>closeShop();
+if(el('pay-cancel')) el('pay-cancel').onclick=()=>payClose();
+if(el('pay-confirm')) el('pay-confirm').onclick=()=>{ if(!payItem) return;
+  PASS.wallet.tuna+=payItem.tuna; passSave(); syncMenuCur(); renderShop();
+  menuToast('Bought '+payItem.nm+' — +'+payItem.tuna+' 🥫 (demo)'); payClose(); };
 if(el('cc-close')) el('cc-close').onclick=()=>closeCats();
 if(el('m-settings')) el('m-settings').onclick=()=>menuToast('Settings coming soon! ⚙️');
 if(el('m-pass')) el('m-pass').onclick=()=>openPass();
