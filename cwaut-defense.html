@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Cwaut Defense 🐱🏰</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:#0d1220;font-family:"Trebuchet MS",Verdana,sans-serif;color:#fff}
+  #app{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center}
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .hidden{display:none!important}
+
+  /* ---------- MENU ---------- */
+  #menu{background:radial-gradient(circle at 50% 25%,#1c3a5e,#0b1120 70%)}
+  #menu .logo{font-size:clamp(38px,9vw,86px);font-weight:900;letter-spacing:2px;text-align:center;line-height:.95;
+    background:linear-gradient(180deg,#ffe680,#ff9f43);-webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 6px 0 rgba(0,0,0,.35);filter:drop-shadow(0 0 18px rgba(255,180,60,.5))}
+  #menu .sub{font-size:clamp(13px,2.4vw,20px);color:#9fd0ff;margin-top:10px;letter-spacing:4px}
+  .cats{font-size:clamp(34px,8vw,64px);margin:18px 0 6px;letter-spacing:8px;animation:float 2.4s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .btn{font-family:inherit;font-weight:800;font-size:clamp(15px,2.6vw,22px);letter-spacing:1px;cursor:pointer;border:none;
+    border-radius:16px;padding:16px 42px;margin:8px;color:#20130a;background:linear-gradient(180deg,#ffd23f,#ff9f1c);
+    box-shadow:0 6px 0 #b5660b,0 10px 22px rgba(0,0,0,.4);transition:transform .08s,box-shadow .08s}
+  .btn:active{transform:translateY(5px);box-shadow:0 1px 0 #b5660b,0 4px 10px rgba(0,0,0,.4)}
+  .btn.ghost{background:linear-gradient(180deg,#2b4a72,#1c3252);color:#cfe6ff;box-shadow:0 6px 0 #0e1c33,0 10px 22px rgba(0,0,0,.4)}
+  .btn.ghost:active{box-shadow:0 1px 0 #0e1c33}
+
+  /* ---------- HOW TO ---------- */
+  #howto{background:radial-gradient(circle at 50% 20%,#20395c,#0b1120 75%);padding:20px;text-align:center;overflow:auto}
+  #howto h2{font-size:clamp(24px,5vw,40px);color:#ffd23f;margin-bottom:14px}
+  #howto p{max-width:640px;font-size:clamp(14px,2.3vw,18px);line-height:1.6;color:#dbe9ff;margin:6px auto}
+  .k{display:inline-block;background:#2b4a72;border-radius:8px;padding:2px 10px;font-weight:800;color:#ffd23f}
+
+  /* ---------- GAME ---------- */
+  #game{background:#0b1120}
+  #stage{position:relative;width:min(100vw,calc(100vh*1.6));aspect-ratio:960/600;max-height:100vh}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:6px}
+
+  #topbar{position:absolute;top:0;left:0;right:0;display:flex;gap:8px;align-items:center;justify-content:space-between;
+    padding:8px 10px;pointer-events:none;font-weight:800;font-size:clamp(12px,2vw,17px)}
+  .chip{background:rgba(8,14,26,.78);border:2px solid rgba(255,255,255,.14);border-radius:12px;padding:6px 12px;
+    display:flex;align-items:center;gap:6px;backdrop-filter:blur(4px)}
+  #topbar .lives{color:#ff6b81}#topbar .fish{color:#5ad1ff}#topbar .wave{color:#ffd23f}
+
+  #buildbar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:8px}
+  .card{position:relative;width:clamp(74px,13vw,110px);background:rgba(10,18,32,.9);border:2px solid rgba(255,255,255,.15);
+    border-radius:14px;padding:6px 4px 4px;text-align:center;cursor:pointer;transition:transform .08s,border-color .1s}
+  .card:active{transform:scale(.95)}
+  .card.sel{border-color:#ffd23f;box-shadow:0 0 0 3px rgba(255,210,63,.35)}
+  .card.poor{opacity:.45}
+  .card .face{font-size:clamp(20px,4vw,30px);line-height:1}
+  .card .nm{font-size:clamp(9px,1.6vw,12px);font-weight:800;margin-top:2px}
+  .card .cost{font-size:clamp(10px,1.7vw,13px);color:#5ad1ff;font-weight:800}
+
+  #startbtn{position:absolute;right:10px;bottom:calc(100%*0 + 8px);top:auto;transform:none}
+  #wavebtn{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);padding:12px 30px;font-size:clamp(13px,2.2vw,18px)}
+  #wavebtn.ready{animation:pulse 1.1s infinite}
+  @keyframes pulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.06)}}
+
+  #panel{position:absolute;top:52px;left:50%;transform:translateX(-50%);background:rgba(10,18,32,.95);
+    border:2px solid rgba(255,210,63,.5);border-radius:16px;padding:12px 14px;min-width:230px;text-align:center;
+    box-shadow:0 12px 30px rgba(0,0,0,.55)}
+  #panel .pt{font-weight:900;font-size:16px;color:#ffd23f;margin-bottom:2px}
+  #panel .st{font-size:12px;color:#9fd0ff;margin-bottom:8px}
+  #panel .row{display:flex;gap:8px;justify-content:center}
+
+  #banner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+    font-size:clamp(28px,7vw,64px);font-weight:900;color:#ffd23f;text-shadow:0 4px 0 #7a3d00,0 0 30px rgba(255,180,60,.7);
+    opacity:0;transition:opacity .2s;text-align:center;padding:20px}
+  #banner.show{opacity:1}
+  #overlay{position:absolute;inset:0;background:rgba(6,10,20,.82);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:6px;text-align:center;padding:20px}
+  #overlay h2{font-size:clamp(26px,6vw,52px);color:#ffd23f;text-shadow:0 4px 0 #7a3d00}
+  #overlay p{color:#9fd0ff;font-size:clamp(13px,2.4vw,19px)}
+  .buildhint{position:absolute;top:52px;left:50%;transform:translateX(-50%);background:rgba(255,210,63,.92);color:#20130a;
+    font-weight:800;padding:6px 16px;border-radius:20px;font-size:clamp(12px,2vw,16px);pointer-events:none}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ================= MENU ================= -->
+  <div id="menu" class="screen">
+    <div class="cats">🐱🐭🐕</div>
+    <div class="logo">CWAUT<br>DEFENSE</div>
+    <div class="sub">CATS. TOWERS. CHAOS.</div>
+    <button class="btn" id="m-play">▶ PLAY</button>
+    <button class="btn ghost" id="m-how">❔ HOW TO PLAY</button>
+    <div style="margin-top:16px;font-size:12px;color:#5577a0">World 1 · Backyard 🐭</div>
+  </div>
+
+  <!-- ================= HOW TO ================= -->
+  <div id="howto" class="screen hidden">
+    <h2>How to Play 🐾</h2>
+    <p><span class="k">1</span> Pick a cat from the bottom bar, then tap a <b>grass tile</b> to place it. Cats shoot by themselves.</p>
+    <p><span class="k">2</span> Mice march along the path toward your cat homes. If they get through, you lose a life ❤️.</p>
+    <p><span class="k">3</span> Every mouse you pop gives <b>fish 🐟</b>. Spend fish on more cats and upgrades.</p>
+    <p><span class="k">4</span> Tap a placed cat to <b>upgrade</b> it or sell it.</p>
+    <p><span class="k">5</span> Hit <b>START WAVE</b>, survive all 5 waves, and win 🏆</p>
+    <p style="margin-top:14px">Each world throws a <b>different enemy</b> at you. This is just the start…</p>
+    <button class="btn" id="h-back" style="margin-top:20px">◀ BACK</button>
+  </div>
+
+  <!-- ================= GAME ================= -->
+  <div id="game" class="screen hidden">
+    <div id="stage">
+      <canvas id="cv"></canvas>
+
+      <div id="topbar">
+        <div class="chip lives">❤️ <span id="ui-lives">10</span></div>
+        <div class="chip wave">🌊 WAVE <span id="ui-wave">0</span>/5</div>
+        <div class="chip fish">🐟 <span id="ui-fish">100</span></div>
+      </div>
+
+      <button class="btn" id="wavebtn">START WAVE</button>
+      <div id="hint" class="buildhint hidden">Tap a grass tile to place your cat</div>
+
+      <div id="buildbar"></div>
+      <div id="panel" class="hidden"></div>
+      <div id="banner"></div>
+      <div id="overlay" class="hidden"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+'use strict';
+// ------------------------------------------------------------------
+// CWAUT DEFENSE — Phase 1 prototype (World 1: Backyard, enemies = mice)
+// ------------------------------------------------------------------
+const CV = document.getElementById('cv');
+const ctx = CV.getContext('2d');
+const W = 960, H = 600, TS = 60;          // logical size, tile size
+const COLS = W/TS, ROWS = H/TS;           // 16 x 10
+
+function fit(){
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  CV.width = W*dpr; CV.height = H*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+fit(); addEventListener('resize', fit);
+
+// ---------------- PATH ----------------
+const WP = [[-1,2],[12,2],[12,6],[2,6],[2,9],[17,9]]; // grid waypoints
+const pts = WP.map(([c,r])=>({x:c*TS+TS/2, y:r*TS+TS/2}));
+const segs=[]; let total=0;
+for(let i=0;i<pts.length-1;i++){
+  const a=pts[i], b=pts[i+1];
+  const len=Math.hypot(b.x-a.x,b.y-a.y);
+  segs.push({a,b,len,start:total}); total+=len;
+}
+function posAt(d){
+  d=Math.max(0,Math.min(total,d));
+  for(const s of segs){ if(d<=s.start+s.len){ const t=(d-s.start)/s.len;
+    return {x:s.a.x+(s.b.x-s.a.x)*t, y:s.a.y+(s.b.y-s.a.y)*t, ang:Math.atan2(s.b.y-s.a.y,s.b.x-s.a.x)}; } }
+  const l=segs[segs.length-1]; return {x:l.b.x,y:l.b.y,ang:0};
+}
+// path tiles (unbuildable)
+function distSeg(px,py,s){
+  const dx=s.b.x-s.a.x, dy=s.b.y-s.a.y, L=dx*dx+dy*dy;
+  let t=((px-s.a.x)*dx+(py-s.a.y)*dy)/L; t=Math.max(0,Math.min(1,t));
+  return Math.hypot(px-(s.a.x+dx*t), py-(s.a.y+dy*t));
+}
+const blocked=new Set();
+for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
+  const x=c*TS+TS/2,y=r*TS+TS/2;
+  if(segs.some(s=>distSeg(x,y,s)<TS*0.62)) blocked.add(c+','+r);
+}
+// cat home (base) near path start, exit portal
+const HOME={x:pts[0].x+40,y:pts[0].y};
+
+// ---------------- CAT TYPES ----------------
+const CATS={
+  pouncer:{name:'Pouncer', face:'🐱', cost:50, dmg:9,  range:112, rate:0.55, speed:520, color:'#ffb347', splash:0,  desc:'Fast single-target'},
+  sharp:  {name:'Sharpshooter',face:'🎯',cost:100,dmg:30, range:230, rate:1.15,speed:900, color:'#7be0ff', splash:0,  desc:'Long-range sniper'},
+  chonk:  {name:'Chonk',   face:'💥', cost:120,dmg:16, range:135, rate:1.05,speed:420, color:'#ff7ba8', splash:62, desc:'Splash damage'},
+};
+const ORDER=['pouncer','sharp','chonk'];
+
+// ---------------- STATE ----------------
+let S;
+function newGame(){
+  S={ state:'idle', lives:10, fish:100, wave:0, maxWaves:5,
+      towers:[], enemies:[], shots:[], pops:[], t:0,
+      spawnQueue:[], spawnTimer:0, waveActive:false, sel:null, buildCat:null, over:false };
+}
+newGame();
+
+// ---------------- WAVES ----------------
+function waveDef(n){
+  const count = 5 + n*3;                 // 8,11,14,17,20
+  const hp = 12 + (n-1)*9;               // grows
+  const speed = 52 + (n-1)*7;
+  const bounty = 6 + n;
+  return {count,hp,speed,bounty};
+}
+
+// ---------------- HELPERS ----------------
+const el=id=>document.getElementById(id);
+const ui={lives:el('ui-lives'),wave:el('ui-wave'),fish:el('ui-fish'),hint:el('hint'),banner:el('banner'),
+  overlay:el('overlay'),panel:el('panel'),bar:el('buildbar'),wavebtn:el('wavebtn')};
+
+function flashBanner(txt,ms){
+  ui.banner.textContent=txt; ui.banner.classList.add('show');
+  clearTimeout(flashBanner._t); flashBanner._t=setTimeout(()=>ui.banner.classList.remove('show'),ms||1100);
+}
+function syncHud(){
+  ui.lives.textContent=S.lives; ui.wave.textContent=S.wave; ui.fish.textContent=Math.floor(S.fish);
+}
+
+// ---------------- BUILD BAR ----------------
+function buildBar(){
+  ui.bar.innerHTML='';
+  ORDER.forEach(key=>{
+    const c=CATS[key];
+    const d=document.createElement('div');
+    d.className='card'; d.dataset.key=key;
+    d.innerHTML=`<div class="face">${c.face}</div><div class="nm">${c.name}</div><div class="cost">🐟${c.cost}</div>`;
+    d.onclick=()=>{
+      if(S.fish<c.cost){ flashBanner('Need more fish!',700); return; }
+      S.buildCat = (S.buildCat===key)?null:key; S.sel=null;
+      ui.panel.classList.add('hidden');
+      syncBuildBar();
+    };
+    ui.bar.appendChild(d);
+  });
+  syncBuildBar();
+}
+function syncBuildBar(){
+  [...ui.bar.children].forEach(d=>{
+    const key=d.dataset.key;
+    d.classList.toggle('sel', S.buildCat===key);
+    d.classList.toggle('poor', S.fish<CATS[key].cost);
+  });
+  ui.hint.classList.toggle('hidden', !S.buildCat);
+}
+
+// ---------------- TOWER PANEL ----------------
+function showPanel(t){
+  S.sel=t;
+  const c=CATS[t.key];
+  const upCost=Math.round(c.cost*0.7*t.lvl);
+  const dmg=Math.round(c.dmg*(1+0.5*(t.lvl-1)));
+  const rng=Math.round(t.range);
+  ui.panel.classList.remove('hidden');
+  ui.panel.innerHTML=`
+    <div class="pt">${c.face} ${c.name} · Lv ${t.lvl}</div>
+    <div class="st">DMG ${dmg} · RNG ${rng}</div>
+    <div class="row">
+      <button class="btn" id="p-up" style="padding:10px 16px;font-size:14px">⬆ Upgrade 🐟${upCost}</button>
+      <button class="btn ghost" id="p-sell" style="padding:10px 16px;font-size:14px">Sell +🐟${Math.round(t.spent*0.6)}</button>
+    </div>`;
+  el('p-up').onclick=()=>{
+    if(S.fish<upCost){ flashBanner('Need more fish!',700); return; }
+    S.fish-=upCost; t.lvl++; t.spent+=upCost; t.dmg=c.dmg*(1+0.5*(t.lvl-1)); t.range=c.range+8*(t.lvl-1);
+    syncHud(); showPanel(t);
+  };
+  el('p-sell').onclick=()=>{
+    S.fish+=Math.round(t.spent*0.6);
+    S.towers=S.towers.filter(x=>x!==t); S.sel=null; ui.panel.classList.add('hidden'); syncHud();
+  };
+}
+
+// ---------------- INPUT ----------------
+CV.addEventListener('pointerdown',e=>{
+  if(S.over) return;
+  const r=CV.getBoundingClientRect();
+  const x=(e.clientX-r.left)/r.width*W, y=(e.clientY-r.top)/r.height*H;
+  // click existing cat?
+  for(const t of S.towers){
+    if(Math.hypot(t.x-x,t.y-y)<26){ showPanel(t); return; }
+  }
+  if(S.buildCat){
+    const c=Math.floor(x/TS), r2=Math.floor(y/TS);
+    if(c<0||r2<0||c>=COLS||r2>=ROWS){ return; }
+    if(blocked.has(c+','+r2)){ flashBanner('Cats can\'t stand on the path!',700); return; }
+    if(S.towers.some(t=>t.c===c&&t.r===r2)){ flashBanner('Spot taken!',700); return; }
+    const def=CATS[S.buildCat];
+    if(S.fish<def.cost){ flashBanner('Need more fish!',700); return; }
+    S.fish-=def.cost;
+    S.towers.push({key:S.buildCat,c,r:r2,x:c*TS+TS/2,y:r2*TS+TS/2,lvl:1,dmg:def.dmg,range:def.range,
+      cd:0,angle:0,spent:def.cost,bob:Math.random()*6});
+    syncHud(); syncBuildBar();
+    if(S.fish<def.cost) S.buildCat=null; syncBuildBar();
+  } else {
+    S.sel=null; ui.panel.classList.add('hidden');
+  }
+});
+
+// ---------------- WAVE CONTROL ----------------
+ui.wavebtn.onclick=()=>{
+  if(S.waveActive||S.over) return;
+  if(S.wave>=S.maxWaves) return;
+  S.wave++; startWave();
+};
+function startWave(){
+  const d=waveDef(S.wave);
+  S.spawnQueue=[];
+  for(let i=0;i<d.count;i++) S.spawnQueue.push({hp:d.hp*(1+ (i%5===4?0.6:0)), speed:d.speed, bounty:d.bounty, big:(i%5===4)});
+  S.spawnTimer=0; S.waveActive=true;
+  ui.wavebtn.classList.remove('ready');
+  ui.wavebtn.textContent='WAVE '+S.wave+' INCOMING…';
+  ui.wavebtn.disabled=true;
+  flashBanner('WAVE '+S.wave+' 🌊',900);
+  syncHud();
+}
+function endWave(){
+  S.waveActive=false;
+  const bonus=25+S.wave*10; S.fish+=bonus; syncHud();
+  if(S.wave>=S.maxWaves){ win(); return; }
+  ui.wavebtn.disabled=false;
+  ui.wavebtn.textContent='START WAVE '+(S.wave+1);
+  ui.wavebtn.classList.add('ready');
+  flashBanner('Wave cleared!  +🐟'+bonus,1400);
+}
+function win(){
+  S.over=true;
+  ui.overlay.classList.remove('hidden');
+  ui.overlay.innerHTML=`<h2>🏆 YOU WIN!</h2><p>Cwaut Defense — World 1: Backyard cleared.</p>
+    <p style="margin-top:6px">Next up… 🐕 the dogs are coming.</p>
+    <button class="btn" id="o-again" style="margin-top:16px">🔁 PLAY AGAIN</button>
+    <button class="btn ghost" id="o-menu">🏠 MENU</button>`;
+  el('o-again').onclick=()=>{ ui.overlay.classList.add('hidden'); restart(); };
+  el('o-menu').onclick=()=>{ ui.overlay.classList.add('hidden'); toMenu(); };
+}
+function lose(){
+  S.over=true;
+  ui.overlay.classList.remove('hidden');
+  ui.overlay.innerHTML=`<h2>😿 THE MICE GOT THROUGH</h2><p>Your cat homes fell. Wave ${S.wave} of 5.</p>
+    <button class="btn" id="o-again" style="margin-top:16px">🔁 TRY AGAIN</button>
+    <button class="btn ghost" id="o-menu">🏠 MENU</button>`;
+  el('o-again').onclick=()=>{ ui.overlay.classList.add('hidden'); restart(); };
+  el('o-menu').onclick=()=>{ ui.overlay.classList.add('hidden'); toMenu(); };
+}
+function restart(){ newGame(); buildBar(); ui.panel.classList.add('hidden'); ui.overlay.classList.add('hidden');
+  ui.wavebtn.disabled=false; ui.wavebtn.textContent='START WAVE'; ui.wavebtn.classList.add('ready'); syncHud(); }
+
+// ---------------- UPDATE ----------------
+function update(dt){
+  if(S.over) return;
+  S.t+=dt;
+
+  // spawn
+  if(S.waveActive && S.spawnQueue.length){
+    S.spawnTimer-=dt;
+    if(S.spawnTimer<=0){
+      const e=S.spawnQueue.shift();
+      S.enemies.push({...e, d:0, maxhp:e.hp, wob:Math.random()*6});
+      S.spawnTimer = Math.max(0.35, 0.85 - S.wave*0.06);
+    }
+  }
+
+  // enemies move
+  for(const e of S.enemies){
+    e.d += e.speed*dt; e.wob+=dt*8;
+    if(e.d>=total){ e.reached=true; }
+  }
+  const reached=S.enemies.filter(e=>e.reached);
+  if(reached.length){ S.lives-=reached.length; syncHud(); }
+  S.enemies=S.enemies.filter(e=>!e.reached);
+  if(S.lives<=0){ lose(); return; }
+
+  // towers shoot
+  for(const t of S.towers){
+    t.cd-=dt; t.bob+=dt;
+    const def=CATS[t.key];
+    // find target: furthest along path within range
+    let target=null,best=-1;
+    for(const e of S.enemies){
+      const p=posAt(e.d);
+      if(Math.hypot(p.x-t.x,p.y-t.y)<=t.range && e.d>best){ best=e.d; target=p; }
+    }
+    if(target) t.angle=Math.atan2(target.y-t.y,target.x-t.x);
+    if(target && t.cd<=0){
+      t.cd=def.rate;
+      const dmg=Math.round(def.dmg*(1+0.5*(t.lvl-1)));
+      S.shots.push({x:t.x,y:t.y-14,tx:target.x,ty:target.y,dmg,splash:def.splash,
+        color:def.color,life:0.09,speed:def.speed,target:null, tgtD:best});
+    }
+  }
+
+  // shots resolve (hitscan, quick visual)
+  for(const s of S.shots){
+    s.life-=dt;
+    if(s.life<=0){
+      // apply damage
+      let hit=null,bd=1e9;
+      for(const e of S.enemies){ const p=posAt(e.d); const dd=Math.hypot(p.x-s.tx,p.y-s.ty);
+        if(dd<bd){bd=dd;hit=e;} }
+      if(hit && bd<40){
+        if(s.splash>0){
+          for(const e of S.enemies){ const p=posAt(e.d);
+            if(Math.hypot(p.x-s.tx,p.y-s.ty)<s.splash) e.hp-=s.dmg; }
+          S.pops.push({x:s.tx,y:s.ty,r:6,max:s.splash,color:s.color,life:0.32});
+        } else {
+          hit.hp-=s.dmg;
+          S.pops.push({x:s.tx,y:s.ty,r:2,max:14,color:s.color,life:0.2});
+        }
+      }
+    }
+  }
+  S.shots=S.shots.filter(s=>s.life>0);
+
+  // deaths
+  const dead=S.enemies.filter(e=>e.hp<=0);
+  for(const e of dead){ S.fish+=e.bounty; }
+  if(dead.length) syncHud();
+  S.enemies=S.enemies.filter(e=>e.hp>0);
+
+  // pops
+  for(const p of S.pops) p.life-=dt;
+  S.pops=S.pops.filter(p=>p.life>0);
+
+  // wave end
+  if(S.waveActive && !S.spawnQueue.length && !S.enemies.length && !S.over){
+    endWave();
+  }
+}
+
+// ---------------- DRAW ----------------
+function drawCat(t,time){
+  const bob=Math.sin(t.bob*3)*1.6;
+  ctx.save(); ctx.translate(t.x,t.y+bob);
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(0,16,20,7,0,0,7); ctx.fill();
+  // range (selected)
+  if(S.sel===t){ ctx.strokeStyle='rgba(255,210,63,.55)'; ctx.lineWidth=2; ctx.setLineDash([6,6]);
+    ctx.beginPath(); ctx.arc(0,0,t.range,0,7); ctx.stroke(); ctx.setLineDash([]); }
+  // body
+  const c=CATS[t.key];
+  ctx.fillStyle=c.color; ctx.beginPath(); ctx.arc(0,0,17,0,7); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=2.5; ctx.stroke();
+  // ears
+  ctx.fillStyle=c.color;
+  ctx.beginPath(); ctx.moveTo(-13,-8); ctx.lineTo(-18,-22); ctx.lineTo(-3,-14); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(13,-8); ctx.lineTo(18,-22); ctx.lineTo(3,-14); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // eyes
+  ctx.fillStyle='#20130a'; ctx.beginPath(); ctx.arc(-6,-2,2.6,0,7); ctx.arc(6,-2,2.6,0,7); ctx.fill();
+  // face emoji for type clarity
+  ctx.font='13px serif'; ctx.textAlign='center'; ctx.fillText(c.face,0,12);
+  // level pips
+  if(t.lvl>1){ ctx.fillStyle='#ffd23f'; ctx.font='bold 11px Verdana'; ctx.fillText('★'+t.lvl,0,-24); }
+  // turret direction hint
+  ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(t.angle)*20,Math.sin(t.angle)*20); ctx.stroke();
+  ctx.restore();
+}
+function drawEnemy(e){
+  const p=posAt(e.d); const sz=e.big?15:12;
+  ctx.save(); ctx.translate(p.x,p.y);
+  ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(0,sz-2,sz*0.9,sz*0.4,0,0,7); ctx.fill();
+  ctx.fillStyle=e.big?'#b7b7c9':'#d9d9e6'; ctx.beginPath(); ctx.arc(0,0,sz,0,7); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=2; ctx.stroke();
+  // ears
+  ctx.fillStyle='#c9a3b8'; ctx.beginPath(); ctx.arc(-sz*0.7,-sz*0.7,sz*0.4,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(sz*0.7,-sz*0.7,sz*0.4,0,7); ctx.fill();
+  // eyes
+  ctx.fillStyle='#141420'; ctx.beginPath(); ctx.arc(-sz*0.35,-sz*0.15,2,0,7); ctx.arc(sz*0.35,-sz*0.15,2,0,7); ctx.fill();
+  // hp bar
+  const pct=Math.max(0,e.hp/e.maxhp);
+  ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(-sz,-sz-9,sz*2,4);
+  ctx.fillStyle=pct>0.5?'#5ad17f':(pct>0.25?'#ffd23f':'#ff6b81'); ctx.fillRect(-sz,-sz-9,sz*2*pct,4);
+  ctx.restore();
+}
+function render(){
+  // grass
+  ctx.fillStyle='#3f7d43'; ctx.fillRect(0,0,W,H);
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++){
+    ctx.fillStyle=((c+r)%2===0)?'#417f46':'#3c7741';
+    ctx.fillRect(c*TS,r*TS,TS,TS);
+  }
+  // path
+  ctx.save();
+  ctx.lineJoin='round'; ctx.lineCap='round';
+  ctx.strokeStyle='#a9825a'; ctx.lineWidth=TS*0.96;
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y); ctx.stroke();
+  ctx.strokeStyle='#c49a6c'; ctx.lineWidth=TS*0.78;
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y); ctx.stroke();
+  // paw prints on path
+  ctx.fillStyle='rgba(120,80,40,.35)';
+  for(let d=30;d<total;d+=70){ const p=posAt(d);
+    ctx.beginPath(); ctx.arc(p.x,p.y,4,0,7); ctx.arc(p.x-6,p.y-8,2.5,0,7); ctx.arc(p.x+6,p.y-8,2.5,0,7); ctx.fill(); }
+  ctx.restore();
+
+  // home / exit
+  ctx.save(); ctx.translate(HOME.x,HOME.y);
+  ctx.font='34px serif'; ctx.textAlign='center'; ctx.fillText('🏠',0,10); ctx.restore();
+  const end=pts[pts.length-1];
+  ctx.save(); ctx.globalAlpha=.85; ctx.font='30px serif'; ctx.textAlign='center';
+  ctx.fillText('🚪',end.x-20,end.y+10); ctx.restore();
+
+  // towers
+  for(const t of S.towers) drawCat(t);
+
+  // enemies
+  for(const e of S.enemies) drawEnemy(e);
+
+  // shots
+  for(const s of S.shots){
+    ctx.strokeStyle=s.color; ctx.lineWidth=3; ctx.globalAlpha=Math.max(0,s.life/0.09);
+    ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(s.tx,s.ty); ctx.stroke(); ctx.globalAlpha=1;
+  }
+  // pops
+  for(const p of S.pops){
+    const k=1-p.life/ (p.max>20?0.32:0.2);
+    ctx.strokeStyle=p.color; ctx.globalAlpha=1-k; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r+(p.max)*k,0,7); ctx.stroke(); ctx.globalAlpha=1;
+  }
+}
+
+// ---------------- LOOP ----------------
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+  update(dt); render(); requestAnimationFrame(loop);
+}
+
+// ---------------- SCREENS ----------------
+function toMenu(){ newGame(); el('game').classList.add('hidden'); el('menu').classList.remove('hidden'); }
+el('m-play').onclick=()=>{ el('menu').classList.add('hidden'); el('game').classList.remove('hidden');
+  restart(); };
+el('m-how').onclick=()=>{ el('menu').classList.add('hidden'); el('howto').classList.remove('hidden'); };
+el('h-back').onclick=()=>{ el('howto').classList.add('hidden'); el('menu').classList.remove('hidden'); };
+
+// boot
+buildBar(); syncHud();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
