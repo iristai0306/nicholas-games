@@ -183,7 +183,7 @@ const ORDER=['pouncer','sharp','chonk'];
 // ---------------- STATE ----------------
 let S;
 function newGame(){
-  S={ state:'idle', lives:10, fish:100, wave:0, maxWaves:5,
+  S={ state:'idle', lives:10, fish:140, wave:0, maxWaves:5,
       towers:[], enemies:[], shots:[], pops:[], t:0,
       spawnQueue:[], spawnTimer:0, waveActive:false, sel:null, buildCat:null, over:false };
 }
@@ -191,9 +191,9 @@ newGame();
 
 // ---------------- WAVES ----------------
 function waveDef(n){
-  const count = 5 + n*3;                 // 8,11,14,17,20
-  const hp = 12 + (n-1)*9;               // grows
-  const speed = 96 + (n-1)*10;
+  const count = 6 + n*2;                 // 8,10,12,14,16
+  const hp = 10 + (n-1)*8;               // grows
+  const speed = 78 + (n-1)*12;
   const bounty = 6 + n;
   return {count,hp,speed,bounty};
 }
