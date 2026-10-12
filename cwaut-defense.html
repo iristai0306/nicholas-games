@@ -85,6 +85,18 @@
   .cp-fill{height:100%;width:0%;border-radius:10px;background:linear-gradient(90deg,#7be0ff,#b06bff,#ff9f43);transition:width .5s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 14px rgba(150,120,255,.7)}
   .cp-xp{font-weight:800;font-size:clamp(11px,1.8vw,14px);color:#cfe0ff;white-space:nowrap}
   .cp-gem{font-size:clamp(11px,1.8vw,13px);color:#9be7ff;font-weight:800;white-space:nowrap}
+  .cp-buy{position:absolute;inset:0;background:rgba(6,8,18,.74);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
+  .cp-buycard{position:relative;width:min(92vw,390px);max-height:92%;overflow-y:auto;background:linear-gradient(180deg,#2a1846,#160f2c);border:2px solid rgba(200,160,255,.4);border-radius:20px;padding:20px 18px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+  .cp-buytitle{font-weight:900;font-size:clamp(17px,3.4vw,22px);letter-spacing:1.5px;background:linear-gradient(180deg,#ffe680,#ff9f43);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cp-buyprice{font-weight:900;font-size:clamp(34px,8vw,46px);color:#fff;margin:4px 0 0;text-shadow:0 0 18px rgba(150,120,255,.6)}
+  .cp-buyperk{list-style:none;padding:0;margin:12px 0 0;text-align:left;font-size:clamp(12px,2.1vw,14px);color:#dbe6ff;line-height:1.7;font-weight:700}
+  .cp-buyperk li{display:flex;gap:8px}
+  .cp-buynote{font-size:11px;color:#ffb3c7;font-weight:800;margin-top:12px;background:rgba(255,90,130,.12);border:1px solid rgba(255,120,160,.3);border-radius:10px;padding:6px}
+  .cp-buybtns{display:flex;gap:10px;margin-top:14px}
+  .cp-confirm{flex:1.4;font-family:inherit;font-weight:900;font-size:clamp(13px,2.4vw,16px);cursor:pointer;border:none;border-radius:12px;padding:13px;color:#062033;background:linear-gradient(180deg,#7be0ff,#2f9fe0);box-shadow:0 4px 0 #14506e}
+  .cp-confirm:active{transform:translateY(3px);box-shadow:0 1px 0 #14506e}
+  .cp-cancel{flex:1;font-family:inherit;font-weight:900;font-size:clamp(13px,2.4vw,16px);cursor:pointer;border:none;border-radius:12px;padding:13px;color:#fff;background:rgba(255,255,255,.14)}
+  .cp-cancel:active{transform:translateY(3px)}
   .cp-prembtn{font-family:inherit;font-weight:900;font-size:clamp(13px,2.2vw,17px);cursor:pointer;border:none;color:#2a0f4a;
     background:linear-gradient(180deg,#e6c6ff,#b06bff);border-radius:14px;padding:11px 22px;
     box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 5px 0 #6d34b5,0 9px 18px rgba(0,0,0,.4)}
@@ -308,10 +320,28 @@
       <div class="cp-prem">
         <button class="cp-prembtn" id="cp-prembtn">🎫 PAWSOME PASS</button>
         <span class="cp-gem" id="cp-gemwallet">💎 0</span>
-        <span style="font-size:12px;color:#c9b6ff;font-weight:700">Buy the Pawsome Pass for 💎150 — earns profit + exclusive skins</span>
+        <span style="font-size:12px;color:#c9b6ff;font-weight:700">One-time purchase — unlocks all 10 premium rewards + exclusive skins 👑</span>
       </div>
       <div class="cp-track" id="cp-track"></div>
       <div class="cp-tip">Earn XP by popping mice 🐭 and clearing waves 🌊 — then claim your rewards!</div>
+    </div>
+    <div class="cp-buy hidden" id="cp-buy">
+      <div class="cp-buycard">
+        <div class="cp-buytitle">🎫 PAWSOME PASS</div>
+        <div class="cp-buyprice">$4.99</div>
+        <div style="font-size:11px;color:#9fb4d8;font-weight:800;letter-spacing:1px">ONE-TIME · SEASON 1</div>
+        <ul class="cp-buyperk">
+          <li><span>👑</span><span>All 10 premium tier rewards</span></li>
+          <li><span>✨</span><span>Exclusive skins — Golden Cat &amp; TOP CAT</span></li>
+          <li><span>💎</span><span>+150 gems instantly</span></li>
+          <li><span>⚡</span><span>+25% XP for the whole season</span></li>
+        </ul>
+        <div class="cp-buynote">🔒 Demo store — no real payment is taken</div>
+        <div class="cp-buybtns">
+          <button class="cp-cancel" id="cp-cancel">Cancel</button>
+          <button class="cp-confirm" id="cp-confirm">Buy $4.99</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -405,7 +435,8 @@ function newGame(){
 
 // ---------------- CATAPASS ----------------
 const PASS_MAX=10, PASS_STEP=100;   // 100 XP per tier, 10 tiers
-const PREMIUM_COST=150;             // 💎 to buy the Pawsome Pass
+const PRICE_USD='$4.99';            // Pawsome Pass = real-money purchase (demo store, no real charge)
+const PREMIUM_GEMS=150;             // instant gems granted on purchase
 // each tier: free reward + premium reward
 // kinds: fish | gems | skin
 const PASS_TIERS=[
@@ -425,7 +456,7 @@ function passLoad(){ try{ const raw=localStorage.getItem('cwaut_pass'); if(raw){
 function passSave(){ try{ localStorage.setItem('cwaut_pass', JSON.stringify(PASS)); }catch(e){} }
 function passTier(){ return Math.min(PASS_MAX, Math.floor(PASS.xp/PASS_STEP)); }
 function passXpInTier(){ return passTier()>=PASS_MAX ? PASS_STEP : (PASS.xp % PASS_STEP); }
-function gainXp(n){ const before=passTier(); PASS.xp+=n; passSave(); const after=passTier();
+function gainXp(n){ const before=passTier(); if(PASS.premium) n=Math.round(n*1.25); PASS.xp+=n; passSave(); const after=passTier();
   if(after>before){ flashBanner('🎫 CATAPASS TIER '+after+'!',1300); } refreshPassBadge(); updatePassLive(); }
 function refreshPassBadge(){ const b=el('m-passlvl'); if(b) b.textContent='T'+passTier(); }
 function doClaim(after,premium){
@@ -449,8 +480,8 @@ function renderPass(){
   el('cp-prembtn').classList.toggle('owned',PASS.premium);
   const walletGems=(PASS.wallet?PASS.wallet.gems:0);
   const gw=el('cp-gemwallet'); if(gw) gw.textContent='\ud83d\udc8e '+walletGems;
-  el('cp-prembtn').classList.toggle('locked',!PASS.premium && walletGems<PREMIUM_COST);
-  el('cp-prembtn').textContent = PASS.premium ? '🎫 PAWSOME PASS ACTIVE ✓' : '🎫 PAWSOME PASS — 💎'+PREMIUM_COST;
+  el('cp-prembtn').classList.remove('locked');
+  el('cp-prembtn').textContent = PASS.premium ? '🎫 PAWSOME PASS ACTIVE ✓' : '🎫 PAWSOME PASS — '+PRICE_USD;
   const track=el('cp-track'); track.innerHTML='';
   for(let i=0;i<PASS_MAX;i++){
     const tier=PASS_TIERS[i]; const unlocked=(i<t); const current=(i===t);
@@ -1106,12 +1137,16 @@ if(el('m-cats')) el('m-cats').onclick=()=>menuToast('Cats collection coming soon
 if(el('m-settings')) el('m-settings').onclick=()=>menuToast('Settings coming soon! ⚙️');
 if(el('m-pass')) el('m-pass').onclick=()=>openPass();
 if(el('cp-close')) el('cp-close').onclick=()=>closePass();
+function openStore(){ const m=el('cp-buy'); if(m) m.classList.remove('hidden'); }
+function closeStore(){ const m=el('cp-buy'); if(m) m.classList.add('hidden'); }
 if(el('cp-prembtn')) el('cp-prembtn').onclick=()=>{
   if(PASS.premium){ menuToast('Pawsome Pass is already active ✓'); return; }
-  const g=PASS.wallet.gems||0;
-  if(g<PREMIUM_COST){ menuToast('Not enough gems — need 💎'+PREMIUM_COST+' (you have 💎'+g+')'); return; }
-  PASS.wallet.gems-=PREMIUM_COST; PASS.premium=true; passSave(); syncMenuCur(); renderPass();
-  menuToast('🎫 PAWSOME PASS bought! Claim your premium loot! 👑');
+  openStore();
+};
+if(el('cp-cancel')) el('cp-cancel').onclick=()=>closeStore();
+if(el('cp-confirm')) el('cp-confirm').onclick=()=>{
+  PASS.premium=true; PASS.wallet.gems+=PREMIUM_GEMS; passSave(); syncMenuCur(); renderPass(); closeStore();
+  menuToast('🎫 PAWSOME PASS bought for '+PRICE_USD+' (demo) — +💎'+PREMIUM_GEMS+'! 👑');
 };
 
 // boot
