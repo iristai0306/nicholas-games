@@ -150,6 +150,13 @@
   .ccard .cc-lock{font-size:clamp(9px,1.5vw,11px);font-weight:800;color:#c9b6ff;margin-top:7px;line-height:1.4}
   .ccard .cc-st{display:flex;justify-content:center;gap:8px;margin-top:6px;font-size:clamp(9px,1.5vw,11px);font-weight:800;color:#cfe0ff}
   .ccard .cc-badge{position:absolute;top:8px;right:8px;font-size:15px;filter:drop-shadow(0 0 4px #000)}
+  .ccard.eq{border-color:#5ad1ff;box-shadow:0 0 0 3px rgba(90,209,255,.28),0 0 20px rgba(90,209,255,.35)}
+  .ccard.skin.eq.sowned{box-shadow:0 0 0 3px rgba(90,209,255,.28),0 0 22px rgba(255,210,63,.4)}
+  .cc-equip{margin-top:9px;width:100%;font-family:inherit;font-weight:900;font-size:clamp(11px,1.9vw,13px);cursor:pointer;border:none;border-radius:11px;padding:9px;color:#0d2410;background:linear-gradient(180deg,#9bf0b0,#43c86a);box-shadow:0 4px 0 #1f7a3c}
+  .cc-equip:active{transform:translateY(3px);box-shadow:0 1px 0 #1f7a3c}
+  .cc-equip.on{background:linear-gradient(180deg,#7be0ff,#2f9fe0);color:#062033;box-shadow:0 4px 0 #14506e}
+  .cc-eqcount{font-size:clamp(10px,1.7vw,13px);color:#9fe6ff;font-weight:800;border:1.5px solid rgba(120,220,255,.35);border-radius:16px;padding:5px 12px;background:rgba(20,50,70,.4)}
+  .cc-tip{margin-top:8px;font-size:clamp(10px,1.7vw,12px);color:#9fb4d8;font-weight:700}
 
   /* ---------- SHOP ---------- */
   #shop{background:#0a1020;overflow:hidden}
@@ -420,8 +427,10 @@
       <div class="cc-head">
         <div class="cc-title">🐱 CAT COLLECTION</div>
         <div class="cc-count" id="cc-count">3 / 10</div>
+        <div class="cc-eqcount" id="cc-equipped">3/6 equipped</div>
         <button class="cc-close" id="cc-close">✕</button>
       </div>
+      <div class="cc-tip">Equip up to 6 cats — they become your build bar in the game! ⚔️</div>
       <div class="cc-grid" id="cc-grid"></div>
     </div>
     <canvas id="sc" width="560" height="420" style="display:none"></canvas>
@@ -459,7 +468,7 @@
 
       <div id="topbar">
         <div class="chip lives">❤️ <span id="ui-lives">10</span></div>
-        <div class="chip wave">🌊 WAVE <span id="ui-wave">0</span>/5</div>
+        <div class="chip wave">🌊 WAVE <span id="ui-wave">0</span>/10</div>
         <div class="chip fish">🐟 <span id="ui-fish">100</span></div>
         <div class="chip tuna">🥫 <span id="ui-tuna">0</span></div>
       </div>
@@ -526,11 +535,34 @@ const HOME={x:pts[0].x+40,y:pts[0].y};
 
 // ---------------- CAT TYPES ----------------
 const CATS={
-  pouncer:{name:'Pouncer', face:'🐱', cost:50, dmg:12, range:118, rate:0.55, speed:520, color:'#ffb347', splash:0,  desc:'Fast single-target'},
-  sharp:  {name:'Sharpshooter',face:'🎯',cost:100,dmg:30, range:230, rate:1.15,speed:900, color:'#7be0ff', splash:0,  desc:'Long-range sniper'},
-  chonk:  {name:'Chonk',   face:'💥', cost:120,dmg:16, range:135, rate:1.05,speed:420, color:'#ff7ba8', splash:62, desc:'Splash damage'},
+  pouncer:{name:'Pouncer',     face:'🐱', cost:50, dmg:12, range:118, rate:0.55, speed:520, color:'#ffb347', splash:0,  ability:null,     desc:'Fast single-target'},
+  sharp:  {name:'Sharpshooter',face:'🎯', cost:100,dmg:30, range:230, rate:1.15, speed:900, color:'#7be0ff', splash:0,  ability:null,     desc:'Long-range sniper'},
+  chonk:  {name:'Chonk',       face:'💥', cost:120,dmg:16, range:135, rate:1.05, speed:420, color:'#ff7ba8', splash:62, ability:'splash', desc:'Splash damage'},
+  shadow: {name:'Shadow Cat',  face:'🐈‍⬛',cost:90, dmg:22, range:130, rate:0.70, speed:640, color:'#7d8698', splash:0,  ability:'crit',   desc:'Crits for 2.5x burst'},
+  mage:   {name:'Mage Cat',    face:'🧙', cost:130,dmg:20, range:180, rate:1.20, speed:500, color:'#a98bff', splash:52, ability:'splash', desc:'Magic blast AoE'},
+  frost:  {name:'Frost Cat',   face:'❄️', cost:110,dmg:9,  range:155, rate:0.80, speed:560, color:'#5ef0d0', splash:0,  ability:'slow',   desc:'Freezes mice in place'},
+  golden: {name:'Golden Cat',  face:'🌟', cost:160,dmg:18, range:170, rate:0.50, speed:700, color:'#ffd23f', splash:0,  ability:'crit',   desc:'Rapid critical shots'},
+  ninja:  {name:'Ninja Cat',   face:'🥷', cost:140,dmg:10, range:150, rate:0.28, speed:820, color:'#b9c0cc', splash:0,  ability:null,     desc:'Blazing attack speed'},
+  crystal:{name:'Crystal Cat', face:'🔮', cost:150,dmg:26, range:200, rate:1.40, speed:900, color:'#c86bff', splash:0,  ability:'pierce', desc:'Piercing shots'},
+  cosmic: {name:'Cosmic Cat',  face:'🌌', cost:200,dmg:40, range:220, rate:0.90, speed:1000,color:'#eef1f7', splash:70, ability:'cosmic', desc:'ULTIMATE — pierce + crit'},
 };
-const ORDER=['pouncer','sharp','chonk'];
+const STARTERS=['pouncer','sharp','chonk'];
+// Loadout = the cats EQUIPPED into your in-level build bar (max 6)
+let LOADOUT=STARTERS.slice();
+function loadoutLoad(){ try{ const raw=localStorage.getItem('cwaut_loadout'); if(raw){ const a=JSON.parse(raw); if(Array.isArray(a)&&a.length) LOADOUT=a.filter(k=>CATS[k]); } }catch(e){} }
+function loadoutSave(){ try{ localStorage.setItem('cwaut_loadout', JSON.stringify(LOADOUT)); }catch(e){} }
+function isCatUnlocked(key){
+  if(STARTERS.indexOf(key)>=0) return true;
+  const info=CATS_INFO.find(c=>c.key===key);
+  return !!(info && skinOwned(info.unlockSkin));
+}
+function equipCat(key){
+  if(!isCatUnlocked(key)){ menuToast('Locked — unlock it first!'); return; }
+  if(LOADOUT.indexOf(key)>=0){ LOADOUT=LOADOUT.filter(k=>k!==key); menuToast('Unequipped '+CATS[key].name); }
+  else { if(LOADOUT.length>=6){ menuToast('Build bar full (6) — unequip one'); return; } LOADOUT.push(key); menuToast('Equipped '+CATS[key].name+'! '+CATS[key].face); }
+  loadoutSave(); buildBar(); renderCats();
+}
+loadoutLoad();
 
 // ---------------- CAT COLLECTION ----------------
 const DPR=Math.min(2,window.devicePixelRatio||1);
@@ -544,13 +576,13 @@ const CATS_INFO=[
   {key:'pouncer',name:'Pouncer',     role:'Fighter',   rarity:'Common',    color:COAT.orange,   stat:'Balanced all-rounder'},
   {key:'sharp',  name:'Sharpshooter',role:'Sniper',    rarity:'Rare',      color:COAT.cyan,     stat:'Long range 230'},
   {key:'chonk',  name:'Chonk',       role:'Bomber',    rarity:'Epic',      color:COAT.neonpink, stat:'Splash damage'},
-  {name:'Shadow Cat',role:'Assassin',rarity:'Rare',     color:COAT.charcoal, stat:'Backstab ×2',        unlock:'Pawsome Pass · Tier 1', unlockSkin:'Shadow Cat'},
-  {name:'Mage Cat',  role:'Mage',    rarity:'Epic',     color:COAT.royal,    stat:'Magic blast AoE',    unlock:'Pawsome Pass · Tier 4', unlockSkin:'Mage Cat'},
-  {name:'Frost Cat', role:'Control', rarity:'Epic',     color:COAT.aqua,     stat:'Slows mice',         unlock:'Win World 1 🏆'},
-  {name:'Golden Cat',role:'Legend',  rarity:'Legendary',color:COAT.gold,     stat:'Critical hits',      unlock:'Pawsome Pass · Tier 7', unlockSkin:'Golden Cat'},
-  {name:'Ninja Cat', role:'Speedster',rarity:'Epic',    color:COAT.grey,     stat:'Double attack speed',unlock:'Catapass · Tier 6 🎫', unlockSkin:'Ninja Cat'},
-  {name:'Crystal Cat',role:'Mage',   rarity:'Mythic',   color:COAT.violet,   stat:'Pierce shots',       unlock:'Catapass · Tier 8 🎫', unlockSkin:'Crystal Cat'},
-  {name:'Cosmic Cat',role:'Mythic',  rarity:'Mythic',   color:COAT.white,    stat:'ULTIMATE power',     unlock:'Pawsome Pass · Tier 10 👑', unlockSkin:'Cosmic Cat'},
+  {key:'shadow', name:'Shadow Cat',  role:'Assassin',  rarity:'Rare',      color:COAT.charcoal, stat:'2.5× critical hits', unlock:'Pawsome Pass · Tier 1', unlockSkin:'Shadow Cat'},
+  {key:'mage',   name:'Mage Cat',    role:'Mage',      rarity:'Epic',      color:COAT.royal,    stat:'Magic blast AoE',   unlock:'Pawsome Pass · Tier 4', unlockSkin:'Mage Cat'},
+  {key:'frost',  name:'Frost Cat',   role:'Control',   rarity:'Epic',      color:COAT.aqua,     stat:'Freezes mice solid',unlock:'Win World 1 🏆', unlockSkin:'Frost Cat'},
+  {key:'golden', name:'Golden Cat',  role:'Legend',    rarity:'Legendary', color:COAT.gold,     stat:'Rapid crit shots',  unlock:'Pawsome Pass · Tier 7', unlockSkin:'Golden Cat'},
+  {key:'ninja',  name:'Ninja Cat',   role:'Speedster', rarity:'Epic',      color:COAT.grey,     stat:'Blazing attack speed',unlock:'Catapass · Tier 6 🎫', unlockSkin:'Ninja Cat'},
+  {key:'crystal',name:'Crystal Cat', role:'Mage',      rarity:'Mythic',    color:COAT.violet,   stat:'Piercing shots',    unlock:'Catapass · Tier 8 🎫', unlockSkin:'Crystal Cat'},
+  {key:'cosmic', name:'Cosmic Cat',  role:'Mythic',    rarity:'Mythic',    color:COAT.white,    stat:'Pierce + crit ULT', unlock:'Pawsome Pass · Tier 10 👑', unlockSkin:'Cosmic Cat'},
 ];
 function skinOwned(name){ return name && ((PASS&&PASS.skins)||[]).indexOf(name)>=0; }
 function grantSkin(name){ if(!name) return false; if(!PASS.skins) PASS.skins=[]; if(PASS.skins.indexOf(name)<0){ PASS.skins.push(name); passSave(); return true; } return false; }
@@ -572,28 +604,38 @@ function catPreviewURL(def){
 function initCats(){ CATS_INFO.forEach(info=>{ try{ info.dataURL=catPreviewURL(info); }catch(e){ info.dataURL=''; } }); }
 function renderCats(){
   const grid=el('cc-grid'); if(!grid) return;
-  const ownedCount=CATS_INFO.filter(c=>c.key||skinOwned(c.unlockSkin)).length;
+  const ownedCount=CATS_INFO.filter(c=>isCatUnlocked(c.key)).length;
   const cnt=el('cc-count'); if(cnt) cnt.textContent=ownedCount+' / '+CATS_INFO.length;
   const mc=el('m-catcount'); if(mc) mc.textContent=(ownedCount-3)+'/'+(CATS_INFO.length-3);
   grid.innerHTML='';
   CATS_INFO.forEach(info=>{
-    const isSkin=!info.key;
-    const owned=isSkin? skinOwned(info.unlockSkin) : true;
+    const isSkin=STARTERS.indexOf(info.key)<0;
+    const owned=isCatUnlocked(info.key);
+    const equipped=LOADOUT.indexOf(info.key)>=0;
     const d=document.createElement('div');
-    d.className='ccard'+(isSkin?' skin':'')+(owned?(isSkin?' sowned':' owned'):' locked');
+    d.className='ccard'+(isSkin?' skin':'')+(owned?(isSkin?' sowned':' owned'):' locked')+(equipped?' eq':'')+(S_selCat===info.key?' sel':'');
     const rc=RARITY_COLORS[info.rarity]||'#9fb4d8';
+    const cdef=CATS[info.key];
     d.innerHTML=
       '<img class="cc-canvas" src="'+info.dataURL+'" alt="'+info.name+'">'+
-      (owned?'<div class="cc-badge">'+(isSkin?'✨':'✓')+'</div>':'<div class="cc-badge">🔒</div>')+
+      (owned?'<div class="cc-badge">'+(equipped?'✅':(isSkin?'✨':'✓'))+'</div>':'<div class="cc-badge">🔒</div>')+
       '<div class="cc-nm">'+info.name+'</div>'+
       '<div class="cc-role">'+info.role+'</div>'+
       '<div class="cc-rarity" style="color:'+rc+'">'+info.rarity+'</div>'+
       (owned
         ? '<div class="cc-st"><span>'+info.stat+'</span></div>'
         : '<div class="cc-lock">'+info.unlock+'</div>');
+    if(owned){
+      const b=document.createElement('button'); b.className='cc-equip'+(equipped?' on':'');
+      b.textContent=equipped?'EQUIPPED ✓':'EQUIP';
+      b.onclick=(ev)=>{ ev.stopPropagation(); equipCat(info.key); };
+      d.appendChild(b);
+    }
     grid.appendChild(d);
   });
+  const eq=el('cc-equipped'); if(eq) eq.textContent=LOADOUT.length+'/6 equipped';
 }
+let S_selCat=null;
 function openCats(){ el('menu').classList.add('hidden'); el('game').classList.add('hidden');
   el('howto').classList.add('hidden'); el('catapass').classList.add('hidden'); el('cats').classList.remove('hidden'); renderCats(); }
 function closeCats(){ el('cats').classList.add('hidden'); el('menu').classList.remove('hidden'); refreshPassBadge(); }
@@ -706,7 +748,7 @@ boostsLoad();
 let S;
 function newGame(){
   const bankFish = (typeof PASS!=='undefined' && PASS.wallet) ? PASS.wallet.fish : 0;
-  S={ state:'idle', lives:10, fish:140+startBonus()+bankFish, tuna:0, wave:0, maxWaves:5,
+  S={ state:'idle', lives:10, fish:140+startBonus()+bankFish, tuna:0, wave:0, maxWaves:10,
       towers:[], enemies:[], shots:[], pops:[], t:0,
       dmgText:[], parts:[], shake:0, hurtFlash:0,
       spawnQueue:[], spawnTimer:0, waveActive:false, sel:null, buildCat:null, locked:null, hover:null, over:false };
@@ -801,11 +843,12 @@ newGame();
 
 // ---------------- WAVES ----------------
 function waveDef(n){
-  const count = 6 + n*2;                 // 8,10,12,14,16
+  const count = 6 + n*2;                 // 8,10,12...
   const hp = 10 + (n-1)*8;               // grows
-  const speed = 78 + (n-1)*12;
+  const speed = 78 + (n-1)*9;
   const bounty = 6 + n;
-  return {count,hp,speed,bounty};
+  const boss = (n%5===0);                 // waves 5 & 10 have a BOSS
+  return {count,hp,speed,bounty,boss};
 }
 
 // ---------------- HELPERS ----------------
@@ -824,8 +867,8 @@ function syncHud(){
 // ---------------- BUILD BAR ----------------
 function buildBar(){
   ui.bar.innerHTML='';
-  ORDER.forEach(key=>{
-    const c=CATS[key];
+  LOADOUT.forEach(key=>{
+    const c=CATS[key]; if(!c) return;
     const d=document.createElement('div');
     d.className='card'; d.dataset.key=key;
     d.innerHTML=`<div class="face">${c.face}</div><div class="nm">${c.name}</div><div class="cost">🐟${c.cost}</div>`;
@@ -871,6 +914,7 @@ function showPanel(t){
   el('p-up').onclick=()=>{
     if(S.fish<upCost){ flashBanner('Need more fish!',700); return; }
     S.fish-=upCost; t.lvl++; t.spent+=upCost; t.dmg=c.dmg*(1+0.5*(t.lvl-1))*dmgMult(); t.range=c.range+8*(t.lvl-1);
+    playSfx('upgrade');
     syncHud(); showPanel(t);
   };
   el('p-sell').onclick=()=>{
@@ -900,6 +944,7 @@ function placeTower(c,r){
   S.fish-=def.cost;
   S.towers.push({key:S.buildCat,c,r,x:c*TS+TS/2,y:r*TS+TS/2,lvl:1,dmg:def.dmg*dmgMult(),range:def.range,
     cd:0,angle:0,spent:def.cost,bob:Math.random()*6,flash:0});
+  playSfx('place');
   syncHud();
   if(S.fish<def.cost) S.buildCat=null;
   S.locked=null;
@@ -962,6 +1007,11 @@ function startWave(){
   S.spawnQueue=[];
   const count=Math.round(d.count*(BOOSTS.mice?1.5:1));
   for(let i=0;i<count;i++) S.spawnQueue.push({hp:d.hp*(1+ (i%5===4?0.6:0)), speed:d.speed, bounty:d.bounty, big:(i%5===4)});
+  if(d.boss){
+    const bh=Math.round(d.hp*(12+S.wave));
+    S.spawnQueue.splice(Math.floor(count/2),0,{hp:bh, speed:d.speed*0.62, bounty:d.bounty*15, big:true, boss:true});
+    flashBanner('😾 BOSS MOUSE INCOMING!',1600);
+  }
   S.spawnTimer=0; S.waveActive=true;
   ui.wavebtn.classList.remove('ready');
   ui.wavebtn.textContent='WAVE '+S.wave+' INCOMING…';
@@ -980,7 +1030,7 @@ function endWave(){
 }
 function win(){
   S.over=true;
-  PASS.wallet.tuna+=50; grantSkin('Frost Cat'); passSave();
+  PASS.wallet.tuna+=50; grantSkin('Frost Cat'); passSave(); playSfx('win');
   ui.overlay.classList.remove('hidden');
   ui.overlay.innerHTML=`<h2>🏆 YOU WIN!</h2><p>Cwaut Defense — World 1: Backyard cleared.</p>
     <p style="margin-top:6px;color:#9be7ff;font-weight:800">+50 🥫 earned — save up for the Pawsome Pass!</p>
@@ -992,6 +1042,7 @@ function win(){
 }
 function lose(){
   S.over=true;
+  playSfx('lose');
   ui.overlay.classList.remove('hidden');
   ui.overlay.innerHTML=`<h2>😿 THE MICE GOT THROUGH</h2><p>Your cat homes fell. Wave ${S.wave} of 5.</p>
     <button class="btn" id="o-again" style="margin-top:16px">🔁 TRY AGAIN</button>
@@ -1019,11 +1070,12 @@ function update(dt){
 
   // enemies move
   for(const e of S.enemies){
-    e.d += e.speed*dt; e.wob+=dt*8;
+    e.d += e.speed*(e.slowT>0?0.45:1)*dt; e.wob+=dt*8;
+    if(e.slowT>0) e.slowT-=dt;
     if(e.d>=total){ e.reached=true; }
   }
   const reached=S.enemies.filter(e=>e.reached);
-  if(reached.length){ S.lives-=reached.length; S.shake=Math.min(14,S.shake+7); S.hurtFlash=0.5; syncHud(); }
+  if(reached.length){ S.lives-=reached.length; S.shake=Math.min(14,S.shake+7); S.hurtFlash=0.5; playSfx('life'); syncHud(); }
   S.enemies=S.enemies.filter(e=>!e.reached);
   if(S.lives<=0){ lose(); return; }
 
@@ -1040,12 +1092,15 @@ function update(dt){
     if(target) t.angle=Math.atan2(target.y-t.y,target.x-t.x);
     if(target && t.cd<=0){
       t.cd=def.rate; t.flash=0.09;
-      const dmg=Math.round(def.dmg*(1+0.5*(t.lvl-1))*dmgMult());
+      let dmg=Math.round(def.dmg*(1+0.5*(t.lvl-1))*dmgMult());
+      let crit=false;
+      if(def.ability==='crit' || def.ability==='cosmic'){ if(Math.random()<0.35){ dmg=Math.round(dmg*2.5); crit=true; } }
       const mx=t.x+Math.cos(t.angle)*16, my=t.y-14+Math.sin(t.angle)*16;
-      S.shots.push({x:mx,y:my,tx:target.x,ty:target.y,dmg,splash:def.splash,
-        color:def.color,life:0.09,speed:def.speed,target:null, tgtD:best});
+      S.shots.push({x:mx,y:my,tx:target.x,ty:target.y,dmg,splash:def.splash,crit,
+        ability:def.ability,slow:def.ability==='slow',color:def.color,life:0.09,speed:def.speed,target:null, tgtD:best});
+      playSfx('shoot', def.ability==='cosmic'?'cosmic':(def.splash>0?'boom':'pew'));
       // muzzle spark
-      for(let i=0;i<4;i++){ const a=t.angle+(Math.random()-0.5)*0.9;
+      for(let i=0;i<(def.ability==='cosmic'?7:4);i++){ const a=t.angle+(Math.random()-0.5)*0.9;
         S.parts.push({x:mx,y:my,vx:Math.cos(a)*(80+Math.random()*120),vy:Math.sin(a)*(80+Math.random()*120)-24,
           life:0.26,max:0.26,color:def.color,r:3.5+Math.random()*3}); }
     }
@@ -1062,15 +1117,23 @@ function update(dt){
       if(hit && bd<40){
         if(s.splash>0){
           for(const e of S.enemies){ const p=posAt(e.d);
-            if(Math.hypot(p.x-s.tx,p.y-s.ty)<s.splash){ e.hp-=s.dmg; e.hitT=0.12; } }
+            if(Math.hypot(p.x-s.tx,p.y-s.ty)<s.splash){ e.hp-=s.dmg; e.hitT=0.12; if(s.slow) applySlow(e); } }
           S.pops.push({x:s.tx,y:s.ty,r:6,max:s.splash,color:s.color,life:0.32});
-          burst(s.tx,s.ty,s.color,14,220,4.5);
+          burst(s.tx,s.ty,s.color,14,220,4.5); playSfx('hit', s.splash>50?'boom':'pop');
         } else {
-          hit.hp-=s.dmg; hit.hitT=0.12;
+          hit.hp-=s.dmg; hit.hitT=0.12; if(s.slow) applySlow(hit);
           S.pops.push({x:s.tx,y:s.ty,r:2,max:16,color:s.color,life:0.2});
-          burst(s.tx,s.ty,s.color,7,150,3.4);
+          burst(s.tx,s.ty,s.color,7,150,3.4); playSfx('hit', s.splash>50?'boom':'pop');
+          // PIERCE: also damage the next mice behind along the path
+          if(s.ability==='pierce' || s.ability==='cosmic'){
+            let n=0;
+            for(const e of S.enemies){ if(e===hit||e.hp<=0) continue; const p=posAt(e.d);
+              if(Math.hypot(p.x-s.tx,p.y-s.ty)<70){ e.hp-=Math.round(s.dmg*0.6); e.hitT=0.12; if(s.slow)applySlow(e); n++; if(n>=2)break; } }
+            if(n) burst(s.tx,s.ty,'#ffffff',10,200,3.6);
+          }
         }
-        S.dmgText.push({x:s.tx+ (Math.random()-0.5)*8,y:s.ty-16,vy:-42,life:0.75,max:0.75,text:''+Math.round(s.dmg),color:s.color,bold:false});
+        S.dmgText.push({x:s.tx+ (Math.random()-0.5)*8,y:s.ty-16,vy:-42,life:0.75,max:0.75,text:(s.crit?'CRIT ':'')+Math.round(s.dmg),color:s.crit?'#ffd23f':s.color,bold:!!s.crit});
+        if(s.crit) S.pops.push({x:s.tx,y:s.ty,r:3,max:22,color:'#ffd23f',life:0.25});
       }
     }
   }
@@ -1082,6 +1145,7 @@ function update(dt){
     S.fish+=Math.round(e.bounty*fishMult());
     const tuna=Math.round((e.big?2:1)*fishMult()); PASS.wallet.tuna+=tuna;
     gainXp(e.big?12:5);
+    playSfx('kill'); if(e.big) playSfx('big');
     const p=posAt(e.d);
     burst(p.x,p.y,e.big?'#ffd23f':'#cfd3e6', e.big?24:16, e.big?300:240, e.big?5:3.8);
     S.dmgText.push({x:p.x,y:p.y-22,vy:-46,life:0.95,max:0.95,text:'+'+e.bounty+'🐟',color:'#5ad1ff',bold:true});
@@ -1121,6 +1185,40 @@ function shade(hex,amt){
 }
 function tri(ax,ay,bx,by,cx,cy){ ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.lineTo(cx,cy); ctx.closePath(); }
 function triF(ax,ay,bx,by,cx,cy){ tri(ax,ay,bx,by,cx,cy); ctx.fill(); }
+
+// ---- status effects ----
+function applySlow(e){ e.slow=1.0; e.slowT=Math.max(e.slowT||0,1.6); }
+
+// ---- WEB AUDIO SOUND FX (no assets) ----
+let AC=null, MUTED=false, MUSIC=null;
+function audioInit(){ if(AC) return; try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=null; } }
+function tone(freq,dur,type,vol,when,slideTo){
+  if(!AC||MUTED) return; const t0=(when||AC.currentTime);
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.type=type||'square'; o.frequency.setValueAtTime(freq,t0);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(30,slideTo), t0+dur);
+  g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(vol||0.12,t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g); g.connect(AC.destination); o.start(t0); o.stop(t0+dur+0.02);
+}
+function playSfx(kind,variant){
+  audioInit(); if(!AC||MUTED) return;
+  if(kind==='shoot'){
+    if(variant==='boom') tone(180,0.16,'sawtooth',0.10,0,90);
+    else if(variant==='cosmic') tone(880,0.18,'triangle',0.12,0,1400);
+    else tone(660,0.07,'square',0.05,0,420);
+  } else if(kind==='hit'){
+    if(variant==='boom'){ tone(120,0.22,'sawtooth',0.16,0,50); tone(70,0.25,'square',0.10,0,40); }
+    else tone(320,0.06,'triangle',0.05,0,180);
+  } else if(kind==='kill'){ tone(520,0.09,'square',0.10,0,760); tone(780,0.08,'triangle',0.07,0.05,980); }
+  else if(kind==='big'){ tone(180,0.3,'sawtooth',0.18,0,60); }
+  else if(kind==='place'){ tone(440,0.08,'triangle',0.12,0,660); }
+  else if(kind==='upgrade'){ tone(520,0.09,'square',0.12,0,880); tone(880,0.1,'triangle',0.1,0.08,1100); }
+  else if(kind==='life'){ tone(220,0.35,'sawtooth',0.2,0,90); }
+  else if(kind==='win'){ [523,659,784,1047].forEach((f,i)=>tone(f,0.22,'triangle',0.14,i*0.13)); }
+  else if(kind==='lose'){ [440,349,262,196].forEach((f,i)=>tone(f,0.28,'sawtooth',0.14,i*0.16)); }
+  else if(kind==='ui'){ tone(600,0.05,'square',0.06,0,700); }
+}
 
 // spawn a burst of particles
 function burst(x,y,color,count,speed,r){
@@ -1240,13 +1338,13 @@ function drawCat(t){
 }
 
 function drawEnemy(e){
-  const p=posAt(e.d); const sz=e.big?15:12;
+  const p=posAt(e.d); const sz=e.boss?26:(e.big?15:12);
   ctx.save(); ctx.translate(p.x,p.y);
   const dir=(Math.cos(p.ang)>=0)?1:-1;   // face the way they walk
   // shadow (world-aligned)
   ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(0,sz-1,sz*0.95,sz*0.4,0,0,7); ctx.fill();
   ctx.scale(dir,1);
-  const body=e.big?'#a7a9c2':'#dadbe8', bodyD=e.big?'#7d7f98':'#b9bacb';
+  const body=e.boss?'#8f6fd6':(e.big?'#a7a9c2':'#dadbe8'), bodyD=e.boss?'#6a4fb0':(e.big?'#7d7f98':'#b9bacb');
 
   // tail
   ctx.strokeStyle='#d8a9c4'; ctx.lineWidth=2.4; ctx.lineCap='round';
@@ -1271,6 +1369,15 @@ function drawEnemy(e){
     ctx.beginPath(); ctx.moveTo(sz*0.08,-sz*0.5); ctx.lineTo(sz*0.42,-sz*0.34);
     ctx.moveTo(sz*0.9,-sz*0.5); ctx.lineTo(sz*0.56,-sz*0.34); ctx.stroke(); }
 
+  // BOSS crown above the ears
+  if(e.boss){
+    ctx.fillStyle='#ffd23f'; ctx.strokeStyle='#c89400'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(-sz*0.8,-sz*1.25); ctx.lineTo(-sz*0.55,-sz*1.75);
+    ctx.lineTo(-sz*0.25,-sz*1.35); ctx.lineTo(0,-sz*1.85); ctx.lineTo(sz*0.25,-sz*1.35);
+    ctx.lineTo(sz*0.55,-sz*1.75); ctx.lineTo(sz*0.8,-sz*1.25); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#ff5b8a'; ctx.beginPath(); ctx.arc(0,-sz*1.45,sz*0.14,0,7); ctx.fill();
+  }
+
   // nose + whiskers
   ctx.fillStyle='#e0708a'; ctx.beginPath(); ctx.arc(sz*0.92,sz*0.16,sz*0.14,0,7); ctx.fill();
   ctx.strokeStyle='rgba(120,110,120,.7)'; ctx.lineWidth=1;
@@ -1281,9 +1388,10 @@ function drawEnemy(e){
   // hp bar (world-aligned, only when hurt)
   if(e.hp<e.maxhp){
     const pct=Math.max(0,e.hp/e.maxhp), bw=sz*2;
-    ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(-bw/2,-sz-11,bw,5);
-    ctx.fillStyle=pct>0.5?'#5ad17f':(pct>0.25?'#ffd23f':'#ff6b81'); ctx.fillRect(-bw/2,-sz-11,bw*pct,5);
-    ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=1; ctx.strokeRect(-bw/2,-sz-11,bw,5);
+    const barY=-sz-(e.boss?24:11);
+    ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(-bw/2,barY,bw,e.boss?8:5);
+    ctx.fillStyle=e.boss?'#c86bff':(pct>0.5?'#5ad17f':(pct>0.25?'#ffd23f':'#ff6b81')); ctx.fillRect(-bw/2,barY,bw*pct,e.boss?8:5);
+    ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=1; ctx.strokeRect(-bw/2,barY,bw,e.boss?8:5);
   }
 }
 function render(){
@@ -1413,7 +1521,7 @@ function menuToast(txt){
 
 // ---------------- SCREENS ----------------
 function toMenu(){ newGame(); el('game').classList.add('hidden'); el('menu').classList.remove('hidden'); syncMenuCur(); }
-el('m-play').onclick=()=>{ el('menu').classList.add('hidden'); el('game').classList.remove('hidden');
+el('m-play').onclick=()=>{ audioInit(); el('menu').classList.add('hidden'); el('game').classList.remove('hidden');
   restart(); };
 el('m-how').onclick=()=>{ el('menu').classList.add('hidden'); el('howto').classList.remove('hidden'); };
 el('h-back').onclick=()=>{ el('howto').classList.add('hidden'); el('menu').classList.remove('hidden'); };
@@ -1426,7 +1534,8 @@ if(el('pay-confirm')) el('pay-confirm').onclick=()=>{ if(!payItem) return;
   PASS.wallet.tuna+=payItem.tuna; passSave(); syncMenuCur(); renderShop();
   menuToast('Bought '+payItem.nm+' — +'+payItem.tuna+' 🥫 (demo)'); payClose(); };
 if(el('cc-close')) el('cc-close').onclick=()=>closeCats();
-if(el('m-settings')) el('m-settings').onclick=()=>menuToast('Settings coming soon! ⚙️');
+if(el('m-settings')) el('m-settings').onclick=()=>{ MUTED=!MUTED; try{ localStorage.setItem('cwaut_mute',MUTED?'1':'0'); }catch(e){} menuToast(MUTED?'🔇 Sound OFF':'🔊 Sound ON'); el('m-settings').innerHTML='<span class="ic">'+(MUTED?'🔇':'⚙️')+'</span> SOUND '+(MUTED?'OFF':'ON'); };
+try{ MUTED=localStorage.getItem('cwaut_mute')==='1'; if(el('m-settings')) el('m-settings').innerHTML='<span class="ic">'+(MUTED?'🔇':'⚙️')+'</span> SOUND '+(MUTED?'OFF':'ON'); }catch(e){}
 if(el('m-pass')) el('m-pass').onclick=()=>openPass();
 if(el('cp-close')) el('cp-close').onclick=()=>closePass();
 function openStore(){ const m=el('cp-buy'); if(m) m.classList.remove('hidden'); }
