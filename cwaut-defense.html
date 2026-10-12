@@ -394,12 +394,12 @@ const ORDER=['pouncer','sharp','chonk'];
 // ---------------- STATE ----------------
 let S;
 function newGame(){
-  S={ state:'idle', lives:10, fish:140, gems:0, wave:0, maxWaves:5,
+  const bankFish = (typeof PASS!=='undefined' && PASS.wallet) ? PASS.wallet.fish : 0;
+  S={ state:'idle', lives:10, fish:140+bankFish, gems:0, wave:0, maxWaves:5,
       towers:[], enemies:[], shots:[], pops:[], t:0,
       dmgText:[], parts:[], shake:0, hurtFlash:0,
       spawnQueue:[], spawnTimer:0, waveActive:false, sel:null, buildCat:null, locked:null, hover:null, over:false };
 }
-newGame();
 
 // ---------------- CATAPASS ----------------
 const PASS_MAX=10, PASS_STEP=100;   // 100 XP per tier, 10 tiers
@@ -417,8 +417,8 @@ const PASS_TIERS=[
   {free:{k:'fish',a:500,ic:'🐟'}, prem:{k:'gems',a:200,ic:'💎'}},
   {free:{k:'gems',a:100,ic:'💎'},prem:{k:'skin',a:'TOP CAT',ic:'👑'}},
 ];
-const PASS={ xp:0, premium:false, claimed:{}, skins:[] };
-function passLoad(){ try{ const raw=localStorage.getItem('cwaut_pass'); if(raw){ const d=JSON.parse(raw); Object.assign(PASS,d); if(!PASS.claimed) PASS.claimed={}; if(!PASS.skins) PASS.skins=[]; } }catch(e){} }
+const PASS={ xp:0, premium:false, claimed:{}, skins:[], wallet:{fish:0,gems:0} };
+function passLoad(){ try{ const raw=localStorage.getItem('cwaut_pass'); if(raw){ const d=JSON.parse(raw); Object.assign(PASS,d); if(!PASS.claimed) PASS.claimed={}; if(!PASS.skins) PASS.skins=[]; if(!PASS.wallet) PASS.wallet={fish:0,gems:0}; } }catch(e){} }
 function passSave(){ try{ localStorage.setItem('cwaut_pass', JSON.stringify(PASS)); }catch(e){} }
 function passTier(){ return Math.min(PASS_MAX, Math.floor(PASS.xp/PASS_STEP)); }
 function passXpInTier(){ return passTier()>=PASS_MAX ? PASS_STEP : (PASS.xp % PASS_STEP); }
@@ -430,8 +430,8 @@ function doClaim(after,premium){
   const rw=premium?tier.prem:tier.free; if(!rw) return;
   const claimedSet=PASS.claimed[after]||(PASS.claimed[after]={});
   claimedSet[premium?'p':'f']=true;
-  if(rw.k==='fish') S.fish+=rw.a;
-  if(rw.k==='gems') S.gems=(S.gems||0)+rw.a;
+  if(rw.k==='fish') PASS.wallet.fish+=rw.a;
+  if(rw.k==='gems') PASS.wallet.gems+=rw.a;
   if(rw.k==='skin'){ if(PASS.skins.indexOf(rw.a)<0) PASS.skins.push(rw.a); }
   passSave(); syncMenuCur(); syncHud(); renderPass();
   const label = rw.k==='skin'?('Unlocked '+rw.a+' '+(rw.ic||'🎨')):('+'+rw.a+' '+(rw.ic||'🎁'));
@@ -478,6 +478,7 @@ function openPass(){ el('menu').classList.add('hidden'); el('game').classList.ad
   el('howto').classList.add('hidden'); el('catapass').classList.remove('hidden'); renderPass(); }
 function closePass(){ el('catapass').classList.add('hidden'); el('menu').classList.remove('hidden'); refreshPassBadge(); }
 passLoad();
+newGame();
 
 // ---------------- WAVES ----------------
 function waveDef(n){
@@ -1076,8 +1077,8 @@ function setupMenu(){
 }
 function syncMenuCur(){
   const g=el('m-gold'), m=el('m-gem');
-  if(g) g.textContent=(S.fish||0);
-  if(m) m.textContent=(S.gems||0);
+  if(g) g.textContent=(PASS.wallet?PASS.wallet.fish:0);
+  if(m) m.textContent=(PASS.wallet?PASS.wallet.gems:0);
 }
 let toastT;
 function menuToast(txt){
