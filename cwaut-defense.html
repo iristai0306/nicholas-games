@@ -265,10 +265,26 @@ function showPanel(t){
 }
 
 // ---------------- INPUT ----------------
+function canvasPos(e){
+  const r=CV.getBoundingClientRect();
+  return {x:(e.clientX-r.left)/r.width*W, y:(e.clientY-r.top)/r.height*H};
+}
+function tileAt(x,y){ return {c:Math.floor(x/TS), r:Math.floor(y/TS)}; }
+function tileFree(c,r){
+  if(c<0||r<0||c>=COLS||r>=ROWS) return false;
+  if(blocked.has(c+','+r)) return false;
+  if(S.towers.some(t=>t.c===c&&t.r===r)) return false;
+  return true;
+}
+CV.addEventListener('pointermove',e=>{
+  if(!S.buildCat){ S.hover=null; return; }
+  const p=canvasPos(e); const {c,r}=tileAt(p.x,p.y);
+  S.hover={c,r,x:c*TS+TS/2,y:r*TS+TS/2,valid:tileFree(c,r)};
+});
+CV.addEventListener('pointerleave',()=>{ S.hover=null; });
 CV.addEventListener('pointerdown',e=>{
   if(S.over) return;
-  const r=CV.getBoundingClientRect();
-  const x=(e.clientX-r.left)/r.width*W, y=(e.clientY-r.top)/r.height*H;
+  const {x,y}=canvasPos(e);
   // click existing cat?
   for(const t of S.towers){
     if(Math.hypot(t.x-x,t.y-y)<26){ showPanel(t); return; }
@@ -285,6 +301,7 @@ CV.addEventListener('pointerdown',e=>{
       cd:0,angle:0,spent:def.cost,bob:Math.random()*6});
     syncHud(); syncBuildBar();
     if(S.fish<def.cost) S.buildCat=null; syncBuildBar();
+    S.hover={c,r:r2,x:c*TS+TS/2,y:r2*TS+TS/2,valid:true};
   } else {
     S.sel=null; ui.panel.classList.add('hidden');
   }
@@ -491,6 +508,32 @@ function render(){
   const end=pts[pts.length-1];
   ctx.save(); ctx.globalAlpha=.85; ctx.font='30px serif'; ctx.textAlign='center';
   ctx.fillText('🚪',end.x-20,end.y+10); ctx.restore();
+
+  // hover ghost + radius preview (while placing)
+  if(S.buildCat && S.hover){
+    const def=CATS[S.buildCat], h=S.hover, ok=h.valid && S.fish>=def.cost;
+    const col = ok?'255,210,63':'255,90,110';
+    ctx.save();
+    // range circle
+    ctx.fillStyle=`rgba(${col},0.10)`;
+    ctx.strokeStyle=`rgba(${col},0.85)`;
+    ctx.lineWidth=2.5; ctx.setLineDash([8,7]);
+    ctx.beginPath(); ctx.arc(h.x,h.y,def.range,0,7); ctx.fill(); ctx.stroke();
+    ctx.setLineDash([]);
+    // tile highlight
+    ctx.fillStyle=`rgba(${col},0.28)`;
+    ctx.fillRect(h.c*TS+2,h.r*TS+2,TS-4,TS-4);
+    // cat ghost
+    ctx.globalAlpha=0.85;
+    ctx.fillStyle=def.color; ctx.beginPath(); ctx.arc(h.x,h.y,17,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=2.5; ctx.stroke();
+    ctx.fillStyle=def.color;
+    ctx.beginPath(); ctx.moveTo(h.x-13,h.y-8); ctx.lineTo(h.x-18,h.y-22); ctx.lineTo(h.x-3,h.y-14); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(h.x+13,h.y-8); ctx.lineTo(h.x+18,h.y-22); ctx.lineTo(h.x+3,h.y-14); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#20130a'; ctx.beginPath(); ctx.arc(h.x-6,h.y-2,2.6,0,7); ctx.arc(h.x+6,h.y-2,2.6,0,7); ctx.fill();
+    ctx.font='13px serif'; ctx.textAlign='center'; ctx.fillText(def.face,h.x,h.y+12);
+    ctx.restore();
+  }
 
   // towers
   for(const t of S.towers) drawCat(t);
