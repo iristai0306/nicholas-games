@@ -12,13 +12,30 @@
   .hidden{display:none!important}
 
   /* ---------- MENU ---------- */
-  #menu{background:radial-gradient(circle at 50% 25%,#1c3a5e,#0b1120 70%)}
-  #menu .logo{font-size:clamp(38px,9vw,86px);font-weight:900;letter-spacing:2px;text-align:center;line-height:.95;
-    background:linear-gradient(180deg,#ffe680,#ff9f43);-webkit-background-clip:text;background-clip:text;color:transparent;
-    text-shadow:0 6px 0 rgba(0,0,0,.35);filter:drop-shadow(0 0 18px rgba(255,180,60,.5))}
-  #menu .sub{font-size:clamp(13px,2.4vw,20px);color:#9fd0ff;margin-top:10px;letter-spacing:4px}
-  .cats{font-size:clamp(34px,8vw,64px);margin:18px 0 6px;letter-spacing:8px;animation:float 2.4s ease-in-out infinite}
-  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  #menu{overflow:hidden;background:#070d18}
+  #menu .bg{position:absolute;inset:0;z-index:0;background:
+    radial-gradient(circle at 50% -8%,#2f63ad 0%,#153055 38%,#0b1730 68%,#070d18 100%)}
+  #menu .bg::after{content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at 50% 122%,rgba(255,170,50,.20),transparent 58%)}
+  .floats{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+  .floats span{position:absolute;bottom:-48px;animation:rise linear infinite}
+  @keyframes rise{from{transform:translateY(0) rotate(0deg)}to{transform:translateY(-118vh) rotate(320deg)}}
+  .menu-inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+  .mascot{font-size:clamp(48px,12vw,96px);line-height:1;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5));animation:bob 2.3s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-12px) rotate(3deg)}}
+  .logo{font-size:clamp(46px,12vw,110px);font-weight:900;letter-spacing:3px;text-align:center;line-height:.88;margin-top:2px;
+    background:linear-gradient(180deg,#fff6c0 0%,#ffd23f 46%,#ff941a 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 30px rgba(255,170,50,.5)) drop-shadow(0 5px 0 rgba(0,0,0,.22))}
+  .logo .l2{display:block;font-size:.66em;letter-spacing:10px;margin-top:.06em}
+  .sub{font-size:clamp(11px,2.2vw,16px);color:#9fd0ff;letter-spacing:6px;margin-top:10px;font-weight:700}
+  .menu-btns{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:24px}
+  .btn.big{font-size:clamp(19px,3.4vw,27px);padding:18px 58px}
+  .worldtag{margin-top:24px;font-size:clamp(10px,1.9vw,13px);letter-spacing:2px;color:#7ea3d0;
+    border:1.5px solid rgba(120,160,220,.28);border-radius:20px;padding:7px 18px;background:rgba(10,20,40,.5)}
+  .parade{position:absolute;bottom:0;left:0;right:0;height:64px;z-index:2;overflow:hidden;pointer-events:none}
+  .parade span{position:absolute;bottom:8px;animation:walk linear infinite;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
+  @keyframes walk{from{transform:translateX(-14vw)}to{transform:translateX(112vw)}}
   .btn{font-family:inherit;font-weight:800;font-size:clamp(15px,2.6vw,22px);letter-spacing:1px;cursor:pointer;border:none;
     border-radius:16px;padding:16px 42px;margin:8px;color:#20130a;background:linear-gradient(180deg,#ffd23f,#ff9f1c);
     box-shadow:0 6px 0 #b5660b,0 10px 22px rgba(0,0,0,.4);transition:transform .08s,box-shadow .08s}
@@ -82,12 +99,19 @@
 
   <!-- ================= MENU ================= -->
   <div id="menu" class="screen">
-    <div class="cats">🐱🐭🐕</div>
-    <div class="logo">CWAUT<br>DEFENSE</div>
-    <div class="sub">CATS. TOWERS. CHAOS.</div>
-    <button class="btn" id="m-play">▶ PLAY</button>
-    <button class="btn ghost" id="m-how">❔ HOW TO PLAY</button>
-    <div style="margin-top:16px;font-size:12px;color:#5577a0">World 1 · Backyard 🐭</div>
+    <div class="bg"></div>
+    <div class="floats" id="m-floats"></div>
+    <div class="menu-inner">
+      <div class="mascot">🐱</div>
+      <div class="logo">CWAUT<span class="l2">DEFENSE</span></div>
+      <div class="sub">CATS · TOWERS · CHAOS</div>
+      <div class="menu-btns">
+        <button class="btn big" id="m-play">▶ PLAY</button>
+        <button class="btn ghost" id="m-how">❔ HOW TO PLAY</button>
+      </div>
+      <div class="worldtag">WORLD 1 · BACKYARD 🐭</div>
+    </div>
+    <div class="parade" id="m-parade"></div>
   </div>
 
   <!-- ================= HOW TO ================= -->
@@ -595,6 +619,32 @@ function loop(now){
   update(dt); render(); requestAnimationFrame(loop);
 }
 
+// ---------------- MENU DECOR ----------------
+function setupMenu(){
+  const floats=el('m-floats'); floats.innerHTML='';
+  const glyphs=['🐾','🐟','🐾','🐱','🐾','🐭','🐾','🐾'];
+  for(let i=0;i<22;i++){
+    const s=document.createElement('span');
+    s.textContent=glyphs[i%glyphs.length];
+    s.style.left=(Math.random()*100)+'%';
+    s.style.fontSize=(15+Math.random()*22)+'px';
+    s.style.animationDuration=(9+Math.random()*11)+'s';
+    s.style.animationDelay=(-Math.random()*18)+'s';
+    s.style.opacity=(0.13+Math.random()*0.28).toFixed(2);
+    floats.appendChild(s);
+  }
+  const parade=el('m-parade'); parade.innerHTML='';
+  for(let i=0;i<8;i++){
+    const s=document.createElement('span');
+    s.textContent=i===4?'🐭':'🐱';
+    s.style.animationDuration=(8+Math.random()*8)+'s';
+    s.style.animationDelay=(-Math.random()*16)+'s';
+    s.style.fontSize=(22+Math.random()*12)+'px';
+    s.style.bottom=(4+Math.random()*16)+'px';
+    parade.appendChild(s);
+  }
+}
+
 // ---------------- SCREENS ----------------
 function toMenu(){ newGame(); el('game').classList.add('hidden'); el('menu').classList.remove('hidden'); }
 el('m-play').onclick=()=>{ el('menu').classList.add('hidden'); el('game').classList.remove('hidden');
@@ -604,6 +654,7 @@ el('h-back').onclick=()=>{ el('howto').classList.add('hidden'); el('menu').class
 
 // boot
 window.__dbg=()=>S;
+setupMenu();
 buildBar(); syncHud();
 requestAnimationFrame(loop);
 })();
