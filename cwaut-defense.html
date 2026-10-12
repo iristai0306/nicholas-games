@@ -26,7 +26,7 @@
   .cur{display:flex;gap:8px}
   .cur .c{display:flex;align-items:center;gap:6px;font-weight:800;font-size:clamp(12px,2vw,16px);
     background:rgba(6,12,24,.7);border:2px solid rgba(255,255,255,.16);border-radius:22px;padding:7px 15px;backdrop-filter:blur(5px)}
-  .cur .gold{color:#ffd23f}.cur .gem{color:#7be0ff}
+  .cur .gold{color:#ffd23f}.cur .tuna{color:#bfe0ff}
   .menu-side{position:absolute;z-index:4;left:0;top:50%;transform:translateY(-50%);
     padding:0 clamp(16px,4vw,58px);display:flex;flex-direction:column;gap:11px;
     width:min(430px,88vw);max-height:96vh;overflow:auto}
@@ -84,7 +84,7 @@
   .cp-bar{flex:1;min-width:130px;height:20px;border-radius:12px;background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.18);overflow:hidden}
   .cp-fill{height:100%;width:0%;border-radius:10px;background:linear-gradient(90deg,#7be0ff,#b06bff,#ff9f43);transition:width .5s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 14px rgba(150,120,255,.7)}
   .cp-xp{font-weight:800;font-size:clamp(11px,1.8vw,14px);color:#cfe0ff;white-space:nowrap}
-  .cp-gem{font-size:clamp(11px,1.8vw,13px);color:#9be7ff;font-weight:800;white-space:nowrap}
+  .cp-tuna{font-size:clamp(11px,1.8vw,13px);color:#9be7ff;font-weight:800;white-space:nowrap}
   .cp-buy{position:absolute;inset:0;background:rgba(6,8,18,.74);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
   .cp-buycard{position:relative;width:min(92vw,390px);max-height:92%;overflow-y:auto;background:linear-gradient(180deg,#2a1846,#160f2c);border:2px solid rgba(200,160,255,.4);border-radius:20px;padding:20px 18px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.6)}
   .cp-buytitle{font-weight:900;font-size:clamp(17px,3.4vw,22px);letter-spacing:1.5px;background:linear-gradient(180deg,#ffe680,#ff9f43);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -150,6 +150,36 @@
   .ccard .cc-lock{font-size:clamp(9px,1.5vw,11px);font-weight:800;color:#c9b6ff;margin-top:7px;line-height:1.4}
   .ccard .cc-st{display:flex;justify-content:center;gap:8px;margin-top:6px;font-size:clamp(9px,1.5vw,11px);font-weight:800;color:#cfe0ff}
   .ccard .cc-badge{position:absolute;top:8px;right:8px;font-size:15px;filter:drop-shadow(0 0 4px #000)}
+
+  /* ---------- SHOP ---------- */
+  #shop{background:#0a1020;overflow:hidden}
+  #shop .sh-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% -12%,#3a4a20,#161f10 55%,#0a1020 100%)}
+  .sh-wrap{position:relative;z-index:2;width:100%;height:100%;display:flex;flex-direction:column;padding:14px clamp(10px,3vw,34px)}
+  .sh-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .sh-title{font-size:clamp(22px,4.4vw,40px);font-weight:900;letter-spacing:2px;
+    background:linear-gradient(180deg,#ffe680,#7be0a0);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 16px rgba(120,220,150,.5))}
+  .sh-wallet{font-size:clamp(12px,2.2vw,17px);letter-spacing:1px;color:#fff;font-weight:900;
+    border:1.5px solid rgba(180,220,150,.4);border-radius:16px;padding:5px 16px;background:rgba(30,50,20,.55)}
+  .sh-wallet .fishc{color:#5ad1ff;font-size:clamp(10px,1.7vw,13px);font-weight:800;margin-left:8px}
+  .sh-close{margin-left:auto;font-family:inherit;font-weight:900;font-size:18px;cursor:pointer;border:none;color:#fff;
+    background:rgba(255,255,255,.12);border-radius:12px;padding:8px 15px}
+  .sh-close:active{transform:scale(.94)}
+  .sh-grid{margin-top:14px;flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(140px,20vw,186px),1fr));
+    gap:12px;padding:4px 2px 16px;align-content:start}
+  .sitem{background:rgba(12,20,14,.92);border:2px solid rgba(255,255,255,.14);border-radius:16px;padding:12px 11px;display:flex;flex-direction:column;text-align:center}
+  .sitem .s-ic{font-size:clamp(30px,6vw,42px);line-height:1;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+  .sitem .s-nm{font-weight:900;font-size:clamp(12px,2vw,15px);margin-top:8px;color:#eaffea}
+  .sitem .s-desc{font-size:clamp(9px,1.5vw,11px);color:#a9c6a0;font-weight:700;margin-top:3px;flex:1}
+  .sitem .s-price{font-weight:900;font-size:clamp(12px,2vw,15px);color:#bfe0ff;margin-top:8px}
+  .sbtn{margin-top:8px;width:100%;font-family:inherit;font-weight:900;font-size:clamp(11px,1.9vw,14px);cursor:pointer;border:none;border-radius:11px;padding:10px;color:#0d2410;background:linear-gradient(180deg,#9bf0b0,#43c86a);box-shadow:0 4px 0 #1f7a3c}
+  .sbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #1f7a3c}
+  .sbtn.cant{background:linear-gradient(180deg,#8a9490,#5c6660);color:#dfe6e0;box-shadow:0 4px 0 #3a423e;cursor:default}
+  .sbtn.owned{background:linear-gradient(180deg,#bfe0ff,#5aa8e0);color:#062033;box-shadow:0 4px 0 #2a5a80}
+  .sitem.feat{border-color:rgba(255,210,63,.55);background:linear-gradient(180deg,rgba(70,40,20,.7),rgba(30,22,12,.95))}
+  .sitem.feat .s-price{color:#ffd23f}
+  .mbtn.shop{background:linear-gradient(180deg,#bff0c0,#43c86a);color:#0d2410;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 5px 0 #1f7a3c,0 9px 18px rgba(0,0,0,.45)}
+  .mbtn.shop:active{box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 1px 0 #1f7a3c,0 3px 8px rgba(0,0,0,.45)}
 
   .mbtn.pass{background:linear-gradient(180deg,#e6c6ff,#b06bff);color:#2a0f4a;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 5px 0 #6d34b5,0 9px 18px rgba(0,0,0,.45)}
   .mbtn.pass:active{box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 1px 0 #6d34b5,0 3px 8px rgba(0,0,0,.45)}
@@ -303,7 +333,7 @@
     <div class="menu-top">
       <div class="cur">
         <div class="c gold">🐟 <span id="m-gold">0</span></div>
-        <div class="c gem">💎 <span id="m-gem">0</span></div>
+        <div class="c tuna">🥫 <span id="m-tuna">0</span></div>
       </div>
     </div>
 
@@ -315,6 +345,7 @@
       <button class="mbtn" id="m-how"><span class="ic">❔</span> HOW TO PLAY</button>
       <button class="mbtn lock" id="m-campaign"><span class="ic">🗺️</span> CAMPAIGN <span class="lo">🔒</span></button>
       <button class="mbtn" id="m-cats"><span class="ic">🐱</span> CATS <span class="lo" id="m-catcount">3/10</span></button>
+      <button class="mbtn shop" id="m-shop"><span class="ic">🛒</span> SHOP <span class="lo" id="m-shoplvl">🥫0</span></button>
       <button class="mbtn" id="m-settings"><span class="ic">⚙️</span> SETTINGS</button>
     </div>
     <div class="ver">v1 · World 1: Backyard 🐭</div>
@@ -349,7 +380,7 @@
       </div>
       <div class="cp-prem">
         <button class="cp-prembtn" id="cp-prembtn">🎫 PAWSOME PASS</button>
-        <span class="cp-gem" id="cp-gemwallet">💎 0</span>
+        <span class="cp-tuna" id="cp-tunawallet">🥫 0</span>
         <span style="font-size:12px;color:#c9b6ff;font-weight:700">One-time purchase — unlocks all 10 premium rewards + exclusive skins 👑</span>
       </div>
       <div class="cp-track" id="cp-track"></div>
@@ -363,7 +394,7 @@
         <ul class="cp-buyperk">
           <li><span>👑</span><span>All 10 premium tier rewards</span></li>
           <li><span>✨</span><span>Exclusive skins — Golden Cat &amp; TOP CAT</span></li>
-          <li><span>💎</span><span>+150 gems instantly</span></li>
+          <li><span>🥫</span><span>+150 tuna cans instantly</span></li>
           <li><span>⚡</span><span>+25% XP for the whole season</span></li>
         </ul>
         <div class="cp-buynote">🔒 Demo store — no real payment is taken</div>
@@ -387,6 +418,19 @@
       <div class="cc-grid" id="cc-grid"></div>
     </div>
     <canvas id="sc" width="560" height="420" style="display:none"></canvas>
+  </div>
+
+  <!-- ================= SHOP ================= -->
+  <div id="shop" class="screen hidden">
+    <div class="sh-bg"></div>
+    <div class="sh-wrap">
+      <div class="sh-head">
+        <div class="sh-title">🛒 CAT SHOP</div>
+        <div class="sh-wallet">🥫 <span id="sh-tuna">0</span><span class="fishc">🐟 <span id="sh-fish">0</span></span></div>
+        <button class="sh-close" id="sh-close">✕</button>
+      </div>
+      <div class="sh-grid" id="sh-grid"></div>
+    </div>
   </div>
 
   <!-- ================= GAME ================= -->
@@ -550,11 +594,74 @@ function testSkins(){
   return list.filter(i=>skinOwned(i.unlockSkin)).map(i=>i.name).join(',')||'none claimed';
 }
 
+// ---------------- CAT SHOP ----------------
+const BOOSTS={ dmg:false, xp:false, fish:false, mice:false, start:false };
+function boostsLoad(){ try{ const raw=localStorage.getItem('cwaut_boosts'); if(raw){ Object.assign(BOOSTS,JSON.parse(raw)); } }catch(e){} }
+function boostsSave(){ try{ localStorage.setItem('cwaut_boosts', JSON.stringify(BOOSTS)); }catch(e){} }
+function xpMult(){ return BOOSTS.xp?1.5:1; }
+function fishMult(){ return BOOSTS.fish?1.5:1; }
+function dmgMult(){ return BOOSTS.dmg?1.25:1; }
+function startBonus(){ return BOOSTS.start?180:0; }
+// once: true = permanent unlock (b flag). trade:true = spends FISH instead of tuna.
+const SHOP_ITEMS=[
+  {id:'dmg',      ic:'⚔️', nm:'Sharp Claws',  desc:'+25% damage for all cats',             price:30, once:true, b:'dmg'},
+  {id:'xp',       ic:'⭐', nm:'XP Booster',    desc:'+50% Catapass XP (permanent)',         price:40, once:true, b:'xp'},
+  {id:'fish',     ic:'💰', nm:'Fish Finder',   desc:'+50% fish from every mouse (permanent)',price:35, once:true, b:'fish'},
+  {id:'mice',     ic:'🐭', nm:'More Mice!',    desc:'+50% mice per wave (more fish & XP)',  price:25, once:true, b:'mice'},
+  {id:'start',    ic:'🚀', nm:'Head Start',    desc:'Begin every run with +180🐟',          price:20, once:true, b:'start'},
+  {id:'fishpack', ic:'🐟', nm:'Fish Crate',    desc:'+300 fish to your wallet',             price:15, repeat:true, effect:'fishpack'},
+  {id:'tunapack', ic:'🥫', nm:'Tuna 10-Pack',  desc:'Trade 60🐟 for +10 🥫 tuna',           price:60, repeat:true, trade:true},
+  {id:'gemskin',  ic:'🎨', nm:'Golden Skin',   desc:'Unlock the Golden Cat in your collection', price:80, once:true, effect:'skin'},
+];
+function shopOwned(it){ if(!it.once) return false; return !!BOOSTS[it.b]; }
+function shopCanAfford(it){ if(it.trade) return (PASS.wallet.fish||0)>=it.price; return (PASS.wallet.tuna||0)>=it.price; }
+function buyShopItem(it){
+  if(shopOwned(it)) return;
+  if(it.trade){
+    if((PASS.wallet.fish||0)<it.price){ menuToast('Need 🐟'+it.price+' fish'); return; }
+    PASS.wallet.fish-=it.price; PASS.wallet.tuna+=10; passSave();
+  } else {
+    if((PASS.wallet.tuna||0)<it.price){ menuToast('Need 🥫'+it.price+' tuna'); return; }
+    PASS.wallet.tuna-=it.price;
+    if(it.once) BOOSTS[it.b]=true;
+    if(it.effect==='fishpack') PASS.wallet.fish+=300;
+    if(it.effect==='skin') grantSkin('Golden Cat');
+    boostsSave(); passSave();
+  }
+  syncMenuCur(); renderShop();
+  menuToast('Bought '+it.nm+'! '+it.ic);
+}
+function renderShop(){
+  const grid=el('sh-grid'); if(!grid) return;
+  if(el('sh-tuna')) el('sh-tuna').textContent=(PASS.wallet.tuna||0);
+  if(el('sh-fish')) el('sh-fish').textContent=(PASS.wallet.fish||0);
+  const ml=el('m-shoplvl'); if(ml) ml.textContent='🥫'+(PASS.wallet?PASS.wallet.tuna:0);
+  grid.innerHTML='';
+  SHOP_ITEMS.forEach(it=>{
+    const owned=shopOwned(it);
+    const afford=shopCanAfford(it);
+    const cur=it.trade?'🐟':'🥫';
+    const d=document.createElement('div'); d.className='sitem'+(it.once&&it.price>=35?' feat':'');
+    d.innerHTML='<div class="s-ic">'+it.ic+'</div><div class="s-nm">'+it.nm+'</div><div class="s-desc">'+it.desc+'</div>'+
+      '<div class="s-price">'+(owned?'✓ OWNED':(cur+it.price))+'</div>';
+    const b=document.createElement('button');
+    if(owned){ b.className='sbtn owned'; b.textContent='OWNED ✓'; b.disabled=true; }
+    else if(!afford){ b.className='sbtn cant'; b.textContent='NEED '+cur+it.price; b.disabled=true; }
+    else { b.className='sbtn'; b.textContent='BUY  '+cur+it.price; b.onclick=()=>buyShopItem(it); }
+    d.appendChild(b); grid.appendChild(d);
+  });
+}
+function openShop(){ ['howto','catapass','cats'].forEach(id=>{ const e=el(id); if(e) e.classList.add('hidden'); });
+  el('menu').classList.add('hidden'); el('game').classList.add('hidden');
+  el('shop').classList.remove('hidden'); renderShop(); }
+function closeShop(){ el('shop').classList.add('hidden'); el('menu').classList.remove('hidden'); refreshPassBadge(); syncMenuCur(); }
+boostsLoad();
+
 // ---------------- STATE ----------------
 let S;
 function newGame(){
   const bankFish = (typeof PASS!=='undefined' && PASS.wallet) ? PASS.wallet.fish : 0;
-  S={ state:'idle', lives:10, fish:140+bankFish, gems:0, wave:0, maxWaves:5,
+  S={ state:'idle', lives:10, fish:140+startBonus()+bankFish, tuna:0, wave:0, maxWaves:5,
       towers:[], enemies:[], shots:[], pops:[], t:0,
       dmgText:[], parts:[], shake:0, hurtFlash:0,
       spawnQueue:[], spawnTimer:0, waveActive:false, sel:null, buildCat:null, locked:null, hover:null, over:false };
@@ -563,27 +670,27 @@ function newGame(){
 // ---------------- CATAPASS ----------------
 const PASS_MAX=10, PASS_STEP=100;   // 100 XP per tier, 10 tiers
 const PRICE_USD='$4.99';            // Pawsome Pass = real-money purchase (demo store, no real charge)
-const PREMIUM_GEMS=150;             // instant gems granted on purchase
+const PREMIUM_TUNA=150;             // instant tuna cans granted on purchase
 // each tier: free reward + premium reward
-// kinds: fish | gems | skin
+// kinds: fish | tuna | skin
 const PASS_TIERS=[
   {free:{k:'fish',a:100,ic:'🐟'}, prem:{k:'skin',a:'Shadow Cat',ic:'🐈⬛'}},
-  {free:{k:'gems',a:20,ic:'💎'},  prem:{k:'fish',a:400,ic:'🐟'}},
-  {free:{k:'fish',a:200,ic:'🐟'}, prem:{k:'gems',a:60,ic:'💎'}},
-  {free:{k:'gems',a:30,ic:'💎'},  prem:{k:'skin',a:'Mage Cat',ic:'🧙'}},
+  {free:{k:'tuna',a:20,ic:'🥫'},  prem:{k:'fish',a:400,ic:'🐟'}},
+  {free:{k:'fish',a:200,ic:'🐟'}, prem:{k:'tuna',a:60,ic:'🥫'}},
+  {free:{k:'tuna',a:30,ic:'🥫'},  prem:{k:'skin',a:'Mage Cat',ic:'🧙'}},
   {free:{k:'fish',a:300,ic:'🐟'}, prem:{k:'fish',a:700,ic:'🐟'}},
-  {free:{k:'gems',a:40,ic:'💎'},  prem:{k:'gems',a:120,ic:'💎'}},
+  {free:{k:'tuna',a:40,ic:'🥫'},  prem:{k:'tuna',a:120,ic:'🥫'}},
   {free:{k:'fish',a:400,ic:'🐟'}, prem:{k:'skin',a:'Golden Cat',ic:'🌟'}},
-  {free:{k:'gems',a:50,ic:'💎'},  prem:{k:'fish',a:900,ic:'🐟'}},
-  {free:{k:'fish',a:500,ic:'🐟'}, prem:{k:'gems',a:200,ic:'💎'}},
-  {free:{k:'gems',a:100,ic:'💎'},prem:{k:'skin',a:'Cosmic Cat',ic:'🌌'}},
+  {free:{k:'tuna',a:50,ic:'🥫'},  prem:{k:'fish',a:900,ic:'🐟'}},
+  {free:{k:'fish',a:500,ic:'🐟'}, prem:{k:'tuna',a:200,ic:'🥫'}},
+  {free:{k:'tuna',a:100,ic:'🥫'},prem:{k:'skin',a:'Cosmic Cat',ic:'🌌'}},
 ];
-const PASS={ xp:0, premium:false, claimed:{}, skins:[], wallet:{fish:0,gems:0} };
-function passLoad(){ try{ const raw=localStorage.getItem('cwaut_pass'); if(raw){ const d=JSON.parse(raw); Object.assign(PASS,d); if(!PASS.claimed) PASS.claimed={}; if(!PASS.skins) PASS.skins=[]; if(!PASS.wallet) PASS.wallet={fish:0,gems:0}; } }catch(e){} }
+const PASS={ xp:0, premium:false, claimed:{}, skins:[], wallet:{fish:0,tuna:0} };
+function passLoad(){ try{ const raw=localStorage.getItem('cwaut_pass'); if(raw){ const d=JSON.parse(raw); Object.assign(PASS,d); if(!PASS.claimed) PASS.claimed={}; if(!PASS.skins) PASS.skins=[]; if(!PASS.wallet) PASS.wallet={fish:0,tuna:0}; } }catch(e){} }
 function passSave(){ try{ localStorage.setItem('cwaut_pass', JSON.stringify(PASS)); }catch(e){} }
 function passTier(){ return Math.min(PASS_MAX, Math.floor(PASS.xp/PASS_STEP)); }
 function passXpInTier(){ return passTier()>=PASS_MAX ? PASS_STEP : (PASS.xp % PASS_STEP); }
-function gainXp(n){ const before=passTier(); if(PASS.premium) n=Math.round(n*1.25); PASS.xp+=n; passSave(); const after=passTier();
+function gainXp(n){ const before=passTier(); n=Math.round(n*xpMult()*(PASS.premium?1.25:1)); PASS.xp+=n; passSave(); const after=passTier();
   if(after>before){ flashBanner('🎫 CATAPASS TIER '+after+'!',1300); }
   if(after>=6) grantSkin('Ninja Cat');
   if(after>=8) grantSkin('Crystal Cat');
@@ -595,7 +702,7 @@ function doClaim(after,premium){
   const claimedSet=PASS.claimed[after]||(PASS.claimed[after]={});
   claimedSet[premium?'p':'f']=true;
   if(rw.k==='fish') PASS.wallet.fish+=rw.a;
-  if(rw.k==='gems') PASS.wallet.gems+=rw.a;
+  if(rw.k==='tuna') PASS.wallet.tuna+=rw.a;
   if(rw.k==='skin'){ if(PASS.skins.indexOf(rw.a)<0) PASS.skins.push(rw.a); }
   passSave(); syncMenuCur(); syncHud(); renderPass();
   const label = rw.k==='skin'?('Unlocked '+rw.a+' '+(rw.ic||'🎨')):('+'+rw.a+' '+(rw.ic||'🎁'));
@@ -608,8 +715,8 @@ function renderPass(){
   if(!el('cp-track')) return;
   const t=passTier();
   el('cp-prembtn').classList.toggle('owned',PASS.premium);
-  const walletGems=(PASS.wallet?PASS.wallet.gems:0);
-  const gw=el('cp-gemwallet'); if(gw) gw.textContent='\ud83d\udc8e '+walletGems;
+  const walletTuna=(PASS.wallet?PASS.wallet.tuna:0);
+  const gw=el('cp-tunawallet'); if(gw) gw.textContent='\ud83e\udd6b '+walletTuna;
   el('cp-prembtn').classList.remove('locked');
   el('cp-prembtn').textContent = PASS.premium ? '🎫 PAWSOME PASS ACTIVE ✓' : '🎫 PAWSOME PASS — '+PRICE_USD;
   const track=el('cp-track'); track.innerHTML='';
@@ -631,7 +738,7 @@ function passRewardEl(i,lane,rw,unlocked,premium){
   const claimable=unlocked && (premium?PASS.premium:true) && !claimed;
   const d=document.createElement('div');
   d.className='cp-reward '+(premium?'prem':'free')+(unlocked?'':' locked')+(claimed?' claimed':'');
-  const label = rw.k==='skin' ? rw.a : (rw.k==='fish'?('+'+rw.a+' Fish'):('+'+rw.a+' Gems'));
+  const label = rw.k==='skin' ? rw.a : (rw.k==='fish'?('+'+rw.a+' Fish'):('+'+rw.a+' Tuna'));
   d.innerHTML='<div class="cp-ric">'+rw.ic+'</div><div class="cp-ramt" style="font-size:11px">'+label+'</div>';
   const btn=document.createElement('button'); btn.className='cp-claim'+(claimable?' ready':'');
   if(claimed){ btn.textContent='CLAIMED ✓'; btn.disabled=true; }
@@ -706,7 +813,7 @@ function showPanel(t){
   S.sel=t;
   const c=CATS[t.key];
   const upCost=Math.round(c.cost*0.7*t.lvl);
-  const dmg=Math.round(c.dmg*(1+0.5*(t.lvl-1)));
+  const dmg=Math.round(c.dmg*(1+0.5*(t.lvl-1))*dmgMult());
   const rng=Math.round(t.range);
   ui.panel.classList.remove('hidden');
   ui.panel.innerHTML=`
@@ -718,7 +825,7 @@ function showPanel(t){
     </div>`;
   el('p-up').onclick=()=>{
     if(S.fish<upCost){ flashBanner('Need more fish!',700); return; }
-    S.fish-=upCost; t.lvl++; t.spent+=upCost; t.dmg=c.dmg*(1+0.5*(t.lvl-1)); t.range=c.range+8*(t.lvl-1);
+    S.fish-=upCost; t.lvl++; t.spent+=upCost; t.dmg=c.dmg*(1+0.5*(t.lvl-1))*dmgMult(); t.range=c.range+8*(t.lvl-1);
     syncHud(); showPanel(t);
   };
   el('p-sell').onclick=()=>{
@@ -746,7 +853,7 @@ function setHover(c,r){
 function placeTower(c,r){
   const def=CATS[S.buildCat];
   S.fish-=def.cost;
-  S.towers.push({key:S.buildCat,c,r,x:c*TS+TS/2,y:r*TS+TS/2,lvl:1,dmg:def.dmg,range:def.range,
+  S.towers.push({key:S.buildCat,c,r,x:c*TS+TS/2,y:r*TS+TS/2,lvl:1,dmg:def.dmg*dmgMult(),range:def.range,
     cd:0,angle:0,spent:def.cost,bob:Math.random()*6,flash:0});
   syncHud();
   if(S.fish<def.cost) S.buildCat=null;
@@ -808,7 +915,8 @@ ui.wavebtn.onclick=()=>{
 function startWave(){
   const d=waveDef(S.wave);
   S.spawnQueue=[];
-  for(let i=0;i<d.count;i++) S.spawnQueue.push({hp:d.hp*(1+ (i%5===4?0.6:0)), speed:d.speed, bounty:d.bounty, big:(i%5===4)});
+  const count=Math.round(d.count*(BOOSTS.mice?1.5:1));
+  for(let i=0;i<count;i++) S.spawnQueue.push({hp:d.hp*(1+ (i%5===4?0.6:0)), speed:d.speed, bounty:d.bounty, big:(i%5===4)});
   S.spawnTimer=0; S.waveActive=true;
   ui.wavebtn.classList.remove('ready');
   ui.wavebtn.textContent='WAVE '+S.wave+' INCOMING…';
@@ -818,19 +926,19 @@ function startWave(){
 }
 function endWave(){
   S.waveActive=false;
-  const bonus=25+S.wave*10; S.fish+=bonus; const gemDrop=2+S.wave; PASS.wallet.gems+=gemDrop; passSave(); gainXp(25); syncHud();
+  const bonus=25+S.wave*10; S.fish+=bonus; const tunaDrop=2+S.wave; PASS.wallet.tuna+=tunaDrop; passSave(); gainXp(25); syncHud();
   if(S.wave>=S.maxWaves){ win(); return; }
   ui.wavebtn.disabled=false;
   ui.wavebtn.textContent='START WAVE '+(S.wave+1);
   ui.wavebtn.classList.add('ready');
-  flashBanner('Wave cleared!  +🐟'+bonus+'  +💎'+gemDrop,1600);
+  flashBanner('Wave cleared!  +🐟'+bonus+'  +🥫'+tunaDrop,1600);
 }
 function win(){
   S.over=true;
-  PASS.wallet.gems+=50; grantSkin('Frost Cat'); passSave();
+  PASS.wallet.tuna+=50; grantSkin('Frost Cat'); passSave();
   ui.overlay.classList.remove('hidden');
   ui.overlay.innerHTML=`<h2>🏆 YOU WIN!</h2><p>Cwaut Defense — World 1: Backyard cleared.</p>
-    <p style="margin-top:6px;color:#9be7ff;font-weight:800">+50 💎 earned — save up for the Pawsome Pass!</p>
+    <p style="margin-top:6px;color:#9be7ff;font-weight:800">+50 🥫 earned — save up for the Pawsome Pass!</p>
     <p style="margin-top:6px">Next up… 🐕 the dogs are coming.</p>
     <button class="btn" id="o-again" style="margin-top:16px">🔁 PLAY AGAIN</button>
     <button class="btn ghost" id="o-menu">🏠 MENU</button>`;
@@ -887,7 +995,7 @@ function update(dt){
     if(target) t.angle=Math.atan2(target.y-t.y,target.x-t.x);
     if(target && t.cd<=0){
       t.cd=def.rate; t.flash=0.09;
-      const dmg=Math.round(def.dmg*(1+0.5*(t.lvl-1)));
+      const dmg=Math.round(def.dmg*(1+0.5*(t.lvl-1))*dmgMult());
       const mx=t.x+Math.cos(t.angle)*16, my=t.y-14+Math.sin(t.angle)*16;
       S.shots.push({x:mx,y:my,tx:target.x,ty:target.y,dmg,splash:def.splash,
         color:def.color,life:0.09,speed:def.speed,target:null, tgtD:best});
@@ -926,7 +1034,7 @@ function update(dt){
   // deaths
   const dead=S.enemies.filter(e=>e.hp<=0);
   for(const e of dead){
-    S.fish+=e.bounty;
+    S.fish+=Math.round(e.bounty*fishMult());
     gainXp(e.big?12:5);
     const p=posAt(e.d);
     burst(p.x,p.y,e.big?'#ffd23f':'#cfd3e6', e.big?24:16, e.big?300:240, e.big?5:3.8);
@@ -1245,9 +1353,9 @@ function setupMenu(){
   syncMenuCur();
 }
 function syncMenuCur(){
-  const g=el('m-gold'), m=el('m-gem');
+  const g=el('m-gold'), m=el('m-tuna');
   if(g) g.textContent=(PASS.wallet?PASS.wallet.fish:0);
-  if(m) m.textContent=(PASS.wallet?PASS.wallet.gems:0);
+  if(m) m.textContent=(PASS.wallet?PASS.wallet.tuna:0);
 }
 let toastT;
 function menuToast(txt){
@@ -1264,6 +1372,8 @@ el('m-how').onclick=()=>{ el('menu').classList.add('hidden'); el('howto').classL
 el('h-back').onclick=()=>{ el('howto').classList.add('hidden'); el('menu').classList.remove('hidden'); };
 if(el('m-campaign')) el('m-campaign').onclick=()=>menuToast('Campaign is coming soon! 🗺️');
 if(el('m-cats')) el('m-cats').onclick=()=>openCats();
+if(el('m-shop')) el('m-shop').onclick=()=>openShop();
+if(el('sh-close')) el('sh-close').onclick=()=>closeShop();
 if(el('cc-close')) el('cc-close').onclick=()=>closeCats();
 if(el('m-settings')) el('m-settings').onclick=()=>menuToast('Settings coming soon! ⚙️');
 if(el('m-pass')) el('m-pass').onclick=()=>openPass();
@@ -1276,14 +1386,16 @@ if(el('cp-prembtn')) el('cp-prembtn').onclick=()=>{
 };
 if(el('cp-cancel')) el('cp-cancel').onclick=()=>closeStore();
 if(el('cp-confirm')) el('cp-confirm').onclick=()=>{
-  PASS.premium=true; PASS.wallet.gems+=PREMIUM_GEMS; passSave(); syncMenuCur(); renderPass(); closeStore();
-  menuToast('🎫 PAWSOME PASS bought for '+PRICE_USD+' (demo) — +💎'+PREMIUM_GEMS+'! 👑');
+  PASS.premium=true; PASS.wallet.tuna+=PREMIUM_TUNA; passSave(); syncMenuCur(); renderPass(); closeStore();
+  menuToast('🎫 PAWSOME PASS bought for '+PRICE_USD+' (demo) — +🥫'+PREMIUM_TUNA+'! 👑');
 };
 
 // boot
 window.__dbg=()=>S;
 window.__pass={PASS,gainXp,doClaim,passTier,renderPass,openPass,closePass};
 window.__cats={CATS_INFO,renderCats,openCats,closeCats,catPreviewURL,testSkins,initCats,skinOwned,grantSkin};
+window.__shop={BOOSTS,SHOP_ITEMS,renderShop,openShop,closeShop,buyShopItem,shopOwned};
+boostsSave&&0;
 setupMenu();
 refreshPassBadge();
 initCats();
