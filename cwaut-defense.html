@@ -185,7 +185,7 @@ let S;
 function newGame(){
   S={ state:'idle', lives:10, fish:140, wave:0, maxWaves:5,
       towers:[], enemies:[], shots:[], pops:[], t:0,
-      spawnQueue:[], spawnTimer:0, waveActive:false, sel:null, buildCat:null, over:false };
+      spawnQueue:[], spawnTimer:0, waveActive:false, sel:null, buildCat:null, locked:null, hover:null, over:false };
 }
 newGame();
 
@@ -221,7 +221,7 @@ function buildBar(){
     d.innerHTML=`<div class="face">${c.face}</div><div class="nm">${c.name}</div><div class="cost">🐟${c.cost}</div>`;
     d.onclick=()=>{
       if(S.fish<c.cost){ flashBanner('Need more fish!',700); return; }
-      S.buildCat = (S.buildCat===key)?null:key; S.sel=null;
+      S.buildCat = (S.buildCat===key)?null:key; S.sel=null; S.locked=null; S.hover=null;
       ui.panel.classList.add('hidden');
       syncBuildBar();
     };
@@ -235,7 +235,12 @@ function syncBuildBar(){
     d.classList.toggle('sel', S.buildCat===key);
     d.classList.toggle('poor', S.fish<CATS[key].cost);
   });
-  ui.hint.classList.toggle('hidden', !S.buildCat);
+  updateHint();
+}
+function updateHint(){
+  if(!S.buildCat){ ui.hint.classList.add('hidden'); return; }
+  ui.hint.classList.remove('hidden');
+  ui.hint.textContent = S.locked ? 'Tap again to place ✓  ·  tap another tile to move' : 'Tap a grass tile to preview your cat';
 }
 
 // ---------------- TOWER PANEL ----------------
@@ -276,12 +281,28 @@ function tileFree(c,r){
   if(S.towers.some(t=>t.c===c&&t.r===r)) return false;
   return true;
 }
+function setHover(c,r){
+  if(c<0||r<0||c>=COLS||r>=ROWS){ return; }
+  S.hover={c,r,x:c*TS+TS/2,y:r*TS+TS/2,valid:tileFree(c,r)};
+}
+function placeTower(c,r){
+  const def=CATS[S.buildCat];
+  S.fish-=def.cost;
+  S.towers.push({key:S.buildCat,c,r,x:c*TS+TS/2,y:r*TS+TS/2,lvl:1,dmg:def.dmg,range:def.range,
+    cd:0,angle:0,spent:def.cost,bob:Math.random()*6});
+  syncHud();
+  if(S.fish<def.cost) S.buildCat=null;
+  S.locked=null;
+  if(!S.buildCat){ S.hover=null; }
+  syncBuildBar();
+}
 CV.addEventListener('pointermove',e=>{
   if(!S.buildCat){ S.hover=null; return; }
+  if(S.locked){ return; }              // ghost stays locked while confirming
   const p=canvasPos(e); const {c,r}=tileAt(p.x,p.y);
-  S.hover={c,r,x:c*TS+TS/2,y:r*TS+TS/2,valid:tileFree(c,r)};
+  setHover(c,r);
 });
-CV.addEventListener('pointerleave',()=>{ S.hover=null; });
+CV.addEventListener('pointerleave',()=>{ if(!S.locked) S.hover=null; });
 CV.addEventListener('pointerdown',e=>{
   if(S.over) return;
   const {x,y}=canvasPos(e);
@@ -290,18 +311,31 @@ CV.addEventListener('pointerdown',e=>{
     if(Math.hypot(t.x-x,t.y-y)<26){ showPanel(t); return; }
   }
   if(S.buildCat){
-    const c=Math.floor(x/TS), r2=Math.floor(y/TS);
-    if(c<0||r2<0||c>=COLS||r2>=ROWS){ return; }
-    if(blocked.has(c+','+r2)){ flashBanner('Cats can\'t stand on the path!',700); return; }
-    if(S.towers.some(t=>t.c===c&&t.r===r2)){ flashBanner('Spot taken!',700); return; }
+    const {c,r}=tileAt(x,y);
+    if(c<0||r<0||c>=COLS||r>=ROWS){ return; }
     const def=CATS[S.buildCat];
-    if(S.fish<def.cost){ flashBanner('Need more fish!',700); return; }
-    S.fish-=def.cost;
-    S.towers.push({key:S.buildCat,c,r:r2,x:c*TS+TS/2,y:r2*TS+TS/2,lvl:1,dmg:def.dmg,range:def.range,
-      cd:0,angle:0,spent:def.cost,bob:Math.random()*6});
-    syncHud(); syncBuildBar();
-    if(S.fish<def.cost) S.buildCat=null; syncBuildBar();
-    S.hover={c,r:r2,x:c*TS+TS/2,y:r2*TS+TS/2,valid:true};
+    const onPath=blocked.has(c+','+r);
+    const taken=S.towers.some(t=>t.c===c&&t.r===r);
+
+    // already previewing -> this tap confirms (if valid + affordable)
+    if(S.locked){
+      if(S.locked.c===c && S.locked.r===r){
+        if(onPath){ flashBanner("Cats can't stand on the path!",800); S.locked=null; S.hover=null; updateHint(); return; }
+        if(taken){ flashBanner('Spot taken!',800); S.locked=null; S.hover=null; updateHint(); return; }
+        if(S.fish<def.cost){ flashBanner('Need more fish!',800); S.locked=null; setHover(c,r); updateHint(); return; }
+        placeTower(c,r); updateHint(); return;
+      }
+      // tapped a different tile -> move the preview there
+      if(onPath){ flashBanner("Cats can't stand on the path!",800); return; }
+      if(taken){ flashBanner('Spot taken!',800); return; }
+      S.locked={c,r}; setHover(c,r); updateHint(); return;
+    }
+
+    // first tap -> PREVIEW only, do not place yet
+    if(onPath){ flashBanner("Cats can't stand on the path!",800); return; }
+    if(taken){ flashBanner('Spot taken!',800); return; }
+    if(S.fish<def.cost){ flashBanner('Need more fish!',800); return; }
+    S.locked={c,r}; setHover(c,r); updateHint();
   } else {
     S.sel=null; ui.panel.classList.add('hidden');
   }
