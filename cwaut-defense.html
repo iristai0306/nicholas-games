@@ -615,6 +615,12 @@ const CATS={
   ninja:  {name:'Ninja Cat',   face:'🥷', cost:140,dmg:10, range:150, rate:0.28, speed:820, color:'#b9c0cc', splash:0,  ability:null,     desc:'Blazing attack speed'},
   crystal:{name:'Crystal Cat', face:'🔮', cost:150,dmg:26, range:200, rate:1.40, speed:900, color:'#c86bff', splash:0,  ability:'pierce', desc:'Piercing shots'},
   cosmic: {name:'Cosmic Cat',  face:'🌌', cost:200,dmg:40, range:220, rate:0.90, speed:1000,color:'#eef1f7', splash:70, ability:'cosmic', desc:'ULTIMATE — pierce + crit'},
+  thunder:{name:'Thunder Cat', face:'⚡', cost:150,dmg:24, range:165, rate:1.10, speed:1300,color:'#ffe680', splash:58, ability:'chain',  desc:'Chain lightning zap'},
+  flame:  {name:'Flame Cat',   face:'🔥', cost:135,dmg:20, range:140, rate:0.95, speed:600, color:'#ff7a3c', splash:70, ability:'burn',   desc:'Burns mice over time'},
+  toxic:  {name:'Toxic Cat',   face:'☠️', cost:120,dmg:14, range:150, rate:0.80, speed:560, color:'#9be24f', splash:66, ability:'poison', desc:'Venom melts mice'},
+  angel:  {name:'Angel Cat',   face:'😇', cost:180,dmg:16, range:175, rate:1.00, speed:700, color:'#bfe9ff', splash:0,  ability:'heal',   desc:'Heals a +life every few waves'},
+  demon:  {name:'Demon Cat',   face:'😈', cost:210,dmg:34, range:160, rate:0.60, speed:760, color:'#ff5b6e', splash:52, ability:'crit',   desc:'Savage crit berserker'},
+  dragon: {name:'Dragon Cat',  face:'🐲', cost:260,dmg:46, range:210, rate:1.05, speed:950, color:'#7be0ff', splash:82, ability:'cosmic', desc:'MYTHIC — splash + pierce + crit'},
 };
 const STARTERS=['pouncer','sharp','chonk'];
 // Loadout = the cats EQUIPPED into your in-level build bar (max 6)
@@ -652,7 +658,12 @@ const CATS_INFO=[
   {key:'golden', name:'Golden Cat',  role:'Legend',    rarity:'Legendary', color:COAT.gold,     stat:'Rapid crit shots',  unlock:'Pawsome Pass · Tier 7', unlockSkin:'Golden Cat'},
   {key:'ninja',  name:'Ninja Cat',   role:'Speedster', rarity:'Epic',      color:COAT.grey,     stat:'Blazing attack speed',unlock:'Catapass · Tier 6 🎫', unlockSkin:'Ninja Cat'},
   {key:'crystal',name:'Crystal Cat', role:'Mage',      rarity:'Mythic',    color:COAT.violet,   stat:'Piercing shots',    unlock:'Catapass · Tier 8 🎫', unlockSkin:'Crystal Cat'},
-  {key:'cosmic', name:'Cosmic Cat',  role:'Mythic',    rarity:'Mythic',    color:COAT.white,    stat:'Pierce + crit ULT', unlock:'Pawsome Pass · Tier 10 👑', unlockSkin:'Cosmic Cat'},
+  {key:'thunder', name:'Thunder Cat', role:'Mage', rarity:'Legendary', color:COAT.gold, stat:'Chain lightning zap', unlock:'Catapass · Tier 62 🎫', unlockSkin:'Thunder Cat'},
+  {key:'drakeling', name:'Dragon Cat', role:'Dragon', rarity:'Mythic', color:COAT.gold, stat:'Mythic all-rounder', unlock:'Pawsome Pass · Tier 95 👑', unlockSkin:'Dragon Cat'},
+  {key:'angel', name:'Angel Cat', role:'Support', rarity:'Legendary', color:COAT.cream, stat:'Heals +1 life', unlock:'Catapass · Tier 70 🎫', unlockSkin:'Angel Cat'},
+  {key:'demon', name:'Demon Cat', role:'Berserker', rarity:'Mythic', color:COAT.neonpink, stat:'Savage crit', unlock:'Catapass · Tier 80 🎫', unlockSkin:'Demon Cat'},
+  {key:'toxic', name:'Toxic Cat', role:'Venom', rarity:'Epic', color:COAT.grey, stat:'Venom melts mice', unlock:'Catapass · Tier 45 🎫', unlockSkin:'Toxic Cat'},
+  {key:'flame', name:'Flame Cat', role:'Burner', rarity:'Epic', color:COAT.orange, stat:'Burns mice over time', unlock:'Catapass · Tier 40 🎫', unlockSkin:'Flame Cat'},
 ];
 function skinOwned(name){ return name && ((PASS&&PASS.skins)||[]).indexOf(name)>=0; }
 function grantSkin(name){ if(!name) return false; if(!PASS.skins) PASS.skins=[]; if(PASS.skins.indexOf(name)<0){ PASS.skins.push(name); passSave(); return true; } return false; }
@@ -728,31 +739,58 @@ function testSkins(){
 }
 
 // ---------------- CAT SHOP ----------------
-const BOOSTS={ dmg:false, xp:false, fish:false, mice:false, start:false };
+const BOOSTS={ dmg:false, xp:false, fish:false, mice:false, start:false, range:false, crit:false, rate:false, lives:false, luck:false };
 function boostsLoad(){ try{ const raw=localStorage.getItem('cwaut_boosts'); if(raw){ Object.assign(BOOSTS,JSON.parse(raw)); } }catch(e){} }
 function boostsSave(){ try{ localStorage.setItem('cwaut_boosts', JSON.stringify(BOOSTS)); }catch(e){} }
 function xpMult(){ return BOOSTS.xp?1.5:1; }
 function fishMult(){ return BOOSTS.fish?1.5:1; }
 function dmgMult(){ return BOOSTS.dmg?1.25:1; }
 function startBonus(){ return BOOSTS.start?180:0; }
+function rangeMult(){ return BOOSTS.range?1.20:1; }
+function rateMult(){ return BOOSTS.rate?0.85:1; }   // lower cooldown = faster
+function critBonus(){ return BOOSTS.crit?0.15:0; }  // +15% crit chance
+function startLives(){ return BOOSTS.lives?5:0; }
+function luckBonus(){ return BOOSTS.luck?1.25:1; }  // +25% tuna drops
 // once: true = permanent unlock (b flag). trade:true = spends FISH instead of tuna.
 const SHOP_ITEMS=[
-  // ---- real-money tuna bundles ----
-  {id:'tun_s',  ic:'🥫', nm:'Handful of Tuna',  desc:'A tasty starter pack to get going', money:'$0.99', tuna:60,  rm:true},
-  {id:'tun_m',  ic:'📦', nm:'Bucket of Tuna',   desc:'Most popular! Keeps the cats fed',  money:'$2.99', tuna:220, rm:true, best:true},
-  {id:'tun_l',  ic:'🚚', nm:'Truckload of Tuna',desc:'+180 bonus tuna thrown in 🎁',      money:'$4.99', tuna:700, rm:true},
-  {id:'tun_xl', ic:'🐟', nm:'Mega Tuna Catch',  desc:'The biggest pile! +800 bonus 🏆',   money:'$9.99', tuna:2300,rm:true},
-  // ---- boosts & items (tuna / fish) ----
-  {id:'dmg',      ic:'⚔️', nm:'Sharp Claws',  desc:'+25% damage for all cats',             price:30, once:true, b:'dmg'},
-  {id:'xp',       ic:'⭐', nm:'XP Booster',    desc:'+50% Catapass XP (permanent)',         price:40, once:true, b:'xp'},
-  {id:'fish',     ic:'💰', nm:'Fish Finder',   desc:'+50% fish from every mouse (permanent)',price:35, once:true, b:'fish'},
-  {id:'mice',     ic:'🐭', nm:'More Mice!',    desc:'+50% mice per wave (more fish & XP)',  price:25, once:true, b:'mice'},
-  {id:'start',    ic:'🚀', nm:'Head Start',    desc:'Begin every run with +180🐟',          price:20, once:true, b:'start'},
-  {id:'fishpack', ic:'🐟', nm:'Fish Crate',    desc:'+300 fish to your wallet',             price:15, repeat:true, effect:'fishpack'},
-  {id:'tunapack', ic:'🥫', nm:'Tuna 10-Pack',  desc:'Trade 60🐟 for +10 🥫 tuna',           price:60, repeat:true, trade:true},
-  {id:'gemskin',  ic:'🎨', nm:'Golden Skin',   desc:'Unlock the Golden Cat in your collection', price:80, once:true, effect:'skin'},
+  // ================= REAL-MONEY TUNA BUNDLES =================
+  {id:'tun_s',  ic:'🥫', nm:'Handful of Tuna',   desc:'A tasty starter pack to get going', money:'$0.99', tuna:60,   rm:true},
+  {id:'tun_m',  ic:'📦', nm:'Bucket of Tuna',    desc:'Most popular! Keeps the cats fed',   money:'$2.99', tuna:220,  rm:true, best:true},
+  {id:'tun_l',  ic:'🚚', nm:'Truckload of Tuna',  desc:'+180 bonus tuna thrown in 🎁',      money:'$4.99', tuna:700,  rm:true},
+  {id:'tun_xl', ic:'🐟', nm:'Mega Tuna Catch',   desc:'The biggest pile! +800 bonus 🏆',   money:'$9.99', tuna:2300, rm:true},
+  {id:'tun_xxl',ic:'🏆', nm:'Whale-Sized Tuna',   desc:'Legendary haul! +2000 bonus 👑',    money:'$19.99',tuna:6500, rm:true},
+  {id:'tun_vip',ic:'💎', nm:'VIP Tuna Vault',     desc:'Everything forever! +5000 bonus 💎', money:'$49.99',tuna:18000,rm:true},
+
+  // ================= PERMANENT POWER UPGRADES (tuna) =================
+  {id:'dmg',      ic:'⚔️', nm:'Sharp Claws',     desc:'+25% damage for ALL cats',          price:30, once:true, b:'dmg', feat:true},
+  {id:'xp',       ic:'⭐', nm:'XP Booster',     desc:'+50% Catapass XP',                  price:40, once:true, b:'xp'},
+  {id:'fish',     ic:'💰', nm:'Fish Finder',    desc:'+50% fish from every kill',          price:35, once:true, b:'fish'},
+  {id:'mice',     ic:'🐭', nm:'More Mice!',     desc:'+50% mice per wave (more loot)',    price:25, once:true, b:'mice'},
+  {id:'start',    ic:'🚀', nm:'Head Start',     desc:'Begin every run with +180🐟',        price:20, once:true, b:'start'},
+  {id:'range',    ic:'📡', nm:'Long Sight',     desc:'+20% range for ALL cats',           price:45, once:true, b:'range'},
+  {id:'crit',     ic:'🎯', nm:'Deadly Aim',     desc:'+15% crit chance for ALL cats',     price:55, once:true, b:'crit'},
+  {id:'rate',     ic:'⚡', nm:'Quick Paws',     desc:'15% faster attacks for ALL cats',    price:60, once:true, b:'rate'},
+  {id:'lives',    ic:'❤️', nm:'4th Life',       desc:'+5 lives at the start of a run',    price:50, once:true, b:'lives'},
+  {id:'luck',     ic:'🍀', nm:'Lucky Cat',      desc:'+25% tuna drops from mice',         price:70, once:true, b:'luck', feat:true},
+
+  // ================= CONSUMABLE PACKS (tuna, repeatable) =================
+  {id:'fishpack', ic:'🐟', nm:'Fish Crate',     desc:'+300 fish to your wallet',           price:15, repeat:true, effect:'fishpack'},
+  {id:'fishbig',  ic:'🐟', nm:'Fish Boat',      desc:'+1500 fish to your wallet',          price:55, repeat:true, effect:'fishbig'},
+  {id:'tunapack', ic:'🥫', nm:'Tuna 10-Pack',   desc:'Trade 60🐟 for +10 🥫 tuna',         price:60, repeat:true, trade:true},
+  {id:'gemskin',  ic:'🎨', nm:'Golden Skin',    desc:'Unlock the Golden Cat',              price:80, once:true, effect:'skin', skinName:'Golden Cat'},
+  {id:'sk_frost', ic:'❄️', nm:'Frost Skin',     desc:'Unlock the Frost Cat',               price:120,once:true, effect:'skin', skinName:'Frost Cat'},
+  {id:'sk_shadow',ic:'🐈‍⬛',nm:'Shadow Skin',   desc:'Unlock the Shadow Cat',              price:90, once:true, effect:'skin', skinName:'Shadow Cat'},
+  {id:'sk_mage',  ic:'🧙', nm:'Mage Skin',      desc:'Unlock the Mage Cat',                price:110,once:true, effect:'skin', skinName:'Mage Cat'},
+  {id:'sk_ninja', ic:'🥷', nm:'Ninja Skin',     desc:'Unlock the Ninja Cat',               price:130,once:true, effect:'skin', skinName:'Ninja Cat'},
+  {id:'sk_cryst', ic:'🔮', nm:'Crystal Skin',   desc:'Unlock the Crystal Cat',             price:150,once:true, effect:'skin', skinName:'Crystal Cat'},
+  {id:'sk_thund', ic:'⚡', nm:'Thunder Skin',   desc:'Unlock the Thunder Cat',             price:170,once:true, effect:'skin', skinName:'Thunder Cat'},
+  {id:'sk_flame', ic:'🔥', nm:'Flame Skin',     desc:'Unlock the Flame Cat',               price:150,once:true, effect:'skin', skinName:'Flame Cat'},
+  {id:'sk_toxic', ic:'☠️', nm:'Toxic Skin',     desc:'Unlock the Toxic Cat',               price:150,once:true, effect:'skin', skinName:'Toxic Cat'},
+  {id:'sk_demon', ic:'😈', nm:'Demon Skin',     desc:'Unlock the Demon Cat',               price:250,once:true, effect:'skin', skinName:'Demon Cat'},
+  {id:'sk_angel', ic:'😇', nm:'Angel Skin',     desc:'Unlock the Angel Cat',               price:220,once:true, effect:'skin', skinName:'Angel Cat'},
+  {id:'sk_dragon',ic:'🐲', nm:'Dragon Skin',    desc:'Unlock the Dragon Cat MYTHIC',        price:400,once:true, effect:'skin', skinName:'Dragon Cat'},
 ];
-function shopOwned(it){ if(!it.once) return false; return !!BOOSTS[it.b]; }
+function shopOwned(it){ if(!it.once) return false; if(it.effect==='skin') return PASS.skins&&PASS.skins.indexOf(it.skinName)>=0; return !!BOOSTS[it.b]; }
 function shopCanAfford(it){ if(it.rm) return true; if(it.trade) return (PASS.wallet.fish||0)>=it.price; return (PASS.wallet.tuna||0)>=it.price; }
 function buyShopItem(it){
   if(shopOwned(it)) return;
@@ -765,7 +803,8 @@ function buyShopItem(it){
     PASS.wallet.tuna-=it.price;
     if(it.once) BOOSTS[it.b]=true;
     if(it.effect==='fishpack') PASS.wallet.fish+=300;
-    if(it.effect==='skin') grantSkin('Golden Cat');
+    if(it.effect==='fishbig') PASS.wallet.fish+=1500;
+    if(it.effect==='skin') grantSkin(it.skinName||'Golden Cat');
     boostsSave(); passSave();
   }
   syncMenuCur(); renderShop();
@@ -795,8 +834,12 @@ function renderShop(){
   grid.innerHTML='';
   grid.appendChild(shopSection('🥫 TUNA BUNDLES — real money',true));
   SHOP_ITEMS.filter(it=>it.rm).forEach(it=> grid.appendChild(shopCard(it)));
-  grid.appendChild(shopSection('⚡ BOOSTS & ITEMS — spend tuna 🥫',false));
-  SHOP_ITEMS.filter(it=>!it.rm).forEach(it=> grid.appendChild(shopCard(it)));
+  grid.appendChild(shopSection('⚡ PERMANENT POWER — spend tuna 🥫',false));
+  SHOP_ITEMS.filter(it=>!it.rm && it.once && it.effect!=='skin').forEach(it=> grid.appendChild(shopCard(it)));
+  grid.appendChild(shopSection('🐱 CAT SKINS — spend tuna 🥫',false));
+  SHOP_ITEMS.filter(it=>!it.rm && it.effect==='skin').forEach(it=> grid.appendChild(shopCard(it)));
+  grid.appendChild(shopSection('📦 CONSUMABLE PACKS — spend tuna 🥫',false));
+  SHOP_ITEMS.filter(it=>!it.rm && !it.once).forEach(it=> grid.appendChild(shopCard(it)));
 }
 let payItem=null;
 function payOpen(it){ payItem=it;
@@ -845,39 +888,43 @@ boostsLoad();
 let S;
 function newGame(){
   const bankFish = (typeof PASS!=='undefined' && PASS.wallet) ? PASS.wallet.fish : 0;
-  S={ state:'idle', lives:10, fish:140+startBonus()+bankFish, tuna:0, wave:0, maxWaves:10,
+  S={ state:'idle', lives:10+startLives(), fish:140+startBonus()+bankFish, tuna:0, wave:0, maxWaves:10,
       towers:[], enemies:[], shots:[], pops:[], t:0,
       dmgText:[], parts:[], shake:0, hurtFlash:0,
       spawnQueue:[], spawnTimer:0, waveActive:false, sel:null, buildCat:null, locked:null, hover:null, over:false };
 }
 
 // ---------------- CATAPASS ----------------
-const PASS_MAX=10, PASS_STEP=100;   // 100 XP per tier, 10 tiers
+const PASS_MAX=100, PASS_STEP=100;   // 100 XP per tier, 100 tiers
 const PRICE_USD='$4.99';            // Pawsome Pass = real-money purchase (demo store, no real charge)
 const PREMIUM_TUNA=150;             // instant tuna cans granted on purchase
-// each tier: free reward + premium reward
-// kinds: fish | tuna | skin
-const PASS_TIERS=[
-  {free:{k:'fish',a:100,ic:'🐟'}, prem:{k:'skin',a:'Shadow Cat',ic:'🐈⬛'}},
-  {free:{k:'tuna',a:20,ic:'🥫'},  prem:{k:'fish',a:400,ic:'🐟'}},
-  {free:{k:'fish',a:200,ic:'🐟'}, prem:{k:'tuna',a:60,ic:'🥫'}},
-  {free:{k:'tuna',a:30,ic:'🥫'},  prem:{k:'skin',a:'Mage Cat',ic:'🧙'}},
-  {free:{k:'fish',a:300,ic:'🐟'}, prem:{k:'fish',a:700,ic:'🐟'}},
-  {free:{k:'tuna',a:40,ic:'🥫'},  prem:{k:'tuna',a:120,ic:'🥫'}},
-  {free:{k:'fish',a:400,ic:'🐟'}, prem:{k:'skin',a:'Golden Cat',ic:'🌟'}},
-  {free:{k:'tuna',a:50,ic:'🥫'},  prem:{k:'fish',a:900,ic:'🐟'}},
-  {free:{k:'fish',a:500,ic:'🐟'}, prem:{k:'tuna',a:200,ic:'🥫'}},
-  {free:{k:'tuna',a:100,ic:'🥫'},prem:{k:'skin',a:'Cosmic Cat',ic:'🌌'}},
-];
+// ---- 100-TIER CATAPASS LADDER (generated) ----
+// kinds: fish | tuna | skin. Premium lane holds the big cat skins; free lane scales with tier.
+const PASS_SKINS={1:'Shadow Cat',4:'Mage Cat',7:'Golden Cat',10:'Cosmic Cat',40:'Flame Cat',45:'Toxic Cat',62:'Thunder Cat',70:'Angel Cat',80:'Demon Cat',95:'Dragon Cat'};
+const PASS_FREE_SKINS={25:'Ninja Cat',35:'Crystal Cat'};
+const PASS_TIERS=(()=>{
+  const arr=[];
+  for(let i=0;i<PASS_MAX;i++){
+    const t=i+1; let free, premm;
+    if(PASS_FREE_SKINS[t]) free={k:'skin',a:PASS_FREE_SKINS[t],ic:'🎫'};
+    else if(t%5===0)       free={k:'tuna',a:20+t*2,ic:'🥫'};
+    else                   free={k:'fish',a:150+t*45,ic:'🐟'};
+    if(PASS_SKINS[t])      premm={k:'skin',a:PASS_SKINS[t],ic:'✨'};
+    else if(t%3===0)       premm={k:'tuna',a:60+t*4,ic:'🥫'};
+    else                   premm={k:'fish',a:400+t*140,ic:'🐟'};
+    arr.push({free,prem:premm});
+  }
+  return arr;
+})();
 const PASS={ xp:0, premium:false, claimed:{}, skins:[], wallet:{fish:0,tuna:0} };
 function passLoad(){ try{ const raw=localStorage.getItem('cwaut_pass'); if(raw){ const d=JSON.parse(raw); Object.assign(PASS,d); if(!PASS.claimed) PASS.claimed={}; if(!PASS.skins) PASS.skins=[]; if(!PASS.wallet) PASS.wallet={fish:0,tuna:0}; } }catch(e){} }
 function passSave(){ try{ localStorage.setItem('cwaut_pass', JSON.stringify(PASS)); }catch(e){} }
 function passTier(){ return Math.min(PASS_MAX, Math.floor(PASS.xp/PASS_STEP)); }
 function passXpInTier(){ return passTier()>=PASS_MAX ? PASS_STEP : (PASS.xp % PASS_STEP); }
 function gainXp(n){ const before=passTier(); n=Math.round(n*xpMult()*(PASS.premium?1.25:1)); PASS.xp+=n; passSave(); const after=passTier();
-  if(after>before){ flashBanner('🎫 CATAPASS TIER '+after+'!',1300); }
-  if(after>=6) grantSkin('Ninja Cat');
-  if(after>=8) grantSkin('Crystal Cat');
+  if(after>before){ playSfx('ui'); flashBanner('🎫 CATAPASS TIER '+after+'!',1300); }
+  const MILESTONES={1:'Shadow Cat',4:'Mage Cat',7:'Golden Cat',10:'Cosmic Cat',25:'Ninja Cat',35:'Crystal Cat',40:'Flame Cat',45:'Toxic Cat',62:'Thunder Cat',70:'Angel Cat',80:'Demon Cat',95:'Dragon Cat'};
+  for(const k in MILESTONES){ if(after>=+k && before<+k) grantSkin(MILESTONES[k]); }
   refreshPassBadge(); updatePassLive(); }
 function refreshPassBadge(){ const b=el('m-passlvl'); if(b) b.textContent='T'+passTier(); }
 function doClaim(after,premium){
@@ -1010,7 +1057,7 @@ function showPanel(t){
     </div>`;
   el('p-up').onclick=()=>{
     if(S.fish<upCost){ flashBanner('Need more fish!',700); return; }
-    S.fish-=upCost; t.lvl++; t.spent+=upCost; t.dmg=c.dmg*(1+0.5*(t.lvl-1))*dmgMult(); t.range=c.range+8*(t.lvl-1);
+    S.fish-=upCost; t.lvl++; t.spent+=upCost; t.dmg=c.dmg*(1+0.5*(t.lvl-1))*dmgMult(); t.range=(c.range+8*(t.lvl-1))*rangeMult();
     playSfx('upgrade');
     syncHud(); showPanel(t);
   };
@@ -1039,7 +1086,7 @@ function setHover(c,r){
 function placeTower(c,r){
   const def=CATS[S.buildCat];
   S.fish-=def.cost;
-  S.towers.push({key:S.buildCat,c,r,x:c*TS+TS/2,y:r*TS+TS/2,lvl:1,dmg:def.dmg*dmgMult(),range:def.range,
+  S.towers.push({key:S.buildCat,c,r,x:c*TS+TS/2,y:r*TS+TS/2,lvl:1,dmg:def.dmg*dmgMult(),range:def.range*rangeMult(),
     cd:0,angle:0,spent:def.cost,bob:Math.random()*6,flash:0});
   playSfx('place');
   syncHud();
@@ -1119,6 +1166,8 @@ function startWave(){
 function endWave(){
   S.waveActive=false;
   const bonus=25+S.wave*10; S.fish+=bonus; const tunaDrop=2+S.wave; PASS.wallet.tuna+=tunaDrop; passSave(); gainXp(25); syncHud();
+  // Angel Cat passive: +1 life every 3 waves
+  if(S.wave%3===0 && S.towers.some(t=>t.key==='angel') && S.lives<20){ S.lives++; flashBanner('😇 Angel Cat blessed you! +1❤️',1200); syncHud(); }
   if(S.wave>=S.maxWaves){ win(); return; }
   ui.wavebtn.disabled=false;
   ui.wavebtn.textContent='START WAVE '+(S.wave+1);
@@ -1193,10 +1242,10 @@ function update(dt){
     }
     if(target) t.angle=Math.atan2(target.y-t.y,target.x-t.x);
     if(target && t.cd<=0){
-      t.cd=def.rate; t.flash=0.09;
+      t.cd=def.rate*rateMult(); t.flash=0.09;
       let dmg=Math.round(def.dmg*(1+0.5*(t.lvl-1))*dmgMult());
       let crit=false;
-      if(def.ability==='crit' || def.ability==='cosmic'){ if(Math.random()<0.35){ dmg=Math.round(dmg*2.5); crit=true; } }
+      if(def.ability==='crit' || def.ability==='cosmic'){ if(Math.random()<(0.35+critBonus())){ dmg=Math.round(dmg*2.5); crit=true; } }
       const mx=t.x+Math.cos(t.angle)*16, my=t.y-14+Math.sin(t.angle)*16;
       S.shots.push({x:mx,y:my,tx:target.x,ty:target.y,dmg,splash:def.splash,crit,
         ability:def.ability,slow:def.ability==='slow',color:def.color,life:0.09,speed:def.speed,target:null, tgtD:best});
@@ -1234,6 +1283,16 @@ function update(dt){
             if(n) burst(s.tx,s.ty,'#ffffff',10,200,3.6);
           }
         }
+        // NEW ABILITIES
+        if(s.ability==='chain'){
+          let cn=0;
+          for(const e of S.enemies){ if(e===hit||e.hp<=0) continue; const p=posAt(e.d);
+            if(Math.hypot(p.x-s.tx,p.y-s.ty)<95){ e.hp-=Math.round(s.dmg*0.7); e.hitT=0.12; cn++;
+              S.shots.push({x:s.tx,y:s.ty,tx:p.x,ty:p.y,dmg:1,splash:0,ability:null,slow:false,color:'#ffe680',life:0.06,speed:2000,crit:false,tgtD:e.d}); if(cn>=3)break; } }
+          if(cn) burst(s.tx,s.ty,'#ffe680',12,220,3.8);
+        }
+        if(s.ability==='burn'){ for(const e of S.enemies){ const p=posAt(e.d); if(Math.hypot(p.x-s.tx,p.y-s.ty)<(s.splash>0?s.splash:40)) applyBurn(e,s.dmg); } }
+        if(s.ability==='poison'){ for(const e of S.enemies){ const p=posAt(e.d); if(Math.hypot(p.x-s.tx,p.y-s.ty)<(s.splash>0?s.splash:40)) applyPoison(e,s.dmg); } }
         S.dmgText.push({x:s.tx+ (Math.random()-0.5)*8,y:s.ty-16,vy:-42,life:0.75,max:0.75,text:(s.crit?'CRIT ':'')+Math.round(s.dmg),color:s.crit?'#ffd23f':s.color,bold:!!s.crit});
         if(s.crit) S.pops.push({x:s.tx,y:s.ty,r:3,max:22,color:'#ffd23f',life:0.25});
       }
@@ -1245,7 +1304,7 @@ function update(dt){
   const dead=S.enemies.filter(e=>e.hp<=0);
   for(const e of dead){
     S.fish+=Math.round(e.bounty*fishMult());
-    const tuna=Math.round((e.big?2:1)*fishMult()); PASS.wallet.tuna+=tuna;
+    const tuna=Math.round((e.big?2:1)*fishMult()*luckBonus()); PASS.wallet.tuna+=tuna;
     gainXp(e.big?12:5);
     playSfx('kill'); if(e.big) playSfx('big');
     const p=posAt(e.d);
@@ -1271,6 +1330,11 @@ function update(dt){
   if(S.hurtFlash>0) S.hurtFlash=Math.max(0,S.hurtFlash-dt*2.2);
   for(const t of S.towers) if(t.flash>0) t.flash=Math.max(0,t.flash-dt);
   for(const e of S.enemies) if(e.hitT>0) e.hitT=Math.max(0,e.hitT-dt);
+  // burn + poison damage-over-time
+  for(const e of S.enemies){
+    if(e.burnT>0){ e.burnT-=dt; e.burnTick=(e.burnTick||0)+dt; if(e.burnTick>=0.4){ e.burnTick=0; e.hp-=e.burnDmg; const p=posAt(e.d); burst(p.x,p.y,'#ff7a3c',3,60,2.4); } }
+    if(e.poisT>0){ e.poisT-=dt; e.poisTick=(e.poisTick||0)+dt; if(e.poisTick>=0.5){ e.poisTick=0; e.hp-=e.poisDmg; const p=posAt(e.d); burst(p.x,p.y,'#9be24f',3,60,2.4); } }
+  }
 
   // wave end
   if(S.waveActive && !S.spawnQueue.length && !S.enemies.length && !S.over){
@@ -1321,6 +1385,8 @@ function drawWorldDeco(WO){
 
 // ---- status effects ----
 function applySlow(e){ e.slow=1.0; e.slowT=Math.max(e.slowT||0,1.6); }
+function applyBurn(e,dmg){ e.burnT=Math.max(e.burnT||0,2.0); e.burnDmg=Math.max(e.burnDmg||0,Math.round(dmg*0.18)); }
+function applyPoison(e,dmg){ e.poisT=Math.max(e.poisT||0,3.0); e.poisDmg=Math.max(e.poisDmg||0,Math.round(dmg*0.14)); }
 
 // ---- WEB AUDIO SOUND FX (no assets) ----
 let AC=null, MUTED=false, MUSIC=null;
