@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Cwaut Defense 🐱🏰</title>
+<style>
+  html,body{margin:0;height:100%;background:#0b1120;overflow:hidden}
+  iframe{border:0;display:block;width:100vw;height:100vh}
+</style>
+</head>
+<body>
+<script>
+  // Always load a FRESH build of the game.
+  // The ?t=timestamp defeats the browser/GitHub Pages cache, so any update shows up immediately.
+  var frame = document.createElement('iframe');
+  frame.src = 'cwaut-defense.html?t=' + Date.now();
+  frame.setAttribute('allow', 'fullscreen; autoplay');
+  frame.title = 'Cwaut Defense';
+  document.body.appendChild(frame);
+</script>
+</body>
+</html>
