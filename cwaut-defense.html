@@ -121,6 +121,36 @@
   .cp-claim.ready{animation:cpPulse 1s infinite}
   @keyframes cpPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
   .cp-tip{margin-top:4px;text-align:center;font-size:clamp(10px,1.7vw,13px);color:#9fb4d8}
+  /* ---------- CAT COLLECTION ---------- */
+  #cats{background:#0a1020;overflow:hidden}
+  #cats .cc-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% -12%,#3a2560,#141026 55%,#0a1020 100%)}
+  .cc-wrap{position:relative;z-index:2;width:100%;height:100%;display:flex;flex-direction:column;padding:14px clamp(10px,3vw,34px)}
+  .cc-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .cc-title{font-size:clamp(22px,4.4vw,40px);font-weight:900;letter-spacing:2px;
+    background:linear-gradient(180deg,#8ff0ff,#5ad1ff);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 16px rgba(90,209,255,.5))}
+  .cc-count{font-size:clamp(10px,1.7vw,14px);letter-spacing:1px;color:#9fe6ff;font-weight:800;
+    border:1.5px solid rgba(120,220,255,.35);border-radius:16px;padding:5px 14px;background:rgba(20,50,70,.4)}
+  .cc-close{margin-left:auto;font-family:inherit;font-weight:900;font-size:18px;cursor:pointer;border:none;color:#fff;
+    background:rgba(255,255,255,.12);border-radius:12px;padding:8px 15px}
+  .cc-close:active{transform:scale(.94)}
+  .cc-grid{margin-top:14px;flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(120px,16vw,168px),1fr));
+    gap:12px;padding:4px 2px 16px;align-content:start}
+  .ccard{background:rgba(12,18,34,.92);border:2px solid rgba(255,255,255,.14);border-radius:16px;padding:10px 10px 12px;text-align:center;position:relative}
+  .ccard.owned{border-color:rgba(120,220,255,.45)}
+  .ccard.locked{filter:grayscale(.45) brightness(.92)}
+  .ccard.skin{border-color:rgba(255,210,63,.55)}
+  .ccard.skin.sowned{box-shadow:0 0 22px rgba(255,210,63,.4);border-color:#ffd23f}
+  .ccard .cc-canvas{width:100%;height:clamp(84px,13vw,116px);border-radius:12px;display:block;
+    background:radial-gradient(circle at 50% 42%,#2a3a5c,#101a30);border:1.5px solid rgba(255,255,255,.1);object-fit:cover}
+  .ccard.locked .cc-canvas{background:radial-gradient(circle at 50% 42%,#161c2c,#0b0f1c)}
+  .ccard .cc-nm{font-weight:900;font-size:clamp(12px,2vw,15px);margin-top:8px;color:#eaf2ff}
+  .ccard .cc-role{font-size:clamp(9px,1.5vw,11px);font-weight:800;letter-spacing:1px;color:#9fb4d8;text-transform:uppercase;margin-top:1px}
+  .ccard .cc-rarity{font-size:11px;font-weight:900;margin-top:5px;letter-spacing:1px}
+  .ccard .cc-lock{font-size:clamp(9px,1.5vw,11px);font-weight:800;color:#c9b6ff;margin-top:7px;line-height:1.4}
+  .ccard .cc-st{display:flex;justify-content:center;gap:8px;margin-top:6px;font-size:clamp(9px,1.5vw,11px);font-weight:800;color:#cfe0ff}
+  .ccard .cc-badge{position:absolute;top:8px;right:8px;font-size:15px;filter:drop-shadow(0 0 4px #000)}
+
   .mbtn.pass{background:linear-gradient(180deg,#e6c6ff,#b06bff);color:#2a0f4a;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 5px 0 #6d34b5,0 9px 18px rgba(0,0,0,.45)}
   .mbtn.pass:active{box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 1px 0 #6d34b5,0 3px 8px rgba(0,0,0,.45)}
 
@@ -284,7 +314,7 @@
       <button class="mbtn pass" id="m-pass"><span class="ic">🎫</span> CATAPASS <span class="lo" id="m-passlvl">T0</span></button>
       <button class="mbtn" id="m-how"><span class="ic">❔</span> HOW TO PLAY</button>
       <button class="mbtn lock" id="m-campaign"><span class="ic">🗺️</span> CAMPAIGN <span class="lo">🔒</span></button>
-      <button class="mbtn lock" id="m-cats"><span class="ic">🐱</span> CATS <span class="lo">🔒</span></button>
+      <button class="mbtn" id="m-cats"><span class="ic">🐱</span> CATS <span class="lo" id="m-catcount">3/10</span></button>
       <button class="mbtn" id="m-settings"><span class="ic">⚙️</span> SETTINGS</button>
     </div>
     <div class="ver">v1 · World 1: Backyard 🐭</div>
@@ -345,6 +375,20 @@
     </div>
   </div>
 
+  <!-- ================= CAT COLLECTION ================= -->
+  <div id="cats" class="screen hidden">
+    <div class="cc-bg"></div>
+    <div class="cc-wrap">
+      <div class="cc-head">
+        <div class="cc-title">🐱 CAT COLLECTION</div>
+        <div class="cc-count" id="cc-count">3 / 10</div>
+        <button class="cc-close" id="cc-close">✕</button>
+      </div>
+      <div class="cc-grid" id="cc-grid"></div>
+    </div>
+    <canvas id="sc" width="560" height="420" style="display:none"></canvas>
+  </div>
+
   <!-- ================= GAME ================= -->
   <div id="game" class="screen hidden">
     <div id="stage">
@@ -375,7 +419,7 @@
 // CWAUT DEFENSE — Phase 1 prototype (World 1: Backyard, enemies = mice)
 // ------------------------------------------------------------------
 const CV = document.getElementById('cv');
-const ctx = CV.getContext('2d');
+let ctx = CV.getContext('2d');
 const W = 960, H = 600, TS = 60;          // logical size, tile size
 const COLS = W/TS, ROWS = H/TS;           // 16 x 10
 
@@ -423,6 +467,89 @@ const CATS={
 };
 const ORDER=['pouncer','sharp','chonk'];
 
+// ---------------- CAT COLLECTION ----------------
+const DPR=Math.min(2,window.devicePixelRatio||1);
+const COAT={
+  orange:'#ffb347', cream:'#ffe0b0', cyan:'#7be0ff', neonpink:'#ff7ba8', aqua:'#5ef0d0',
+  grey:'#b9c0cc', royal:'#a98bff', gold:'#ffd23f', white:'#eef1f7', violet:'#c86bff', charcoal:'#7d8698'
+};
+const RARITY_COLORS={Common:'#b9c0cc',Rare:'#7be0ff',Epic:'#c86bff',Legendary:'#ffd23f',Mythic:'#ff7ba8'};
+// base 3 (key links to CATS) + 7 to collect. unlockSkin links to a Pawsome Pass reward skin name.
+const CATS_INFO=[
+  {key:'pouncer',name:'Pouncer',     role:'Fighter',   rarity:'Common',    color:COAT.orange,   stat:'Balanced all-rounder'},
+  {key:'sharp',  name:'Sharpshooter',role:'Sniper',    rarity:'Rare',      color:COAT.cyan,     stat:'Long range 230'},
+  {key:'chonk',  name:'Chonk',       role:'Bomber',    rarity:'Epic',      color:COAT.neonpink, stat:'Splash damage'},
+  {name:'Shadow Cat',role:'Assassin',rarity:'Rare',     color:COAT.charcoal, stat:'Backstab ×2',        unlock:'Pawsome Pass · Tier 1', unlockSkin:'Shadow Cat'},
+  {name:'Mage Cat',  role:'Mage',    rarity:'Epic',     color:COAT.royal,    stat:'Magic blast AoE',    unlock:'Pawsome Pass · Tier 4', unlockSkin:'Mage Cat'},
+  {name:'Frost Cat', role:'Control', rarity:'Epic',     color:COAT.aqua,     stat:'Slows mice',         unlock:'Win World 1 🏆'},
+  {name:'Golden Cat',role:'Legend',  rarity:'Legendary',color:COAT.gold,     stat:'Critical hits',      unlock:'Pawsome Pass · Tier 7', unlockSkin:'Golden Cat'},
+  {name:'Ninja Cat', role:'Speedster',rarity:'Epic',    color:COAT.grey,     stat:'Double attack speed',unlock:'Catapass · Tier 6 🎫', unlockSkin:'Ninja Cat'},
+  {name:'Crystal Cat',role:'Mage',   rarity:'Mythic',   color:COAT.violet,   stat:'Pierce shots',       unlock:'Catapass · Tier 8 🎫', unlockSkin:'Crystal Cat'},
+  {name:'Cosmic Cat',role:'Mythic',  rarity:'Mythic',   color:COAT.white,    stat:'ULTIMATE power',     unlock:'Pawsome Pass · Tier 10 👑', unlockSkin:'Cosmic Cat'},
+];
+function skinOwned(name){ return name && ((PASS&&PASS.skins)||[]).indexOf(name)>=0; }
+function grantSkin(name){ if(!name) return false; if(!PASS.skins) PASS.skins=[]; if(PASS.skins.indexOf(name)<0){ PASS.skins.push(name); passSave(); return true; } return false; }
+function drawPreviewTo(cv,def,alpha){
+  const c=cv.getContext('2d');
+  const W=cv.width/DPR, H=cv.height/DPR;
+  c.setTransform(DPR,0,0,DPR,0,0);
+  c.clearRect(0,0,W,H);
+  c.save(); c.translate(W/2,H*0.58); c.scale(1.5,1.5);
+  const old=ctx; ctx=c; drawCatShape(def,1,0,alpha==null?1:alpha,null); ctx=old;
+  c.restore();
+}
+function catPreviewURL(def){
+  const cv=document.createElement('canvas');
+  cv.width=Math.round(150*DPR); cv.height=Math.round(120*DPR);
+  drawPreviewTo(cv,def,1);
+  try{ return cv.toDataURL('image/png'); }catch(e){ return ''; }
+}
+function initCats(){ CATS_INFO.forEach(info=>{ try{ info.dataURL=catPreviewURL(info); }catch(e){ info.dataURL=''; } }); }
+function renderCats(){
+  const grid=el('cc-grid'); if(!grid) return;
+  const ownedCount=CATS_INFO.filter(c=>c.key||skinOwned(c.unlockSkin)).length;
+  const cnt=el('cc-count'); if(cnt) cnt.textContent=ownedCount+' / '+CATS_INFO.length;
+  const mc=el('m-catcount'); if(mc) mc.textContent=(ownedCount-3)+'/'+(CATS_INFO.length-3);
+  grid.innerHTML='';
+  CATS_INFO.forEach(info=>{
+    const isSkin=!info.key;
+    const owned=isSkin? skinOwned(info.unlockSkin) : true;
+    const d=document.createElement('div');
+    d.className='ccard'+(isSkin?' skin':'')+(owned?(isSkin?' sowned':' owned'):' locked');
+    const rc=RARITY_COLORS[info.rarity]||'#9fb4d8';
+    d.innerHTML=
+      '<img class="cc-canvas" src="'+info.dataURL+'" alt="'+info.name+'">'+
+      (owned?'<div class="cc-badge">'+(isSkin?'✨':'✓')+'</div>':'<div class="cc-badge">🔒</div>')+
+      '<div class="cc-nm">'+info.name+'</div>'+
+      '<div class="cc-role">'+info.role+'</div>'+
+      '<div class="cc-rarity" style="color:'+rc+'">'+info.rarity+'</div>'+
+      (owned
+        ? '<div class="cc-st"><span>'+info.stat+'</span></div>'
+        : '<div class="cc-lock">'+info.unlock+'</div>');
+    grid.appendChild(d);
+  });
+}
+function openCats(){ el('menu').classList.add('hidden'); el('game').classList.add('hidden');
+  el('howto').classList.add('hidden'); el('catapass').classList.add('hidden'); el('cats').classList.remove('hidden'); renderCats(); }
+function closeCats(){ el('cats').classList.add('hidden'); el('menu').classList.remove('hidden'); refreshPassBadge(); }
+// hidden canvas swatch of every collected skin that actually works (in case toDataURL is blocked)
+function testSkins(){
+  const sc=document.getElementById('sc'); if(!sc) return 'no canvas';
+  const c=sc.getContext('2d'); c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,sc.width,sc.height);
+  const list=CATS_INFO.filter(i=>i.unlockSkin);
+  const cols=2, rows=Math.ceil(list.length/cols), cw=sc.width/cols, ch=sc.height/rows;
+  list.forEach((info,k)=>{
+    const col=k%cols, row=Math.floor(k/cols), x=col*cw, y=row*ch;
+    const o=skinOwned(info.unlockSkin);
+    c.save(); c.fillStyle=o?'rgba(120,220,140,.30)':'rgba(150,120,220,.22)'; c.fillRect(x,y,cw,ch); c.restore();
+    c.save(); c.translate(x+cw/2,y+ch*0.60); c.scale(2.0,2.0);
+    const old=ctx; ctx=c; drawCatShape(info,1,0,1,null); ctx=old; c.restore();
+    c.save(); c.textAlign='center'; c.font='bold 13px Verdana';
+    c.fillStyle=o?'#eaffea':'#e8dfff'; c.fillText(o?'✓ ':'', x+cw/2, y+ch-8); c.restore();
+  });
+  return list.filter(i=>skinOwned(i.unlockSkin)).map(i=>i.name).join(',')||'none claimed';
+}
+
 // ---------------- STATE ----------------
 let S;
 function newGame(){
@@ -440,16 +567,16 @@ const PREMIUM_GEMS=150;             // instant gems granted on purchase
 // each tier: free reward + premium reward
 // kinds: fish | gems | skin
 const PASS_TIERS=[
-  {free:{k:'fish',a:100,ic:'🐟'}, prem:{k:'skin',a:'Bandana Pouncer',ic:'🧣'}},
+  {free:{k:'fish',a:100,ic:'🐟'}, prem:{k:'skin',a:'Shadow Cat',ic:'🐈⬛'}},
   {free:{k:'gems',a:20,ic:'💎'},  prem:{k:'fish',a:400,ic:'🐟'}},
   {free:{k:'fish',a:200,ic:'🐟'}, prem:{k:'gems',a:60,ic:'💎'}},
-  {free:{k:'gems',a:30,ic:'💎'},  prem:{k:'skin',a:'Chef Chonk',ic:'👨‍🍳'}},
+  {free:{k:'gems',a:30,ic:'💎'},  prem:{k:'skin',a:'Mage Cat',ic:'🧙'}},
   {free:{k:'fish',a:300,ic:'🐟'}, prem:{k:'fish',a:700,ic:'🐟'}},
   {free:{k:'gems',a:40,ic:'💎'},  prem:{k:'gems',a:120,ic:'💎'}},
-  {free:{k:'fish',a:400,ic:'🐟'}, prem:{k:'skin',a:'Golden Cat',ic:'✨'}},
+  {free:{k:'fish',a:400,ic:'🐟'}, prem:{k:'skin',a:'Golden Cat',ic:'🌟'}},
   {free:{k:'gems',a:50,ic:'💎'},  prem:{k:'fish',a:900,ic:'🐟'}},
   {free:{k:'fish',a:500,ic:'🐟'}, prem:{k:'gems',a:200,ic:'💎'}},
-  {free:{k:'gems',a:100,ic:'💎'},prem:{k:'skin',a:'TOP CAT',ic:'👑'}},
+  {free:{k:'gems',a:100,ic:'💎'},prem:{k:'skin',a:'Cosmic Cat',ic:'🌌'}},
 ];
 const PASS={ xp:0, premium:false, claimed:{}, skins:[], wallet:{fish:0,gems:0} };
 function passLoad(){ try{ const raw=localStorage.getItem('cwaut_pass'); if(raw){ const d=JSON.parse(raw); Object.assign(PASS,d); if(!PASS.claimed) PASS.claimed={}; if(!PASS.skins) PASS.skins=[]; if(!PASS.wallet) PASS.wallet={fish:0,gems:0}; } }catch(e){} }
@@ -457,7 +584,10 @@ function passSave(){ try{ localStorage.setItem('cwaut_pass', JSON.stringify(PASS
 function passTier(){ return Math.min(PASS_MAX, Math.floor(PASS.xp/PASS_STEP)); }
 function passXpInTier(){ return passTier()>=PASS_MAX ? PASS_STEP : (PASS.xp % PASS_STEP); }
 function gainXp(n){ const before=passTier(); if(PASS.premium) n=Math.round(n*1.25); PASS.xp+=n; passSave(); const after=passTier();
-  if(after>before){ flashBanner('🎫 CATAPASS TIER '+after+'!',1300); } refreshPassBadge(); updatePassLive(); }
+  if(after>before){ flashBanner('🎫 CATAPASS TIER '+after+'!',1300); }
+  if(after>=6) grantSkin('Ninja Cat');
+  if(after>=8) grantSkin('Crystal Cat');
+  refreshPassBadge(); updatePassLive(); }
 function refreshPassBadge(){ const b=el('m-passlvl'); if(b) b.textContent='T'+passTier(); }
 function doClaim(after,premium){
   const tier=PASS_TIERS[after]; if(!tier) return;
@@ -697,7 +827,7 @@ function endWave(){
 }
 function win(){
   S.over=true;
-  PASS.wallet.gems+=50; passSave();
+  PASS.wallet.gems+=50; grantSkin('Frost Cat'); passSave();
   ui.overlay.classList.remove('hidden');
   ui.overlay.innerHTML=`<h2>🏆 YOU WIN!</h2><p>Cwaut Defense — World 1: Backyard cleared.</p>
     <p style="margin-top:6px;color:#9be7ff;font-weight:800">+50 💎 earned — save up for the Pawsome Pass!</p>
@@ -1133,7 +1263,8 @@ el('m-play').onclick=()=>{ el('menu').classList.add('hidden'); el('game').classL
 el('m-how').onclick=()=>{ el('menu').classList.add('hidden'); el('howto').classList.remove('hidden'); };
 el('h-back').onclick=()=>{ el('howto').classList.add('hidden'); el('menu').classList.remove('hidden'); };
 if(el('m-campaign')) el('m-campaign').onclick=()=>menuToast('Campaign is coming soon! 🗺️');
-if(el('m-cats')) el('m-cats').onclick=()=>menuToast('Cats collection coming soon! 🐱');
+if(el('m-cats')) el('m-cats').onclick=()=>openCats();
+if(el('cc-close')) el('cc-close').onclick=()=>closeCats();
 if(el('m-settings')) el('m-settings').onclick=()=>menuToast('Settings coming soon! ⚙️');
 if(el('m-pass')) el('m-pass').onclick=()=>openPass();
 if(el('cp-close')) el('cp-close').onclick=()=>closePass();
@@ -1152,8 +1283,10 @@ if(el('cp-confirm')) el('cp-confirm').onclick=()=>{
 // boot
 window.__dbg=()=>S;
 window.__pass={PASS,gainXp,doClaim,passTier,renderPass,openPass,closePass};
+window.__cats={CATS_INFO,renderCats,openCats,closeCats,catPreviewURL,testSkins,initCats,skinOwned,grantSkin};
 setupMenu();
 refreshPassBadge();
+initCats();
 buildBar(); syncHud();
 requestAnimationFrame(loop);
 })();
