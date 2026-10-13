@@ -144,19 +144,76 @@
     background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);box-shadow:0 4px 0 #4a3409}
   #martBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
 
-  /* ---------- PLEBMART ---------- */
-  #mart{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
-  #mart.on{display:flex}
-  #mart .mcard{width:840px;max-width:95%;max-height:93%;overflow:auto;border:3px solid #4a3616;border-radius:18px;
+  /* ---------- PLEB MART (its own screen — built from Nicholas's sketch) ---------- */
+  #mart{background:#241708;overflow:auto;padding:30px 40px 46px}
+  #mart .mpaper{max-width:1180px;margin:0 auto;border:3px solid #31281c;border-radius:18px;
+    background:linear-gradient(#fdf9ee,#f0e6cc);box-shadow:0 16px 40px rgba(0,0,0,.55);padding:22px 26px 24px}
+  .pm-head{display:flex;align-items:flex-start;gap:26px;flex-wrap:wrap;border-bottom:3px solid #31281c;padding-bottom:14px;margin-bottom:18px}
+  .pm-logo{font:900 46px/0.84 Georgia,'Times New Roman',serif;color:#2b2418;letter-spacing:2px}
+  .pm-logo span{display:block}
+  .pm-cr{display:flex;gap:12px;align-items:center;margin-left:auto;flex-wrap:wrap}
+  .pm-cr .c{font:800 16px Georgia,serif;color:#2b2418;border:2px solid #31281c;border-radius:999px;padding:6px 14px;background:#fcf7ea}
+  .pm-tabs{display:flex;gap:10px;flex-wrap:wrap;width:100%;margin-top:2px}
+  .pm-tab{border:2.5px solid #31281c;border-radius:999px;padding:8px 20px;font:700 17px Georgia,serif;color:#2b2418;
+    background:#fcf7ea;cursor:pointer;transition:transform .06s}
+  .pm-tab:hover{transform:translateY(-2px)}
+  .pm-tab.on{background:#31281c;color:#fcf7ea}
+  .pm-row{display:flex;gap:18px;align-items:stretch;flex-wrap:wrap}
+  .pm-box{position:relative;border:2.5px solid #31281c;border-radius:16px;background:#fcf7ea;padding:16px 16px 46px;
+    min-height:140px;flex:1 1 190px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .pm-box .pm-e{font-size:46px;line-height:1}
+  .pm-box .pm-n{font:800 17px Georgia,serif;color:#2b2418;margin-top:8px}
+  .pm-box .pm-d{font:13px Georgia,serif;color:#5a4d36;margin-top:4px}
+  .pm-price{position:absolute;right:14px;bottom:10px;font:800 22px Georgia,serif;color:#2b2418}
+  .pm-buy{position:absolute;left:14px;bottom:10px;border:2px solid #31281c;border-radius:10px;padding:5px 12px;
+    font:800 14px Georgia,serif;color:#fcf7ea;background:#31281c;cursor:pointer}
+  .pm-buy.cant{opacity:.38;cursor:default}
+  .pm-tall{flex:0 0 232px;min-height:210px}
+  .pm-bundle{flex:1 1 320px;border:2.5px solid #31281c;border-radius:16px;background:#fcf7ea;padding:16px;
+    display:flex;flex-direction:column;align-items:center}
+  .pm-pill{border:2.5px solid #31281c;border-radius:999px;padding:6px 24px;font:800 21px Georgia,serif;color:#2b2418}
+  .pm-sqs{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;justify-content:center}
+  .pm-sq{border:2.5px solid #31281c;border-radius:12px;padding:10px 16px;min-width:156px;text-align:center}
+  .pm-sq .q1{font:900 30px Georgia,serif;color:#2b2418}
+  .pm-sq .q2{font:700 15px Georgia,serif;color:#2b2418}
+  .pm-arrow{font:900 26px Georgia,serif;color:#2b2418;margin-right:4px}
+  .pm-bl{font:800 16px Georgia,serif;color:#2b2418;margin-top:14px;letter-spacing:1px}
+  .pm-plekey{flex:0 0 300px;border:2.5px solid #31281c;border-radius:16px;background:#fcf7ea;padding:14px 16px 46px;position:relative}
+  .pm-plekey .pt{font:800 20px Georgia,serif;color:#2b2418;text-align:center}
+  .pm-plekey .pbody{display:flex;gap:12px;align-items:center;margin-top:8px}
+  .pm-plekey .pchar{font-size:54px;line-height:1}
+  .pm-plekey ul{margin:0;padding-left:18px;font:14px Georgia,serif;color:#3f3524}
+  .pm-plekey li{margin:5px 0}
+  .pm-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .pm-card{position:relative;border:2.5px solid #31281c;border-radius:14px;background:#fcf7ea;padding:16px;text-align:center}
+  .pm-card .pe{font-size:44px}
+  .pm-card .pn{font:800 17px Georgia,serif;color:#2b2418;margin-top:6px}
+  .pm-card .pd{font:13px Georgia,serif;color:#5a4d36;margin-top:4px;line-height:1.35}
+  .pm-btndisplay{display:inline-block;border:2px solid #31281c;border-radius:10px;padding:7px 16px;margin-top:10px;
+    font:800 15px Georgia,serif;color:#fcf7ea;background:#31281c;cursor:pointer}
+  .pm-btndisplay.cant{opacity:.38;cursor:default}
+  .pm-code{display:flex;gap:10px;justify-content:center;margin:14px 0}
+  .pm-code input{flex:1;max-width:340px;padding:11px 14px;border-radius:10px;border:2.5px solid #31281c;background:#fffdf6;color:#2b2418;font:800 16px Georgia,serif}
+  .pm-note{color:#8a5a2b;font:italic 13px Georgia,serif;text-align:center;margin:10px 0 2px}
+  .pm-news{font:15px/1.6 Georgia,serif;color:#3f3524;padding-left:6px}
+  .pm-news li{margin:8px 0}
+  .pm-sk{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}
+  .pm-skin{border:2.5px solid #31281c;border-radius:12px;padding:8px 4px;text-align:center;background:#fcf7ea}
+  .pm-skin.owned{border-color:#3f8f3a}
+  .pm-skin .sn{font:700 12px Georgia,serif;color:#2b2418;margin-top:6px}
+  .pm-skin .sr{font:11px Georgia,serif;margin-top:2px}
+  .pm-back{text-align:center;margin-top:20px}
+  .pm-sub{color:#5a4d36;font:italic 15px Georgia,serif;text-align:center;margin:0 0 14px}
+
+  /* ---------- in-run UPGRADES overlay (⬆️) ---------- */
+  #upshop{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
+  #upshop.on{display:flex}
+  #upshop .mcard{width:720px;max-width:95%;max-height:93%;overflow:auto;border:3px solid #4a3616;border-radius:18px;
     background:linear-gradient(#2a1c0a,#150d03);box-shadow:0 16px 44px rgba(0,0,0,.75);padding:16px 22px 20px}
-  #mart h2{font:900 40px Georgia,serif;color:#f2d375;margin:0;text-shadow:0 3px 0 #000;text-align:center}
-  #mart .msub{text-align:center;color:#d8c48c;font:italic 14px Georgia,serif;margin:2px 0 8px}
-  .mtop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+  #upshop h2{font:900 34px Georgia,serif;color:#f2d375;margin:0;text-shadow:0 3px 0 #000;text-align:center}
+  #upshop .msub{text-align:center;color:#d8c48c;font:italic 14px Georgia,serif;margin:2px 0 10px}
+  .mtop{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px}
   .mbal{font:800 18px Georgia,serif;color:#ffe08a}
-  .mtabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0 14px}
-  .mtab{border:2px solid #5a3f14;border-radius:999px;padding:7px 15px;font:800 15px Georgia,serif;color:#f0dca6;
-    background:linear-gradient(rgba(70,52,22,.8),rgba(36,25,10,.85));cursor:pointer}
-  .mtab.on{background:linear-gradient(#f2cf62,#c9971f 60%,#8f6a12);color:#3a2506;border-color:#2a1c08}
   .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .mitem{display:flex;gap:12px;align-items:center;border:2px solid #3a2a10;border-radius:12px;padding:10px 12px;
     background:linear-gradient(rgba(70,52,22,.7),rgba(36,25,10,.8))}
@@ -168,22 +225,7 @@
     background:linear-gradient(#f2cf62,#c9971f 60%,#8f6a12);box-shadow:0 3px 0 #4a3409;cursor:pointer;white-space:nowrap;flex:0 0 auto}
   .mbuy:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
   .mbuy.cant{filter:grayscale(.7) brightness(.7);cursor:default}
-  .mboxes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-  .mbox{border:2px solid #3a2a10;border-radius:14px;padding:14px;text-align:center;background:linear-gradient(rgba(70,52,22,.7),rgba(36,25,10,.8))}
-  .mbox .be{font-size:44px}
-  .mbox .bn{font:800 16px Georgia,serif;color:#f6e4ad;margin-top:6px}
-  .mbox .bc{margin-top:10px}
-  .mskins{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
-  .mskin{border:2px solid #3a2a10;border-radius:12px;padding:8px 4px;text-align:center;background:rgba(0,0,0,.25)}
-  .mskin.owned{border-color:#6aa84f}
-  .mskin .sn{font:700 12px Georgia,serif;color:#e8d9ac;margin-top:6px}
-  .mskin .sr{font:11px Georgia,serif;margin-top:2px}
-  .mcode{display:flex;gap:10px;justify-content:center;margin:12px 0}
-  .mcode input{flex:1;max-width:320px;padding:10px 12px;border-radius:10px;border:2px solid #5a3f14;background:#1a1108;color:#f6e4ad;font:800 16px Georgia,serif}
-  .mnews{font:14px/1.5 Georgia,serif;color:#d8c48c;padding-left:6px}
-  .mnews li{margin:7px 0}
-  .mnote{color:#d99a5a;font:italic 13px Georgia,serif;text-align:center;margin:10px 0 2px}
-  #mart .mclose{text-align:center;margin-top:16px}
+  #upshop .mclose{text-align:center;margin-top:16px}
 
   #bar{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:6;
     display:flex;gap:12px;padding:12px 14px;border-radius:16px;
@@ -365,6 +407,7 @@
       <div class="tagline">Pitchforks up. The nobles are marching.</div>
       <div class="menu-btns">
         <div class="mbtn" id="playBtn"><span class="ic">⚔️</span> PLAY</div>
+        <div class="mbtn" id="martBtn"><span class="ic">🔑</span> PLEB MART</div>
       </div>
       <div class="worldstrip" id="worldStrip"></div>
       <div style="margin-top:14px"><span class="linklike" id="howBtn">❔ How to Play</span></div>
@@ -432,7 +475,7 @@
       <div id="rallyBtn"><span id="rallyLbl">✊ RALLY</span><span class="sub" id="rallySub">Ready</span></div>
       <div id="speedBtn" title="Fast-forward">1×</div>
       <div id="startBtn">START WAVE ▶</div>
-      <div id="martBtn" title="Plebmart shop">🛒</div>
+      <div id="upsBtn" title="Upgrades">⬆️</div>
       <div id="homeBtn" title="Menu">🏠</div>
     </div>
 
@@ -451,15 +494,30 @@
     </div>
   </div>
 
-  <!-- ============ PLEBMART ============ -->
-  <div id="mart"><div class="mcard">
-    <h2>🛒 PLEB MART</h2>
-    <div class="mtop"><div class="mbal">👑 <span id="martGold">0</span></div>
-      <div class="mbal" style="color:#e0a92e">⚡ <span id="martPleb">0</span> Pleb</div>
-      <div class="mbal" style="color:#8fd66a">🔑 <span id="martKeys">0</span> Plekeys</div></div>
-    <div class="mtabs" id="martTabs"></div>
-    <div id="martBody"></div>
-    <div class="mclose"><div class="mbtn small" id="martClose" style="width:220px">⬅ Back to battle</div></div>
+  <!-- ============ PLEB MART (its own screen — built from Nicholas's sketch) ============ -->
+  <div id="mart" class="screen">
+    <div class="mpaper">
+      <div class="pm-head">
+        <div class="pm-logo"><span>PLEB</span><span>MART</span></div>
+        <div class="pm-cr">
+          <div class="c">👑 <span id="martGold">0</span></div>
+          <div class="c">⚡ <span id="martPleb">0</span> Pleb</div>
+          <div class="c">🔑 <span id="martKeys">0</span> Plekeys</div>
+        </div>
+        <div class="pm-tabs" id="martTabs"></div>
+      </div>
+      <div id="martBody"></div>
+      <div class="pm-back"><div class="mbtn small" id="martBack" style="width:220px">⬅ Back to Menu</div></div>
+    </div>
+  </div>
+
+  <!-- ============ IN-RUN UPGRADES (⬆️) ============ -->
+  <div id="upshop"><div class="mcard">
+    <h2>⬆️ UPGRADES</h2>
+    <div class="msub">Spend your plunder to buff the run, then head back to battle.</div>
+    <div class="mtop"><div class="mbal">👑 <span id="upGold">0</span></div></div>
+    <div class="mgrid" id="upBody"></div>
+    <div class="mclose"><div class="mbtn small" id="upClose" style="width:220px">⬅ Back to battle</div></div>
   </div></div>
 
   <!-- ============ TUTORIAL ============ -->
@@ -506,9 +564,10 @@ cv.width=W; cv.height=H;
 
 /* ---------------- screens ---------------- */
 function show(id){
-  ['menu','how','worlds','game'].forEach(s=>$(s).classList.toggle('on',s===id));
+  ['menu','how','worlds','game','mart'].forEach(s=>$(s).classList.toggle('on',s===id));
   if(id==='menu')populateWorldStrip();
   if(id==='worlds')populateWorldSelect();
+  if(id==='mart')renderMart();
 }
 function populateWorldStrip(){
   const strip=$('worldStrip'); if(!strip)return; strip.innerHTML='';
@@ -543,6 +602,8 @@ function populateWorldSelect(){
   });
 }
 $('howBtn').onclick=()=>show('how');
+$('martBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('mart'); };
+$('martBack').onclick=()=>show('menu');
 $('howBack').onclick=()=>show('menu');
 $('worldsBack').onclick=()=>show('menu');
 $('playBtn').onclick=()=>{ initAudio(); show('worlds'); };
@@ -734,7 +795,7 @@ function buildBar(){
   });
 }
 
-/* ---------------- PLEB MART (shop) ---------------- */
+/* ---------------- IN-RUN UPGRADES (⬆️ — spend gold, lasts the run) ---------------- */
 const UPGRADES=[
   {id:'sword', e:'🗡️', name:'Longer Sword',  desc:'+15 hero damage.',                base:60, mul:1.7,  max:6},
   {id:'boots', e:'👢', name:'Running Boots',  desc:'+18% hero move speed.',           base:55, mul:1.7,  max:6},
@@ -756,28 +817,45 @@ function buyUpgrade(id){
   if(id==='banner') S.lives+=1;
   SFX.up(); for(let i=0;i<14;i++)burst(S.hero.x,S.hero.y-12,'#ffe08a');
   showBanner(u.e+' '+u.name+' → Lv'+S.mart[id]+'!','gold',1200);
-  renderMart(); syncHud(); buildBar();
+  renderUpgrades(); syncHud(); buildBar();
 }
+function renderUpgrades(){
+  if(!S)return;
+  $('upGold').textContent=Math.floor(S.gold);
+  const body=$('upBody'); if(!body)return; body.innerHTML='';
+  UPGRADES.forEach(u=>{ const lvl=S.mart[u.id]||0, maxed=lvl>=u.max, cost=martCost(u);
+    const el=document.createElement('div'); el.className='mitem';
+    el.innerHTML='<div class="me">'+u.e+'</div><div class="mi"><div class="mn">'+u.name+(maxed?' ✔ MAX':' · Lv'+lvl+'/'+u.max)+'</div><div class="md">'+u.desc+'</div></div>';
+    const b=document.createElement('div'); b.className='mbuy'+(maxed||S.gold<cost?' cant':''); b.textContent=maxed?'MAX':'👑'+cost;
+    if(!maxed)b.onclick=()=>buyUpgrade(u.id); el.appendChild(b); body.appendChild(el); });
+}
+function openUp(){ if(!S||S.over)return; S.paused=true; renderUpgrades(); $('upshop').classList.add('on'); SFX.ui(); }
+function closeUp(){ if(S)S.paused=false; $('upshop').classList.remove('on'); }
 
 /* ---- Pleb Mart meta: currencies, boxes, collectible Plekeys, codes, gift ---- */
 function loadJSON(k,d){ try{ const v=JSON.parse(localStorage.getItem(k)); return v==null?d:v; }catch(e){ return d; } }
 function saveJSON(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 let PLEB=loadJSON('plebania_pleb',0);
 let PLEKEYS=loadJSON('plebania_plekeys',[]);
+let PGOLD=loadJSON('plebania_pgold',600);
+let PAPERS=loadJSON('plebania_papers',0);
 let EQUIPPED=loadJSON('plebania_key','');
 let GIFT=loadJSON('plebania_gift',0);
 const CODES_USED=loadJSON('plebania_codes',{});
-let MARTTAB='shop';
+let MARTTAB='pledoption';
 const PLEB_CODES={
   'WELCOME': {pleb:3000, gold:200, note:'Welcome, pleb!'},
   'UPRISING':{pleb:1500, gold:150, note:'Power to the plebs!'},
   'PLEB2026':{pleb:1000, key:true,   note:'Founder\u2019s Plekey!'}
 };
 const BOXES=[
-  {id:'wood', e:'📦', name:'Wooden Pleb Box', cost:150,  pleb:150,  keyChance:0.12},
-  {id:'iron', e:'🎁', name:'Iron Pleb Box',   cost:400,  pleb:500,  keyChance:0.28},
-  {id:'gold', e:'🏆', name:'Golden Pleb Box', cost:900,  pleb:1600, keyChance:0.6}
+  {id:'wood', e:'📦', name:'Wooden Pleb Box', cost:150,  pleb:150,  keyChance:0.12, tag:'$2.99'},
+  {id:'iron', e:'🎁', name:'Iron Pleb Box',   cost:400,  pleb:500,  keyChance:0.28, tag:'$4.99'},
+  {id:'gold', e:'🏆', name:'Golden Pleb Box', cost:900,  pleb:1600, keyChance:0.6,  tag:'$9.99'}
 ];
+const BUNDLE={pleb:3000, papers:20, boxes:5, cost:1200, tag:'$14.99'};
+const MEGA=BUNDLE;                 // the big "3,000 Blep" pack in the sketch
+const PLEKEY_COST=1000;            // gold to adopt one random Plekey
 const SKINS=[
   {id:'classic', e:'🧑‍🌾', name:'Classic Pleb', rarity:'Common',    col:'#f2cf62', cost:0},
   {id:'knight',  e:'🐴', name:'Turned Knight', rarity:'Rare',      col:'#d8b24a', cost:1200},
@@ -785,7 +863,7 @@ const SKINS=[
   {id:'bone',    e:'💀', name:'Bone Lord',     rarity:'Epic',      col:'#c69bff', cost:2600},
   {id:'king',    e:'👑', name:'Pleb King',     rarity:'Legendary', col:'#ff4d4d', cost:5000}
 ];
-const RARCOL={Common:'#cccccc',Rare:'#7fd0ff',Epic:'#c69bff',Legendary:'#ffd24a'};
+const RARCOL={Common:'#8a8378',Rare:'#2f7fb0',Epic:'#7a4fc0',Legendary:'#c08a1e'};
 function hasKey(id){ return PLEKEYS.indexOf(id)>=0; }
 function unlockKey(id){ if(hasKey(id))return false; PLEKEYS.push(id); saveJSON('plebania_plekeys',PLEKEYS);
   const sk=SKINS.find(s=>s.id===id); showBanner('🔑 PLEKEY UNLOCKED: '+sk.name+'!','gold',1900); return true; }
@@ -793,13 +871,30 @@ function rollKey(){ const lock=SKINS.filter(s=>!hasKey(s.id)); if(!lock.length)r
   const pool=lock.concat(lock); // bias toward rarer by weighting
   return unlockKey(pool[Math.floor(Math.random()*pool.length)].id); }
 function openBox(id){
-  const b=BOXES.find(x=>x.id===id); if(!b||!S)return;
-  if(S.gold<b.cost){ tip('Need 👑'+b.cost+' for the '+b.name,1400); return; }
-  S.gold-=b.cost; PLEB+=b.pleb; saveJSON('plebania_pleb',PLEB);
+  const b=BOXES.find(x=>x.id===id); if(!b)return;
+  if(PGOLD<b.cost){ tip('Need \ud83d\udc51'+b.cost+' for the '+b.name,1400); return; }
+  PGOLD-=b.cost; saveJSON('plebania_pgold',PGOLD);
+  PLEB+=b.pleb; saveJSON('plebania_pleb',PLEB);
   let key=false; if(Math.random()<b.keyChance) key=rollKey();
   SFX.up(); for(let i=0;i<18;i++)burst(W/2,H/2,'#ffe08a');
   showBanner(b.e+' +'+b.pleb+' Pleb'+(key?' + A PLEKEY!':''),'gold',1600);
   renderMart(); syncHud();
+}
+function buyMega(){
+  if(PGOLD<MEGA.cost){ tip('Need \ud83d\udc51'+MEGA.cost+' for the '+MEGA.name,1500); return; }
+  PGOLD-=MEGA.cost; saveJSON('plebania_pgold',PGOLD);
+  PLEB+=MEGA.pleb; PAPERS+=MEGA.papers; saveJSON('plebania_pleb',PLEB); saveJSON('plebania_papers',PAPERS);
+  for(let i=0;i<MEGA.boxes;i++){ if(Math.random()<0.3)rollKey(); }
+  SFX.up(); for(let i=0;i<20;i++)burst(W/2,H/2,'#ffe08a');
+  showBanner('\ud83d\udce6 Mega Pack: +'+MEGA.pleb+' Pleb \u26a1 + '+MEGA.papers+' Papers + '+MEGA.boxes+' Pleb Boxes','gold',1900);
+  renderMart();
+}
+function buyPlekey(){
+  const lock=SKINS.filter(s=>!hasKey(s.id));
+  if(!lock.length){ tip('You already own every Plekey \ud83d\udd11',1500); return; }
+  if(PGOLD<PLEKEY_COST){ tip('Need \ud83d\udc51'+PLEKEY_COST+' for a Plekey',1500); return; }
+  PGOLD-=PLEKEY_COST; saveJSON('plebania_pgold',PGOLD);
+  rollKey(); SFX.up(); renderMart();
 }
 function buySkin(id){
   const s=SKINS.find(x=>x.id===id); if(!s)return;
@@ -816,7 +911,7 @@ function redeemCode(){
   if(!c){ tip('❌ That code isn\u2019t valid',1500); return; }
   if(CODES_USED[code]){ tip('You already used '+code,1400); return; }
   CODES_USED[code]=1; saveJSON('plebania_codes',CODES_USED);
-  if(c.gold&&S)S.gold+=c.gold;
+  if(c.gold){ PGOLD+=c.gold; saveJSON('plebania_pgold',PGOLD); }
   if(c.pleb){ PLEB+=c.pleb; saveJSON('plebania_pleb',PLEB); }
   if(c.key) rollKey();
   inp.value=''; SFX.up(); showBanner('✅ Code redeemed: '+c.note,'gold',1800); renderMart(); syncHud();
@@ -825,64 +920,73 @@ function claimGift(){
   const now=Date.now(), day=86400000;
   if(GIFT&&now-GIFT<day){ const h=Math.ceil((day-(now-GIFT))/3600000); tip('Gift resets in ~'+h+'h',1400); return; }
   GIFT=now; saveJSON('plebania_gift',GIFT);
-  if(S)S.gold+=250; PLEB+=250; saveJSON('plebania_pleb',PLEB);
+  PGOLD+=250; saveJSON('plebania_pgold',PGOLD); PLEB+=250; saveJSON('plebania_pleb',PLEB);
   SFX.up(); showBanner('🎁 Daily gift: +250 gold +250 Pleb!','gold',1800); renderMart(); syncHud();
 }
-function openMart(){ if(!S||S.over)return; S.paused=true; MARTTAB=MARTTAB||'shop'; renderMart(); $('mart').classList.add('on'); SFX.ui(); }
-function closeMart(){ if(S)S.paused=false; $('mart').classList.remove('on'); }
 function renderMart(){
-  if(!S)return;
-  $('martGold').textContent=Math.floor(S.gold);
+  $('martGold').textContent=Math.floor(PGOLD);
   $('martPleb').textContent=PLEB; $('martKeys').textContent=PLEKEYS.length;
-  const TABS=[['shop','🛒 Shop'],['boxes','📦 Pleb Boxes'],['revolt','🔑 Revolt Center'],['codes','🎟️ Codes'],['gift','🎁 Gift'],['news','📰 News']];
+  const TABS=[['pledoption','Pledoption center'],['boxes','Pleb boxes'],['codes','Codes'],['gift','Gift'],['news','News']];
   const tabs=$('martTabs'); tabs.innerHTML='';
-  TABS.forEach(([id,label])=>{ const t=document.createElement('div'); t.className='mtab'+(MARTTAB===id?' on':'');
+  TABS.forEach(([id,label])=>{ const t=document.createElement('div'); t.className='pm-tab'+(MARTTAB===id?' on':'');
     t.textContent=label; t.onclick=()=>{ MARTTAB=id; SFX.ui(); renderMart(); }; tabs.appendChild(t); });
   const body=$('martBody');
-  if(MARTTAB==='shop'){
-    body.innerHTML='<div class="msub">Spend your plunder 👑. Upgrades stick for the whole run.</div>';
-    const g=document.createElement('div'); g.className='mgrid';
-    UPGRADES.forEach(u=>{ const lvl=S.mart[u.id]||0, maxed=lvl>=u.max, cost=martCost(u);
-      const el=document.createElement('div'); el.className='mitem';
-      el.innerHTML='<div class="me">'+u.e+'</div><div class="mi"><div class="mn">'+u.name+(maxed?' ✔ MAX':' · Lv'+lvl+'/'+u.max)+'</div><div class="md">'+u.desc+'</div></div>';
-      const b=document.createElement('div'); b.className='mbuy'+(maxed||S.gold<cost?' cant':''); b.textContent=maxed?'MAX':'👑'+cost;
-      if(!maxed)b.onclick=()=>buyUpgrade(u.id); el.appendChild(b); g.appendChild(el); });
-    body.appendChild(g);
-  }else if(MARTTAB==='boxes'){
-    body.innerHTML='<div class="msub">Buy boxes for a pile of Pleb ⚡ — and a chance at a KEY 🔑.</div><div class="mboxes" id="boxRow"></div>';
-    const row=body.querySelector('#boxRow');
-    BOXES.forEach(b=>{ const el=document.createElement('div'); el.className='mbox';
-      el.innerHTML='<div class="be">'+b.e+'</div><div class="bn">'+b.name+'</div><div class="md">+'+b.pleb+' Pleb ⚡<br>'+Math.round(b.keyChance*100)+'% Plekey chance</div>';
-      const btn=document.createElement('div'); btn.className='mbuy bc'+(S.gold<b.cost?' cant':''); btn.textContent='👑'+b.cost;
-      if(S.gold>=b.cost)btn.onclick=()=>openBox(b.id); el.appendChild(btn); row.appendChild(el); });
-  }else if(MARTTAB==='revolt'){
-    body.innerHTML='<div class="msub">Revolt Center — unlock collectible PLEKEYS with Pleb ⚡. Each one re-skins your hero.</div><div class="mskins" id="skinRow"></div>';
+  if(MARTTAB==='pledoption'){
+    body.innerHTML='<div class="pm-sub">Adopt a pleb \u2014 spend \u26a1 Pleb to unlock collectible PLEKEYS that re-skin your hero.</div><div class="pm-sk" id="skinRow"></div>';
     const row=body.querySelector('#skinRow');
     SKINS.forEach(s=>{ const owned=hasKey(s.id); const eq=EQUIPPED===s.id;
-      const el=document.createElement('div'); el.className='mskin'+(owned?' owned':'');
+      const el=document.createElement('div'); el.className='pm-skin'+(owned?' owned':'');
       el.innerHTML='<div style="font-size:30px">'+s.e+'</div><div class="sn">'+s.name+'</div><div class="sr" style="color:'+RARCOL[s.rarity]+'">'+s.rarity+'</div>';
-      const btn=document.createElement('div'); btn.className='mbuy'+(owned?'':' cant'); btn.style.marginTop='6px';
-      btn.textContent= eq?'✔ Equipped' : owned?'Equip' : ('⚡'+s.cost);
+      const btn=document.createElement('div'); btn.className='pm-btndisplay'+(owned||PLEB>=s.cost?'':' cant'); btn.style.marginTop='6px';
+      btn.textContent= eq?'\u2714 Equipped' : owned?'Equip' : ('\u26a1'+s.cost);
       if(owned||PLEB>=s.cost)btn.onclick=()=>buySkin(s.id);
       el.appendChild(btn); row.appendChild(el); });
+  }else if(MARTTAB==='boxes'){
+    body.innerHTML='<div class="pm-sub">Grab a Pleb box \u2014 a pile of \u26a1 Pleb and a chance at a KEY \ud83d\udd11. Then the big bundle below.</div>'+
+      '<div class="pm-row" id="boxRow"></div>'+
+      '<div class="pm-row" style="margin-top:18px">'+
+        '<div class="pm-box pm-tall" id="megaBox"></div>'+
+        '<div class="pm-bundle"><div class="pm-pill">3,000 Blep</div>'+
+          '<div class="pm-sqs"><div class="pm-sq"><div class="q1">20</div><div class="q2"><span class="pm-arrow">\u2190</span>Adoption papers</div></div>'+
+          '<div class="pm-sq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
+          '<div class="pm-bl">PLEDOPTION</div></div>'+
+        '<div class="pm-plekey"><div class="pt">Plekey</div>'+
+          '<div class="pbody"><div class="pchar">\ud83e\udd16</div><ul><li>Custom sfx</li><li>Unique style</li><li>Different rarity</li></ul></div>'+
+          '<div class="pm-price" style="position:absolute;right:14px;bottom:10px;font:800 22px Georgia,serif">$19.99</div></div>'+
+      '</div>';
+    const row=body.querySelector('#boxRow');
+    BOXES.forEach(b=>{ const el=document.createElement('div'); el.className='pm-box';
+      el.innerHTML='<div class="pm-e">'+b.e+'</div><div class="pm-n">'+b.name+'</div><div class="pm-d">+'+b.pleb+' Pleb \u26a1 \u00b7 '+Math.round(b.keyChance*100)+'% Plekey</div>';
+      const btn=document.createElement('div'); btn.className='pm-buy'+(PGOLD<b.cost?' cant':''); btn.textContent='\ud83d\udc51 '+b.cost;
+      if(PGOLD>=b.cost)btn.onclick=()=>openBox(b.id); el.appendChild(btn);
+      const pr=document.createElement('div'); pr.className='pm-price'; pr.textContent=b.tag; el.appendChild(pr);
+      row.appendChild(el); });
+    const mega=body.querySelector('#megaBox');
+    mega.innerHTML='<div class="pm-e">\ud83d\udce6</div><div class="pm-n">Mega Pack</div><div class="pm-d">3,000 Pleb + 20 papers + 5\u00d7 Pleb Box</div>';
+    const mb=document.createElement('div'); mb.className='pm-buy'+(PGOLD<MEGA.cost?' cant':''); mb.textContent='\ud83d\udc51 '+MEGA.cost;
+    if(PGOLD>=MEGA.cost)mb.onclick=()=>buyMega(); mega.appendChild(mb);
+    const mp=document.createElement('div'); mp.className='pm-price'; mp.textContent=MEGA.tag; mega.appendChild(mp);
+    const pk=body.querySelector('.pm-plekey');
+    const pb=document.createElement('div'); pb.className='pm-buy'+(PGOLD<PLEKEY_COST?' cant':''); pb.textContent='\ud83d\udc51 '+PLEKEY_COST; pb.style.position='absolute'; pb.style.left='14px'; pb.style.bottom='10px';
+    if(PGOLD>=PLEKEY_COST)pb.onclick=()=>buyPlekey(); pk.appendChild(pb);
   }else if(MARTTAB==='codes'){
-    body.innerHTML='<div class="msub">Got a code? Type it in for free plunder ⚡👑.</div>'+
-      '<div class="mcode"><input id="codeInput" maxlength="24" placeholder="ENTER CODE…"><div class="mbuy" id="codeGo">Redeem</div></div>'+
-      '<div class="mnote">Psst… try WELCOME , UPRISING , or PLEB2026 </div>';
+    body.innerHTML='<div class="pm-sub">Got a code? Type it in for free plunder \u26a1\ud83d\udc51.</div>'+
+      '<div class="pm-code"><input id="codeInput" maxlength="24" placeholder="ENTER CODE\u2026"><div class="pm-btndisplay" id="codeGo">Redeem</div></div>'+
+      '<div class="pm-note">Psst\u2026 try WELCOME , UPRISING , or PLEB2026 </div>';
     body.querySelector('#codeGo').onclick=redeemCode;
     body.querySelector('#codeInput').addEventListener('keydown',e=>{ if(e.key==='Enter')redeemCode(); });
   }else if(MARTTAB==='gift'){
     const ready=!(GIFT&&Date.now()-GIFT<86400000);
-    body.innerHTML='<div class="msub">Come back every day for a free gift 🎁.</div>'+
-      '<div class="mbox" style="max-width:300px;margin:0 auto"><div class="be">🎁</div><div class="bn">Daily Gift</div><div class="md">+250 gold 👑 and +250 Pleb ⚡</div></div>'+
-      '<div style="text-align:center;margin-top:12px"><div class="mbuy'+(ready?'':' cant')+'" id="giftGo" style="display:inline-block">'+(ready?'Claim gift':'Come back tomorrow')+'</div></div>';
+    body.innerHTML='<div class="pm-sub">Come back every day for a free gift \ud83c\udf81.</div>'+
+      '<div class="pm-box" style="max-width:320px;margin:0 auto"><div class="pm-e">\ud83c\udf81</div><div class="pm-n">Daily Gift</div><div class="pm-d">+250 gold \ud83d\udc51 and +250 Pleb \u26a1</div>'+
+      '<div class="pm-btndisplay'+(ready?'':' cant')+'" id="giftGo" style="margin-top:12px">'+(ready?'Claim gift':'Come back tomorrow')+'</div></div>';
     if(ready)body.querySelector('#giftGo').onclick=claimGift;
   }else{
-    body.innerHTML='<div class="msub">Latest from Plebania 📰</div><ul class="mnews">'+
-      '<li><b>✊ v2.0</b> — THE UPRISING: slain nobles defect to your mob!</li>'+
-      '<li><b>🗡️ v2.0</b> — control your own hero. Drag to run, he auto-attacks.</li>'+
-      '<li><b>🛒 v2.1</b> — Pleb Mart opens: shop, Pleb Boxes, Plekeys &amp; codes.</li>'+
-      '<li><b>🔑 Coming soon</b> — more Plekeys, hero weapons, boss rush.</li></ul>';
+    body.innerHTML='<div class="pm-sub">Latest from Plebania \ud83d\udcf0</div><ul class="pm-news">'+
+      '<li><b>\u270a v2.0</b> \u2014 THE UPRISING: slain nobles defect to your mob!</li>'+
+      '<li><b>\ud83d\udde1\ufe0f v2.0</b> \u2014 control your own hero. Drag to run, he auto-attacks.</li>'+
+      '<li><b>\ud83d\udd11 v2.1</b> \u2014 PLEB MART: Pledoption center, Pleb boxes, Codes, Gift &amp; News.</li>'+
+      '<li><b>\u2728 Coming soon</b> \u2014 more Plekeys, hero weapons, boss rush.</li></ul>';
   }
 }
 
@@ -1739,9 +1843,9 @@ $('ovMenu').onclick=()=>{ hideOv(); show('menu'); };
 populateWorldStrip();
 $('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
 $('homeBtn').onclick=()=>{ if(!S||S.over)return; $('ov').classList.remove('on'); hideSel(); show('menu'); SFX.ui(); };
-$('martBtn').onclick=()=>{ if(!S||S.over)return; openMart(); };
-$('martClose').onclick=()=>closeMart();
-document.addEventListener('keydown',e=>{ if(e.code==='Escape'&&$('mart').classList.contains('on'))closeMart(); });
+$('upsBtn').onclick=()=>{ if(!S||S.over)return; openUp(); };
+$('upClose').onclick=()=>closeUp();
+document.addEventListener('keydown',e=>{ if(e.code==='Escape'&&$('upshop').classList.contains('on'))closeUp(); });
 $('rallyBtn').onclick=()=>{ if(!S||S.over||S.paused)return; if((S.rallyCd||0)>0)return;
   S.rally=6; S.rallyCd=30; SFX.up();
   // THE UPRISING: the crowd answers the call — a few fresh defectors rise up
