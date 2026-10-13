@@ -90,6 +90,10 @@
     background:linear-gradient(#f2cf62,#c9971f 55%,#8f6a12);box-shadow:0 5px 0 #4a3409}
   #startBtn:active{transform:translateY(3px);box-shadow:0 2px 0 #4a3409}
   #startBtn.off{filter:grayscale(.7) brightness(.75);cursor:default}
+  #homeBtn{pointer-events:auto;cursor:pointer;border:2px solid #2a1c08;border-radius:12px;
+    width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-size:22px;
+    background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);box-shadow:0 4px 0 #4a3409}
+  #homeBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
 
   #bar{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:6;
     display:flex;gap:12px;padding:12px 14px;border-radius:16px;
@@ -101,6 +105,8 @@
   .card:hover{transform:translateY(-3px)}
   .card.sel{border-color:#f2d375;box-shadow:0 0 0 2px #f2d375,0 0 18px rgba(242,211,117,.5)}
   .card.poor{filter:grayscale(.6) brightness(.62)}
+  .card.locked{opacity:.7}
+  .card.locked .ce{filter:grayscale(.3)}
   .card .ce{font-size:27px;line-height:1}
   .card .cn{font:700 13px Georgia,serif;color:#f5e8bf;margin-top:4px}
   .card .cc{font:700 14px Georgia,serif;color:#f2cf62;margin-top:3px}
@@ -128,6 +134,10 @@
     background:linear-gradient(rgba(52,36,14,.98),rgba(26,17,6,.98));box-shadow:0 20px 60px rgba(0,0,0,.7)}
   .ovcard h1{margin:0 0 8px;font:900 54px Georgia,serif;color:#f6dd8b;text-shadow:0 4px 0 #000}
   .ovcard p{margin:6px 0;font-size:18px;color:#e9d9ab;line-height:1.4}
+  #tut .ovcard{width:600px;text-align:left}
+  #tut h1{font-size:40px}
+  #tut .tutstep{font:700 14px Georgia,serif;color:#c9a24a;letter-spacing:2px;margin-bottom:6px}
+  #tut .ov-btns{justify-content:flex-end}
   .ov-btns{margin-top:22px;display:flex;gap:14px;justify-content:center}
 
   /* select/upgrade panel */
@@ -321,6 +331,7 @@
       </div>
       <div class="spacer"></div>
       <div id="startBtn">START WAVE ▶</div>
+      <div id="homeBtn" title="Menu">🏠</div>
     </div>
 
     <div id="banner"></div>
@@ -337,6 +348,17 @@
       </div>
     </div>
   </div>
+
+  <!-- ============ TUTORIAL ============ -->
+  <div id="tut" class="ov"><div class="ovcard tutcard">
+    <div class="tutstep" id="tutStep">1 / 4</div>
+    <h1 id="tutT">Welcome to Plebania</h1>
+    <p id="tutP">You are the villagers. The noble army is coming to crush you. Here's the plan:</p>
+    <div class="ov-btns">
+      <div class="mbtn small" id="tutSkip" style="width:150px;opacity:.8">Skip</div>
+      <div class="mbtn small" id="tutNext" style="width:180px">Next ▶</div>
+    </div>
+  </div></div>
 
   <!-- ============ OVERLAYS ============ -->
   <div id="ov" class="ov"><div class="ovcard">
@@ -375,7 +397,23 @@ function show(id){
 }
 $('howBtn').onclick=()=>show('how');
 $('howBack').onclick=()=>show('menu');
-$('playBtn').onclick=()=>{initAudio();newGame();show('game');};
+$('playBtn').onclick=()=>{initAudio();newGame();show('game');startTutorial();};
+
+/* ---------------- tutorial ---------------- */
+const TUT=[
+  {t:'Welcome to Plebania 🧑‍🌾',p:'You are the villagers — the plebs. The noble army is marching in to crush your village and tax you into dust. Your job: hold the line.'},
+  {t:'Place your villagers',p:'Tap a villager in the bar at the bottom, then tap a grass tile to place them. Tap the SAME tile again to confirm. They fight the nobles for you. Tap a placed villager to upgrade or sell them.'},
+  {t:'Watch your FAITH ✊',p:'Slaying nobles raises your people\'s faith. High faith = UPRISING (+25% damage). Let faith hit ZERO and the plebs go on STRIKE — nobody defends. Keep them hopeful!'},
+  {t:'Start with only 3',p:'You unlock new villagers as you survive: Poacher & Farm now, Militia at wave 3, Alchemist at wave 5, Catapult at wave 7. Earn gold 👑 by slaying nobles. Good luck, pleb!'}
+];
+let tutI=0;
+function startTutorial(){ tutI=0; renderTut(); $('tut').classList.add('on'); pauseGame(true); }
+function renderTut(){ const s=TUT[tutI]; $('tutStep').textContent=(tutI+1)+' / '+TUT.length; $('tutT').textContent=s.t; $('tutP').textContent=s.p;
+  $('tutNext').textContent = tutI>=TUT.length-1?'Let\'s go ⚔️':'Next ▶'; }
+$('tutNext').onclick=()=>{ if(tutI<TUT.length-1){ tutI++; renderTut(); } else endTutorial(); };
+$('tutSkip').onclick=()=>endTutorial();
+function endTutorial(){ $('tut').classList.remove('on'); pauseGame(false); initAudio(); }
+function pauseGame(on){ if(S)S.paused=on; }
 
 /* ---------------- audio ---------------- */
 let AC=null,muted=false;
@@ -454,14 +492,16 @@ function tileAt(px,py){
 /* =========================================================
    STATE
    ========================================================= */
-let S;
+let S, hover=null, locked=null;
 function newGame(){
   S={
-    gold:120, lives:20, wave:0, faith:50, running:false, between:true, over:false,
+    gold:120, lives:20, wave:0, faith:50, running:false, between:true, over:false, paused:false,
+    reached:1,
     towers:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
     shake:0, hurt:0, strike:0, slain:0, sel:null, build:'farmhand',
     uprising:false, waveTimer:0, farmAcc:0
   };
+  hover=null; locked=null;
   hideOv(); hideSel(); showBanner('Defend your village!','gold',1400);
   syncHud(); buildBar(); tip('Tap a villager below, then tap the grass to place them',2600);
 }
@@ -479,16 +519,24 @@ let bnrT=0;
 function showBanner(txt,cls,ms){ const b=$('banner'); b.textContent=txt; b.className='on '+(cls||''); bnrT=Date.now()+(ms||1500); }
 
 /* ---------------- build bar ---------------- */
+const UNLOCK={ farmhand:1, poacher:1, farm:1, militia:3, alchemist:5, catapult:7 };
+function unlockedUnit(k){ return S.reached>=UNLOCK[k]; }
 function buildBar(){
   const bar=$('bar'); bar.innerHTML='';
   ORDER.forEach(k=>{
-    const d=TOWERS[k]; const card=document.createElement('div');
-    card.className='card'+(k===S.build?' sel':'')+(S.gold<d.cost?' poor':'');
+    const d=TOWERS[k]; const lock=!unlockedUnit(k); const card=document.createElement('div');
+    card.className='card'+(k===S.build?' sel':'')+((S.gold<d.cost||lock)?' poor':'')+(lock?' locked':'');
     card.dataset.k=k;
-    card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
-      '<div class="cc">👑 '+d.cost+'</div><div class="cd">'+d.desc+'</div>';
-    card.onclick=()=>{ if(S.over)return; S.build=k; hideSel(); buildBar(); SFX.ui();
-      tip('Selected '+d.name+' — tap a grass tile to place',1500); };
+    if(lock){
+      card.innerHTML='<div class="ce">🔒</div><div class="cn">'+d.name+'</div>'+
+        '<div class="cc" style="color:#c9a24a">Wave '+UNLOCK[k]+'</div><div class="cd">Unlocks as you advance</div>';
+      card.onclick=()=>{ tip('🔒 '+d.name+' unlocks at wave '+UNLOCK[k],1500); };
+    }else{
+      card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
+        '<div class="cc">👑 '+d.cost+'</div><div class="cd">'+d.desc+'</div>';
+      card.onclick=()=>{ if(S.over)return; S.build=k; locked=null; hideSel(); buildBar(); SFX.ui();
+        tip('Selected '+d.name+' — tap a grass tile to place',1500); };
+    }
     bar.appendChild(card);
   });
 }
@@ -496,36 +544,40 @@ function buildBar(){
 /* =========================================================
    PLACEMENT (two-tap) + selection
    ========================================================= */
-let ghost=null;
+/* hover = live preview (mouse only). locked = confirmed tile that survives a finger lifting off. */
 cv.addEventListener('pointermove',e=>{
-  if(!S||S.over)return;
-  if(!S.build){ghost=null;return;}
+  if(!S||S.over||S.paused)return;
+  if(e.pointerType!=='mouse')return;
+  if(!S.build){hover=null;return;}
   const p=evt(e), t=tileAt(p.x,p.y);
-  if(!t||pathKeys.has(t.c+','+t.r)||S.towers.some(o=>o.c===t.c&&o.r===t.r)){ghost=null;return;}
-  ghost={c:t.c,r:t.r};
+  if(!t||pathKeys.has(t.c+','+t.r)||S.towers.some(o=>o.c===t.c&&o.r===t.r)){hover=null;return;}
+  hover={c:t.c,r:t.r};
 });
-cv.addEventListener('pointerleave',()=>{ghost=null;});
+cv.addEventListener('pointerleave',()=>{hover=null;});
+cv.addEventListener('pointercancel',()=>{hover=null;});
 cv.addEventListener('pointerdown',e=>{
-  if(!S||S.over||S.running===undefined)return;
+  if(!S||S.over||S.paused)return;
   const p=evt(e);
-  // 1) clicking an existing tower selects/upgrades
-  const hit=S.towers.find(o=>Math.hypot(p.x-(cx(o.c)-0),p.y-(cy(o.r)))<TILE*0.62);
-  if(hit){ S.sel=hit; showSel(hit); return; }
-  // 2) build
+  // 1) tapping an existing villager selects/upgrades it
+  const hit=S.towers.find(o=>Math.hypot(p.x-cx(o.c),p.y-cy(o.r))<TILE*0.62);
+  if(hit){ S.sel=hit; locked=null; showSel(hit); return; }
+  hideSel();
+  // 2) build on a grass tile
   const t=tileAt(p.x,p.y);
-  if(!t||pathKeys.has(t.c+','+t.r)){ hideSel(); return; }
+  if(!t||pathKeys.has(t.c+','+t.r)){ return; }
   if(S.towers.some(o=>o.c===t.c&&o.r===t.r)){ return; }
+  if(!S.build){return;}
+  if(!unlockedUnit(S.build)){ tip('That villager is locked 🔒',1400); return; }
+  // two-tap: first tap locks a preview on this tile; second tap on the SAME tile places
+  if(!locked||locked.c!==t.c||locked.r!==t.r){ locked={c:t.c,r:t.r}; tip('Tap the same tile again to place ⚒️',1600); return; }
   const d=TOWERS[S.build];
-  if(!S.build){hideSel();return;}
-  // two-tap: first tap shows a locked ghost, second tap same tile places
-  if(!ghost||ghost.c!==t.c||ghost.r!==t.r){ ghost={c:t.c,r:t.r}; tip('Tap the same tile again to place ⚒️',1400); return; }
   if(S.gold<d.cost){ tip('Need more gold! ('+d.cost+' 👑)',1400); return; }
   S.gold-=d.cost;
   S.towers.push({c:t.c,r:t.r,k:S.build,cd:0,level:1,spent:d.cost,angle:-0.4,flash:0,t:Math.random()*6,jab:0});
   SFX.place();
   const px=cx(t.c),py=cy(t.r);
   for(let i=0;i<10;i++) burst(px,py,'#d9b45a');
-  ghost=null; hideSel(); syncHud(); buildBar();
+  locked=null; syncHud(); buildBar();
 });
 function evt(e){
   const r=cv.getBoundingClientRect();
@@ -773,14 +825,19 @@ function render(dt){
   drawGround();
   drawPath();
 
-  // ghosts / range previews
-  if(S.build&&ghost){
+  // placement preview: locked (survives touch) takes priority, else mouse hover
+  const ghost=locked||hover;
+  if(S.build&&ghost&&unlockedUnit(S.build)){
     const gx=cx(ghost.c),gy=cy(ghost.r); const d=TOWERS[S.build];
     const ok=S.gold>=d.cost;
     drawRange(gx,gy,d.range, ok?'rgba(242,211,117,.18)':'rgba(200,60,40,.18)', ok?'#f2d375':'#e05a3a');
-    ctx.globalAlpha=0.55;
+    ctx.globalAlpha=locked?0.85:0.55;
     drawPleb(gx,gy,S.build,d,0, ok?1:0.6);
     ctx.globalAlpha=1;
+    if(locked){ // confirmed tile marker
+      ctx.strokeStyle=ok?'#f2d375':'#e05a3a'; ctx.lineWidth=3;
+      ctx.strokeRect(GX+ghost.c*TILE+3,GY+ghost.r*TILE+3,TILE-6,TILE-6);
+    }
   }
   // selected range
   if(S.sel&&TOWERS[S.sel.k].kind!=='econ'){
@@ -1063,8 +1120,9 @@ function roundRect(x,y,w,h,r){ ctx.beginPath();
 let last=performance.now();
 function loop(now){
   const dt=Math.min(0.05,(now-last)/1000); last=now;
+  const active = $('game').classList.contains('on') && !(S&&S.paused);
   if(S){
-    if(!S.over){
+    if(!S.over&&active){
       // spawning
       if(S.running){
         S.spawnT-=dt;
@@ -1094,6 +1152,7 @@ function loop(now){
 }
 function endWave(){
   S.running=false; S.between=true;
+  if(S.wave+1>S.reached){ S.reached=S.wave+1; }
   const bonus=20+S.wave*8;
   S.gold+=bonus; gainFaith(8);
   addDmg(W/2,H/2-40,'WAVE CLEAR  +👑'+bonus,'#8ef0ff');
@@ -1117,8 +1176,9 @@ function endGame(win){
 function hideOv(){ $('ov').classList.remove('on'); }
 $('ovAgain').onclick=()=>{ hideOv(); newGame(); };
 $('ovMenu').onclick=()=>{ hideOv(); show('menu'); };
-$('startBtn').onclick=()=>{ if(!S||S.over)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
-document.addEventListener('keydown',e=>{ if(e.code==='Space'&&$('game').classList.contains('on')){e.preventDefault(); if(S&&!S.running&&!S.over)startWave();} });
+$('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
+$('homeBtn').onclick=()=>{ if(!S||S.over)return; $('ov').classList.remove('on'); hideSel(); show('menu'); SFX.ui(); };  // pause: loop + input are gated on the game screen/over state
+document.addEventListener('keydown',e=>{ if(e.code==='Space'&&$('game').classList.contains('on')){e.preventDefault(); if(S&&!S.running&&!S.over&&!S.paused)startWave();} });
 
 /* soot particles on menu */
 (function(){
