@@ -339,7 +339,8 @@
       </div>
       <div class="panel">
         <h3>⚔️ Commands &amp; Tricks</h3>
-        <div class="row"><span class="e">🗡️</span><span><b>Your Hero</b> — drag anywhere on the map to run your crowned hero pleb around. He auto-attacks and <b>levels up</b> with every 6 kills. Getting swamped? He goes down for 5s, then he\u2019s back.</span></div>
+        <div class="row"><span class="e">✊</span><span><b>THE UPRISING</b> — every noble you slay <b>throws off its armour and joins your mob</b>! They swarm around your hero, picking fights. Bigger mob = bigger uprising. This is what makes Plebania special.</span></div>
+        <div class="row"><span class="e">🗡️</span><span><b>Your Hero</b> — drag anywhere to run your crowned hero around. He auto-attacks and levels up. Rally calls <b>+4 new defectors</b> to him at once.</span></div>
         <div class="row"><span class="e">✊</span><span><b>RALLY</b> — hit it when things get hairy: every pleb attacks <b>twice as fast +25% damage</b> for 6 seconds. 30s cooldown.</span></div>
         <div class="row"><span class="e">⏩</span><span><b>Fast-forward</b> — the ×1 button doubles game speed when you've got it under control.</span></div>
         <div class="row"><span class="e">👀</span><span><b>Next</b> — the HUD shows what's marching in on the next wave. Plan ahead!</span></div>
@@ -376,6 +377,7 @@
       <div class="chip"><span class="ci">🏠</span><span id="hLives">20</span></div>
       <div class="chip"><span class="ci">🌊</span><span id="hWave">0/10</span></div>
       <div class="chip" title="Next wave"><span class="ci">👀</span><span id="hNext">—</span></div>
+      <div class="chip" title="The Uprising — nobles who defected to your side"><span class="ci">✊</span><span id="hMob">0</span></div>
       <div class="chip" title="Your hero"><span class="ci">🗡️</span><span id="hHero">100</span></div>
       <div class="spacer"></div>
       <div id="rallyBtn"><span id="rallyLbl">✊ RALLY</span><span class="sub" id="rallySub">Ready</span></div>
@@ -489,7 +491,8 @@ const TUT=[
   {t:'Welcome to Plebania 🧑‍🌾',p:'You are the villagers — the plebs. The noble army is marching in to crush your village. You get TWO things: a HERO you control, and villagers you place.'},
   {t:'Your HERO is you 🗡️',p:'A pleb champion with a crown and sword stands on the field. DRAG anywhere on the map to run him around — he auto-attacks any noble he touches, and levels up as he fights. He\u2019ll get knocked down if he\u2019s swamped (back up in 5s).'},
   {t:'Place your villagers',p:'Tap a villager in the bar at the bottom, then tap a grass tile to place them. Tap the SAME tile again to confirm. They defend the line while you fight with your hero. Tap a placed villager to upgrade or sell.'},
-  {t:'Rally the plebs ✊',p:'Things getting hairy? Hit RALLY — every pleb attacks twice as fast with +25% damage for 6 seconds. Use the ⏩ button to speed up when you can handle it.'},
+  {t:'You are the UPRISING ✊',p:'Here\u2019s the special bit: every noble you slay rips off its armour and DEFECTS to your side! They gather around your hero as a growing mob and fight for you. The more you kill, the bigger your uprising. Rally raises fresh defectors instantly.'},
+  {t:'Rally the plebs ✊',p:'Things getting hairy? Hit RALLY — the mob swells, and every pleb attacks twice as fast with +25% damage for 6 seconds. Use the ⏩ button to speed up when you can handle it.'},
   {t:'Start with only 3',p:'You unlock new villagers as you survive: Poacher & Farm now, Militia at wave 3, Alchemist at wave 5, Catapult at wave 7. Earn gold 👑 by slaying nobles. Good luck, pleb!'}
 ];
 let tutI=0;
@@ -614,7 +617,7 @@ function newGame(world){
     reached:1, rally:0, speed:1,
     towers:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
     shake:0, hurt:0, slain:0, sel:null, build:'farmhand',
-    waveTimer:0, farmAcc:0
+    waveTimer:0, farmAcc:0, mob:[], turned:0
   };
   hover=null; locked=null; buildPath(w);
   // THE HERO — a pleb champion you control (drag to move, auto-attacks)
@@ -623,8 +626,7 @@ function newGame(world){
   hideOv(); hideSel();
   showBanner(WORLDS[w].emoji+' '+WORLDS[w].name+' — defend it!','gold',1700);
   syncHud(); buildBar();
-  tip('🗡️ DRAG anywhere to run your hero · tap the grass to place villagers',3400);
-}
+  tip('🗡️ DRAG anywhere to run your hero · tap the grass to place villagers',3400);}
 buildPath(0);
 function syncHud(){
   $('hGold').textContent=Math.floor(S.gold);
@@ -633,6 +635,7 @@ function syncHud(){
   $('hWorldIc').textContent=WORLDS[S.world].emoji;
   $('hWorld').textContent=WORLDS[S.world].name;
   if($('hHero')&&S.hero)$('hHero').textContent=Math.max(0,Math.ceil(S.hero.hp));
+  if($('hMob'))$('hMob').textContent=(S.mob?S.mob.length:0);
   sUpdateNext();
 }
 function previewWave(w){
@@ -856,7 +859,18 @@ function kill(e,byPlayer){
   const big=e.rank==='boss'||e.rank==='king';
   for(let i=0;i<(big?34:14);i++)burst(e.x,e.y,big?'#ffcf5a':'#d8c088');
   SFX.kill(); if(big){S.shake=Math.max(S.shake,12);SFX.big();showBanner(e.name+' SLAIN!','gold',1500);}
+  // THE UPRISING: the fallen noble throws off its armour and joins your mob!
+  spawnTurned(e, e.rank==='king'?6:e.rank==='boss'?3:1);
   syncHud();
+}
+/* a defector — a pleb who was once a noble, now fights for you (powers your Rally) */
+function spawnTurned(e,n){
+  const d=ENEMIES[e.type]||{};
+  for(let i=0;i<(n||1);i++){
+    S.mob.push({x:e.x+(Math.random()-0.5)*18, y:e.y+(Math.random()-0.5)*18,
+      sz:Math.max(16,Math.min(30,(e.sz||24)*0.8)), t:Math.random()*6, lane:e.wp||0, defend:0, emoji:d.emoji});
+  }
+  S.turned+=n;
 }
 
 
@@ -1023,6 +1037,9 @@ function render(dt){
 
   // enemies
   for(const e of S.enemies) drawEnemy(e);
+
+  // the uprising mob
+  drawMob();
 
   // hero (drawn on top so you can always see him)
   drawHero();
@@ -1361,6 +1378,37 @@ function drawHero(){
   ctx.strokeStyle='rgba(0,0,0,.75)'; ctx.lineWidth=3; ctx.strokeText('Lv'+h.level,x,hy-4); ctx.fillText('Lv'+h.level,x,hy-4);
   ctx.restore();
 }
+/* ---- THE UPRISING mob: defectors fight for you and rally around your hero ---- */
+function mobUpdate(dt){
+  if(!S.mob||!S.mob.length)return;
+  const h=S.hero;
+  for(const m of S.mob.slice()){
+    m.t+=dt;
+    let best=null,bd=1e9;
+    for(const e of S.enemies){ const d=Math.hypot(e.x-m.x,e.y-m.y); if(d<bd){bd=d;best=e;} }
+    let tx,ty;
+    if(best&&bd<230){ tx=best.x; ty=best.y; }
+    else { const ang=m.t*0.6+(m.lane||0)*1.3; tx=h.x+Math.cos(ang)*56; ty=h.y+Math.sin(ang)*56; }
+    const dx=tx-m.x, dy=ty-m.y, d=Math.hypot(dx,dy)||1;
+    const spd=152;
+    if(d>6){ const step=Math.min(spd*dt,d); m.x+=dx/d*step; m.y+=dy/d*step; m.walk=(m.walk||0)+dt*10; }
+    if(best&&bd<best.sz*0.5+16){
+      m.atkT=(m.atkT||0)-dt;
+      if(m.atkT<=0){ m.atkT=0.5; damage(best, 6+Math.round(S.turned*0.06), null); for(let i=0;i<2;i++)burst(m.x,m.y,'#f0e0a8'); }
+    }
+  }
+}
+function drawMob(){
+  if(!S.mob||!S.mob.length)return;
+  for(const m of S.mob){
+    const s=Math.max(0.5,Math.min(0.85,m.sz/34));
+    const bob=Math.sin(m.walk||0)*1.0;
+    ctx.save(); ctx.globalAlpha=0.95; ctx.translate(m.x,m.y);
+    ctx.save(); ctx.scale(s,s); drawPlebShape(0,0,1,bob); ctx.restore();
+    ctx.fillStyle='#f2cf62'; ctx.beginPath(); ctx.arc(0,-m.sz*0.72-3,2.6,0,7); ctx.fill();
+    ctx.restore();
+  }
+}
 function drawProj(p){
   if(p.kind==='catapult'){ ctx.fillStyle='#8a6a3a'; ctx.beginPath(); ctx.arc(p.x,p.y,7,0,7); ctx.fill();
     ctx.fillStyle='#b98a4d'; ctx.beginPath(); ctx.arc(p.x-2,p.y-2,3,0,7); ctx.fill(); }
@@ -1412,6 +1460,7 @@ function loop(now){
       enemyUpdate(dt);
       towerUpdate(dt);
       heroUpdate(dt);
+      mobUpdate(dt);
       projUpdate(dt);
       // decay fx
       for(const q of S.parts){ q.t+=dt; q.x+=q.vx*dt; q.y+=q.vy*dt; q.vy+=420*dt; }
@@ -1423,7 +1472,8 @@ function loop(now){
       if(S.rally>0){ S.rally-=dt; if(S.rally<=0){ S.rally=0; } }
       if(S.rallyCd>0){ S.rallyCd-=dt; if(S.rallyCd<0)S.rallyCd=0; }
       S.uiAcc=(S.uiAcc||0)+dt; if(S.uiAcc>0.12){ S.uiAcc=0; updateRallyBtn();
-        if(S.hero&&$('hHero'))$('hHero').textContent=Math.max(0,Math.ceil(S.hero.hp)); }
+        if(S.hero&&$('hHero'))$('hHero').textContent=Math.max(0,Math.ceil(S.hero.hp));
+        if($('hMob'))$('hMob').textContent=(S.mob?S.mob.length:0); }
     }
     render(dt);
   }
@@ -1475,9 +1525,14 @@ $('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.ru
 $('homeBtn').onclick=()=>{ if(!S||S.over)return; $('ov').classList.remove('on'); hideSel(); show('menu'); SFX.ui(); };
 $('rallyBtn').onclick=()=>{ if(!S||S.over||S.paused)return; if((S.rallyCd||0)>0)return;
   S.rally=6; S.rallyCd=30; SFX.up();
-  showBanner('✊ RALLY! The plebs attack twice as fast!','gold',1600);
+  // THE UPRISING: the crowd answers the call — a few fresh defectors rise up
+  const n=4;
+  for(let i=0;i<n;i++){ S.mob.push({x:S.hero.x+(Math.random()-0.5)*70, y:S.hero.y+(Math.random()-0.5)*70, sz:22, t:Math.random()*6, lane:i, defend:0}); }
+  S.turned+=n;
+  showBanner('✊ RALLY! The mob swells +'+n+' and attacks twice as fast!','gold',1900);
   for(const o of S.towers)for(let i=0;i<6;i++)burst(cx(o.c),cy(o.r),'#ffb347');
-  updateRallyBtn();
+  for(let i=0;i<20;i++)burst(S.hero.x,S.hero.y,'#ffd24a');
+  syncHud(); updateRallyBtn();
 };
 $('speedBtn').onclick=()=>{ if(!S)return; S.speed=S.speed===1?2:1;
   $('speedBtn').textContent=S.speed+'×'; $('speedBtn').classList.toggle('on',S.speed>1); SFX.ui();
