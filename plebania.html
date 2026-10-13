@@ -4,9 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>PLEBANIA</title>
-<link rel="icon" type="image/png" sizes="192x192" href="plebania-icon-192.png">
-<link rel="icon" href="plebania-favicon.ico" sizes="any">
-<link rel="apple-touch-icon" href="plebania-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="plebania-icon-192.png?v=2">
+<link rel="icon" href="plebania-favicon.ico?v=2" sizes="any">
+<link rel="apple-touch-icon" sizes="120x120" href="plebania-icon-120.png?v=2">
+<link rel="apple-touch-icon" sizes="152x152" href="plebania-icon-152.png?v=2">
+<link rel="apple-touch-icon" sizes="167x167" href="plebania-icon-167.png?v=2">
+<link rel="apple-touch-icon" sizes="180x180" href="plebania-icon-180.png?v=2">
+<link rel="apple-touch-icon" href="plebania-icon-180.png?v=2">
 <link rel="manifest" href="plebania.webmanifest">
 <meta name="theme-color" content="#0b0a07">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -141,17 +145,22 @@
   #martBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
 
   /* ---------- PLEBMART ---------- */
-  #mart{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.58)}
+  #mart{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
   #mart.on{display:flex}
-  #mart .mcard{width:780px;max-height:88%;overflow:auto;border:3px solid #4a3616;border-radius:18px;
-    background:linear-gradient(#2a1c0a,#150d03);box-shadow:0 16px 44px rgba(0,0,0,.75);padding:20px 26px}
-  #mart h2{font:900 42px Georgia,serif;color:#f2d375;margin:0;text-shadow:0 3px 0 #000;text-align:center}
-  #mart .msub{text-align:center;color:#d8c48c;font:italic 15px Georgia,serif;margin:2px 0 10px}
-  #mart .mgold{text-align:center;font:800 22px Georgia,serif;color:#ffe08a;margin-bottom:14px}
+  #mart .mcard{width:840px;max-width:95%;max-height:93%;overflow:auto;border:3px solid #4a3616;border-radius:18px;
+    background:linear-gradient(#2a1c0a,#150d03);box-shadow:0 16px 44px rgba(0,0,0,.75);padding:16px 22px 20px}
+  #mart h2{font:900 40px Georgia,serif;color:#f2d375;margin:0;text-shadow:0 3px 0 #000;text-align:center}
+  #mart .msub{text-align:center;color:#d8c48c;font:italic 14px Georgia,serif;margin:2px 0 8px}
+  .mtop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .mbal{font:800 18px Georgia,serif;color:#ffe08a}
+  .mtabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0 14px}
+  .mtab{border:2px solid #5a3f14;border-radius:999px;padding:7px 15px;font:800 15px Georgia,serif;color:#f0dca6;
+    background:linear-gradient(rgba(70,52,22,.8),rgba(36,25,10,.85));cursor:pointer}
+  .mtab.on{background:linear-gradient(#f2cf62,#c9971f 60%,#8f6a12);color:#3a2506;border-color:#2a1c08}
   .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .mitem{display:flex;gap:12px;align-items:center;border:2px solid #3a2a10;border-radius:12px;padding:10px 12px;
     background:linear-gradient(rgba(70,52,22,.7),rgba(36,25,10,.8))}
-  .mitem .me{font-size:30px;width:42px;text-align:center;flex:0 0 auto}
+  .mitem .me{font-size:30px;width:44px;text-align:center;flex:0 0 auto}
   .mitem .mi{flex:1;min-width:0}
   .mitem .mn{font:800 17px Georgia,serif;color:#f6e4ad}
   .mitem .md{font:13px Georgia,serif;color:#cdb885;line-height:1.3;margin-top:2px}
@@ -159,6 +168,21 @@
     background:linear-gradient(#f2cf62,#c9971f 60%,#8f6a12);box-shadow:0 3px 0 #4a3409;cursor:pointer;white-space:nowrap;flex:0 0 auto}
   .mbuy:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
   .mbuy.cant{filter:grayscale(.7) brightness(.7);cursor:default}
+  .mboxes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .mbox{border:2px solid #3a2a10;border-radius:14px;padding:14px;text-align:center;background:linear-gradient(rgba(70,52,22,.7),rgba(36,25,10,.8))}
+  .mbox .be{font-size:44px}
+  .mbox .bn{font:800 16px Georgia,serif;color:#f6e4ad;margin-top:6px}
+  .mbox .bc{margin-top:10px}
+  .mskins{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+  .mskin{border:2px solid #3a2a10;border-radius:12px;padding:8px 4px;text-align:center;background:rgba(0,0,0,.25)}
+  .mskin.owned{border-color:#6aa84f}
+  .mskin .sn{font:700 12px Georgia,serif;color:#e8d9ac;margin-top:6px}
+  .mskin .sr{font:11px Georgia,serif;margin-top:2px}
+  .mcode{display:flex;gap:10px;justify-content:center;margin:12px 0}
+  .mcode input{flex:1;max-width:320px;padding:10px 12px;border-radius:10px;border:2px solid #5a3f14;background:#1a1108;color:#f6e4ad;font:800 16px Georgia,serif}
+  .mnews{font:14px/1.5 Georgia,serif;color:#d8c48c;padding-left:6px}
+  .mnews li{margin:7px 0}
+  .mnote{color:#d99a5a;font:italic 13px Georgia,serif;text-align:center;margin:10px 0 2px}
   #mart .mclose{text-align:center;margin-top:16px}
 
   #bar{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:6;
@@ -429,11 +453,13 @@
 
   <!-- ============ PLEBMART ============ -->
   <div id="mart"><div class="mcard">
-    <h2>🛒 PLEBMART</h2>
-    <div class="msub">Spend your plunder. Upgrades stick for the whole run.</div>
-    <div class="mgold">👑 <span id="martGold">0</span></div>
-    <div class="mgrid" id="martGrid"></div>
-    <div class="mclose"><div class="mbtn small" id="martClose" style="width:200px">⬅ Back to battle</div></div>
+    <h2>🛒 PLEB MART</h2>
+    <div class="mtop"><div class="mbal">👑 <span id="martGold">0</span></div>
+      <div class="mbal" style="color:#e0a92e">⚡ <span id="martPleb">0</span> Pleb</div>
+      <div class="mbal" style="color:#8fd66a">🔑 <span id="martKeys">0</span> Plekeys</div></div>
+    <div class="mtabs" id="martTabs"></div>
+    <div id="martBody"></div>
+    <div class="mclose"><div class="mbtn small" id="martClose" style="width:220px">⬅ Back to battle</div></div>
   </div></div>
 
   <!-- ============ TUTORIAL ============ -->
@@ -708,7 +734,7 @@ function buildBar(){
   });
 }
 
-/* ---------------- PLEBMART (shop) ---------------- */
+/* ---------------- PLEB MART (shop) ---------------- */
 const UPGRADES=[
   {id:'sword', e:'🗡️', name:'Longer Sword',  desc:'+15 hero damage.',                base:60, mul:1.7,  max:6},
   {id:'boots', e:'👢', name:'Running Boots',  desc:'+18% hero move speed.',           base:55, mul:1.7,  max:6},
@@ -732,20 +758,132 @@ function buyUpgrade(id){
   showBanner(u.e+' '+u.name+' → Lv'+S.mart[id]+'!','gold',1200);
   renderMart(); syncHud(); buildBar();
 }
-function openMart(){ if(!S||S.over)return; S.paused=true; renderMart(); $('mart').classList.add('on'); SFX.ui(); }
+
+/* ---- Pleb Mart meta: currencies, boxes, collectible Plekeys, codes, gift ---- */
+function loadJSON(k,d){ try{ const v=JSON.parse(localStorage.getItem(k)); return v==null?d:v; }catch(e){ return d; } }
+function saveJSON(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+let PLEB=loadJSON('plebania_pleb',0);
+let PLEKEYS=loadJSON('plebania_plekeys',[]);
+let EQUIPPED=loadJSON('plebania_key','');
+let GIFT=loadJSON('plebania_gift',0);
+const CODES_USED=loadJSON('plebania_codes',{});
+let MARTTAB='shop';
+const PLEB_CODES={
+  'WELCOME': {pleb:3000, gold:200, note:'Welcome, pleb!'},
+  'UPRISING':{pleb:1500, gold:150, note:'Power to the plebs!'},
+  'PLEB2026':{pleb:1000, key:true,   note:'Founder\u2019s Plekey!'}
+};
+const BOXES=[
+  {id:'wood', e:'📦', name:'Wooden Pleb Box', cost:150,  pleb:150,  keyChance:0.12},
+  {id:'iron', e:'🎁', name:'Iron Pleb Box',   cost:400,  pleb:500,  keyChance:0.28},
+  {id:'gold', e:'🏆', name:'Golden Pleb Box', cost:900,  pleb:1600, keyChance:0.6}
+];
+const SKINS=[
+  {id:'classic', e:'🧑‍🌾', name:'Classic Pleb', rarity:'Common',    col:'#f2cf62', cost:0},
+  {id:'knight',  e:'🐴', name:'Turned Knight', rarity:'Rare',      col:'#d8b24a', cost:1200},
+  {id:'wolf',    e:'🐺', name:'Wolf Pleb',     rarity:'Rare',      col:'#9fd0ff', cost:1500},
+  {id:'bone',    e:'💀', name:'Bone Lord',     rarity:'Epic',      col:'#c69bff', cost:2600},
+  {id:'king',    e:'👑', name:'Pleb King',     rarity:'Legendary', col:'#ff4d4d', cost:5000}
+];
+const RARCOL={Common:'#cccccc',Rare:'#7fd0ff',Epic:'#c69bff',Legendary:'#ffd24a'};
+function hasKey(id){ return PLEKEYS.indexOf(id)>=0; }
+function unlockKey(id){ if(hasKey(id))return false; PLEKEYS.push(id); saveJSON('plebania_plekeys',PLEKEYS);
+  const sk=SKINS.find(s=>s.id===id); showBanner('🔑 PLEKEY UNLOCKED: '+sk.name+'!','gold',1900); return true; }
+function rollKey(){ const lock=SKINS.filter(s=>!hasKey(s.id)); if(!lock.length)return false;
+  const pool=lock.concat(lock); // bias toward rarer by weighting
+  return unlockKey(pool[Math.floor(Math.random()*pool.length)].id); }
+function openBox(id){
+  const b=BOXES.find(x=>x.id===id); if(!b||!S)return;
+  if(S.gold<b.cost){ tip('Need 👑'+b.cost+' for the '+b.name,1400); return; }
+  S.gold-=b.cost; PLEB+=b.pleb; saveJSON('plebania_pleb',PLEB);
+  let key=false; if(Math.random()<b.keyChance) key=rollKey();
+  SFX.up(); for(let i=0;i<18;i++)burst(W/2,H/2,'#ffe08a');
+  showBanner(b.e+' +'+b.pleb+' Pleb'+(key?' + A PLEKEY!':''),'gold',1600);
+  renderMart(); syncHud();
+}
+function buySkin(id){
+  const s=SKINS.find(x=>x.id===id); if(!s)return;
+  if(hasKey(id)){ EQUIPPED=(EQUIPPED===id)?'':id; saveJSON('plebania_key',EQUIPPED); SFX.ui(); renderMart();
+    showBanner(EQUIPPED?('🧑‍🌾 Hero is now the '+s.name):'Default hero',1000); return; }
+  if(PLEB<s.cost){ tip('Need '+s.cost+' Pleb to unlock '+s.name,1500); return; }
+  PLEB-=s.cost; saveJSON('plebania_pleb',PLEB); unlockKey(id); EQUIPPED=id; saveJSON('plebania_key',EQUIPPED);
+  SFX.up(); renderMart();
+}
+function redeemCode(){
+  const inp=$('codeInput'); if(!inp)return; const code=(inp.value||'').trim().toUpperCase();
+  if(!code){ tip('Type a code first',1200); return; }
+  const c=PLEB_CODES[code];
+  if(!c){ tip('❌ That code isn\u2019t valid',1500); return; }
+  if(CODES_USED[code]){ tip('You already used '+code,1400); return; }
+  CODES_USED[code]=1; saveJSON('plebania_codes',CODES_USED);
+  if(c.gold&&S)S.gold+=c.gold;
+  if(c.pleb){ PLEB+=c.pleb; saveJSON('plebania_pleb',PLEB); }
+  if(c.key) rollKey();
+  inp.value=''; SFX.up(); showBanner('✅ Code redeemed: '+c.note,'gold',1800); renderMart(); syncHud();
+}
+function claimGift(){
+  const now=Date.now(), day=86400000;
+  if(GIFT&&now-GIFT<day){ const h=Math.ceil((day-(now-GIFT))/3600000); tip('Gift resets in ~'+h+'h',1400); return; }
+  GIFT=now; saveJSON('plebania_gift',GIFT);
+  if(S)S.gold+=250; PLEB+=250; saveJSON('plebania_pleb',PLEB);
+  SFX.up(); showBanner('🎁 Daily gift: +250 gold +250 Pleb!','gold',1800); renderMart(); syncHud();
+}
+function openMart(){ if(!S||S.over)return; S.paused=true; MARTTAB=MARTTAB||'shop'; renderMart(); $('mart').classList.add('on'); SFX.ui(); }
 function closeMart(){ if(S)S.paused=false; $('mart').classList.remove('on'); }
 function renderMart(){
-  if(!S)return; $('martGold').textContent=Math.floor(S.gold);
-  const g=$('martGrid'); g.innerHTML='';
-  UPGRADES.forEach(u=>{
-    const lvl=S.mart[u.id]||0, maxed=lvl>=u.max, cost=martCost(u);
-    const el=document.createElement('div'); el.className='mitem';
-    el.innerHTML='<div class="me">'+u.e+'</div><div class="mi"><div class="mn">'+u.name+(maxed?' ✔ MAX':' · Lv'+lvl+'/'+u.max)+'</div><div class="md">'+u.desc+'</div></div>';
-    const b=document.createElement('div'); b.className='mbuy'+(maxed||S.gold<cost?' cant':'');
-    b.textContent=maxed?'MAX':'👑'+cost;
-    if(!maxed) b.onclick=()=>buyUpgrade(u.id);
-    el.appendChild(b); g.appendChild(el);
-  });
+  if(!S)return;
+  $('martGold').textContent=Math.floor(S.gold);
+  $('martPleb').textContent=PLEB; $('martKeys').textContent=PLEKEYS.length;
+  const TABS=[['shop','🛒 Shop'],['boxes','📦 Pleb Boxes'],['revolt','🔑 Revolt Center'],['codes','🎟️ Codes'],['gift','🎁 Gift'],['news','📰 News']];
+  const tabs=$('martTabs'); tabs.innerHTML='';
+  TABS.forEach(([id,label])=>{ const t=document.createElement('div'); t.className='mtab'+(MARTTAB===id?' on':'');
+    t.textContent=label; t.onclick=()=>{ MARTTAB=id; SFX.ui(); renderMart(); }; tabs.appendChild(t); });
+  const body=$('martBody');
+  if(MARTTAB==='shop'){
+    body.innerHTML='<div class="msub">Spend your plunder 👑. Upgrades stick for the whole run.</div>';
+    const g=document.createElement('div'); g.className='mgrid';
+    UPGRADES.forEach(u=>{ const lvl=S.mart[u.id]||0, maxed=lvl>=u.max, cost=martCost(u);
+      const el=document.createElement('div'); el.className='mitem';
+      el.innerHTML='<div class="me">'+u.e+'</div><div class="mi"><div class="mn">'+u.name+(maxed?' ✔ MAX':' · Lv'+lvl+'/'+u.max)+'</div><div class="md">'+u.desc+'</div></div>';
+      const b=document.createElement('div'); b.className='mbuy'+(maxed||S.gold<cost?' cant':''); b.textContent=maxed?'MAX':'👑'+cost;
+      if(!maxed)b.onclick=()=>buyUpgrade(u.id); el.appendChild(b); g.appendChild(el); });
+    body.appendChild(g);
+  }else if(MARTTAB==='boxes'){
+    body.innerHTML='<div class="msub">Buy boxes for a pile of Pleb ⚡ — and a chance at a KEY 🔑.</div><div class="mboxes" id="boxRow"></div>';
+    const row=body.querySelector('#boxRow');
+    BOXES.forEach(b=>{ const el=document.createElement('div'); el.className='mbox';
+      el.innerHTML='<div class="be">'+b.e+'</div><div class="bn">'+b.name+'</div><div class="md">+'+b.pleb+' Pleb ⚡<br>'+Math.round(b.keyChance*100)+'% Plekey chance</div>';
+      const btn=document.createElement('div'); btn.className='mbuy bc'+(S.gold<b.cost?' cant':''); btn.textContent='👑'+b.cost;
+      if(S.gold>=b.cost)btn.onclick=()=>openBox(b.id); el.appendChild(btn); row.appendChild(el); });
+  }else if(MARTTAB==='revolt'){
+    body.innerHTML='<div class="msub">Revolt Center — unlock collectible PLEKEYS with Pleb ⚡. Each one re-skins your hero.</div><div class="mskins" id="skinRow"></div>';
+    const row=body.querySelector('#skinRow');
+    SKINS.forEach(s=>{ const owned=hasKey(s.id); const eq=EQUIPPED===s.id;
+      const el=document.createElement('div'); el.className='mskin'+(owned?' owned':'');
+      el.innerHTML='<div style="font-size:30px">'+s.e+'</div><div class="sn">'+s.name+'</div><div class="sr" style="color:'+RARCOL[s.rarity]+'">'+s.rarity+'</div>';
+      const btn=document.createElement('div'); btn.className='mbuy'+(owned?'':' cant'); btn.style.marginTop='6px';
+      btn.textContent= eq?'✔ Equipped' : owned?'Equip' : ('⚡'+s.cost);
+      if(owned||PLEB>=s.cost)btn.onclick=()=>buySkin(s.id);
+      el.appendChild(btn); row.appendChild(el); });
+  }else if(MARTTAB==='codes'){
+    body.innerHTML='<div class="msub">Got a code? Type it in for free plunder ⚡👑.</div>'+
+      '<div class="mcode"><input id="codeInput" maxlength="24" placeholder="ENTER CODE…"><div class="mbuy" id="codeGo">Redeem</div></div>'+
+      '<div class="mnote">Psst… try WELCOME , UPRISING , or PLEB2026 </div>';
+    body.querySelector('#codeGo').onclick=redeemCode;
+    body.querySelector('#codeInput').addEventListener('keydown',e=>{ if(e.key==='Enter')redeemCode(); });
+  }else if(MARTTAB==='gift'){
+    const ready=!(GIFT&&Date.now()-GIFT<86400000);
+    body.innerHTML='<div class="msub">Come back every day for a free gift 🎁.</div>'+
+      '<div class="mbox" style="max-width:300px;margin:0 auto"><div class="be">🎁</div><div class="bn">Daily Gift</div><div class="md">+250 gold 👑 and +250 Pleb ⚡</div></div>'+
+      '<div style="text-align:center;margin-top:12px"><div class="mbuy'+(ready?'':' cant')+'" id="giftGo" style="display:inline-block">'+(ready?'Claim gift':'Come back tomorrow')+'</div></div>';
+    if(ready)body.querySelector('#giftGo').onclick=claimGift;
+  }else{
+    body.innerHTML='<div class="msub">Latest from Plebania 📰</div><ul class="mnews">'+
+      '<li><b>✊ v2.0</b> — THE UPRISING: slain nobles defect to your mob!</li>'+
+      '<li><b>🗡️ v2.0</b> — control your own hero. Drag to run, he auto-attacks.</li>'+
+      '<li><b>🛒 v2.1</b> — Pleb Mart opens: shop, Pleb Boxes, Plekeys &amp; codes.</li>'+
+      '<li><b>🔑 Coming soon</b> — more Plekeys, hero weapons, boss rush.</li></ul>';
+  }
 }
 
 /* =========================================================
@@ -1418,9 +1556,11 @@ function drawEnemy(e){
 function drawHero(){
   const h=S.hero; if(!h)return;
   const x=h.x, y=h.y;
+  const skin=(typeof SKINS!=='undefined')?SKINS.find(s=>s.id===EQUIPPED):null;
+  const aura=skin?RARCOL[skin.rarity]:'rgba(255,214,90,.75)';
   ctx.save();
   ctx.fillStyle='rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(x,y+30,28,9,0,0,7); ctx.fill();
-  ctx.strokeStyle='rgba(255,214,90,.75)'; ctx.lineWidth=3; ctx.setLineDash([7,7]);
+  ctx.strokeStyle=aura; ctx.lineWidth=3; ctx.setLineDash([7,7]);
   ctx.beginPath(); ctx.ellipse(x,y+30,33,11,0,0,7); ctx.stroke(); ctx.setLineDash([]);
   if(h.down){
     ctx.globalAlpha=.55; ctx.save(); ctx.translate(x,y); ctx.scale(1.4,1.4); drawPlebShape(0,0,1,0); ctx.restore(); ctx.globalAlpha=1;
@@ -1451,6 +1591,7 @@ function drawHero(){
   ctx.fillStyle=frac>0.5?'#79d24e':frac>0.25?'#f2c94c':'#e0562a'; ctx.fillRect(hx,hy,bw*frac,6);
   ctx.font='800 13px Georgia,serif'; ctx.textAlign='center'; ctx.fillStyle='#ffe9b0';
   ctx.strokeStyle='rgba(0,0,0,.75)'; ctx.lineWidth=3; ctx.strokeText('Lv'+h.level,x,hy-4); ctx.fillText('Lv'+h.level,x,hy-4);
+  if(skin){ ctx.font='16px serif'; ctx.strokeText(skin.e,x+34,hy+6); ctx.fillText(skin.e,x+34,hy+6); }
   ctx.restore();
 }
 /* ---- THE UPRISING mob: defectors fight for you and rally around your hero ---- */
