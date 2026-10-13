@@ -52,8 +52,8 @@
   .mbtn.small{font-size:19px;padding:13px 20px;background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);color:#3a2a08}
   .menu-foot{position:absolute;left:72px;bottom:26px;z-index:5;font:14px Georgia,serif;color:#c8b079;opacity:.85;
     text-shadow:0 2px 4px #000}
-  .worldstrip{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
-  .wchip{width:132px;border:2px solid #2a1c08;border-radius:14px;padding:10px 8px;text-align:center;cursor:pointer;
+  .worldstrip{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+  .wchip{width:118px;border:2px solid #2a1c08;border-radius:14px;padding:10px 8px;text-align:center;cursor:pointer;
     background:linear-gradient(rgba(64,46,20,.9),rgba(34,23,9,.92));box-shadow:0 4px 0 #2a1c08,0 10px 20px rgba(0,0,0,.4);
     transition:transform .07s,border-color .1s}
   .wchip:hover{transform:translateY(-3px);border-color:#c9a24a}
@@ -63,6 +63,23 @@
   .wchip.locked{opacity:.55;filter:grayscale(.7)}
   .wchip.cleared{border-color:#6aa84f;box-shadow:0 4px 0 #2a1c08,0 0 16px rgba(120,200,90,.35)}
   .wchip .wcheck{color:#8fd66a;font-size:13px}
+
+  /* ---------- WORLD SELECT ---------- */
+  #worlds{background:linear-gradient(#241708,#0f0a03);overflow:auto;padding:44px 60px;text-align:center}
+  #worlds.on{display:flex;flex-direction:column;align-items:center;justify-content:center}
+  #worlds h2{font:900 50px Georgia,serif;color:#f2d375;margin:0 0 6px;text-shadow:0 3px 0 #000}
+  #worlds .sub{color:#d8c48c;font:italic 18px Georgia,serif;margin-bottom:28px}
+  #worlds .wgrid{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+  #worlds .wbig{width:224px;border:3px solid #2a1c08;border-radius:18px;padding:20px 16px;cursor:pointer;
+    background:linear-gradient(rgba(64,46,20,.92),rgba(30,20,8,.94));box-shadow:0 6px 0 #2a1c08,0 14px 26px rgba(0,0,0,.45);transition:transform .08s,border-color .1s}
+  #worlds .wbig:hover{transform:translateY(-4px);border-color:#c9a24a}
+  #worlds .wbig .we{font-size:54px;line-height:1}
+  #worlds .wbig .wn{font:800 21px Georgia,serif;color:#f3e2b0;margin-top:8px}
+  #worlds .wbig .wd{font:13px Georgia,serif;color:#c8b079;margin-top:8px;min-height:36px;line-height:1.35}
+  #worlds .wbig .ws{font:800 15px Georgia,serif;color:#e2c476;margin-top:12px;padding:7px;border-radius:10px;background:rgba(0,0,0,.32)}
+  #worlds .wbig.locked{opacity:.55;filter:grayscale(.7)}
+  #worlds .wbig.cleared{border-color:#6aa84f;box-shadow:0 6px 0 #2a1c08,0 0 20px rgba(120,200,90,.35)}
+  #worlds .wbig .wcheck{color:#8fd66a}
   .linklike{cursor:pointer;color:#d8c48c;font:15px Georgia,serif;text-decoration:underline;text-underline-offset:3px;opacity:.9}
   .linklike:hover{color:#f6e3ab}
   .torch{position:absolute;width:16px;height:16px;border-radius:50%;
@@ -340,6 +357,14 @@
     <div class="back"><div class="mbtn small" id="howBack" style="width:220px">⬅ Back to Menu</div></div>
   </div>
 
+  <!-- ============ WORLD SELECT ============ -->
+  <div id="worlds" class="screen">
+    <h2>Choose Your World</h2>
+    <div class="sub">Every world is a different land with its own beasts to survive. Free one to unlock the next.</div>
+    <div class="wgrid" id="worldGrid"></div>
+    <div class="back"><div class="mbtn small" id="worldsBack" style="width:220px">⬅ Back to Menu</div></div>
+  </div>
+
   <!-- ============ GAME ============ -->
   <div id="game" class="screen">
     <canvas id="cv"></canvas>
@@ -416,8 +441,9 @@ cv.width=W; cv.height=H;
 
 /* ---------------- screens ---------------- */
 function show(id){
-  ['menu','how','game'].forEach(s=>$(s).classList.toggle('on',s===id));
+  ['menu','how','worlds','game'].forEach(s=>$(s).classList.toggle('on',s===id));
   if(id==='menu')populateWorldStrip();
+  if(id==='worlds')populateWorldSelect();
 }
 function populateWorldStrip(){
   const strip=$('worldStrip'); if(!strip)return; strip.innerHTML='';
@@ -432,9 +458,29 @@ function populateWorldStrip(){
     strip.appendChild(el);
   });
 }
+const WORLD_DESC=[
+  'Green fields, thatched cottages. The King\u2019s army marches on your little village.',
+  'Dark pines and howling beasts \u2014 wolves, boars and a raging Forest Troll.',
+  'Undead in the dark \u2014 skeletons, ghouls and the Necromancer\u2019s Lich.'
+];
+function populateWorldSelect(){
+  const g=$('worldGrid'); if(!g)return; g.innerHTML='';
+  WORLDS.forEach((w,i)=>{
+    const locked=i+1>unlocked;
+    const cleared=i+1<unlocked;
+    const el=document.createElement('div');
+    el.className='wbig'+(locked?' locked':'')+(cleared?' cleared':'');
+    el.innerHTML='<div class="we">'+w.emoji+'</div><div class="wn">'+w.name+'</div>'+
+      '<div class="wd">'+(locked?'Locked \u2014 free the previous world first.':WORLD_DESC[i])+'</div>'+
+      '<div class="ws">'+(locked?'🔒 Locked':(cleared?'<span class="wcheck">✔ Cleared \u00b7 replay</span>':'▶ Play'))+'</div>';
+    el.onclick=()=>{ if(locked){SFX.ui();tip('Free the previous world first!',1500);return;} initAudio(); newGame(i); show('game'); startTutorial(); };
+    g.appendChild(el);
+  });
+}
 $('howBtn').onclick=()=>show('how');
 $('howBack').onclick=()=>show('menu');
-$('playBtn').onclick=()=>{initAudio();newGame(unlocked-1);show('game');startTutorial();};
+$('worldsBack').onclick=()=>show('menu');
+$('playBtn').onclick=()=>{ initAudio(); show('worlds'); };
 
 /* ---------------- tutorial ---------------- */
 const TUT=[
@@ -500,18 +546,21 @@ const ENEMIES={
   knight  : {name:'Knight',  hp:74,  spd:80, gold:10, sz:28, rank:'gold',   emoji:'🐴'},
   sheriff : {name:'Sheriff', hp:165, spd:44, gold:17, sz:33, rank:'red',    emoji:'🏇'},
   elephant: {name:'War Elephant', hp:460, spd:34, gold:48, sz:46, rank:'boss', emoji:'🐘'},
+  champion: {name:'Royal Champion', hp:300, spd:52, gold:34, sz:40, rank:'champ', emoji:'⚔️'},
   king    : {name:'The King', hp:1650, spd:30, gold:220, sz:56, rank:'king', emoji:'👑'},
   // --- World 2: the deep forest beasts ---
   wolf    : {name:'Wolf',  hp:52,  spd:70, gold:8,  sz:26, rank:'beast',  emoji:'🐺'},
   boar    : {name:'Boar',  hp:92,  spd:56, gold:12, sz:30, rank:'beast',  emoji:'🐗'},
   spider  : {name:'Spider',hp:150, spd:72, gold:16, sz:28, rank:'beast',  emoji:'🕷️'},
   bear    : {name:'Bear',  hp:480, spd:36, gold:48, sz:46, rank:'boss',   emoji:'🐻'},
+  direelk : {name:'Dire Elk', hp:310, spd:58, gold:34, sz:42, rank:'champ', emoji:'🦌'},
   troll   : {name:'Forest Troll', hp:1700, spd:30, gold:220, sz:56, rank:'king', emoji:'👹'},
   // --- World 3: the bone caves undead ---
   skeleton:{name:'Skeleton', hp:46,  spd:58, gold:7,  sz:26, rank:'undead', emoji:'💀'},
   zombie  : {name:'Zombie',  hp:96,  spd:44, gold:12, sz:30, rank:'undead', emoji:'🧟'},
   ghoul   : {name:'Ghoul',   hp:160, spd:64, gold:17, sz:30, rank:'undead', emoji:'🧟‍♂️'},
   necromancer:{name:'Necromancer', hp:460, spd:34, gold:48, sz:46, rank:'boss', emoji:'🧙'},
+  vampire : {name:'Vampire', hp:290, spd:62, gold:34, sz:40, rank:'champ', emoji:'🧛'},
   lich    : {name:'The Lich', hp:1650, spd:30, gold:220, sz:56, rank:'king', emoji:'☠️'}
 };
 const MAXWAVE=10;
@@ -522,13 +571,13 @@ function cy(r){return GY+(r+0.5)*TILE;}
 const WORLDS=[
   {name:'The Village', emoji:'🌾', theme:'grass',
    wps:[[-1,2],[5,2],[5,7],[10,7],[10,3],[16,3]],
-   units:{light:'footman',medium:'knight',heavy:'sheriff'}, boss:'elephant', king:'king'},
+   units:{light:'footman',medium:'knight',heavy:'sheriff'}, elite:'champion', boss:'elephant', king:'king'},
   {name:'The Deep Forest', emoji:'🌲', theme:'forest',
    wps:[[-1,5],[4,5],[4,1],[8,1],[8,8],[13,8],[13,4],[16,4]],
-   units:{light:'wolf',medium:'boar',heavy:'spider'}, boss:'bear', king:'troll'},
+   units:{light:'wolf',medium:'boar',heavy:'spider'}, elite:'direelk', boss:'bear', king:'troll'},
   {name:'The Bone Caves', emoji:'💀', theme:'cave',
    wps:[[-1,1],[6,1],[6,6],[2,6],[2,9],[11,9],[11,4],[16,4]],
-   units:{light:'skeleton',medium:'zombie',heavy:'ghoul'}, boss:'necromancer', king:'lich'}
+   units:{light:'skeleton',medium:'zombie',heavy:'ghoul'}, elite:'vampire', boss:'necromancer', king:'lich'}
 ];
 let PATH=[], pathKeys=new Set();
 function buildPath(worldIdx){
@@ -581,7 +630,7 @@ function syncHud(){
 function previewWave(w){
   const W=WORLDS[S.world];
   const q=waveComp(w); const seen={}; q.forEach(t=>seen[t]=(seen[t]||0)+1);
-  const order=[W.king,W.boss,W.units.heavy,W.units.medium,W.units.light];
+  const order=[W.king,W.boss,W.elite,W.units.heavy,W.units.medium,W.units.light];
   return order.filter(t=>seen[t]).map(t=>ENEMIES[t].emoji+seen[t]).join(' ');
 }
 function sUpdateNext(){ const w=Math.min(S.wave+1,MAXWAVE); const t=$('hNext'); if(t)t.textContent=S.wave>=MAXWAVE?'👑 final':previewWave(w); }
@@ -627,6 +676,13 @@ cv.addEventListener('pointermove',e=>{
 });
 cv.addEventListener('pointerleave',()=>{hover=null;});
 cv.addEventListener('pointercancel',()=>{hover=null;});
+/* instant deselect: an outside tap clears the selection the moment it lands (capture phase),
+   so after you place a villager (or confirm a build) nothing is left selected */
+cv.addEventListener('pointerdown',e=>{
+  if(!S||S.over||S.paused)return;
+  const p=evt(e);
+  if(S.sel && !S.towers.some(o=>Math.hypot(p.x-cx(o.c),p.y-cy(o.r))<TILE*0.62)) hideSel();
+}, true);
 cv.addEventListener('pointerdown',e=>{
   if(!S||S.over||S.paused)return;
   const p=evt(e);
@@ -702,8 +758,9 @@ function waveComp(w){
   for(let i=0;i<n;i++)q.push(W.units.light);
   if(w>=2){const k=Math.round(w*0.9);for(let i=0;i<k;i++)q.push(W.units.medium);}
   if(w>=4){const s=Math.round((w-3)*0.75);for(let i=0;i<s;i++)q.push(W.units.heavy);}
+  if(w>=6){const el=Math.round((w-5)*0.7);for(let i=0;i<el;i++)q.push(W.elite);}
   if(w===5||w===8)q.push(W.boss);
-  if(w===10){q.push(W.boss);q.push(W.king);}
+  if(w===10){q.push(W.boss);q.push(W.elite);q.push(W.elite);q.push(W.king);}
   // shuffle a little so it feels organic
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
   return q;
@@ -946,7 +1003,7 @@ const THEMES={
            pathOuter:'#241f30', pathInner:'#454060', pathHi:'rgba(120,110,170,.45)', pebble:'rgba(20,16,30,.5)'}
 };
 function curTheme(){ return THEMES[WORLDS[S.world].theme]||THEMES.grass; }
-function hash2(c,r){ let h=(c*73856093)^(r*19349663); h=(h^(h>>13))*1274126177; return ((h^(h>>16))>>>0)/4294967295; }
+function hash2(c,r){ const x=Math.sin(c*127.1+r*311.7)*43758.5453; return x-Math.floor(x); }
 
 function drawGround(){
   const TH=curTheme();
@@ -966,26 +1023,59 @@ function drawGround(){
 }
 function drawDeco(){
   const theme=WORLDS[S.world].theme;
+  const ol=3;
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
     if(pathKeys.has(c+','+r))continue;
-    const h=hash2(c,r); if(h<0.62)continue;
+    const h=hash2(c,r); if(h<0.42)continue;
     const x=cx(c), y=cy(r);
+    ctx.lineWidth=ol; ctx.strokeStyle=INK; ctx.lineJoin='round';
     if(theme==='grass'){
-      // leafy tree
-      ctx.fillStyle='#4a3a1c'; ctx.fillRect(x-3,y-2,6,14);
-      ctx.fillStyle='#2f5a24'; ctx.beginPath(); ctx.arc(x,y-10,15,0,7); ctx.fill();
-      ctx.fillStyle='#3d722f'; ctx.beginPath(); ctx.arc(x-4,y-14,10,0,7); ctx.fill();
+      if(h>0.84){ // leafy tree
+        ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(x+3,y+13,17,5,0,0,7); ctx.fill();
+        ctx.fillStyle='#7a5326'; ctx.fillRect(x-4,y-2,8,16); ctx.strokeRect(x-4,y-2,8,16);
+        ctx.fillStyle='#3f8a30'; ctx.beginPath(); ctx.arc(x,y-13,18,0,7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle='#57aa3e'; ctx.beginPath(); ctx.arc(x-6,y-18,11,0,7); ctx.fill();
+        ctx.fillStyle='#6fcc52'; ctx.beginPath(); ctx.arc(x+7,y-16,7,0,7); ctx.fill();
+      }else if(h>0.72){ // bush
+        ctx.fillStyle=INK; ctx.beginPath(); ctx.ellipse(x,y+3,13,10,0,0,7); ctx.fill();
+        ctx.fillStyle='#4a8f38'; ctx.beginPath(); ctx.ellipse(x,y+3,10.5,7.5,0,0,7); ctx.fill();
+      }else if(h>0.63){ // rock
+        ctx.fillStyle='#b3b7bd'; ctx.beginPath(); ctx.moveTo(x-10,y+9); ctx.lineTo(x-3,y-6); ctx.lineTo(x+7,y+9); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle='#d6d9dd'; ctx.beginPath(); ctx.moveTo(x-10,y+9); ctx.lineTo(x-3,y-6); ctx.lineTo(x-1,y+9); ctx.closePath(); ctx.fill();
+      }else{ // wildflowers
+        for(let i=0;i<3;i++){ const fx=x-8+i*8, fy=y+4+((i%2)*4); ctx.fillStyle=['#f2d94e','#f07a9a','#ffffff'][i%3]; ctx.beginPath(); ctx.arc(fx,fy,3.4,0,7); ctx.fill(); ctx.strokeStyle=INK; ctx.lineWidth=1.5; ctx.stroke(); }
+      }
     }else if(theme==='forest'){
-      // pine
-      ctx.fillStyle='#3a2a14'; ctx.fillRect(x-3,y+2,6,12);
-      ctx.fillStyle='#1e4a2a';
-      for(let k=0;k<3;k++){ const yy=y-2-k*11, w=18-k*4; ctx.beginPath(); ctx.moveTo(x,yy-14); ctx.lineTo(x-w,yy); ctx.lineTo(x+w,yy); ctx.closePath(); ctx.fill(); }
+      if(h>0.8){ // pine
+        ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(x+3,y+13,15,5,0,0,7); ctx.fill();
+        ctx.fillStyle='#7a5326'; ctx.fillRect(x-4,y+2,8,14); ctx.strokeStyle=INK; ctx.lineWidth=ol; ctx.strokeRect(x-4,y+2,8,14);
+        for(let k=0;k<3;k++){ const yy=y-2-k*13, w=21-k*5; ctx.fillStyle=['#2f6b3a','#327a3f','#3a8a47'][k];
+          ctx.beginPath(); ctx.moveTo(x,yy-16); ctx.lineTo(x-w,yy); ctx.lineTo(x+w,yy); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+      }else if(h>0.7){ // mushroom
+        ctx.fillStyle='#efe7d4'; ctx.fillRect(x-3,y+2,6,10); ctx.strokeStyle=INK; ctx.lineWidth=ol; ctx.strokeRect(x-3,y+2,6,10);
+        ctx.fillStyle='#c0392b'; ctx.beginPath(); ctx.ellipse(x,y+2,11,8,0,0,7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle='#f4efe2'; ctx.beginPath(); ctx.arc(x-3,y+1,2.2,0,7); ctx.arc(x+4,y+2,2.2,0,7); ctx.fill();
+      }else if(h>0.62){ // rock
+        ctx.fillStyle='#8b8f95'; ctx.beginPath(); ctx.moveTo(x-10,y+9); ctx.lineTo(x-3,y-6); ctx.lineTo(x+8,y+9); ctx.closePath(); ctx.fill(); ctx.stroke();
+      }else{ // fern
+        ctx.strokeStyle='#57a04c'; ctx.lineWidth=3.4; ctx.lineCap='round';
+        for(let i=-1;i<2;i++){ ctx.beginPath(); ctx.moveTo(x,y+9); ctx.lineTo(x+i*8,y-6); ctx.stroke(); }
+      }
     }else{
-      // cave stalagmite / crystal
-      if(h<0.8){ ctx.fillStyle='#3a3550'; ctx.beginPath(); ctx.moveTo(x-11,y+14); ctx.lineTo(x-3,y-20); ctx.lineTo(x+4,y+14); ctx.closePath(); ctx.fill();
-        ctx.fillStyle='#4a4468'; ctx.beginPath(); ctx.moveTo(x-11,y+14); ctx.lineTo(x-3,y-20); ctx.lineTo(x-1,y+14); ctx.closePath(); ctx.fill(); }
-      else { ctx.fillStyle='#7bd8e0'; ctx.globalAlpha=.85; ctx.beginPath(); ctx.moveTo(x,y-18); ctx.lineTo(x+8,y); ctx.lineTo(x,y+12); ctx.lineTo(x-8,y); ctx.closePath(); ctx.fill();
-        ctx.globalAlpha=.25; ctx.beginPath(); ctx.arc(x,y-4,16,0,7); ctx.fill(); ctx.globalAlpha=1; }
+      if(h>0.8){ // stalagmites
+        ctx.fillStyle='#5a5478'; ctx.beginPath(); ctx.moveTo(x-11,y+14); ctx.lineTo(x-3,y-20); ctx.lineTo(x+4,y+14); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle='#726b93'; ctx.beginPath(); ctx.moveTo(x+4,y+14); ctx.lineTo(x+9,y-8); ctx.lineTo(x+15,y+14); ctx.closePath(); ctx.fill(); ctx.stroke();
+      }else if(h>0.66){ // glowing crystal
+        ctx.fillStyle='#7bd8e0'; ctx.beginPath(); ctx.moveTo(x,y-18); ctx.lineTo(x+9,y); ctx.lineTo(x,y+12); ctx.lineTo(x-9,y); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.globalAlpha=.35; ctx.fillStyle='#9beaf0'; ctx.beginPath(); ctx.arc(x,y-4,17,0,7); ctx.fill(); ctx.globalAlpha=1;
+      }else if(h>0.58){ // skull
+        ctx.fillStyle='#efeade'; ctx.beginPath(); ctx.arc(x,y,8,0,7); ctx.fill(); ctx.strokeStyle=INK; ctx.lineWidth=ol; ctx.stroke();
+        ctx.fillRect(x-5,y+6,10,5); ctx.strokeRect(x-5,y+6,10,5);
+        ctx.fillStyle='#20202a'; ctx.beginPath(); ctx.arc(x-3,y-1,2.4,0,7); ctx.arc(x+3,y-1,2.4,0,7); ctx.fill();
+      }else{ // bone pile
+        ctx.strokeStyle='#e6e1d2'; ctx.lineWidth=4.5; ctx.lineCap='round';
+        ctx.beginPath(); ctx.moveTo(x-9,y+6); ctx.lineTo(x+9,y-3); ctx.moveTo(x-7,y-4); ctx.lineTo(x+8,y+8); ctx.stroke();
+      }
     }
   }
 }
@@ -1130,11 +1220,12 @@ function drawEnemy(e){
   ctx.fillStyle='rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(x,y+e.sz*0.75,e.sz*0.7,e.sz*0.26,0,0,7); ctx.fill();
   const hurt=e.hitT>0;
   const rank=e.rank;
-  if(rank==='king'||rank==='boss'||rank==='beast'||rank==='undead'){
+  if(rank==='king'||rank==='boss'||rank==='champ'||rank==='beast'||rank==='undead'){
     // emoji units (beasts / undead / bosses) with glow accents
     ctx.font=(e.sz*1.9)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
     if(rank==='king'){ ctx.shadowColor=e.type==='lich'?'#7be0c0':'#ffd24a'; ctx.shadowBlur=24; }
     else if(rank==='boss'){ ctx.shadowColor='#ff7a3a'; ctx.shadowBlur=12; }
+    else if(rank==='champ'){ ctx.shadowColor='#ffd24a'; ctx.shadowBlur=10; }
     if(rank==='undead'||e.type==='zombie'||e.type==='ghoul'){ ctx.globalAlpha=hurt?1:0.94; }
     ctx.fillText(e.emoji,x,y); ctx.shadowBlur=0; ctx.globalAlpha=1;
   }else{
