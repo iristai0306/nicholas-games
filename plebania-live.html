@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PLEBANIA (live)</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;background:#0b0a07;overflow:hidden}
+  iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+  .hint{position:absolute;left:0;right:0;bottom:6px;text-align:center;font:12px Georgia,serif;
+    color:#8a7a4a;pointer-events:none;z-index:2}
+</style>
+</head>
+<body>
+  <iframe id="f" src="plebania.html"></iframe>
+  <div class="hint">Always-latest build · reload for updates</div>
+  <script>
+    // Bust the GitHub Pages cache so Nicholas always sees the newest PLEBANIA build.
+    var f=document.getElementById('f');
+    f.src='plebania.html?t='+Date.now();
+  </script>
+</body>
+</html>

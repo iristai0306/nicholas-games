@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>PLEBANIA</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%;background:#0b0a07;overflow:hidden;
+    font-family:Georgia,'Times New Roman',serif;color:#f3e6c8;user-select:none}
+  #app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{position:relative;width:1280px;height:800px;transform-origin:center center}
+
+  /* ---------- generic screens ---------- */
+  .screen{position:absolute;inset:0;display:none}
+  .screen.on{display:block}
+
+  /* ---------- MENU ---------- */
+  #menu{overflow:hidden;background:#1a1206}
+  #menu .scene{position:absolute;inset:0;width:100%;height:100%}
+  .mlayer{position:absolute;inset:0}
+  .vign{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 80% at 50% 30%,transparent 40%,rgba(0,0,0,.55) 100%)}
+  .menu-left{position:absolute;left:70px;top:96px;z-index:5;max-width:560px}
+  .kicker{font:600 15px/1 Georgia,serif;letter-spacing:7px;color:#d9b44a;text-transform:uppercase;
+    text-shadow:0 2px 0 #000;margin-bottom:10px;opacity:.9}
+  .logo{font:900 108px/0.86 Georgia,'Times New Roman',serif;letter-spacing:2px;
+    color:#f7e7b6;text-shadow:
+      0 4px 0 #7a5410, 0 5px 0 #000, 0 9px 22px rgba(0,0,0,.75);
+    -webkit-text-stroke:2px #3a2607}
+  .logo .tail{display:block;font-size:40px;letter-spacing:14px;color:#c9a24a;margin-top:12px;
+    -webkit-text-stroke:0;text-shadow:0 2px 0 #000,0 6px 14px rgba(0,0,0,.6)}
+  .tagline{margin-top:16px;font:italic 20px Georgia,serif;color:#e8d9ac;text-shadow:0 2px 6px #000;opacity:.92}
+  .menu-btns{margin-top:36px;display:flex;flex-direction:column;gap:14px;width:340px}
+  .mbtn{position:relative;display:flex;align-items:center;gap:14px;padding:16px 22px;cursor:pointer;
+    border:3px solid #2a1c08;border-radius:14px;
+    background:linear-gradient(#f2cf62,#c9971f 55%,#8f6a12);
+    color:#3a2506;font:800 24px Georgia,serif;letter-spacing:1px;
+    box-shadow:0 5px 0 #4a3409,0 9px 16px rgba(0,0,0,.5);transition:transform .06s}
+  .mbtn .ic{font-size:26px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.3))}
+  .mbtn:hover{transform:translateY(-2px)}
+  .mbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #4a3409}
+  .mbtn.small{font-size:19px;padding:13px 20px;background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);color:#3a2a08}
+  .menu-foot{position:absolute;left:72px;bottom:26px;z-index:5;font:14px Georgia,serif;color:#c8b079;opacity:.85;
+    text-shadow:0 2px 4px #000}
+  .torch{position:absolute;width:16px;height:16px;border-radius:50%;
+    background:radial-gradient(circle,#fff6c0,#ff9a1e 45%,rgba(255,120,0,0) 72%);
+    filter:blur(.4px);animation:flick 1.3s infinite ease-in-out}
+  @keyframes flick{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.25);opacity:1}}
+  .soot{position:absolute;width:5px;height:5px;border-radius:50%;background:rgba(255,190,90,.85);
+    animation:rise linear infinite}
+  @keyframes rise{0%{transform:translateY(0);opacity:0}12%{opacity:.9}100%{transform:translateY(-260px);opacity:0}}
+
+  /* ---------- HOW TO PLAY ---------- */
+  #how{background:linear-gradient(#241708,#140d04);overflow:auto;padding:46px 70px}
+  #how h2{font:900 46px Georgia,serif;color:#f2d375;margin:0 0 6px;text-shadow:0 3px 0 #000}
+  #how .sub{color:#d8c48c;font:italic 17px Georgia,serif;margin-bottom:22px}
+  #how .cols{display:grid;grid-template-columns:1.15fr 1fr;gap:30px}
+  .panel{border:2px solid #4a3616;border-radius:14px;padding:18px 20px;
+    background:linear-gradient(rgba(60,42,16,.55),rgba(30,20,7,.55));box-shadow:inset 0 0 40px rgba(0,0,0,.4)}
+  .panel h3{margin:0 0 12px;font:800 22px Georgia,serif;color:#f0cf74}
+  .row{display:flex;gap:12px;align-items:flex-start;margin:11px 0;font-size:15.5px;line-height:1.35;color:#ecdcb0}
+  .row .e{font-size:24px;width:32px;text-align:center;flex:0 0 auto}
+  .row b{color:#f7e6b0}
+  .back{margin-top:22px}
+  .barhint{display:inline-block;height:12px;border-radius:6px;vertical-align:middle;width:120px;
+    background:linear-gradient(90deg,#8a1e1e,#d94a2a 45%,#f0c04a 75%,#7bd45a);border:1px solid #000;margin:0 6px}
+
+  /* ---------- GAME ---------- */
+  #game{background:#0e1207}
+  #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+  .hud{position:absolute;left:0;right:0;top:0;height:74px;display:flex;align-items:center;gap:14px;
+    padding:0 20px;z-index:6;pointer-events:none}
+  .chip{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:12px;
+    border:2px solid #2c2008;background:linear-gradient(rgba(50,36,14,.94),rgba(28,19,7,.94));
+    font:700 19px Georgia,serif;color:#f4e6bd;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+  .chip .ci{font-size:21px}
+  #faithwrap{flex:0 0 260px;padding:8px 14px;border-radius:12px;border:2px solid #2c2008;
+    background:linear-gradient(rgba(50,36,14,.94),rgba(28,19,7,.94));box-shadow:0 4px 12px rgba(0,0,0,.5)}
+  #faithwrap .fl{font:700 13px Georgia,serif;color:#e6cf94;letter-spacing:1px;margin-bottom:5px;display:flex;justify-content:space-between}
+  #faithbar{height:12px;border-radius:6px;background:#241a0a;border:1px solid #000;overflow:hidden}
+  #faithfill{height:100%;width:50%;border-radius:6px;transition:width .25s;
+    background:linear-gradient(90deg,#a01e1e,#e0562a 45%,#f2c94c 72%,#79d24e)}
+  #faithfill.hi{box-shadow:0 0 14px #f6d977 inset}
+  #faithfill.lo{animation:pulseLow .7s infinite}
+  @keyframes pulseLow{0%,100%{opacity:1}50%{opacity:.45}}
+  .spacer{flex:1}
+  #startBtn{pointer-events:auto;cursor:pointer;border:3px solid #2a1c08;border-radius:12px;
+    padding:12px 26px;font:800 22px Georgia,serif;color:#3a2506;letter-spacing:1px;
+    background:linear-gradient(#f2cf62,#c9971f 55%,#8f6a12);box-shadow:0 5px 0 #4a3409}
+  #startBtn:active{transform:translateY(3px);box-shadow:0 2px 0 #4a3409}
+  #startBtn.off{filter:grayscale(.7) brightness(.75);cursor:default}
+
+  #bar{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:6;
+    display:flex;gap:12px;padding:12px 14px;border-radius:16px;
+    border:2px solid #2c2008;background:linear-gradient(rgba(46,32,12,.95),rgba(24,16,6,.95));
+    box-shadow:0 8px 24px rgba(0,0,0,.6)}
+  .card{position:relative;width:104px;border-radius:12px;border:2px solid #3a2a10;cursor:pointer;
+    background:linear-gradient(rgba(70,52,22,.8),rgba(36,25,10,.85));padding:8px 6px 10px;text-align:center;
+    box-shadow:0 3px 0 rgba(0,0,0,.4);transition:transform .06s}
+  .card:hover{transform:translateY(-3px)}
+  .card.sel{border-color:#f2d375;box-shadow:0 0 0 2px #f2d375,0 0 18px rgba(242,211,117,.5)}
+  .card.poor{filter:grayscale(.6) brightness(.62)}
+  .card .ce{font-size:27px;line-height:1}
+  .card .cn{font:700 13px Georgia,serif;color:#f5e8bf;margin-top:4px}
+  .card .cc{font:700 14px Georgia,serif;color:#f2cf62;margin-top:3px}
+  .card .cd{font:11px Georgia,serif;color:#c3ae7c;margin-top:3px;min-height:26px;line-height:1.15}
+
+  #banner{position:absolute;left:50%;top:92px;transform:translate(-50%,-8px);z-index:7;opacity:0;
+    padding:10px 24px;border-radius:12px;border:2px solid #2c2008;
+    background:linear-gradient(rgba(60,40,12,.96),rgba(30,20,7,.96));
+    font:800 24px Georgia,serif;color:#f5e2a6;box-shadow:0 6px 20px rgba(0,0,0,.6);
+    transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap}
+  #banner.on{opacity:1;transform:translate(-50%,0)}
+  #banner.red{color:#ffbcae;border-color:#5a1a10;background:linear-gradient(rgba(70,22,12,.97),rgba(34,10,6,.97))}
+  #banner.gold{color:#ffe6a0;border-color:#6a4a12}
+
+  #tip{position:absolute;left:50%;transform:translateX(-50%);bottom:118px;z-index:6;
+    font:15px Georgia,serif;color:#e8d9ac;background:rgba(20,14,5,.72);padding:6px 14px;border-radius:10px;
+    opacity:0;transition:opacity .2s;pointer-events:none}
+  #tip.on{opacity:1}
+
+  /* ---------- OVERLAYS ---------- */
+  .ov{position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;
+    background:rgba(8,6,2,.72);backdrop-filter:blur(3px)}
+  .ov.on{display:flex}
+  .ovcard{width:560px;border-radius:20px;border:3px solid #4a3616;padding:34px 40px;text-align:center;
+    background:linear-gradient(rgba(52,36,14,.98),rgba(26,17,6,.98));box-shadow:0 20px 60px rgba(0,0,0,.7)}
+  .ovcard h1{margin:0 0 8px;font:900 54px Georgia,serif;color:#f6dd8b;text-shadow:0 4px 0 #000}
+  .ovcard p{margin:6px 0;font-size:18px;color:#e9d9ab;line-height:1.4}
+  .ov-btns{margin-top:22px;display:flex;gap:14px;justify-content:center}
+
+  /* select/upgrade panel */
+  #selPanel{position:absolute;z-index:8;display:none;width:250px;border-radius:16px;border:2px solid #5a3f14;
+    background:linear-gradient(rgba(54,38,15,.98),rgba(28,19,7,.98));padding:14px;box-shadow:0 14px 34px rgba(0,0,0,.66)}
+  #selPanel.on{display:block}
+  #selPanel .sp-title{display:flex;align-items:center;gap:10px;font:800 19px Georgia,serif;color:#f6e3ab}
+  #selPanel .sp-title .e{font-size:26px}
+  #selPanel .sp-stats{font:14px Georgia,serif;color:#dcc78f;margin:9px 0;line-height:1.5}
+  #selPanel .sp-stats b{color:#f6e4ad}
+  .sp-btns{display:flex;gap:8px;margin-top:8px}
+  .sp-btns button{flex:1;cursor:pointer;border:2px solid #2a1c08;border-radius:10px;padding:10px 6px;
+    font:800 15px Georgia,serif;color:#3a2506;background:linear-gradient(#f2cf62,#c9971f 55%,#8f6a12);
+    box-shadow:0 3px 0 #4a3409}
+  .sp-btns button.sell{background:linear-gradient(#e3b78a,#b98a4d 55%,#8a5f2b);color:#2e1e06}
+  .sp-btns button:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
+  .sp-btns button:disabled{filter:grayscale(.7) brightness(.7);cursor:default}
+</style>
+</head>
+<body>
+<div id="app"><div id="stage">
+
+  <!-- ============ MENU ============ -->
+  <div id="menu" class="screen on">
+    <svg class="scene" viewBox="0 0 1280 800" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#1b1436"/><stop offset="46%" stop-color="#6b3a33"/>
+          <stop offset="74%" stop-color="#cf7031"/><stop offset="100%" stop-color="#f0b45a"/>
+        </linearGradient>
+        <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stop-color="#ffe9a8" stop-opacity=".95"/><stop offset="100%" stop-color="#ffe9a8" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="hill1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b4a25"/><stop offset="1" stop-color="#26311a"/></linearGradient>
+        <linearGradient id="hill2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c3a1c"/><stop offset="1" stop-color="#1b2412"/></linearGradient>
+        <linearGradient id="grnd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c2612"/><stop offset="1" stop-color="#12190c"/></linearGradient>
+      </defs>
+      <rect width="1280" height="800" fill="url(#sky2)"/>
+      <circle cx="880" cy="250" r="230" fill="url(#glow)" opacity=".5"/>
+      <circle cx="880" cy="250" r="78" fill="#ffd98a" opacity=".92"/>
+      <circle cx="880" cy="250" r="78" fill="none" stroke="#fff0c0" stroke-width="2" opacity=".5"/>
+      <!-- birds -->
+      <path d="M300 190 q14 -12 28 0 q14 -12 28 0" fill="none" stroke="#2a1c10" stroke-width="4" opacity=".7"/>
+      <path d="M420 150 q11 -9 22 0 q11 -9 22 0" fill="none" stroke="#2a1c10" stroke-width="3.5" opacity=".6"/>
+      <path d="M240 250 q9 -8 18 0 q9 -8 18 0" fill="none" stroke="#2a1c10" stroke-width="3" opacity=".5"/>
+      <!-- distant castle on hill -->
+      <path d="M0 470 Q320 380 640 450 T1280 440 L1280 800 L0 800Z" fill="url(#hill1)"/>
+      <g transform="translate(300,300)">
+        <rect x="0" y="40" width="150" height="90" fill="#2a2418"/>
+        <rect x="-14" y="0" width="34" height="130" fill="#312a1c"/>
+        <rect x="130" y="10" width="34" height="120" fill="#312a1c"/>
+        <polygon points="-18,0 3,-30 24,0" fill="#3d2b16"/>
+        <polygon points="130,10 147,-22 168,10" fill="#3d2b16"/>
+        <rect x="0" y="0" width="150" height="14" fill="#3a3222"/>
+        <rect x="22" y="60" width="104" height="70" fill="#241d12"/>
+        <rect x="60" y="90" width="26" height="40" fill="#100c06"/>
+        <rect x="-10" y="-46" width="4" height="46" fill="#20180c"/>
+        <polygon points="-8,-46 14,-40 -8,-30" fill="#a52828"/>
+        <rect x="140" y="-40" width="4" height="40" fill="#20180c"/>
+        <polygon points="142,-40 164,-34 142,-24" fill="#a52828"/>
+        <circle cx="3" cy="-30" r="4" fill="#ffcf5a"/>
+      </g>
+      <!-- mid hills -->
+      <path d="M0 560 Q280 500 560 560 T1280 540 L1280 800 L0 800Z" fill="url(#hill2)"/>
+      <!-- village cottages -->
+      <g>
+        <g transform="translate(120,560)">
+          <rect x="0" y="34" width="120" height="70" fill="#5b4326"/>
+          <polygon points="-14,36 60,-16 134,36" fill="#7a4a24"/>
+          <polygon points="-14,36 60,-16 134,36" fill="none" stroke="#4a2c12" stroke-width="3"/>
+          <rect x="46" y="62" width="28" height="42" fill="#2b1d0d"/>
+          <rect x="12" y="52" width="20" height="18" fill="#ffcf72" opacity=".9"/>
+          <rect x="88" y="52" width="20" height="18" fill="#ffcf72" opacity=".9"/>
+          <rect x="86" y="-4" width="10" height="34" fill="#3d2a12"/>
+          <ellipse cx="91" cy="-6" rx="9" ry="5" fill="#8a5a2a" opacity=".8"/>
+        </g>
+        <g transform="translate(300,600)">
+          <rect x="0" y="30" width="96" height="58" fill="#4f3a20"/>
+          <polygon points="-12,32 48,-12 108,32" fill="#6d421f"/>
+          <rect x="36" y="54" width="24" height="34" fill="#2b1d0d"/>
+          <rect x="10" y="46" width="16" height="15" fill="#ffcf72" opacity=".9"/>
+        </g>
+        <g transform="translate(470,556)">
+          <rect x="0" y="36" width="140" height="78" fill="#5b4326"/>
+          <polygon points="-16,38 70,-20 156,38" fill="#7a4a24"/>
+          <rect x="56" y="66" width="30" height="48" fill="#2b1d0d"/>
+          <rect x="16" y="56" width="22" height="18" fill="#ffcf72" opacity=".9"/>
+          <rect x="102" y="56" width="22" height="18" fill="#ffcf72" opacity=".9"/>
+          <rect x="100" y="-2" width="10" height="36" fill="#3d2a12"/>
+        </g>
+        <g transform="translate(700,600)">
+          <rect x="0" y="30" width="104" height="60" fill="#4f3a20"/>
+          <polygon points="-12,32 52,-14 116,32" fill="#6d421f"/>
+          <rect x="40" y="54" width="26" height="36" fill="#2b1d0d"/>
+          <rect x="12" y="46" width="18" height="16" fill="#ffcf72" opacity=".9"/>
+          <rect x="74" y="46" width="18" height="16" fill="#ffcf72" opacity=".9"/>
+        </g>
+      </g>
+      <!-- ground -->
+      <path d="M0 660 Q320 620 640 664 T1280 650 L1280 800 L0 800Z" fill="url(#grnd)"/>
+      <!-- road -->
+      <path d="M-20 780 C 260 700 360 760 620 720 C 820 690 1000 760 1300 700 L1300 800 L-20 800Z" fill="#3a2c16" opacity=".85"/>
+      <path d="M-20 780 C 260 700 360 760 620 720 C 820 690 1000 760 1300 700" fill="none" stroke="#57431f" stroke-width="6" opacity=".6"/>
+      <!-- peasant silhouettes with pitchforks -->
+      <g fill="#100c06">
+        <g transform="translate(210,690)">
+          <circle cx="0" cy="-40" r="11"/><rect x="-9" y="-32" width="18" height="34" rx="6"/>
+          <rect x="-8" y="0" width="7" height="24"/><rect x="2" y="0" width="7" height="24"/>
+          <rect x="16" y="-58" width="4" height="82" transform="rotate(12 18 -18)"/>
+          <path d="M18 -58 l-10 6 l4 8 z"/>
+        </g>
+        <g transform="translate(360,722)">
+          <circle cx="0" cy="-38" r="10"/><rect x="-8" y="-30" width="16" height="32" rx="6"/>
+          <rect x="-7" y="0" width="6" height="22"/><rect x="2" y="0" width="6" height="22"/>
+          <rect x="14" y="-54" width="4" height="78" transform="rotate(-10 16 -16)"/>
+        </g>
+        <g transform="translate(560,700)">
+          <circle cx="0" cy="-42" r="11"/><rect x="-9" y="-34" width="18" height="34" rx="6"/>
+          <rect x="-8" y="0" width="7" height="26"/><rect x="2" y="0" width="7" height="26"/>
+        </g>
+      </g>
+      <!-- torches -->
+      <circle cx="640" cy="612" r="7" fill="#ffb347"/>
+      <rect x="637" y="614" width="6" height="44" fill="#2b1d0d"/>
+      <circle cx="1040" cy="628" r="7" fill="#ffb347"/>
+      <rect x="1037" y="630" width="6" height="40" fill="#2b1d0d"/>
+    </svg>
+
+    <div class="mlayer" id="sootLayer"></div>
+    <div class="vign"></div>
+
+    <div class="menu-left">
+      <div class="kicker">A Pleb's Tale</div>
+      <div class="logo">PLEBANIA<span class="tail">TOWER DEFENSE</span></div>
+      <div class="tagline">Pitchforks up. The nobles are marching.</div>
+      <div class="menu-btns">
+        <div class="mbtn" id="playBtn"><span class="ic">⚔️</span> PLAY</div>
+        <div class="mbtn small" id="howBtn"><span class="ic">📜</span> How to Play</div>
+      </div>
+    </div>
+    <div class="menu-foot">v1.0 · a Wayne &amp; Nicholas production · rise, pleb 🧑‍🌾</div>
+  </div>
+
+  <!-- ============ HOW TO PLAY ============ -->
+  <div id="how" class="screen">
+    <h2>How to Play</h2>
+    <div class="sub">You are the villagers. The nobles want your land. Make them pay.</div>
+    <div class="cols">
+      <div class="panel">
+        <h3>🧑‍🌾 Your Villagers = Your Towers</h3>
+        <div class="row"><span class="e">🧑‍🌾</span><span><b>Farmhand</b> — cheap pitchfork brawler. Great tile-filler.</span></div>
+        <div class="row"><span class="e">🏹</span><span><b>Poacher</b> — bow. Ranged single-target. Rewards good placement.</span></div>
+        <div class="row"><span class="e">🛡️</span><span><b>Militia</b> — tanky spear wall, heavy hits, slow.</span></div>
+        <div class="row"><span class="e">🧪</span><span><b>Alchemist</b> — lobs potions. Splash damage on groups.</span></div>
+        <div class="row"><span class="e">🪨</span><span><b>Catapult</b> — long range, huge splash. Expensive.</span></div>
+        <div class="row"><span class="e">🌾</span><span><b>Farm</b> — no weapon, but pays gold over time. Economy vs. defense is a real choice.</span></div>
+      </div>
+      <div class="panel">
+        <h3>✊ The Faith Meter</h3>
+        <div class="row"><span class="e">😤</span><span>Your villagers fight on <b>hope</b>. Keeping faith high makes them hit harder; losing it makes them falter.</span></div>
+        <div class="row"><span class="e">💚</span><span><b>High faith (80+):</b> UPRISING — every villager deals <b>+25% damage</b>.</span></div>
+        <div class="row"><span class="e">🟡</span><span>Faith rises when you slay nobles and clear waves.</span></div>
+        <div class="row"><span class="e">🔴</span><span><b>Low faith (&lt;25):</b> villagers attack slower.</span></div>
+        <div class="row"><span class="e">✊</span><span><b>Faith hits 0:</b> THE PLEBS STRIKE — nobody defends for 5s. Let them get miserable and you lose the wave.</span></div>
+        <div class="row"><span class="e">🛡️</span><span>Every noble that reaches your village costs a <b>life</b> — and can slay one of your villagers.</span></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:22px">
+      <h3>⚔️ The Noble Army</h3>
+      <div class="row">
+        <span class="e">🛡️</span><span><b>Footman</b> &amp; <b>Knight</b> — the march. Knights are fast.</span>
+        <span class="e">🏇</span><span><b>Sheriff</b> — armoured, tanky.</span>
+        <span class="e">🐘</span><span><b>War Elephant</b> — mini-boss.</span>
+        <span class="e">👑</span><span><b>The King</b> — wave 10. Survive him and PLEBANIA stands.</span>
+      </div>
+    </div>
+    <div class="back"><div class="mbtn small" id="howBack" style="width:220px">⬅ Back to Menu</div></div>
+  </div>
+
+  <!-- ============ GAME ============ -->
+  <div id="game" class="screen">
+    <canvas id="cv"></canvas>
+
+    <div class="hud">
+      <div class="chip"><span class="ci">👑</span><span id="hGold">120</span></div>
+      <div class="chip"><span class="ci">🏠</span><span id="hLives">20</span></div>
+      <div class="chip"><span class="ci">🌊</span><span id="hWave">0/10</span></div>
+      <div id="faithwrap">
+        <div class="fl"><span>✊ FAITH</span><span id="hFaith">50%</span></div>
+        <div id="faithbar"><div id="faithfill"></div></div>
+      </div>
+      <div class="spacer"></div>
+      <div id="startBtn">START WAVE ▶</div>
+    </div>
+
+    <div id="banner"></div>
+    <div id="tip"></div>
+
+    <div id="bar"></div>
+
+    <div id="selPanel">
+      <div class="sp-title"><span class="e" id="spE">🧑‍🌾</span><span id="spName">Farmhand</span></div>
+      <div class="sp-stats" id="spStats"></div>
+      <div class="sp-btns">
+        <button id="spUp">Upgrade</button>
+        <button id="spSell" class="sell">Sell</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ OVERLAYS ============ -->
+  <div id="ov" class="ov"><div class="ovcard">
+    <h1 id="ovT">PLEBANIA STANDS!</h1>
+    <p id="ovP"></p>
+    <div class="ov-btns">
+      <div class="mbtn small" id="ovAgain" style="width:180px">⚔️ Play Again</div>
+      <div class="mbtn small" id="ovMenu" style="width:180px">🏠 Menu</div>
+    </div>
+  </div></div>
+
+</div></div>
+
+<script>
+(function(){
+"use strict";
+/* =========================================================
+   PLEBANIA — villagers are towers, faith is the battlefield
+   ========================================================= */
+const W=1280,H=800;
+const COLS=16,ROWS=10,TILE=68,GX=96,GY=92;
+const stage=document.getElementById('stage');
+function fit(){
+  const s=Math.min(innerWidth/W, innerHeight/H);
+  stage.style.transform='scale('+s+')';
+}
+addEventListener('resize',fit); fit();
+
+const $=id=>document.getElementById(id);
+const cv=$('cv'), ctx=cv.getContext('2d');
+cv.width=W; cv.height=H;
+
+/* ---------------- screens ---------------- */
+function show(id){
+  ['menu','how','game'].forEach(s=>$(s).classList.toggle('on',s===id));
+}
+$('howBtn').onclick=()=>show('how');
+$('howBack').onclick=()=>show('menu');
+$('playBtn').onclick=()=>{initAudio();newGame();show('game');};
+
+/* ---------------- audio ---------------- */
+let AC=null,muted=false;
+function initAudio(){ if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}} if(AC&&AC.state==='suspended')AC.resume(); }
+function tone(f,d,type,vol,slide){
+  if(!AC||muted)return;
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type||'square'; o.frequency.value=f;
+  if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,slide),AC.currentTime+d);
+  g.gain.setValueAtTime(0.0001,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(vol||0.06,AC.currentTime+0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+d);
+  o.connect(g).connect(AC.destination); o.start(); o.stop(AC.currentTime+d+0.02);
+}
+const SFX={
+  jab:()=>tone(220,0.09,'square',0.05,120),
+  bow:()=>tone(680,0.08,'triangle',0.05,340),
+  boom:()=>{tone(120,0.25,'sawtooth',0.08,50);},
+  potion:()=>tone(420,0.14,'sine',0.06,180),
+  hit:()=>tone(320,0.05,'square',0.03,200),
+  kill:()=>tone(180,0.16,'triangle',0.06,90),
+  big:()=>{tone(90,0.4,'sawtooth',0.1,40);tone(160,0.3,'square',0.06,60);},
+  place:()=>tone(520,0.1,'sine',0.06,760),
+  up:()=>{tone(600,0.1,'sine',0.06,900);setTimeout(()=>tone(900,0.1,'sine',0.05,1200),90);},
+  life:()=>{tone(160,0.35,'sawtooth',0.09,60);tone(110,0.4,'triangle',0.07,50);},
+  win:()=>{[520,660,780,1040].forEach((f,i)=>setTimeout(()=>tone(f,0.22,'triangle',0.07,f*1.5),i*140));},
+  lose:()=>{[400,330,260,180].forEach((f,i)=>setTimeout(()=>tone(f,0.3,'sawtooth',0.08,f*0.7),i*170));},
+  strike:()=>{tone(140,0.5,'sawtooth',0.09,90);},
+  ui:()=>tone(700,0.06,'sine',0.05,900)
+};
+
+/* =========================================================
+   DATA
+   ========================================================= */
+const TOWERS={
+  farmhand : {name:'Farmhand', emoji:'🧑‍🌾', cost:40,  dmg:9,  rate:0.5,  range:78,  kind:'melee',  color:'#5c9c46', desc:'Cheap pitchfork brawler'},
+  poacher  : {name:'Poacher',  emoji:'🏹',   cost:65,  dmg:15, rate:0.72, range:215, kind:'ranged', color:'#8a5a2b', desc:'Bow · single target'},
+  militia  : {name:'Militia',  emoji:'🛡️',   cost:80,  dmg:27, rate:1.05, range:96,  kind:'melee',  color:'#4a72b0', desc:'Tanky spear wall'},
+  alchemist: {name:'Alchemist',emoji:'🧪',   cost:100, dmg:17, rate:1.0,  range:180, kind:'splash', splash:56, color:'#8a52c8', desc:'Potion lob · AoE'},
+  catapult : {name:'Catapult', emoji:'🪨',   cost:140, dmg:46, rate:1.95, range:300, kind:'splash', splash:92, color:'#8a6a3a', desc:'Long range siege'},
+  farm     : {name:'Farm',     emoji:'🌾',   cost:60,  kind:'econ', income:7, every:2.6, color:'#c9a227', desc:'+7 gold / 2.6s'}
+};
+const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm'];
+
+const ENEMIES={
+  footman : {name:'Footman', hp:44,  spd:54, gold:7,  faith:0.5, sz:26, rank:'silver', emoji:'🛡️'},
+  knight  : {name:'Knight',  hp:74,  spd:80, gold:10, faith:0.6, sz:28, rank:'gold',   emoji:'🐴'},
+  sheriff : {name:'Sheriff', hp:165, spd:44, gold:17, faith:1.0, sz:33, rank:'red',    emoji:'🏇'},
+  elephant: {name:'War Elephant', hp:460, spd:34, gold:48, faith:2.2, sz:46, rank:'boss', emoji:'🐘'},
+  king    : {name:'The King', hp:1650, spd:30, gold:220, faith:6, sz:56, rank:'king', emoji:'👑'}
+};
+const MAXWAVE=10;
+
+/* path (tile coords) — nobles march from the west road to the village in the east */
+const WP=[[-1,2],[5,2],[5,7],[10,7],[10,3],[16,3]];
+function cx(c){return GX+(c+0.5)*TILE;}
+function cy(r){return GY+(r+0.5)*TILE;}
+const PATH=WP.map(p=>({x:cx(p[0]),y:cy(p[1])}));
+
+/* tiles occupied by the path */
+const pathKeys=new Set();
+(function(){
+  for(let i=0;i<WP.length-1;i++){
+    let [c0,r0]=WP[i],[c1,r1]=WP[i+1];
+    const dc=Math.sign(c1-c0), dr=Math.sign(r1-r0);
+    let c=c0,r=r0;
+    pathKeys.add(c+','+r);
+    while(c!==c1||r!==r1){ c+=dc; r+=dr; pathKeys.add(c+','+r); }
+  }
+})();
+function tileAt(px,py){
+  const c=Math.floor((px-GX)/TILE), r=Math.floor((py-GY)/TILE);
+  if(c<0||r<0||c>=COLS||r>=ROWS)return null; return {c,r};
+}
+
+/* =========================================================
+   STATE
+   ========================================================= */
+let S;
+function newGame(){
+  S={
+    gold:120, lives:20, wave:0, faith:50, running:false, between:true, over:false,
+    towers:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
+    shake:0, hurt:0, strike:0, slain:0, sel:null, build:'farmhand',
+    uprising:false, waveTimer:0, farmAcc:0
+  };
+  hideOv(); hideSel(); showBanner('Defend your village!','gold',1400);
+  syncHud(); buildBar(); tip('Tap a villager below, then tap the grass to place them',2600);
+}
+function syncHud(){
+  $('hGold').textContent=Math.floor(S.gold);
+  $('hLives').textContent=S.lives;
+  $('hWave').textContent=S.wave+'/'+MAXWAVE;
+  $('hFaith').textContent=Math.round(S.faith)+'%';
+  const f=$('faithfill'); f.style.width=Math.max(0,Math.min(100,S.faith))+'%';
+  f.classList.toggle('hi',S.faith>=80); f.classList.toggle('lo',S.faith<25);
+}
+let tipT=0;
+function tip(txt,ms){ const t=$('tip'); t.textContent=txt; t.classList.add('on'); tipT=Date.now()+(ms||1800); }
+let bnrT=0;
+function showBanner(txt,cls,ms){ const b=$('banner'); b.textContent=txt; b.className='on '+(cls||''); bnrT=Date.now()+(ms||1500); }
+
+/* ---------------- build bar ---------------- */
+function buildBar(){
+  const bar=$('bar'); bar.innerHTML='';
+  ORDER.forEach(k=>{
+    const d=TOWERS[k]; const card=document.createElement('div');
+    card.className='card'+(k===S.build?' sel':'')+(S.gold<d.cost?' poor':'');
+    card.dataset.k=k;
+    card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
+      '<div class="cc">👑 '+d.cost+'</div><div class="cd">'+d.desc+'</div>';
+    card.onclick=()=>{ if(S.over)return; S.build=k; hideSel(); buildBar(); SFX.ui();
+      tip('Selected '+d.name+' — tap a grass tile to place',1500); };
+    bar.appendChild(card);
+  });
+}
+
+/* =========================================================
+   PLACEMENT (two-tap) + selection
+   ========================================================= */
+let ghost=null;
+cv.addEventListener('pointermove',e=>{
+  if(!S||S.over)return;
+  if(!S.build){ghost=null;return;}
+  const p=evt(e), t=tileAt(p.x,p.y);
+  if(!t||pathKeys.has(t.c+','+t.r)||S.towers.some(o=>o.c===t.c&&o.r===t.r)){ghost=null;return;}
+  ghost={c:t.c,r:t.r};
+});
+cv.addEventListener('pointerleave',()=>{ghost=null;});
+cv.addEventListener('pointerdown',e=>{
+  if(!S||S.over||S.running===undefined)return;
+  const p=evt(e);
+  // 1) clicking an existing tower selects/upgrades
+  const hit=S.towers.find(o=>Math.hypot(p.x-(cx(o.c)-0),p.y-(cy(o.r)))<TILE*0.62);
+  if(hit){ S.sel=hit; showSel(hit); return; }
+  // 2) build
+  const t=tileAt(p.x,p.y);
+  if(!t||pathKeys.has(t.c+','+t.r)){ hideSel(); return; }
+  if(S.towers.some(o=>o.c===t.c&&o.r===t.r)){ return; }
+  const d=TOWERS[S.build];
+  if(!S.build){hideSel();return;}
+  // two-tap: first tap shows a locked ghost, second tap same tile places
+  if(!ghost||ghost.c!==t.c||ghost.r!==t.r){ ghost={c:t.c,r:t.r}; tip('Tap the same tile again to place ⚒️',1400); return; }
+  if(S.gold<d.cost){ tip('Need more gold! ('+d.cost+' 👑)',1400); return; }
+  S.gold-=d.cost;
+  S.towers.push({c:t.c,r:t.r,k:S.build,cd:0,level:1,spent:d.cost,angle:-0.4,flash:0,t:Math.random()*6,jab:0});
+  SFX.place();
+  const px=cx(t.c),py=cy(t.r);
+  for(let i=0;i<10;i++) burst(px,py,'#d9b45a');
+  ghost=null; hideSel(); syncHud(); buildBar();
+});
+function evt(e){
+  const r=cv.getBoundingClientRect();
+  return { x:(e.clientX-r.left)*(W/r.width), y:(e.clientY-r.top)*(H/r.height) };
+}
+
+/* ---------------- select panel ---------------- */
+function showSel(o){
+  const d=TOWERS[o.k]; const p=$('selPanel');
+  $('spE').textContent=d.emoji; $('spName').textContent=d.name+'  ·  Lv '+o.level;
+  if(o.k==='farm'){
+    $('spStats').innerHTML='💵 Income: <b>+'+Math.round(d.income*(1+(o.level-1)*0.6))+' gold</b> / 2.6s'+
+      '<br>👑 Spent: <b>'+o.spent+'</b>';
+  }else{
+    $('spStats').innerHTML='⚔️ Damage: <b>'+Math.round(effDmg(o))+'</b><br>🎯 Range: <b>'+Math.round(d.range*(1+(o.level-1)*0.12))+'</b>'+
+      '<br>⏱️ Rate: <b>'+d.rate.toFixed(2)+'s</b>'+(d.splash?'<br>💥 Splash: <b>'+d.splash+'</b>':'')+
+      '<br>👑 Spent: <b>'+o.spent+'</b>';
+  }
+  const upCost=Math.round(d.cost*0.8*o.level);
+  $('spUp').textContent=o.level>=5?'MAX LEVEL':'Upgrade 👑'+upCost;
+  $('spUp').disabled=o.level>=5||S.gold<upCost;
+  $('spUp').onclick=()=>{ if(o.level>=5)return; if(S.gold<upCost){tip('Need more gold!',1200);return;}
+    S.gold-=upCost; o.level++; o.spent+=upCost; SFX.up();
+    for(let i=0;i<12;i++)burst(cx(o.c),cy(o.r),'#ffe08a');
+    showSel(o); syncHud(); buildBar();
+  };
+  $('spSell').onclick=()=>{ const val=Math.round(o.spent*0.6); S.gold+=val;
+    S.towers=S.towers.filter(x=>x!==o); hideSel(); syncHud(); buildBar();
+    showBanner('Sold villager · +👑'+val,'',1000);
+  };
+  const px=cx(o.c)-125, py=cy(o.r)-40;
+  p.style.left=Math.max(8,Math.min(W-260,px))+'px';
+  p.style.top=Math.max(80,Math.min(H-230,py))+'px';
+  p.classList.add('on');
+}
+function hideSel(){ $('selPanel').classList.remove('on'); if(S)S.sel=null; }
+function effDmg(o){
+  const d=TOWERS[o.k];
+  let m=1+(o.level-1)*0.35;
+  if(S.faith>=80)m*=1.25;
+  return d.dmg*m;
+}
+
+/* =========================================================
+   WAVES
+   ========================================================= */
+function waveComp(w){
+  const q=[];
+  const n=4+Math.round(w*1.7);
+  for(let i=0;i<n;i++)q.push('footman');
+  if(w>=2){const k=Math.round(w*0.9);for(let i=0;i<k;i++)q.push('knight');}
+  if(w>=4){const s=Math.round((w-3)*0.75);for(let i=0;i<s;i++)q.push('sheriff');}
+  if(w===5||w===8)q.push('elephant');
+  if(w===10){q.push('elephant');q.push('king');}
+  // shuffle a little so it feels organic
+  for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
+  return q;
+}
+function startWave(){
+  if(S.over||S.running)return;
+  if(S.wave>=MAXWAVE)return;
+  S.wave++; S.running=true; S.between=false;
+  S.spawnQ=waveComp(S.wave); S.spawnT=0; S.spawnGap=0.68;
+  $('startBtn').classList.add('off');
+  syncHud();
+  showBanner('WAVE '+S.wave+' — the nobles advance!','red',1500);
+  if(S.wave===MAXWAVE)showBanner('👑 THE KING MARCHES ON PLEBANIA!','gold',2200);
+}
+
+/* =========================================================
+   ENEMY / PROJECTILE
+   ========================================================= */
+function spawn(type){
+  const d=ENEMIES[type];
+  const hpScale=1+(S.wave-1)*0.24;
+  S.enemies.push({
+    type, hp:d.hp*hpScale, maxhp:d.hp*hpScale, spd:d.spd, gold:d.gold, faith:d.faith,
+    sz:d.sz, rank:d.rank, emoji:d.emoji, wp:0, x:PATH[0].x, y:PATH[0].y, t:0,
+    slow:0, burn:0, burnT:0, hitT:0, facing:1
+  });
+}
+function enemyUpdate(dt){
+  for(const e of S.enemies){
+    e.t+=dt;
+    let spd=e.spd*(e.slow>0?0.45:1);
+    if(e.slow>0)e.slow-=dt;
+    if(e.burn>0){ e.burn-=dt; e.burnT-=dt;
+      if(e.burnT<=0){ e.burnT=0.42; e.hp-= (e.burnDmg||6); addDmg(e.x,e.y-e.sz*0.6,Math.round(e.burnDmg||6),'#ff8a3a'); }
+    }
+    const tgt=PATH[e.wp+1];
+    if(!tgt){ leak(e); continue; }
+    const dx=tgt.x-e.x, dy=tgt.y-e.y, dist=Math.hypot(dx,dy);
+    if(dist<2){ e.wp++; if(e.wp>=PATH.length-1){leak(e);} continue; }
+    e.x+=dx/dist*spd*dt; e.y+=dy/dist*spd*dt;
+    e.facing = tgt.x>=e.x ? 1 : 1; // always march right-ish
+    if(e.hitT>0)e.hitT-=dt;
+    if(e.hp<=0) kill(e,false);
+  }
+  S.enemies=S.enemies.filter(e=>e.hp>0);
+}
+function leak(e){
+  e.hp=0;
+  S.lives--; hurtFaith(16); S.hurt=1; S.shake=Math.max(S.shake,14); SFX.life();
+  // a villager may be slain
+  if(S.towers.length>0){
+    const idx=Math.floor(Math.random()*S.towers.length);
+    const dead=S.towers[idx]; S.towers.splice(idx,1);
+    hurtFaith(9);
+    for(let i=0;i<18;i++)burst(cx(dead.c),cy(dead.r),'#c0392b');
+    showBanner('😱 A villager was slain!','red',1500);
+    buildBar();
+  }else{
+    showBanner('🏚️ The nobles reached the village!','red',1400);
+  }
+  if(S.sel&&S.towers.indexOf(S.sel)<0)hideSel();
+  syncHud();
+  if(S.lives<=0) endGame(false);
+}
+function kill(e,byPlayer){
+  if(e.dead)return; e.dead=true;
+  const bounty=Math.round(e.gold*(1+(e.rank==='boss'||e.rank==='king'?0:0)));
+  S.gold+=e.gold; gainFaith(e.faith); S.slain++;
+  addDmg(e.x,e.y-e.sz*0.7,'+'+e.gold,'#8ef0ff');
+  const big=e.rank==='boss'||e.rank==='king';
+  for(let i=0;i<(big?34:14);i++)burst(e.x,e.y,big?'#ffcf5a':'#d8c088');
+  SFX.kill(); if(big){S.shake=Math.max(S.shake,12);SFX.big();showBanner(e.name+' SLAIN!','gold',1500);}
+  syncHud();
+}
+function gainFaith(v){ S.faith=Math.min(100,S.faith+v); checkUprising(); }
+function hurtFaith(v){
+  const was=S.faith; S.faith=Math.max(0,S.faith-v);
+  if(was>=80&&S.faith<80){S.uprising=false;showBanner('The uprising fades…','',1200);}
+  if(S.faith<=0&&S.strike<=0) triggerStrike();
+  syncHud();
+}
+function checkUprising(){
+  if(S.faith>=80&&!S.uprising){S.uprising=true;showBanner('✊ UPRISING! +25% damage!','gold',1800);}
+}
+function triggerStrike(){
+  S.strike=5; SFX.strike();
+  showBanner('✊ THE PLEBS ARE ON STRIKE!','red',2600);
+  for(const o of S.towers)for(let i=0;i<5;i++)burst(cx(o.c),cy(o.r),'#ffcf5a');
+}
+
+/* =========================================================
+   TOWERS
+   ========================================================= */
+function towerUpdate(dt){
+  const striking=S.strike>0;
+  for(const o of S.towers){
+    o.t+=dt; if(o.flash>0)o.flash-=dt; if(o.jab>0)o.jab-=dt;
+    const d=TOWERS[o.k];
+    const px=cx(o.c),py=cy(o.r);
+
+    if(o.k==='farm'){
+      S.farmAcc+=dt; const every=d.every;
+      if(S.farmAcc>=every){
+        S.farmAcc=0; const inc=Math.round(d.income*(1+(o.level-1)*0.6));
+        S.gold+=inc; addDmg(px,py-20,'+'+inc,'#ffe08a'); syncHud();
+      }
+      continue;
+    }
+    if(striking){ o.cd=Math.max(o.cd,0.3); continue; }
+    if(o.cd>0){ o.cd-=dt; continue; }
+
+    // find target
+    const range=d.range*(1+(o.level-1)*0.12);
+    let best=null,bd=1e9;
+    for(const e of S.enemies){
+      const dd=Math.hypot(e.x-px,e.y-py);
+      if(dd<=range&&dd<bd){bd=dd;best=e;}
+    }
+    if(!best)continue;
+    o.angle=Math.atan2(best.y-py,best.x-px);
+    let cd=d.rate; if(S.faith<25)cd*=1.28;
+    o.cd=cd; o.flash=0.12; o.jab=0.14;
+
+    if(d.kind==='melee'){
+      damage(best,effDmg(o),o);
+      o.jab=0.18; SFX.jab();
+      for(let i=0;i<4;i++)burst((px+best.x)/2,(py+best.y)/2,'#e9d9a8');
+    }else if(d.kind==='splash'){
+      S.projs.push({x:px,y:py-6,tx:best.x,ty:best.y,spd:d.kind==='splash'&&o.k==='catapult'?420:520,
+        dmg:effDmg(o),splash:d.splash*(1+(o.level-1)*0.12),arc:true,life:0,tot:Math.hypot(best.x-px,best.y-py)/520,
+        tgt:best, kind:o.k, sx:px, sy:py-6});
+      SFX[o.k==='catapult'?'boom':'potion']();
+    }else{
+      S.projs.push({x:px,y:py-6,tx:best.x,ty:best.y,spd:760,dmg:effDmg(o),splash:0,
+        arc:false,life:0,tot:Math.hypot(best.x-px,best.y-py)/760,tgt:best,kind:o.k,sx:px,sy:py-6});
+      SFX.bow();
+    }
+  }
+}
+function projUpdate(dt){
+  for(const p of S.projs){
+    p.life+=dt;
+    if(p.tgt&&p.tgt.hp>0){ p.tx=p.tgt.x; p.ty=p.tgt.y; }
+    const dx=p.tx-p.x, dy=p.ty-p.y, dist=Math.hypot(dx,dy);
+    if(dist<Math.max(10,p.spd*dt)){ impact(p); p.done=true; continue; }
+    p.x+=dx/dist*p.spd*dt; p.y+=dy/dist*p.spd*dt;
+  }
+  S.projs=S.projs.filter(p=>!p.done);
+}
+function impact(p){
+  if(p.splash){
+    for(const e of S.enemies){
+      const dd=Math.hypot(e.x-p.tx,e.y-p.ty);
+      if(dd<=p.splash) damage(e,p.dmg*(dd<p.splash*0.5?1:0.7),null);
+    }
+    for(let i=0;i<16;i++)burst(p.tx,p.ty,p.kind==='catapult'?'#b98a4d':'#9be07a');
+    S.shake=Math.max(S.shake,p.kind==='catapult'?6:2);
+  }else if(p.tgt&&p.tgt.hp>0){
+    damage(p.tgt,p.dmg,null);
+    for(let i=0;i<5;i++)burst(p.tx,p.ty,'#f0e0a8');
+  }
+}
+function damage(e,dmg,o){
+  if(e.hp<=0)return;
+  const crit=Math.random()<0.12;
+  const val=Math.round(dmg*(crit?1.8:1));
+  e.hp-=val; e.hitT=0.12;
+  addDmg(e.x,e.y-e.sz*0.6,crit?val+'!':val,crit?'#ffd24a':'#ffffff');
+  SFX.hit();
+  for(let i=0;i<4;i++)burst(e.x,e.y,'#fff2c0');
+  if(e.hp<=0) kill(e,true);
+}
+
+/* =========================================================
+   FX
+   ========================================================= */
+function burst(x,y,col){
+  S.parts.push({x,y,vx:(Math.random()-0.5)*260,vy:(Math.random()-0.5)*260-40,
+    life:0.5+Math.random()*0.3,t:0,col,sz:2+Math.random()*3});
+}
+function addDmg(x,y,txt,col){ S.dmg.push({x,y,txt,col,t:0,life:0.9,vy:-46}); }
+
+/* =========================================================
+   DRAWING
+   ========================================================= */
+function render(dt){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  if(S.shake>0.2){ ctx.translate((Math.random()-0.5)*S.shake,(Math.random()-0.5)*S.shake); }
+
+  drawGround();
+  drawPath();
+
+  // ghosts / range previews
+  if(S.build&&ghost){
+    const gx=cx(ghost.c),gy=cy(ghost.r); const d=TOWERS[S.build];
+    const ok=S.gold>=d.cost;
+    drawRange(gx,gy,d.range, ok?'rgba(242,211,117,.18)':'rgba(200,60,40,.18)', ok?'#f2d375':'#e05a3a');
+    ctx.globalAlpha=0.55;
+    drawPleb(gx,gy,S.build,d,0, ok?1:0.6);
+    ctx.globalAlpha=1;
+  }
+  // selected range
+  if(S.sel&&TOWERS[S.sel.k].kind!=='econ'){
+    const d=TOWERS[S.sel.k];
+    drawRange(cx(S.sel.c),cy(S.sel.r),d.range*(1+(S.sel.level-1)*0.12),'rgba(120,200,255,.16)','#7ec7ff');
+  }
+
+  // towers
+  const order=S.towers.slice().sort((a,b)=>a.r-b.r);
+  for(const o of order) drawTower(o);
+
+  // enemies
+  for(const e of S.enemies) drawEnemy(e);
+
+  // projectiles
+  for(const p of S.projs) drawProj(p);
+
+  // particles
+  for(const q of S.parts){
+    const a=1-q.t/q.life; ctx.globalAlpha=Math.max(0,a); ctx.fillStyle=q.col;
+    ctx.beginPath(); ctx.arc(q.x,q.y,q.sz,0,7); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // dmg text
+  for(const t of S.dmg){
+    const a=1-t.t/t.life; ctx.globalAlpha=Math.max(0,a); ctx.textAlign='center';
+    ctx.font='900 20px Georgia,serif'; ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.75)';
+    ctx.strokeText(t.txt,t.x,t.y); ctx.fillStyle=t.col; ctx.fillText(t.txt,t.x,t.y);
+  }
+  ctx.globalAlpha=1;
+
+  // village (home) marker
+  drawVillage();
+
+  ctx.restore();
+
+  // hurt vignette
+  if(S.hurt>0){ ctx.globalAlpha=S.hurt*0.5; ctx.fillStyle='#8a1b10'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
+  // strike overlay
+  if(S.strike>0){
+    ctx.globalAlpha=0.08; ctx.fillStyle='#000000'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1;
+  }
+}
+
+function drawGround(){
+  // sky-ish backdrop behind grid
+  ctx.fillStyle='#10160a'; ctx.fillRect(0,0,W,H);
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const x=GX+c*TILE,y=GY+r*TILE;
+    const dark=(c+r)%2===0;
+    ctx.fillStyle=dark?'#2c3d1a':'#2f421d';
+    ctx.fillRect(x,y,TILE,TILE);
+    // grass tufts
+    if(((c*7+r*13)%5)===0){
+      ctx.strokeStyle='rgba(90,120,60,.5)'; ctx.lineWidth=2;
+      for(let i=0;i<3;i++){ const gx=x+12+i*18, gy=y+TILE-8; ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx-3,gy-8); ctx.stroke(); }
+    }
+  }
+  // subtle grid
+  ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.lineWidth=1;
+  for(let c=0;c<=COLS;c++){ ctx.beginPath(); ctx.moveTo(GX+c*TILE,GY); ctx.lineTo(GX+c*TILE,GY+ROWS*TILE); ctx.stroke(); }
+  for(let r=0;r<=ROWS;r++){ ctx.beginPath(); ctx.moveTo(GX,GY+r*TILE); ctx.lineTo(GX+COLS*TILE,GY+r*TILE); ctx.stroke(); }
+}
+function drawPath(){
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  // outer dark
+  ctx.strokeStyle='#3a2a13'; ctx.lineWidth=TILE*0.94;
+  ctx.beginPath(); ctx.moveTo(PATH[0].x,PATH[0].y);
+  for(let i=1;i<PATH.length;i++)ctx.lineTo(PATH[i].x,PATH[i].y); ctx.stroke();
+  // inner dirt
+  ctx.strokeStyle='#6b5127'; ctx.lineWidth=TILE*0.74;
+  ctx.beginPath(); ctx.moveTo(PATH[0].x,PATH[0].y);
+  for(let i=1;i<PATH.length;i++)ctx.lineTo(PATH[i].x,PATH[i].y); ctx.stroke();
+  // highlight
+  ctx.strokeStyle='rgba(150,116,60,.5)'; ctx.lineWidth=TILE*0.5;
+  ctx.beginPath(); ctx.moveTo(PATH[0].x,PATH[0].y);
+  for(let i=1;i<PATH.length;i++)ctx.lineTo(PATH[i].x,PATH[i].y); ctx.stroke();
+  // path pebbles
+  ctx.fillStyle='rgba(40,28,12,.5)';
+  for(let i=0;i<PATH.length-1;i++){
+    const a=PATH[i],b=PATH[i+1];
+    for(let t=0.12;t<1;t+=0.14){
+      const x=a.x+(b.x-a.x)*t+(Math.sin(t*40+i)*10), y=a.y+(b.y-a.y)*t+(Math.cos(t*33+i)*8);
+      ctx.beginPath(); ctx.arc(x,y,2.2,0,7); ctx.fill();
+    }
+  }
+}
+function drawRange(x,y,r,fill,stroke){
+  ctx.beginPath(); ctx.arc(x,y,r,0,7);
+  ctx.fillStyle=fill; ctx.fill();
+  ctx.strokeStyle=stroke; ctx.lineWidth=2; ctx.setLineDash([7,6]); ctx.stroke(); ctx.setLineDash([]);
+}
+
+/* ---------- villager (pleb) art ---------- */
+function drawPleb(x,y,key,d,t,alpha){
+  ctx.save(); ctx.translate(x,y); ctx.scale(alpha||1,alpha||1);
+  const body=d.color||'#5c9c46';
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(0,22,20,7,0,0,7); ctx.fill();
+
+  if(key==='catapult'){
+    // wooden siege engine
+    ctx.fillStyle='#5a3f22'; ctx.fillRect(-24,0,48,10);
+    ctx.fillStyle='#6b4a26'; ctx.fillRect(-20,10,12,14); ctx.fillRect(8,10,12,14);
+    ctx.save(); ctx.translate(0,-4); ctx.rotate(-0.35+Math.sin(t*1.5)*0.05);
+    ctx.fillStyle='#7a5a30'; ctx.fillRect(-26,-6,52,7); ctx.restore();
+    ctx.fillStyle='#8a6a3a'; ctx.beginPath(); ctx.arc(0,-10,11,0,7); ctx.fill();
+    ctx.fillStyle='#3a2a12'; ctx.beginPath(); ctx.arc(0,-10,5,0,7); ctx.fill();
+    // crew
+    drawMiniPleb(-14,2,'#c9a227'); drawMiniPleb(14,2,'#c9a227');
+    ctx.restore(); return;
+  }
+  if(key==='farm'){
+    // barn + wheat
+    ctx.fillStyle='#7a4a24'; ctx.fillRect(-22,-6,44,30);
+    ctx.fillStyle='#8f5a2b'; ctx.beginPath(); ctx.moveTo(-26,-6); ctx.lineTo(0,-30); ctx.lineTo(26,-6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#3a2712'; ctx.fillRect(-7,6,14,18);
+    ctx.fillStyle='#e0c25a';
+    for(let i=0;i<3;i++){ const wx=-30+i*30; ctx.fillRect(wx,-14,4,20); ctx.beginPath(); ctx.ellipse(wx+2,-16,4,6,0,0,7); ctx.fill(); }
+    ctx.restore(); return;
+  }
+
+  // body (rounded tunic)
+  ctx.fillStyle=body; roundRect(-15,-16,30,34,10); ctx.fill();
+  // belt
+  ctx.fillStyle='#3a2712'; ctx.fillRect(-15,4,30,5);
+  // head
+  ctx.fillStyle='#f0c79a'; ctx.beginPath(); ctx.arc(0,-26,11,0,7); ctx.fill();
+  // hat per type
+  ctx.save();
+  if(key==='farmhand'){ // straw hat
+    ctx.fillStyle='#d8b251'; ctx.beginPath(); ctx.ellipse(0,-33,19,6,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0,-38,11,8,0,0,7); ctx.fill();
+  }else if(key==='poacher'){ // green hood
+    ctx.fillStyle='#3f7d3f'; ctx.beginPath(); ctx.arc(0,-27,12,Math.PI,0); ctx.fill();
+    ctx.fillRect(-12,-27,24,5);
+  }else if(key==='militia'){ // steel helm
+    ctx.fillStyle='#b9c2cc'; ctx.beginPath(); ctx.arc(0,-27,12,Math.PI,0); ctx.fill();
+    ctx.fillRect(-12,-27,24,6); ctx.fillStyle='#7d8791'; ctx.fillRect(-2,-40,4,12);
+  }else if(key==='alchemist'){ // pointy hat
+    ctx.fillStyle='#5b2f92'; ctx.beginPath(); ctx.moveTo(-14,-27); ctx.lineTo(0,-56); ctx.lineTo(14,-27); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#c9a227'; ctx.fillRect(-14,-28,28,4);
+  }
+  ctx.restore();
+  // eyes
+  ctx.fillStyle='#2a1c10';
+  const look=Math.cos((t||0)*0.6)*1.4;
+  ctx.beginPath(); ctx.arc(-4+look,-26,1.8,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(4+look,-26,1.8,0,7); ctx.fill();
+  // weapon
+  ctx.strokeStyle='#5a3f22'; ctx.lineWidth=4; ctx.lineCap='round';
+  if(key==='farmhand'){ ctx.beginPath(); ctx.moveTo(14,-24); ctx.lineTo(24,-44); ctx.stroke();
+    ctx.strokeStyle='#c8ccd2'; ctx.lineWidth=3; for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(24,-44);ctx.lineTo(28+i*2,-50+i*3);ctx.stroke();} }
+  else if(key==='poacher'){ ctx.strokeStyle='#7a5a30'; ctx.beginPath(); ctx.arc(18,-20,12,-0.7,0.7); ctx.stroke();
+    ctx.strokeStyle='#e8e0c0'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.moveTo(16,-30); ctx.lineTo(28,-10); ctx.stroke(); }
+  else if(key==='militia'){ ctx.beginPath(); ctx.moveTo(-16,-30); ctx.lineTo(-24,-56); ctx.stroke();
+    ctx.fillStyle='#c8ccd2'; ctx.beginPath(); ctx.moveTo(-24,-56); ctx.lineTo(-28,-64); ctx.lineTo(-19,-62); ctx.closePath(); ctx.fill();
+    // shield
+    ctx.fillStyle='#9aa7b4'; ctx.beginPath(); ctx.moveTo(12,-8); ctx.lineTo(26,-8); ctx.lineTo(26,8); ctx.lineTo(19,16); ctx.lineTo(12,8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#a52828'; ctx.fillRect(15,-2,8,4); }
+  else if(key==='alchemist'){ ctx.fillStyle='#7ad0a0'; ctx.beginPath(); ctx.arc(22,-22,8,0,7); ctx.fill();
+    ctx.fillStyle='#5b2f92'; ctx.fillRect(20,-34,4,10); }
+  ctx.restore();
+}
+function drawMiniPleb(x,y,col){ ctx.save(); ctx.translate(x,0); ctx.fillStyle=col; roundRect(-6,-12,12,16,5); ctx.fill(); ctx.fillStyle='#f0c79a'; ctx.beginPath(); ctx.arc(0,-16,5,0,7); ctx.fill(); ctx.restore(); }
+function drawTower(o){
+  const x=cx(o.c),y=cy(o.r); const d=TOWERS[o.k];
+  ctx.save(); ctx.translate(x,y);
+  if(o.flash>0){ ctx.shadowColor='#fff2c0'; ctx.shadowBlur=18; }
+  ctx.translate(0,0);
+  drawPleb(x,y,o.k,d,o.t,1);
+  ctx.shadowBlur=0;
+  // level pips
+  if(o.level>1){ for(let i=0;i<o.level;i++){ ctx.fillStyle='#ffd24a'; ctx.beginPath(); ctx.arc(-10+i*5-2,26,2.4,0,7); ctx.fill(); } }
+  if(S.sel===o){ ctx.strokeStyle='#7ec7ff'; ctx.lineWidth=2; strokeTile(o.c,o.r); }
+  ctx.restore();
+}
+function strokeTile(c,r){ ctx.strokeRect(GX+c*TILE+3,GY+r*TILE+3,TILE-6,TILE-6); }
+
+/* ---------- noble art ---------- */
+function drawEnemy(e){
+  const x=e.x,y=e.y;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(x,y+e.sz*0.75,e.sz*0.7,e.sz*0.26,0,0,7); ctx.fill();
+  const hurt=e.hitT>0;
+  const rank=e.rank;
+  if(rank==='king'||rank==='boss'){
+    // emoji boss with glow ring
+    ctx.font=(e.sz*1.9)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    if(rank==='king'){ ctx.shadowColor='#ffd24a'; ctx.shadowBlur=22; }
+    ctx.fillText(e.emoji,x,y); ctx.shadowBlur=0;
+  }else{
+    // drawn armoured soldier
+    const col=rank==='silver'?'#b9c2cc':rank==='gold'?'#d8b24a':'#c0563a';
+    const col2=rank==='silver'?'#8b949e':rank==='gold'?'#a8842b':'#8a3620';
+    // body
+    ctx.fillStyle=hurt?'#ffffff':col; roundRect(x-e.sz*0.5,y-e.sz*0.35,e.sz,e.sz*0.95,6); ctx.fill();
+    ctx.fillStyle=col2; ctx.fillRect(x-e.sz*0.5,y+e.sz*0.28,e.sz,e.sz*0.16);
+    // helm
+    ctx.fillStyle=hurt?'#ffffff':col; ctx.beginPath(); ctx.arc(x,y-e.sz*0.55,e.sz*0.44,Math.PI,0); ctx.fill();
+    ctx.fillRect(x-e.sz*0.44,y-e.sz*0.55,e.sz*0.88,e.sz*0.34);
+    // visor slit
+    ctx.fillStyle='#1b1b22'; ctx.fillRect(x-e.sz*0.36,y-e.sz*0.5,e.sz*0.72,e.sz*0.14);
+    // plume for gold/red
+    if(rank!=='silver'){ ctx.fillStyle=rank==='gold'?'#f4e07a':'#e0562a';
+      ctx.beginPath(); ctx.ellipse(x,y-e.sz*1.0,e.sz*0.1,e.sz*0.28,0,0,7); ctx.fill(); }
+    // arm/weapon
+    ctx.strokeStyle='#6b6b74'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x+e.sz*0.5,y-e.sz*0.05); ctx.lineTo(x+e.sz*0.85,y-e.sz*0.5); ctx.stroke();
+    ctx.fillStyle='#cfd6dd'; ctx.fillRect(x+e.sz*0.78,y-e.sz*0.85,3,e.sz*0.5);
+  }
+  // hp bar if hurt
+  if(e.hp<e.maxhp-0.5){
+    const w=e.sz*1.3, hx=x-w/2, hy=y-e.sz*1.15;
+    ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(hx-1,hy-1,w+2,6);
+    const frac=Math.max(0,e.hp/e.maxhp);
+    ctx.fillStyle=frac>0.5?'#79d24e':frac>0.25?'#f2c94c':'#e0562a';
+    ctx.fillRect(hx,hy,w*frac,4);
+  }
+  // slow tint
+  if(e.slow>0){ ctx.globalAlpha=0.25; ctx.fillStyle='#7ad0ff'; ctx.beginPath(); ctx.arc(x,y,e.sz*0.7,0,7); ctx.fill(); ctx.globalAlpha=1; }
+  // burn flicker
+  if(e.burn>0&&Math.random()<0.5){ ctx.fillStyle='#ff8a3a'; ctx.beginPath(); ctx.arc(x+(Math.random()-0.5)*e.sz,y-e.sz*0.6,2.5,0,7); ctx.fill(); }
+  ctx.restore();
+}
+function drawProj(p){
+  if(p.kind==='catapult'){ ctx.fillStyle='#8a6a3a'; ctx.beginPath(); ctx.arc(p.x,p.y,7,0,7); ctx.fill();
+    ctx.fillStyle='#b98a4d'; ctx.beginPath(); ctx.arc(p.x-2,p.y-2,3,0,7); ctx.fill(); }
+  else if(p.kind==='alchemist'){ ctx.fillStyle='#9be07a'; ctx.beginPath(); ctx.arc(p.x,p.y,6,0,7); ctx.fill();
+    ctx.fillStyle='rgba(155,224,122,.4)'; ctx.beginPath(); ctx.arc(p.x,p.y,10,0,7); ctx.fill(); }
+  else { ctx.strokeStyle='#e8dcc0'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.sx,p.sy); ctx.stroke();
+    ctx.fillStyle='#e8dcc0'; ctx.beginPath(); ctx.arc(p.x,p.y,3,0,7); ctx.fill(); }
+}
+function drawVillage(){
+  // cottages near the path exit (right side)
+  const ex=PATH[PATH.length-1].x, ey=PATH[PATH.length-1].y;
+  ctx.save(); ctx.translate(ex-30,ey);
+  // gate + hut
+  ctx.fillStyle='#5b4326'; ctx.fillRect(-2,-40,40,46);
+  ctx.fillStyle='#7a4a24'; ctx.beginPath(); ctx.moveTo(-8,-40); ctx.lineTo(18,-64); ctx.lineTo(44,-40); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#2b1d0d'; ctx.fillRect(12,-16,16,22);
+  ctx.fillStyle='#ffcf72'; ctx.fillRect(2,-30,8,8);
+  ctx.fillStyle='#a52828';
+  ctx.beginPath(); ctx.moveTo(38,-46); ctx.lineTo(38,-70); ctx.lineTo(56,-64); ctx.lineTo(38,-58); ctx.closePath(); ctx.fill();
+  // banner text
+  ctx.fillStyle='#f6e3ab'; ctx.font='700 12px Georgia,serif'; ctx.textAlign='center';
+  ctx.fillText('HOME',18,-74);
+  ctx.restore();
+}
+
+function roundRect(x,y,w,h,r){ ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+/* =========================================================
+   LOOP
+   ========================================================= */
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+  if(S){
+    if(!S.over){
+      // spawning
+      if(S.running){
+        S.spawnT-=dt;
+        if(S.spawnT<=0&&S.spawnQ.length){
+          spawn(S.spawnQ.shift());
+          S.spawnT=(S.spawnGap||0.68)*(0.85+Math.random()*0.4);
+        }
+        if(S.spawnQ.length===0&&S.enemies.length===0) endWave();
+      }
+      enemyUpdate(dt);
+      towerUpdate(dt);
+      projUpdate(dt);
+      // decay fx
+      for(const q of S.parts){ q.t+=dt; q.x+=q.vx*dt; q.y+=q.vy*dt; q.vy+=420*dt; }
+      S.parts=S.parts.filter(q=>q.t<q.life);
+      for(const t of S.dmg){ t.t+=dt; t.y+=t.vy*dt; t.vy*=0.92; }
+      S.dmg=S.dmg.filter(t=>t.t<t.life);
+      if(S.shake>0)S.shake=Math.max(0,S.shake-dt*40);
+      if(S.hurt>0)S.hurt=Math.max(0,S.hurt-dt*1.6);
+      if(S.strike>0){ S.strike-=dt; if(S.strike<=0){ S.strike=0; S.faith=35; syncHud(); showBanner('The plebs return to work.','',1200); } }
+    }
+    render(dt);
+  }
+  // banner / tip fade
+  if(bnrT&&Date.now()>bnrT){ $('banner').classList.remove('on'); bnrT=0; }
+  if(tipT&&Date.now()>tipT){ $('tip').classList.remove('on'); tipT=0; }
+}
+function endWave(){
+  S.running=false; S.between=true;
+  const bonus=20+S.wave*8;
+  S.gold+=bonus; gainFaith(8);
+  addDmg(W/2,H/2-40,'WAVE CLEAR  +👑'+bonus,'#8ef0ff');
+  SFX.win();
+  if(S.wave>=MAXWAVE){ endGame(true); return; }
+  $('startBtn').classList.remove('off');
+  showBanner('Wave '+S.wave+' cleared! +👑'+bonus+'  ·  build up','gold',2000);
+  syncHud(); buildBar();
+}
+function endGame(win){
+  S.over=true; S.running=false;
+  hideSel(); $('startBtn').classList.add('off');
+  $('ovT').textContent = win?'PLEBANIA STANDS! 👑':'CRUSHED BY THE CROWN 💀';
+  $('ovT').style.color = win?'#f6dd8b':'#ff9a86';
+  $('ovP').innerHTML = win
+    ? 'You held the line for all '+MAXWAVE+' waves and felled the King.<br>The nobles will remember this. <b>'+S.slain+'</b> enemies slain.'
+    : 'The nobles overran the village on wave <b>'+S.wave+'</b>.<br>You still felled <b>'+S.slain+'</b> of them. Not bad for plebs.';
+  $('ov').classList.add('on');
+  win?SFX.win():SFX.lose();
+}
+function hideOv(){ $('ov').classList.remove('on'); }
+$('ovAgain').onclick=()=>{ hideOv(); newGame(); };
+$('ovMenu').onclick=()=>{ hideOv(); show('menu'); };
+$('startBtn').onclick=()=>{ if(!S||S.over)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
+document.addEventListener('keydown',e=>{ if(e.code==='Space'&&$('game').classList.contains('on')){e.preventDefault(); if(S&&!S.running&&!S.over)startWave();} });
+
+/* soot particles on menu */
+(function(){
+  const L=$('sootLayer');
+  for(let i=0;i<26;i++){
+    const d=document.createElement('div'); d.className='soot';
+    d.style.left=(Math.random()*1280)+'px'; d.style.top=(700+Math.random()*120)+'px';
+    d.style.animationDuration=(3+Math.random()*4)+'s'; d.style.animationDelay=(-Math.random()*5)+'s';
+    d.style.opacity=(0.3+Math.random()*0.6);
+    L.appendChild(d);
+  }
+})();
+
+/* debug hooks (verification) */
+window.__p={ get S(){return S;}, start:startWave, newGame, spawn };
+
+// interval-driven loop: runs even when the game sits in an unfocused iframe
+setInterval(()=>loop(performance.now()),1000/60);
+})();
+</script>
+</body>
+</html>
