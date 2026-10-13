@@ -339,6 +339,7 @@
       </div>
       <div class="panel">
         <h3>⚔️ Commands &amp; Tricks</h3>
+        <div class="row"><span class="e">🗡️</span><span><b>Your Hero</b> — drag anywhere on the map to run your crowned hero pleb around. He auto-attacks and <b>levels up</b> with every 6 kills. Getting swamped? He goes down for 5s, then he\u2019s back.</span></div>
         <div class="row"><span class="e">✊</span><span><b>RALLY</b> — hit it when things get hairy: every pleb attacks <b>twice as fast +25% damage</b> for 6 seconds. 30s cooldown.</span></div>
         <div class="row"><span class="e">⏩</span><span><b>Fast-forward</b> — the ×1 button doubles game speed when you've got it under control.</span></div>
         <div class="row"><span class="e">👀</span><span><b>Next</b> — the HUD shows what's marching in on the next wave. Plan ahead!</span></div>
@@ -375,6 +376,7 @@
       <div class="chip"><span class="ci">🏠</span><span id="hLives">20</span></div>
       <div class="chip"><span class="ci">🌊</span><span id="hWave">0/10</span></div>
       <div class="chip" title="Next wave"><span class="ci">👀</span><span id="hNext">—</span></div>
+      <div class="chip" title="Your hero"><span class="ci">🗡️</span><span id="hHero">100</span></div>
       <div class="spacer"></div>
       <div id="rallyBtn"><span id="rallyLbl">✊ RALLY</span><span class="sub" id="rallySub">Ready</span></div>
       <div id="speedBtn" title="Fast-forward">1×</div>
@@ -484,8 +486,9 @@ $('playBtn').onclick=()=>{ initAudio(); show('worlds'); };
 
 /* ---------------- tutorial ---------------- */
 const TUT=[
-  {t:'Welcome to Plebania 🧑‍🌾',p:'You are the villagers — the plebs. The noble army is marching in to crush your village and tax you into dust. Your job: hold the line.'},
-  {t:'Place your villagers',p:'Tap a villager in the bar at the bottom, then tap a grass tile to place them. Tap the SAME tile again to confirm. They fight the nobles for you. Tap a placed villager to upgrade or sell them.'},
+  {t:'Welcome to Plebania 🧑‍🌾',p:'You are the villagers — the plebs. The noble army is marching in to crush your village. You get TWO things: a HERO you control, and villagers you place.'},
+  {t:'Your HERO is you 🗡️',p:'A pleb champion with a crown and sword stands on the field. DRAG anywhere on the map to run him around — he auto-attacks any noble he touches, and levels up as he fights. He\u2019ll get knocked down if he\u2019s swamped (back up in 5s).'},
+  {t:'Place your villagers',p:'Tap a villager in the bar at the bottom, then tap a grass tile to place them. Tap the SAME tile again to confirm. They defend the line while you fight with your hero. Tap a placed villager to upgrade or sell.'},
   {t:'Rally the plebs ✊',p:'Things getting hairy? Hit RALLY — every pleb attacks twice as fast with +25% damage for 6 seconds. Use the ⏩ button to speed up when you can handle it.'},
   {t:'Start with only 3',p:'You unlock new villagers as you survive: Poacher & Farm now, Militia at wave 3, Alchemist at wave 5, Catapult at wave 7. Earn gold 👑 by slaying nobles. Good luck, pleb!'}
 ];
@@ -614,9 +617,13 @@ function newGame(world){
     waveTimer:0, farmAcc:0
   };
   hover=null; locked=null; buildPath(w);
+  // THE HERO — a pleb champion you control (drag to move, auto-attacks)
+  S.hero={ x:W*0.42, y:H*0.52, tx:null, ty:null, hp:120, maxhp:120, dmg:30, range:80, rate:0.42,
+    atkT:0, sword:0, walk:0, level:1, kills:0, down:false, downT:0 };
   hideOv(); hideSel();
   showBanner(WORLDS[w].emoji+' '+WORLDS[w].name+' — defend it!','gold',1700);
-  syncHud(); buildBar(); tip('Tap a villager below, then tap the grass to place them',2600);
+  syncHud(); buildBar();
+  tip('🗡️ DRAG anywhere to run your hero · tap the grass to place villagers',3400);
 }
 buildPath(0);
 function syncHud(){
@@ -625,6 +632,7 @@ function syncHud(){
   $('hWave').textContent=S.wave+'/'+MAXWAVE;
   $('hWorldIc').textContent=WORLDS[S.world].emoji;
   $('hWorld').textContent=WORLDS[S.world].name;
+  if($('hHero')&&S.hero)$('hHero').textContent=Math.max(0,Math.ceil(S.hero.hp));
   sUpdateNext();
 }
 function previewWave(w){
@@ -665,27 +673,43 @@ function buildBar(){
 /* =========================================================
    PLACEMENT (two-tap) + selection
    ========================================================= */
-/* hover = live preview (mouse only). locked = confirmed tile that survives a finger lifting off. */
+/* INPUT — DRAG anywhere = run your hero · TAP = place/select a villager · mouse hover = preview */
+let ptr={down:false,moved:false,x0:0,y0:0};
 cv.addEventListener('pointermove',e=>{
-  if(!S||S.over||S.paused)return;
+  if(!S)return;
+  const p=evt(e);
+  if(ptr.down){
+    if(Math.hypot(p.x-ptr.x0,p.y-ptr.y0)>16)ptr.moved=true;
+    if(ptr.moved&&S.hero&&!S.hero.down){
+      S.hero.tx=Math.max(GX+14,Math.min(GX+COLS*TILE-14,p.x));
+      S.hero.ty=Math.max(GY+14,Math.min(GY+ROWS*TILE-14,p.y));
+      hover=null; locked=null; hideSel();
+    }
+    return;
+  }
   if(e.pointerType!=='mouse')return;
+  if(S.over||S.paused)return;
   if(!S.build){hover=null;return;}
-  const p=evt(e), t=tileAt(p.x,p.y);
+  const t=tileAt(p.x,p.y);
   if(!t||pathKeys.has(t.c+','+t.r)||S.towers.some(o=>o.c===t.c&&o.r===t.r)){hover=null;return;}
   hover={c:t.c,r:t.r};
 });
 cv.addEventListener('pointerleave',()=>{hover=null;});
-cv.addEventListener('pointercancel',()=>{hover=null;});
-/* instant deselect: an outside tap clears the selection the moment it lands (capture phase),
-   so after you place a villager (or confirm a build) nothing is left selected */
+cv.addEventListener('pointercancel',()=>{hover=null;ptr.down=false;});
 cv.addEventListener('pointerdown',e=>{
   if(!S||S.over||S.paused)return;
   const p=evt(e);
+  ptr.down=true; ptr.moved=false; ptr.x0=p.x; ptr.y0=p.y;
+  // instant deselect: a press that isn't on a villager clears the selection at once
   if(S.sel && !S.towers.some(o=>Math.hypot(p.x-cx(o.c),p.y-cy(o.r))<TILE*0.62)) hideSel();
-}, true);
-cv.addEventListener('pointerdown',e=>{
-  if(!S||S.over||S.paused)return;
-  const p=evt(e);
+});
+cv.addEventListener('pointerup',e=>{
+  if(!S||S.over||S.paused){ptr.down=false;return;}
+  const p=evt(e); const wasTap=!ptr.moved; ptr.down=false;
+  if(!wasTap)return;          // it was a drag → it moved the hero, so don't build
+  handleTap(p);
+});
+function handleTap(p){
   // 1) tapping an existing villager selects/upgrades it
   const hit=S.towers.find(o=>Math.hypot(p.x-cx(o.c),p.y-cy(o.r))<TILE*0.62);
   if(hit){ S.sel=hit; locked=null; showSel(hit); return; }
@@ -706,7 +730,7 @@ cv.addEventListener('pointerdown',e=>{
   const px=cx(t.c),py=cy(t.r);
   for(let i=0;i<10;i++) burst(px,py,'#d9b45a');
   locked=null; syncHud(); buildBar();
-});
+}
 function evt(e){
   const r=cv.getBoundingClientRect();
   return { x:(e.clientX-r.left)*(W/r.width), y:(e.clientY-r.top)*(H/r.height) };
@@ -883,6 +907,41 @@ function towerUpdate(dt){
     }
   }
 }
+/* ---- the HERO: you drag him around; he auto-attacks and levels up ---- */
+function heroUpdate(dt){
+  const h=S.hero; if(!h)return;
+  if(h.down){
+    h.downT-=dt;
+    if(h.downT<=0){ h.down=false; h.hp=h.maxhp; h.tx=null; h.ty=null;
+      showBanner('🗡️ Your hero is back on his feet!','gold',1400); }
+    return;
+  }
+  // run toward the drag target
+  if(h.tx!=null){
+    const dx=h.tx-h.x, dy=h.ty-h.y, d=Math.hypot(dx,dy);
+    const spd=252*(S.rally>0?1.5:1);
+    if(d>5){ h.x+=dx/d*spd*dt; h.y+=dy/d*spd*dt; h.walk+=dt*13; }
+    else { h.tx=null; h.walk=0; }
+  }
+  if(h.sword>0)h.sword-=dt;
+  if(h.atkT>0)h.atkT-=dt;
+  // auto-attack nearest foe in range
+  let best=null,bd=1e9;
+  for(const e of S.enemies){ const dd=Math.hypot(e.x-h.x,e.y-h.y); if(dd<h.range&&dd<bd){bd=dd;best=e;} }
+  if(best&&h.atkT<=0){
+    h.atkT=S.rally>0?h.rate*0.5:h.rate; h.sword=0.18;
+    damage(best, h.dmg*(S.rally>0?1.25:1), null); SFX.jab();
+    for(let i=0;i<5;i++)burst((h.x+best.x)/2,(h.y+best.y)/2,'#ffe9a8');
+    if(best.hp<=0){ h.kills++; if(h.kills%6===0){ h.level++; h.dmg+=12; h.maxhp+=30; h.hp=Math.min(h.maxhp,h.hp+40); SFX.up();
+      showBanner('🗡️ Hero reached Lv'+h.level+'!','gold',1300); } }
+  }
+  // foes in contact hurt the hero
+  let hurt=0;
+  for(const e of S.enemies){ if(Math.hypot(e.x-h.x,e.y-h.y) < e.sz*0.5+16){ hurt += (e.rank==='king'?34:e.rank==='boss'?22:13); } }
+  if(hurt>0) h.hp-=hurt*dt;
+  if(h.hp<=0){ h.hp=0; h.down=true; h.downT=5; h.tx=null; h.ty=null; SFX.lose();
+    showBanner('💀 Your hero is down! Back in 5s…','red',1800); }
+}
 function projUpdate(dt){
   for(const p of S.projs){
     p.life+=dt;
@@ -964,6 +1023,9 @@ function render(dt){
 
   // enemies
   for(const e of S.enemies) drawEnemy(e);
+
+  // hero (drawn on top so you can always see him)
+  drawHero();
 
   // projectiles
   for(const p of S.projs) drawProj(p);
@@ -1261,6 +1323,44 @@ function drawEnemy(e){
   if(e.burn>0&&Math.random()<0.5){ ctx.fillStyle='#ff8a3a'; ctx.beginPath(); ctx.arc(x+(Math.random()-0.5)*e.sz,y-e.sz*0.6,2.5,0,7); ctx.fill(); }
   ctx.restore();
 }
+function drawHero(){
+  const h=S.hero; if(!h)return;
+  const x=h.x, y=h.y;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(x,y+30,28,9,0,0,7); ctx.fill();
+  ctx.strokeStyle='rgba(255,214,90,.75)'; ctx.lineWidth=3; ctx.setLineDash([7,7]);
+  ctx.beginPath(); ctx.ellipse(x,y+30,33,11,0,0,7); ctx.stroke(); ctx.setLineDash([]);
+  if(h.down){
+    ctx.globalAlpha=.55; ctx.save(); ctx.translate(x,y); ctx.scale(1.4,1.4); drawPlebShape(0,0,1,0); ctx.restore(); ctx.globalAlpha=1;
+    ctx.font='800 20px Georgia,serif'; ctx.textAlign='center'; ctx.lineWidth=4; ctx.strokeStyle='rgba(0,0,0,.7)'; ctx.fillStyle='#ff9a86';
+    ctx.strokeText('DOWN '+Math.ceil(h.downT)+'s',x,y-56); ctx.fillText('DOWN '+Math.ceil(h.downT)+'s',x,y-56);
+    ctx.restore(); return;
+  }
+  const bob=Math.sin(h.walk)*1.6;
+  ctx.save(); ctx.translate(x,y); ctx.scale(1.4,1.4); drawPlebShape(0,0,1,bob); ctx.restore();
+  // crown of the plebs
+  const cyy=y-38+bob, cw=15, ch=13;
+  ctx.fillStyle='#f2cf62'; ctx.strokeStyle=INK; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x-cw,cyy); ctx.lineTo(x-cw,cyy-ch); ctx.lineTo(x-cw*0.5,cyy-ch*0.45);
+  ctx.lineTo(x,cyy-ch*1.25); ctx.lineTo(x+cw*0.5,cyy-ch*0.45); ctx.lineTo(x+cw,cyy-ch);
+  ctx.lineTo(x+cw,cyy); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#e0562a'; ctx.beginPath(); ctx.arc(x,cyy-ch*0.5,2.6,0,7); ctx.fill();
+  // sword (swings on attack)
+  const sw=(h.sword>0)?(-1.1+((0.18-h.sword)/0.18)*1.9):-0.55;
+  ctx.save(); ctx.translate(x+20,y-6); ctx.rotate(sw);
+  ctx.strokeStyle='#5a3f22'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(0,2); ctx.lineTo(0,-7); ctx.stroke();
+  ctx.fillStyle='#dfe6ee'; ctx.beginPath(); ctx.moveTo(-3,-7); ctx.lineTo(3,-7); ctx.lineTo(2,-40); ctx.lineTo(0,-47); ctx.lineTo(-2,-40); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle=INK; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.restore();
+  // hp bar
+  const bw=56, hx=x-bw/2, hy=y-64;
+  ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(hx-1,hy-1,bw+2,8);
+  const frac=Math.max(0,h.hp/h.maxhp);
+  ctx.fillStyle=frac>0.5?'#79d24e':frac>0.25?'#f2c94c':'#e0562a'; ctx.fillRect(hx,hy,bw*frac,6);
+  ctx.font='800 13px Georgia,serif'; ctx.textAlign='center'; ctx.fillStyle='#ffe9b0';
+  ctx.strokeStyle='rgba(0,0,0,.75)'; ctx.lineWidth=3; ctx.strokeText('Lv'+h.level,x,hy-4); ctx.fillText('Lv'+h.level,x,hy-4);
+  ctx.restore();
+}
 function drawProj(p){
   if(p.kind==='catapult'){ ctx.fillStyle='#8a6a3a'; ctx.beginPath(); ctx.arc(p.x,p.y,7,0,7); ctx.fill();
     ctx.fillStyle='#b98a4d'; ctx.beginPath(); ctx.arc(p.x-2,p.y-2,3,0,7); ctx.fill(); }
@@ -1311,6 +1411,7 @@ function loop(now){
       }
       enemyUpdate(dt);
       towerUpdate(dt);
+      heroUpdate(dt);
       projUpdate(dt);
       // decay fx
       for(const q of S.parts){ q.t+=dt; q.x+=q.vx*dt; q.y+=q.vy*dt; q.vy+=420*dt; }
@@ -1321,7 +1422,8 @@ function loop(now){
       if(S.hurt>0)S.hurt=Math.max(0,S.hurt-dt*1.6);
       if(S.rally>0){ S.rally-=dt; if(S.rally<=0){ S.rally=0; } }
       if(S.rallyCd>0){ S.rallyCd-=dt; if(S.rallyCd<0)S.rallyCd=0; }
-      S.uiAcc=(S.uiAcc||0)+dt; if(S.uiAcc>0.12){ S.uiAcc=0; updateRallyBtn(); }
+      S.uiAcc=(S.uiAcc||0)+dt; if(S.uiAcc>0.12){ S.uiAcc=0; updateRallyBtn();
+        if(S.hero&&$('hHero'))$('hHero').textContent=Math.max(0,Math.ceil(S.hero.hp)); }
     }
     render(dt);
   }
