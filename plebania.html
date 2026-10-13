@@ -135,6 +135,31 @@
     width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-size:22px;
     background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);box-shadow:0 4px 0 #4a3409}
   #homeBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
+  #martBtn{pointer-events:auto;cursor:pointer;border:2px solid #2a1c08;border-radius:12px;
+    width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-size:22px;
+    background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);box-shadow:0 4px 0 #4a3409}
+  #martBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
+
+  /* ---------- PLEBMART ---------- */
+  #mart{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.58)}
+  #mart.on{display:flex}
+  #mart .mcard{width:780px;max-height:88%;overflow:auto;border:3px solid #4a3616;border-radius:18px;
+    background:linear-gradient(#2a1c0a,#150d03);box-shadow:0 16px 44px rgba(0,0,0,.75);padding:20px 26px}
+  #mart h2{font:900 42px Georgia,serif;color:#f2d375;margin:0;text-shadow:0 3px 0 #000;text-align:center}
+  #mart .msub{text-align:center;color:#d8c48c;font:italic 15px Georgia,serif;margin:2px 0 10px}
+  #mart .mgold{text-align:center;font:800 22px Georgia,serif;color:#ffe08a;margin-bottom:14px}
+  .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .mitem{display:flex;gap:12px;align-items:center;border:2px solid #3a2a10;border-radius:12px;padding:10px 12px;
+    background:linear-gradient(rgba(70,52,22,.7),rgba(36,25,10,.8))}
+  .mitem .me{font-size:30px;width:42px;text-align:center;flex:0 0 auto}
+  .mitem .mi{flex:1;min-width:0}
+  .mitem .mn{font:800 17px Georgia,serif;color:#f6e4ad}
+  .mitem .md{font:13px Georgia,serif;color:#cdb885;line-height:1.3;margin-top:2px}
+  .mbuy{border:2px solid #2a1c08;border-radius:10px;padding:8px 12px;font:800 15px Georgia,serif;color:#3a2506;
+    background:linear-gradient(#f2cf62,#c9971f 60%,#8f6a12);box-shadow:0 3px 0 #4a3409;cursor:pointer;white-space:nowrap;flex:0 0 auto}
+  .mbuy:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
+  .mbuy.cant{filter:grayscale(.7) brightness(.7);cursor:default}
+  #mart .mclose{text-align:center;margin-top:16px}
 
   #bar{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:6;
     display:flex;gap:12px;padding:12px 14px;border-radius:16px;
@@ -383,6 +408,7 @@
       <div id="rallyBtn"><span id="rallyLbl">✊ RALLY</span><span class="sub" id="rallySub">Ready</span></div>
       <div id="speedBtn" title="Fast-forward">1×</div>
       <div id="startBtn">START WAVE ▶</div>
+      <div id="martBtn" title="Plebmart shop">🛒</div>
       <div id="homeBtn" title="Menu">🏠</div>
     </div>
 
@@ -400,6 +426,15 @@
       </div>
     </div>
   </div>
+
+  <!-- ============ PLEBMART ============ -->
+  <div id="mart"><div class="mcard">
+    <h2>🛒 PLEBMART</h2>
+    <div class="msub">Spend your plunder. Upgrades stick for the whole run.</div>
+    <div class="mgold">👑 <span id="martGold">0</span></div>
+    <div class="mgrid" id="martGrid"></div>
+    <div class="mclose"><div class="mbtn small" id="martClose" style="width:200px">⬅ Back to battle</div></div>
+  </div></div>
 
   <!-- ============ TUTORIAL ============ -->
   <div id="tut" class="ov"><div class="ovcard tutcard">
@@ -617,7 +652,7 @@ function newGame(world){
     reached:1, rally:0, speed:1,
     towers:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
     shake:0, hurt:0, slain:0, sel:null, build:'farmhand',
-    waveTimer:0, farmAcc:0, mob:[], turned:0
+    waveTimer:0, farmAcc:0, mob:[], turned:0, mart:{}
   };
   hover=null; locked=null; buildPath(w);
   // THE HERO — a pleb champion you control (drag to move, auto-attacks)
@@ -670,6 +705,46 @@ function buildBar(){
         tip('Selected '+d.name+' — tap a grass tile to place',1500); };
     }
     bar.appendChild(card);
+  });
+}
+
+/* ---------------- PLEBMART (shop) ---------------- */
+const UPGRADES=[
+  {id:'sword', e:'🗡️', name:'Longer Sword',  desc:'+15 hero damage.',                base:60, mul:1.7,  max:6},
+  {id:'boots', e:'👢', name:'Running Boots',  desc:'+18% hero move speed.',           base:55, mul:1.7,  max:6},
+  {id:'armor', e:'🛡️', name:'Peasant Armour', desc:'+35 hero max HP & heals 40.',     base:55, mul:1.7,  max:6},
+  {id:'crowd', e:'✊', name:'Angry Crowd',    desc:'+6% mob damage.',                 base:50, mul:1.65, max:8},
+  {id:'revolt',e:'🔥', name:'Revolt Spirit',  desc:'+1 extra defector per noble slain.', base:95, mul:1.9, max:6},
+  {id:'banner',e:'🚩', name:'Plebania Banner',desc:'+1 life (a safe buffer).',        base:90, mul:1.8,  max:8}
+];
+function martCost(u){ return Math.round(u.base*Math.pow(u.mul,(S.mart[u.id]||0))); }
+function buyUpgrade(id){
+  const u=UPGRADES.find(x=>x.id===id); if(!u||!S)return;
+  const lvl=S.mart[id]||0;
+  if(lvl>=u.max){ tip(u.name+' is maxed ✅',1200); return; }
+  const cost=martCost(u);
+  if(S.gold<cost){ tip('Need more gold for '+u.name+' ('+cost+' 👑)',1400); return; }
+  S.gold-=cost; S.mart[id]=lvl+1;
+  if(id==='sword') S.hero.dmg+=15;
+  if(id==='armor'){ S.hero.maxhp+=35; S.hero.hp=Math.min(S.hero.maxhp,S.hero.hp+40); }
+  if(id==='banner') S.lives+=1;
+  SFX.up(); for(let i=0;i<14;i++)burst(S.hero.x,S.hero.y-12,'#ffe08a');
+  showBanner(u.e+' '+u.name+' → Lv'+S.mart[id]+'!','gold',1200);
+  renderMart(); syncHud(); buildBar();
+}
+function openMart(){ if(!S||S.over)return; S.paused=true; renderMart(); $('mart').classList.add('on'); SFX.ui(); }
+function closeMart(){ if(S)S.paused=false; $('mart').classList.remove('on'); }
+function renderMart(){
+  if(!S)return; $('martGold').textContent=Math.floor(S.gold);
+  const g=$('martGrid'); g.innerHTML='';
+  UPGRADES.forEach(u=>{
+    const lvl=S.mart[u.id]||0, maxed=lvl>=u.max, cost=martCost(u);
+    const el=document.createElement('div'); el.className='mitem';
+    el.innerHTML='<div class="me">'+u.e+'</div><div class="mi"><div class="mn">'+u.name+(maxed?' ✔ MAX':' · Lv'+lvl+'/'+u.max)+'</div><div class="md">'+u.desc+'</div></div>';
+    const b=document.createElement('div'); b.className='mbuy'+(maxed||S.gold<cost?' cant':'');
+    b.textContent=maxed?'MAX':'👑'+cost;
+    if(!maxed) b.onclick=()=>buyUpgrade(u.id);
+    el.appendChild(b); g.appendChild(el);
   });
 }
 
@@ -860,7 +935,7 @@ function kill(e,byPlayer){
   for(let i=0;i<(big?34:14);i++)burst(e.x,e.y,big?'#ffcf5a':'#d8c088');
   SFX.kill(); if(big){S.shake=Math.max(S.shake,12);SFX.big();showBanner(e.name+' SLAIN!','gold',1500);}
   // THE UPRISING: the fallen noble throws off its armour and joins your mob!
-  spawnTurned(e, e.rank==='king'?6:e.rank==='boss'?3:1);
+  spawnTurned(e, (e.rank==='king'?6:e.rank==='boss'?3:1)+(S.mart.revolt||0));
   syncHud();
 }
 /* a defector — a pleb who was once a noble, now fights for you (powers your Rally) */
@@ -933,7 +1008,7 @@ function heroUpdate(dt){
   // run toward the drag target
   if(h.tx!=null){
     const dx=h.tx-h.x, dy=h.ty-h.y, d=Math.hypot(dx,dy);
-    const spd=252*(S.rally>0?1.5:1);
+    const spd=252*(1+(S.mart.boots||0)*0.18)*(S.rally>0?1.5:1);
     if(d>5){ h.x+=dx/d*spd*dt; h.y+=dy/d*spd*dt; h.walk+=dt*13; }
     else { h.tx=null; h.walk=0; }
   }
@@ -1394,7 +1469,7 @@ function mobUpdate(dt){
     if(d>6){ const step=Math.min(spd*dt,d); m.x+=dx/d*step; m.y+=dy/d*step; m.walk=(m.walk||0)+dt*10; }
     if(best&&bd<best.sz*0.5+16){
       m.atkT=(m.atkT||0)-dt;
-      if(m.atkT<=0){ m.atkT=0.5; damage(best, 6+Math.round(S.turned*0.06), null); for(let i=0;i<2;i++)burst(m.x,m.y,'#f0e0a8'); }
+      if(m.atkT<=0){ m.atkT=0.5; damage(best, Math.round((6+Math.round(S.turned*0.06))*(1+(S.mart.crowd||0)*0.06)), null); for(let i=0;i<2;i++)burst(m.x,m.y,'#f0e0a8'); }
     }
   }
 }
@@ -1523,6 +1598,9 @@ $('ovMenu').onclick=()=>{ hideOv(); show('menu'); };
 populateWorldStrip();
 $('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
 $('homeBtn').onclick=()=>{ if(!S||S.over)return; $('ov').classList.remove('on'); hideSel(); show('menu'); SFX.ui(); };
+$('martBtn').onclick=()=>{ if(!S||S.over)return; openMart(); };
+$('martClose').onclick=()=>closeMart();
+document.addEventListener('keydown',e=>{ if(e.code==='Escape'&&$('mart').classList.contains('on'))closeMart(); });
 $('rallyBtn').onclick=()=>{ if(!S||S.over||S.paused)return; if((S.rallyCd||0)>0)return;
   S.rally=6; S.rallyCd=30; SFX.up();
   // THE UPRISING: the crowd answers the call — a few fresh defectors rise up
