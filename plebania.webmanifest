@@ -1,0 +1,16 @@
+{
+  "name": "PLEBANIA",
+  "short_name": "PLEBANIA",
+  "description": "Pitchforks up — the plebs defend against the noble army.",
+  "start_url": "plebania.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0a07",
+  "theme_color": "#0b0a07",
+  "icons": [
+    { "src": "plebania-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "plebania-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "plebania-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>PLEBANIA</title>
+<link rel="icon" type="image/png" sizes="192x192" href="plebania-icon-192.png">
+<link rel="icon" href="plebania-favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="plebania-icon-180.png">
+<link rel="manifest" href="plebania.webmanifest">
+<meta name="theme-color" content="#0b0a07">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PLEBANIA">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;height:100%;background:#0b0a07;overflow:hidden;
@@ -43,6 +52,19 @@
   .mbtn.small{font-size:19px;padding:13px 20px;background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);color:#3a2a08}
   .menu-foot{position:absolute;left:72px;bottom:26px;z-index:5;font:14px Georgia,serif;color:#c8b079;opacity:.85;
     text-shadow:0 2px 4px #000}
+  .worldstrip{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+  .wchip{width:132px;border:2px solid #2a1c08;border-radius:14px;padding:10px 8px;text-align:center;cursor:pointer;
+    background:linear-gradient(rgba(64,46,20,.9),rgba(34,23,9,.92));box-shadow:0 4px 0 #2a1c08,0 10px 20px rgba(0,0,0,.4);
+    transition:transform .07s,border-color .1s}
+  .wchip:hover{transform:translateY(-3px);border-color:#c9a24a}
+  .wchip .we{font-size:30px;line-height:1}
+  .wchip .wn{font:800 14px Georgia,serif;color:#f3e2b0;margin-top:5px}
+  .wchip .ws{font:11px Georgia,serif;color:#c3ae7c;margin-top:3px}
+  .wchip.locked{opacity:.55;filter:grayscale(.7)}
+  .wchip.cleared{border-color:#6aa84f;box-shadow:0 4px 0 #2a1c08,0 0 16px rgba(120,200,90,.35)}
+  .wchip .wcheck{color:#8fd66a;font-size:13px}
+  .linklike{cursor:pointer;color:#d8c48c;font:15px Georgia,serif;text-decoration:underline;text-underline-offset:3px;opacity:.9}
+  .linklike:hover{color:#f6e3ab}
   .torch{position:absolute;width:16px;height:16px;border-radius:50%;
     background:radial-gradient(circle,#fff6c0,#ff9a1e 45%,rgba(255,120,0,0) 72%);
     filter:blur(.4px);animation:flick 1.3s infinite ease-in-out}
@@ -277,10 +299,11 @@
       <div class="tagline">Pitchforks up. The nobles are marching.</div>
       <div class="menu-btns">
         <div class="mbtn" id="playBtn"><span class="ic">⚔️</span> PLAY</div>
-        <div class="mbtn small" id="howBtn"><span class="ic">📜</span> How to Play</div>
       </div>
+      <div class="worldstrip" id="worldStrip"></div>
+      <div style="margin-top:14px"><span class="linklike" id="howBtn">❔ How to Play</span></div>
     </div>
-    <div class="menu-foot">v1.0 · a Wayne &amp; Nicholas production · rise, pleb 🧑‍🌾</div>
+    <div class="menu-foot">v2.0 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -322,6 +345,7 @@
     <canvas id="cv"></canvas>
 
     <div class="hud">
+      <div class="chip" title="World"><span class="ci" id="hWorldIc">🌾</span><span id="hWorld">The Village</span></div>
       <div class="chip"><span class="ci">👑</span><span id="hGold">120</span></div>
       <div class="chip"><span class="ci">🏠</span><span id="hLives">20</span></div>
       <div class="chip"><span class="ci">🌊</span><span id="hWave">0/10</span></div>
@@ -393,10 +417,24 @@ cv.width=W; cv.height=H;
 /* ---------------- screens ---------------- */
 function show(id){
   ['menu','how','game'].forEach(s=>$(s).classList.toggle('on',s===id));
+  if(id==='menu')populateWorldStrip();
+}
+function populateWorldStrip(){
+  const strip=$('worldStrip'); if(!strip)return; strip.innerHTML='';
+  WORLDS.forEach((w,i)=>{
+    const locked=i+1>unlocked;
+    const cleared=i+1<unlocked;
+    const el=document.createElement('div');
+    el.className='wchip'+(locked?' locked':'')+(cleared?' cleared':'');
+    el.innerHTML='<div class="we">'+w.emoji+'</div><div class="wn">'+w.name+'</div>'+
+      '<div class="ws">'+(locked?'🔒 Locked':(cleared?'<span class="wcheck">✔ Cleared</span>':'▶ Play'))+'</div>';
+    el.onclick=()=>{ if(locked){SFX.ui();tip('Beat the previous world to unlock this one',1500);return;} initAudio(); newGame(i); show('game'); startTutorial(); };
+    strip.appendChild(el);
+  });
 }
 $('howBtn').onclick=()=>show('how');
 $('howBack').onclick=()=>show('menu');
-$('playBtn').onclick=()=>{initAudio();newGame();show('game');startTutorial();};
+$('playBtn').onclick=()=>{initAudio();newGame(unlocked-1);show('game');startTutorial();};
 
 /* ---------------- tutorial ---------------- */
 const TUT=[
@@ -457,31 +495,53 @@ const TOWERS={
 const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm'];
 
 const ENEMIES={
+  // --- World 1: the noble army (hand-drawn soldiers) ---
   footman : {name:'Footman', hp:44,  spd:54, gold:7,  sz:26, rank:'silver', emoji:'🛡️'},
   knight  : {name:'Knight',  hp:74,  spd:80, gold:10, sz:28, rank:'gold',   emoji:'🐴'},
   sheriff : {name:'Sheriff', hp:165, spd:44, gold:17, sz:33, rank:'red',    emoji:'🏇'},
   elephant: {name:'War Elephant', hp:460, spd:34, gold:48, sz:46, rank:'boss', emoji:'🐘'},
-  king    : {name:'The King', hp:1650, spd:30, gold:220, sz:56, rank:'king', emoji:'👑'}
+  king    : {name:'The King', hp:1650, spd:30, gold:220, sz:56, rank:'king', emoji:'👑'},
+  // --- World 2: the deep forest beasts ---
+  wolf    : {name:'Wolf',  hp:52,  spd:70, gold:8,  sz:26, rank:'beast',  emoji:'🐺'},
+  boar    : {name:'Boar',  hp:92,  spd:56, gold:12, sz:30, rank:'beast',  emoji:'🐗'},
+  spider  : {name:'Spider',hp:150, spd:72, gold:16, sz:28, rank:'beast',  emoji:'🕷️'},
+  bear    : {name:'Bear',  hp:480, spd:36, gold:48, sz:46, rank:'boss',   emoji:'🐻'},
+  troll   : {name:'Forest Troll', hp:1700, spd:30, gold:220, sz:56, rank:'king', emoji:'👹'},
+  // --- World 3: the bone caves undead ---
+  skeleton:{name:'Skeleton', hp:46,  spd:58, gold:7,  sz:26, rank:'undead', emoji:'💀'},
+  zombie  : {name:'Zombie',  hp:96,  spd:44, gold:12, sz:30, rank:'undead', emoji:'🧟'},
+  ghoul   : {name:'Ghoul',   hp:160, spd:64, gold:17, sz:30, rank:'undead', emoji:'🧟‍♂️'},
+  necromancer:{name:'Necromancer', hp:460, spd:34, gold:48, sz:46, rank:'boss', emoji:'🧙'},
+  lich    : {name:'The Lich', hp:1650, spd:30, gold:220, sz:56, rank:'king', emoji:'☠️'}
 };
 const MAXWAVE=10;
-
-/* path (tile coords) — nobles march from the west road to the village in the east */
-const WP=[[-1,2],[5,2],[5,7],[10,7],[10,3],[16,3]];
 function cx(c){return GX+(c+0.5)*TILE;}
 function cy(r){return GY+(r+0.5)*TILE;}
-const PATH=WP.map(p=>({x:cx(p[0]),y:cy(p[1])}));
 
-/* tiles occupied by the path */
-const pathKeys=new Set();
-(function(){
-  for(let i=0;i<WP.length-1;i++){
-    let [c0,r0]=WP[i],[c1,r1]=WP[i+1];
+/* worlds — each has its own path, scenery theme and enemy set */
+const WORLDS=[
+  {name:'The Village', emoji:'🌾', theme:'grass',
+   wps:[[-1,2],[5,2],[5,7],[10,7],[10,3],[16,3]],
+   units:{light:'footman',medium:'knight',heavy:'sheriff'}, boss:'elephant', king:'king'},
+  {name:'The Deep Forest', emoji:'🌲', theme:'forest',
+   wps:[[-1,5],[4,5],[4,1],[8,1],[8,8],[13,8],[13,4],[16,4]],
+   units:{light:'wolf',medium:'boar',heavy:'spider'}, boss:'bear', king:'troll'},
+  {name:'The Bone Caves', emoji:'💀', theme:'cave',
+   wps:[[-1,1],[6,1],[6,6],[2,6],[2,9],[11,9],[11,4],[16,4]],
+   units:{light:'skeleton',medium:'zombie',heavy:'ghoul'}, boss:'necromancer', king:'lich'}
+];
+let PATH=[], pathKeys=new Set();
+function buildPath(worldIdx){
+  const wps=WORLDS[worldIdx].wps;
+  PATH=wps.map(p=>({x:cx(p[0]),y:cy(p[1])}));
+  pathKeys=new Set();
+  for(let i=0;i<wps.length-1;i++){
+    let [c0,r0]=wps[i],[c1,r1]=wps[i+1];
     const dc=Math.sign(c1-c0), dr=Math.sign(r1-r0);
-    let c=c0,r=r0;
-    pathKeys.add(c+','+r);
+    let c=c0,r=r0; pathKeys.add(c+','+r);
     while(c!==c1||r!==r1){ c+=dc; r+=dr; pathKeys.add(c+','+r); }
   }
-})();
+}
 function tileAt(px,py){
   const c=Math.floor((px-GX)/TILE), r=Math.floor((py-GY)/TILE);
   if(c<0||r<0||c>=COLS||r>=ROWS)return null; return {c,r};
@@ -491,27 +551,37 @@ function tileAt(px,py){
    STATE
    ========================================================= */
 let S, hover=null, locked=null;
-function newGame(){
+const SAVE_KEY='plebania_world';
+function loadUnlocked(){ try{ return Math.max(1,Math.min(WORLDS.length,parseInt(localStorage.getItem(SAVE_KEY))||1)); }catch(e){ return 1; } }
+function saveWorld(){ try{ localStorage.setItem(SAVE_KEY,String(unlocked)); }catch(e){} }
+let unlocked=loadUnlocked();
+function newGame(world){
+  const w=Math.max(0,Math.min(WORLDS.length-1,world||0));
   S={
-    gold:140, lives:20, wave:0, running:false, between:true, over:false, paused:false,
+    world:w, gold:140, lives:20, wave:0, running:false, between:true, over:false, paused:false,
     reached:1, rally:0, speed:1,
     towers:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
     shake:0, hurt:0, slain:0, sel:null, build:'farmhand',
     waveTimer:0, farmAcc:0
   };
-  hover=null; locked=null;
-  hideOv(); hideSel(); showBanner('Defend your village!','gold',1400);
+  hover=null; locked=null; buildPath(w);
+  hideOv(); hideSel();
+  showBanner(WORLDS[w].emoji+' '+WORLDS[w].name+' — defend it!','gold',1700);
   syncHud(); buildBar(); tip('Tap a villager below, then tap the grass to place them',2600);
 }
+buildPath(0);
 function syncHud(){
   $('hGold').textContent=Math.floor(S.gold);
   $('hLives').textContent=S.lives;
   $('hWave').textContent=S.wave+'/'+MAXWAVE;
+  $('hWorldIc').textContent=WORLDS[S.world].emoji;
+  $('hWorld').textContent=WORLDS[S.world].name;
   sUpdateNext();
 }
 function previewWave(w){
+  const W=WORLDS[S.world];
   const q=waveComp(w); const seen={}; q.forEach(t=>seen[t]=(seen[t]||0)+1);
-  const order=['king','elephant','sheriff','knight','footman'];
+  const order=[W.king,W.boss,W.units.heavy,W.units.medium,W.units.light];
   return order.filter(t=>seen[t]).map(t=>ENEMIES[t].emoji+seen[t]).join(' ');
 }
 function sUpdateNext(){ const w=Math.min(S.wave+1,MAXWAVE); const t=$('hNext'); if(t)t.textContent=S.wave>=MAXWAVE?'👑 final':previewWave(w); }
@@ -627,13 +697,13 @@ function effDmg(o){
    WAVES
    ========================================================= */
 function waveComp(w){
-  const q=[];
+  const W=WORLDS[S.world]; const q=[];
   const n=4+Math.round(w*1.7);
-  for(let i=0;i<n;i++)q.push('footman');
-  if(w>=2){const k=Math.round(w*0.9);for(let i=0;i<k;i++)q.push('knight');}
-  if(w>=4){const s=Math.round((w-3)*0.75);for(let i=0;i<s;i++)q.push('sheriff');}
-  if(w===5||w===8)q.push('elephant');
-  if(w===10){q.push('elephant');q.push('king');}
+  for(let i=0;i<n;i++)q.push(W.units.light);
+  if(w>=2){const k=Math.round(w*0.9);for(let i=0;i<k;i++)q.push(W.units.medium);}
+  if(w>=4){const s=Math.round((w-3)*0.75);for(let i=0;i<s;i++)q.push(W.units.heavy);}
+  if(w===5||w===8)q.push(W.boss);
+  if(w===10){q.push(W.boss);q.push(W.king);}
   // shuffle a little so it feels organic
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
   return q;
@@ -645,8 +715,8 @@ function startWave(){
   S.spawnQ=waveComp(S.wave); S.spawnT=0; S.spawnGap=0.68;
   $('startBtn').classList.add('off');
   syncHud();
-  showBanner('WAVE '+S.wave+' — the nobles advance!','red',1500);
-  if(S.wave===MAXWAVE)showBanner('👑 THE KING MARCHES ON PLEBANIA!','gold',2200);
+  showBanner('WAVE '+S.wave+' — they advance!','red',1500);
+  if(S.wave===MAXWAVE)showBanner('👑 '+ENEMIES[WORLDS[S.world].king].name.toUpperCase()+' ARRIVES!','gold',2300);
 }
 
 /* =========================================================
@@ -808,6 +878,7 @@ function render(dt){
   if(S.shake>0.2){ ctx.translate((Math.random()-0.5)*S.shake,(Math.random()-0.5)*S.shake); }
 
   drawGround();
+  drawDeco();
   drawPath();
 
   // placement preview: locked (survives touch) takes priority, else mouse hover
@@ -866,41 +937,71 @@ function render(dt){
   if(S.rally>0){ ctx.globalAlpha=0.06+Math.abs(Math.sin(performance.now()/120))*0.05; ctx.fillStyle='#ffb347'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
 }
 
+const THEMES={
+  grass : {bg:'#10160a', tileA:'#2c3d1a', tileB:'#2f421d', tuft:'rgba(90,120,60,.5)',
+           pathOuter:'#3a2a13', pathInner:'#6b5127', pathHi:'rgba(150,116,60,.5)', pebble:'rgba(40,28,12,.5)'},
+  forest: {bg:'#0c1207', tileA:'#20301a', tileB:'#243619', tuft:'rgba(70,110,60,.5)',
+           pathOuter:'#2c2411', pathInner:'#55401f', pathHi:'rgba(120,96,50,.5)', pebble:'rgba(30,22,10,.5)'},
+  cave  : {bg:'#0a0810', tileA:'#2a2434', tileB:'#2f2a3a', tuft:'rgba(120,110,160,.35)',
+           pathOuter:'#241f30', pathInner:'#454060', pathHi:'rgba(120,110,170,.45)', pebble:'rgba(20,16,30,.5)'}
+};
+function curTheme(){ return THEMES[WORLDS[S.world].theme]||THEMES.grass; }
+function hash2(c,r){ let h=(c*73856093)^(r*19349663); h=(h^(h>>13))*1274126177; return ((h^(h>>16))>>>0)/4294967295; }
+
 function drawGround(){
-  // sky-ish backdrop behind grid
-  ctx.fillStyle='#10160a'; ctx.fillRect(0,0,W,H);
+  const TH=curTheme();
+  ctx.fillStyle=TH.bg; ctx.fillRect(0,0,W,H);
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
     const x=GX+c*TILE,y=GY+r*TILE;
-    const dark=(c+r)%2===0;
-    ctx.fillStyle=dark?'#2c3d1a':'#2f421d';
+    ctx.fillStyle=((c+r)%2===0)?TH.tileA:TH.tileB;
     ctx.fillRect(x,y,TILE,TILE);
-    // grass tufts
     if(((c*7+r*13)%5)===0){
-      ctx.strokeStyle='rgba(90,120,60,.5)'; ctx.lineWidth=2;
+      ctx.strokeStyle=TH.tuft; ctx.lineWidth=2;
       for(let i=0;i<3;i++){ const gx=x+12+i*18, gy=y+TILE-8; ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx-3,gy-8); ctx.stroke(); }
     }
   }
-  // subtle grid
   ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.lineWidth=1;
   for(let c=0;c<=COLS;c++){ ctx.beginPath(); ctx.moveTo(GX+c*TILE,GY); ctx.lineTo(GX+c*TILE,GY+ROWS*TILE); ctx.stroke(); }
   for(let r=0;r<=ROWS;r++){ ctx.beginPath(); ctx.moveTo(GX,GY+r*TILE); ctx.lineTo(GX+COLS*TILE,GY+r*TILE); ctx.stroke(); }
 }
+function drawDeco(){
+  const theme=WORLDS[S.world].theme;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    if(pathKeys.has(c+','+r))continue;
+    const h=hash2(c,r); if(h<0.62)continue;
+    const x=cx(c), y=cy(r);
+    if(theme==='grass'){
+      // leafy tree
+      ctx.fillStyle='#4a3a1c'; ctx.fillRect(x-3,y-2,6,14);
+      ctx.fillStyle='#2f5a24'; ctx.beginPath(); ctx.arc(x,y-10,15,0,7); ctx.fill();
+      ctx.fillStyle='#3d722f'; ctx.beginPath(); ctx.arc(x-4,y-14,10,0,7); ctx.fill();
+    }else if(theme==='forest'){
+      // pine
+      ctx.fillStyle='#3a2a14'; ctx.fillRect(x-3,y+2,6,12);
+      ctx.fillStyle='#1e4a2a';
+      for(let k=0;k<3;k++){ const yy=y-2-k*11, w=18-k*4; ctx.beginPath(); ctx.moveTo(x,yy-14); ctx.lineTo(x-w,yy); ctx.lineTo(x+w,yy); ctx.closePath(); ctx.fill(); }
+    }else{
+      // cave stalagmite / crystal
+      if(h<0.8){ ctx.fillStyle='#3a3550'; ctx.beginPath(); ctx.moveTo(x-11,y+14); ctx.lineTo(x-3,y-20); ctx.lineTo(x+4,y+14); ctx.closePath(); ctx.fill();
+        ctx.fillStyle='#4a4468'; ctx.beginPath(); ctx.moveTo(x-11,y+14); ctx.lineTo(x-3,y-20); ctx.lineTo(x-1,y+14); ctx.closePath(); ctx.fill(); }
+      else { ctx.fillStyle='#7bd8e0'; ctx.globalAlpha=.85; ctx.beginPath(); ctx.moveTo(x,y-18); ctx.lineTo(x+8,y); ctx.lineTo(x,y+12); ctx.lineTo(x-8,y); ctx.closePath(); ctx.fill();
+        ctx.globalAlpha=.25; ctx.beginPath(); ctx.arc(x,y-4,16,0,7); ctx.fill(); ctx.globalAlpha=1; }
+    }
+  }
+}
 function drawPath(){
+  const TH=curTheme();
   ctx.lineCap='round'; ctx.lineJoin='round';
-  // outer dark
-  ctx.strokeStyle='#3a2a13'; ctx.lineWidth=TILE*0.94;
+  ctx.strokeStyle=TH.pathOuter; ctx.lineWidth=TILE*0.94;
   ctx.beginPath(); ctx.moveTo(PATH[0].x,PATH[0].y);
   for(let i=1;i<PATH.length;i++)ctx.lineTo(PATH[i].x,PATH[i].y); ctx.stroke();
-  // inner dirt
-  ctx.strokeStyle='#6b5127'; ctx.lineWidth=TILE*0.74;
+  ctx.strokeStyle=TH.pathInner; ctx.lineWidth=TILE*0.74;
   ctx.beginPath(); ctx.moveTo(PATH[0].x,PATH[0].y);
   for(let i=1;i<PATH.length;i++)ctx.lineTo(PATH[i].x,PATH[i].y); ctx.stroke();
-  // highlight
-  ctx.strokeStyle='rgba(150,116,60,.5)'; ctx.lineWidth=TILE*0.5;
+  ctx.strokeStyle=TH.pathHi; ctx.lineWidth=TILE*0.5;
   ctx.beginPath(); ctx.moveTo(PATH[0].x,PATH[0].y);
   for(let i=1;i<PATH.length;i++)ctx.lineTo(PATH[i].x,PATH[i].y); ctx.stroke();
-  // path pebbles
-  ctx.fillStyle='rgba(40,28,12,.5)';
+  ctx.fillStyle=TH.pebble;
   for(let i=0;i<PATH.length-1;i++){
     const a=PATH[i],b=PATH[i+1];
     for(let t=0.12;t<1;t+=0.14){
@@ -1029,11 +1130,13 @@ function drawEnemy(e){
   ctx.fillStyle='rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(x,y+e.sz*0.75,e.sz*0.7,e.sz*0.26,0,0,7); ctx.fill();
   const hurt=e.hitT>0;
   const rank=e.rank;
-  if(rank==='king'||rank==='boss'){
-    // emoji boss with glow ring
+  if(rank==='king'||rank==='boss'||rank==='beast'||rank==='undead'){
+    // emoji units (beasts / undead / bosses) with glow accents
     ctx.font=(e.sz*1.9)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    if(rank==='king'){ ctx.shadowColor='#ffd24a'; ctx.shadowBlur=22; }
-    ctx.fillText(e.emoji,x,y); ctx.shadowBlur=0;
+    if(rank==='king'){ ctx.shadowColor=e.type==='lich'?'#7be0c0':'#ffd24a'; ctx.shadowBlur=24; }
+    else if(rank==='boss'){ ctx.shadowColor='#ff7a3a'; ctx.shadowBlur=12; }
+    if(rank==='undead'||e.type==='zombie'||e.type==='ghoul'){ ctx.globalAlpha=hurt?1:0.94; }
+    ctx.fillText(e.emoji,x,y); ctx.shadowBlur=0; ctx.globalAlpha=1;
   }else{
     // drawn armoured soldier
     const col=rank==='silver'?'#b9c2cc':rank==='gold'?'#d8b24a':'#c0563a';
@@ -1144,23 +1247,37 @@ function endWave(){
   SFX.win();
   if(S.wave>=MAXWAVE){ endGame(true); return; }
   $('startBtn').classList.remove('off');
-  showBanner('Wave '+S.wave+' cleared! +👑'+bonus+'  ·  build up','gold',2000);
+  showBanner('Wave '+S.wave+'/'+MAXWAVE+' cleared! +👑'+bonus+'  ·  build up','gold',2000);
   syncHud(); buildBar();
 }
 function endGame(win){
   S.over=true; S.running=false;
   hideSel(); $('startBtn').classList.add('off');
-  $('ovT').textContent = win?'PLEBANIA STANDS! 👑':'CRUSHED BY THE CROWN 💀';
+  const last = S.world>=WORLDS.length-1;
   $('ovT').style.color = win?'#f6dd8b':'#ff9a86';
-  $('ovP').innerHTML = win
-    ? 'You held the line for all '+MAXWAVE+' waves and felled the King.<br>The nobles will remember this. <b>'+S.slain+'</b> enemies slain.'
-    : 'The nobles overran the village on wave <b>'+S.wave+'</b>.<br>You still felled <b>'+S.slain+'</b> of them. Not bad for plebs.';
+  $('ovMenu').textContent='🏠 Menu';
+  if(win){ const nu=Math.min(WORLDS.length,S.world+2); if(nu>unlocked){ unlocked=nu; saveWorld(); } }
+  if(win && last){
+    $('ovT').textContent='PLEBANIA IS FREE! 👑';
+    $('ovP').innerHTML='You held every world — scattered the army, tamed the Deep Forest and doused the Lich.<br>The plebs are legends. <b>'+S.slain+'</b> foes felled across the campaign.';
+    $('ovAgain').style.display='none';
+  }else if(win){
+    $('ovT').textContent='WORLD CLEARED! 🏆';
+    $('ovP').innerHTML='<b>'+WORLDS[S.world].name+'</b> is safe — '+S.lives+' lives spare, '+S.slain+' foes felled.<br>More lands to liberate…';
+    $('ovAgain').style.display=''; $('ovAgain').textContent='▶ NEXT WORLD →';
+    $('ovAgain').onclick=()=>{ hideOv(); newGame(S.world+1); };
+  }else{
+    $('ovT').textContent='CRUSHED 💀';
+    $('ovP').innerHTML='They broke through on wave <b>'+S.wave+'</b> of <b>'+WORLDS[S.world].name+'</b>.<br>You still felled <b>'+S.slain+'</b> of them. Rally and try again.';
+    $('ovAgain').style.display=''; $('ovAgain').textContent='🔁 RETRY';
+    $('ovAgain').onclick=()=>{ hideOv(); newGame(S.world); };
+  }
   $('ov').classList.add('on');
   win?SFX.win():SFX.lose();
 }
 function hideOv(){ $('ov').classList.remove('on'); }
-$('ovAgain').onclick=()=>{ hideOv(); newGame(); };
 $('ovMenu').onclick=()=>{ hideOv(); show('menu'); };
+populateWorldStrip();
 $('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
 $('homeBtn').onclick=()=>{ if(!S||S.over)return; $('ov').classList.remove('on'); hideSel(); show('menu'); SFX.ui(); };
 $('rallyBtn').onclick=()=>{ if(!S||S.over||S.paused)return; if((S.rallyCd||0)>0)return;
@@ -1193,7 +1310,7 @@ document.addEventListener('keydown',e=>{ if(e.code==='Space'&&$('game').classLis
 })();
 
 /* debug hooks (verification) */
-window.__p={ get S(){return S;}, start:startWave, newGame, spawn };
+window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked(){return unlocked;}, get PATH(){return PATH;} };
 
 // interval-driven loop: runs even when the game sits in an unfocused iframe
 setInterval(()=>loop(performance.now()),1000/60);

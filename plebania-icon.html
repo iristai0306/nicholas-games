@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>PLEBANIA icon</title>
+<style>html,body{margin:0;padding:0;background:#222}
+#cv{display:block;width:256px;height:256px;border:1px solid #555}</style></head>
+<body>
+<canvas id="cv" width="512" height="512"></canvas>
+<script>
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+function rrp(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+/* Nicholas's pleb icon: black bg, white rounded-square face, deadpan lines. */
+function drawExact(N){
+  cv.width=N; cv.height=N;
+  const W=N,H=N;
+  // black background
+  ctx.fillStyle='#000000'; ctx.fillRect(0,0,W,H);
+  // white rounded square (face)
+  ctx.fillStyle='#ffffff';
+  const sx=0.125*W, sy=0.08*H, sw=0.75*W, sh=0.75*H, r=0.19*W;
+  rrp(sx,sy,sw,sh,r); ctx.fill();
+  // deadpan eyes (two level lines)
+  ctx.strokeStyle='#000000'; ctx.lineWidth=0.028*W; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(0.27*W,0.42*H); ctx.lineTo(0.41*W,0.42*H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0.52*W,0.42*H); ctx.lineTo(0.66*W,0.42*H); ctx.stroke();
+  // mouth (short line, slight downward tilt to the right)
+  ctx.beginPath(); ctx.moveTo(0.30*W,0.615*H); ctx.lineTo(0.45*W,0.648*H); ctx.stroke();
+}
+
+function dataURL(N){ drawExact(N); return cv.toDataURL('image/png'); }
+function post(N){
+  const url=dataURL(N);
+  return fetch('http://127.0.0.1:8124/save?name=plebania-icon-'+N+'.png',
+    {method:'POST',body:url}).then(r=>r.text());
+}
+drawExact(512);
+window.__icon={ draw:drawExact, dataURL, post,
+  all:()=>Promise.all([1024,512,192,180].map(post)).then(a=>a.join(' | ')) };
+</script>
+</body>
+</html>
