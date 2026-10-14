@@ -1062,12 +1062,13 @@ function renderMart(){
    PLACEMENT (two-tap) + selection
    ========================================================= */
 /* INPUT — DRAG anywhere = run your hero · TAP = place/select a villager · mouse hover = preview */
-let ptr={down:false,moved:false,x0:0,y0:0};
+let ptr={down:false,moved:false,x0:0,y0:0,sx0:0,sy0:0};
+const TAPSLOP=18;   // SCREEN px — tap vs drag, so it feels the same on phone (scaled) and desktop
 cv.addEventListener('pointermove',e=>{
   if(!S)return;
   const p=evt(e);
   if(ptr.down){
-    if(Math.hypot(p.x-ptr.x0,p.y-ptr.y0)>16)ptr.moved=true;
+    if(Math.hypot(e.clientX-ptr.sx0,e.clientY-ptr.sy0)>TAPSLOP)ptr.moved=true;
     if(ptr.moved&&S.hero&&!S.hero.down){
       S.hero.tx=Math.max(GX+14,Math.min(GX+COLS*TILE-14,p.x));
       S.hero.ty=Math.max(GY+14,Math.min(GY+ROWS*TILE-14,p.y));
@@ -1093,7 +1094,7 @@ cv.addEventListener('pointercancel',()=>{hover=null;ptr.down=false;});
 cv.addEventListener('pointerdown',e=>{
   if(!S||S.over||S.paused)return;
   const p=evt(e);
-  ptr.down=true; ptr.moved=false; ptr.x0=p.x; ptr.y0=p.y;
+  ptr.down=true; ptr.moved=false; ptr.x0=p.x; ptr.y0=p.y; ptr.sx0=e.clientX; ptr.sy0=e.clientY;
   // instant deselect: a press that isn't on a villager clears the selection at once
   if(S.sel && !S.towers.some(o=>Math.hypot(p.x-cx(o.c),p.y-cy(o.r))<TILE*0.62)) hideSel();
 });
