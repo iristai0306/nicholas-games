@@ -34,17 +34,18 @@
   .mlayer{position:absolute;inset:0}
   .vign{position:absolute;inset:0;pointer-events:none;
     background:radial-gradient(120% 80% at 50% 30%,transparent 40%,rgba(0,0,0,.55) 100%)}
-  .menu-left{position:absolute;left:70px;top:96px;z-index:5;max-width:560px}
+  .menu-left{position:absolute;left:70px;top:70px;z-index:5;max-width:560px;max-height:calc(100% - 92px);overflow-y:auto;overflow-x:hidden;padding-right:8px;scrollbar-width:none}
+  .menu-left::-webkit-scrollbar{width:0;height:0}
   .kicker{font:600 15px/1 Georgia,serif;letter-spacing:7px;color:#d9b44a;text-transform:uppercase;
     text-shadow:0 2px 0 #000;margin-bottom:10px;opacity:.9}
-  .logo{font:900 108px/0.86 Georgia,'Times New Roman',serif;letter-spacing:2px;
+  .logo{font:900 84px/0.86 Georgia,'Times New Roman',serif;letter-spacing:2px;
     color:#f7e7b6;text-shadow:
       0 4px 0 #7a5410, 0 5px 0 #000, 0 9px 22px rgba(0,0,0,.75);
     -webkit-text-stroke:2px #3a2607}
   .logo .tail{display:block;font-size:40px;letter-spacing:14px;color:#c9a24a;margin-top:12px;
     -webkit-text-stroke:0;text-shadow:0 2px 0 #000,0 6px 14px rgba(0,0,0,.6)}
   .tagline{margin-top:16px;font:italic 20px Georgia,serif;color:#e8d9ac;text-shadow:0 2px 6px #000;opacity:.92}
-  .menu-btns{margin-top:36px;display:flex;flex-direction:column;gap:14px;width:340px}
+  .menu-btns{margin-top:20px;display:flex;flex-direction:column;gap:11px;width:340px}
   .mbtn{position:relative;display:flex;align-items:center;gap:14px;padding:16px 22px;cursor:pointer;
     border:3px solid #2a1c08;border-radius:14px;
     background:linear-gradient(#f2cf62,#c9971f 55%,#8f6a12);
@@ -407,11 +408,18 @@
 
   #barwrap{position:absolute;left:0;right:0;bottom:8px;z-index:6;
     display:flex;flex-direction:column;gap:6px;align-items:center;transition:transform .18s}
-  #barwrap.hide{transform:translateY(140%)}
-  #barTag{display:flex;gap:8px;align-items:center;opacity:.9}
-  #barTag .bt{border:2px solid #2c2008;border-radius:999px;padding:3px 12px;font:800 12px Georgia,serif;
-    color:#f2cf62;background:linear-gradient(rgba(46,32,12,.95),rgba(24,16,6,.95));cursor:pointer}
+  #barwrap.hide{transform:translateY(150%)}
+  #barTag{display:flex;gap:8px;align-items:center}
+  #barTag .bt{border:2px solid #2c2008;border-radius:999px;padding:4px 16px;font:800 13px Georgia,serif;
+    color:#f2cf62;background:linear-gradient(rgba(46,32,12,.96),rgba(24,16,6,.96));cursor:pointer;
+    box-shadow:0 3px 0 #2c2008,0 6px 14px rgba(0,0,0,.5)}
   #barTag .bt:active{transform:translateY(1px)}
+  #barToggleFixed{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:8;cursor:pointer;
+    border:2px solid #2c2008;border-radius:999px;padding:6px 20px;font:800 14px Georgia,serif;
+    color:#3a2506;background:linear-gradient(#f2cf62,#c9971f 60%,#8f6a12);
+    box-shadow:0 4px 0 #4a3409,0 8px 18px rgba(0,0,0,.5);display:none}
+  #barToggleFixed.show{display:block}
+  #barToggleFixed:active{transform:translateX(-50%) translateY(2px)}
   .barrow{display:flex;gap:7px;padding:7px 10px;border-radius:14px;
     border:2px solid #2c2008;background:linear-gradient(rgba(46,32,12,.95),rgba(24,16,6,.95));
     box-shadow:0 8px 24px rgba(0,0,0,.6);position:relative;align-items:flex-start;flex-wrap:wrap;justify-content:center;max-width:1100px}
@@ -695,6 +703,7 @@
       <div class="barrow" id="bar" data-kind="units"><span class="btag">UNITS</span></div>
       <div class="barrow" id="bar2" data-kind="buildings"><span class="btag">BUILDINGS</span></div>
     </div>
+    <div id="barToggleFixed">📋 Show tray</div>
 
     <div id="selPanel">
       <div class="sp-title"><span class="e" id="spE">🧑‍🌾</span><span id="spName">Farmhand</span></div>
@@ -1111,10 +1120,11 @@ let bnrT=0;
 function showBanner(txt,cls,ms){ const b=$('banner'); b.textContent=txt; b.className='on '+(cls||''); bnrT=Date.now()+(ms||1500); }
 
 /* ---------------- build bar ---------------- */
-const UNLOCK={ farmhand:1, poacher:1, farm:1, militia:3, alchemist:5, catapult:7,
-  berserker:9999, longbow:9999, dragonling:9999, knight:9999, mortar:9999, orchard:9999 };
+const UNLOCK={ farmhand:1, poacher:1, farm:1, militia:3, alchemist:5, catapult:7 };
+function isExtra(k){ return PACK_EXTRA.indexOf(k)>=0; }
+function plebEquipped(k){ return typeof PACK_OWN!=='undefined' && !!PACK_OWN['equipped:'+k]; }
 function unlockedUnit(k){
-  if(typeof BPASS!=='undefined'&&BPASS.unlocked&&BPASS.unlocked.indexOf(k)>=0) return true;
+  if(isExtra(k)) return plebEquipped(k);      // extra plebs come from PLEB MART + PLEBPACK, never waves
   return S.reached>=(UNLOCK[k]||1); }
 function countOf(k){ return S?S.towers.filter(o=>o.k===k).length:0; }
 function buildBar(){
@@ -1125,9 +1135,11 @@ function buildBar(){
     card.className='card'+(k===S.build?' sel':'')+((S.gold<d.cost||lock||full)?' poor':'')+(lock?' locked':'');
     card.dataset.k=k;
     if(lock){
+      const extra=isExtra(k);
       card.innerHTML='<div class="ce">🔒</div><div class="cn">'+d.name+'</div>'+
-        '<div class="cc" style="color:#c9a24a">Wave '+UNLOCK[k]+'</div><div class="cd">Unlocks as you advance</div>';
-      card.onclick=()=>{ tip('🔒 '+d.name+' unlocks at wave '+UNLOCK[k],1500); };
+        '<div class="cc" style="color:#c9a24a">'+(extra?'🎒 PLEBPACK':'Wave '+UNLOCK[k])+'</div>'+
+        '<div class="cd">'+(extra?'Buy &amp; equip it to unlock':'Unlocks as you advance')+'</div>';
+      card.onclick=()=>{ tip(extra?('🔒 Buy the '+d.name+' in PLEB MART, then equip it in PLEBPACK 🎒'):('🔒 '+d.name+' unlocks at wave '+UNLOCK[k]),1800); };
     }else if(full){
       card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
         '<div class="cc" style="color:#e0792b">MAX '+cap+'/'+cap+'</div><div class="cd">You have all '+cap+' '+d.name+'s</div>';
@@ -1664,7 +1676,12 @@ const PACK_ITEMS={
            {n:'Greaves',     e:'👢', cost:320, d:0.24},
            {n:'Winged Boots',e:'🪽', cost:700, d:0.40} ]
 };
+/* unlocked extra plebs you can EQUIP into your army (bought here in the pack).
+   'extra' plebs are PLEBPACK-only + locked until equipped. */
+const PLEB_GATE={ berserker:250, longbow:320, dragonling:380, knight:340, mortar:520, orchard:220 };
+function plebOwned(k){ return !!PACK_OWN['pleb:'+k]; }
 const PACK_SLOTS=[['weapon','🗡️ Weapon','more damage'],['armour','🛡️ Armour','more range &amp; farm gold'],['boots','👟 Boots','attack faster']];
+const PACK_EXTRA=['berserker','longbow','dragonling','knight','mortar','orchard'];   // plebs you equip into your army
 let PACK_OWN=loadJSON('plebania_pack_own',{});   // keyed 'slot:tier' → true (bought)
 let PACK_EQ=loadJSON('plebania_pack_eq',{});     // {unitKey:{weapon:tier,armour:tier,boots:tier}}
 let PACKPLEB='farmhand';
@@ -1675,7 +1692,18 @@ function renderPack(){
   const body=$('packBody'); if(!body)return;
   let h='<div class="pk-plebs">';
   ORDER.forEach(k=>{ const d=TOWERS[k]; h+='<div class="pk-pleb'+(PACKPLEB===k?' on':'')+'" data-k="'+k+'">'+d.emoji+' '+d.name+'</div>'; });
-  h+='</div><div class="pk-slots">';
+  h+='</div>';
+  // ---- equip extra plebs into your army (buy here) ----
+  h+='<div class="pk-slot"><div class="hd">🧑🌾 Plebs <span style="font-size:14px;font-weight:400;opacity:.65">buy a pleb to add it to your build bar, then equip it</span></div><div class="pk-items">';
+  PACK_EXTRA.forEach(k=>{
+    const d=TOWERS[k]; const owned=plebOwned(k); const equipped=!!PACK_OWN['equipped:'+k];
+    const cost=PLEB_GATE[k];
+    h+='<div class="pk-item'+(owned?' owned':'')+(equipped?' eq':'')+'" data-pleb="'+k+'">'+
+      '<div class="ie">'+d.emoji+'</div><div class="in">'+d.name+'</div>'+
+      '<div class="ic">'+(equipped?'✔ In army':owned?'Equip':'👑 '+cost)+'</div></div>';
+  });
+  h+='</div></div>';
+  h+='<div class="pk-slots">';
   PACK_SLOTS.forEach(([slot,label,note])=>{
     h+='<div class="pk-slot"><div class="hd">'+label+' <span style="font-size:14px;font-weight:400;opacity:.65">'+note+'</span></div><div class="pk-items">';
     PACK_ITEMS[slot].forEach((it,ti)=>{
@@ -1689,7 +1717,24 @@ function renderPack(){
   h+='</div>';
   body.innerHTML=h;
   body.querySelectorAll('.pk-pleb').forEach(el=>el.onclick=()=>{ PACKPLEB=el.dataset.k; SFX.ui(); renderPack(); });
-  body.querySelectorAll('.pk-item').forEach(el=>el.onclick=()=>packClick(el.dataset.slot, +el.dataset.ti));
+  body.querySelectorAll('.pk-item[data-slot]').forEach(el=>el.onclick=()=>packClick(el.dataset.slot, +el.dataset.ti));
+  body.querySelectorAll('.pk-item[data-pleb]').forEach(el=>el.onclick=()=>packPlebClick(el.dataset.pleb));
+}
+function packPlebClick(k){
+  const d=TOWERS[k]; const owned=plebOwned(k);
+  if(!owned){
+    const cost=PLEB_GATE[k];
+    if(PGOLD<cost){ tip('Need 👑'+cost+' shop gold to buy the '+d.name,1700); SFX.ui(); return; }
+    PGOLD-=cost; PACK_OWN['pleb:'+k]=true; PACK_OWN['equipped:'+k]=true;
+    saveJSON('plebania_pack_own',PACK_OWN); saveJSON('plebania_pgold',PGOLD);
+    SFX.up(); for(let i=0;i<14;i++)burst(W/2,H/2,'#ffe08a');
+    showBanner('🧑🌾 Bought the '+d.name+'! Added to your army.','gold',1600);
+  }else{
+    PACK_OWN['equipped:'+k]=!PACK_OWN['equipped:'+k];
+    saveJSON('plebania_pack_own',PACK_OWN);
+    showBanner(PACK_OWN['equipped:'+k]?('✔ '+d.name+' equipped'):('Unequipped '+d.name),'gold',1200);
+  }
+  SFX.ui(); renderPack();
 }
 function packClick(slot,ti){
   const key=slot+':'+ti; const it=PACK_ITEMS[slot][ti]; const k=PACKPLEB;
@@ -1715,25 +1760,25 @@ if(!BPASS.claimed) BPASS.claimed=[];
 function saveBP(){ saveJSON(BPASS_KEY,BPASS); }
 const PASS_MAX=20, PASS_XP_PER=90;   // 90 ⭐ per tier
 const PASS_TIERS=[
-  {t:1,  type:'pleb', k:'berserker', name:'Berserker',   e:'🪓', d:'Fast axe frenzy — unlock the Berserker pleb'},
-  {t:2,  type:'gold', amount:150, e:'👑', name:'+150 gold'},
-  {t:3,  type:'blep', amount:250, e:'⚡', name:'+250 Blep'},
-  {t:4,  type:'pleb', k:'longbow',   name:'Longbowman',  e:'🎯', d:'Sniper pleb — huge range'},
-  {t:5,  type:'gold', amount:250, e:'👑', name:'+250 gold'},
-  {t:6,  type:'gift', amount:1, e:'📦', name:'Pleb Box'},
-  {t:7,  type:'pleb', k:'dragonling',name:'Dragonling',  e:'🐉', d:'Fire breath pleb — AoE splash'},
-  {t:8,  type:'blep', amount:500, e:'⚡', name:'+500 Blep'},
-  {t:9,  type:'gold', amount:400, e:'👑', name:'+400 gold'},
-  {t:10, type:'pleb', k:'knight',    name:'Turned Knight',e:'🐴', d:'A defected noble joins your side'},
-  {t:11, type:'gift', amount:1, e:'📦', name:'Pleb Box'},
-  {t:12, type:'blep', amount:750, e:'⚡', name:'+750 Blep'},
-  {t:13, type:'gold', amount:500, e:'👑', name:'+500 gold'},
-  {t:14, type:'skin', amount:'knight', e:'🧑🌾', name:'Knight Plekey'},
-  {t:15, type:'pleb', k:'mortar',    name:'Mortar',      e:'💣', d:'Siege splash pleb — long range'},
-  {t:16, type:'gift', amount:1, e:'📦', name:'Pleb Box'},
-  {t:17, type:'blep', amount:1200, e:'⚡', name:'+1,200 Blep'},
-  {t:18, type:'gold', amount:800, e:'👑', name:'+800 gold'},
-  {t:19, type:'pleb', k:'orchard',   name:'Orchard',     e:'🍎', d:'Big economy — +14 gold / 2.2s'},
+  {t:1,  type:'gold', amount:200, e:'👑', name:'+200 gold'},
+  {t:2,  type:'blep', amount:300, e:'⚡', name:'+300 Blep'},
+  {t:3,  type:'gift', amount:1, e:'📦', name:'Pleb Box'},
+  {t:4,  type:'gold', amount:300, e:'👑', name:'+300 gold'},
+  {t:5,  type:'blep', amount:400, e:'⚡', name:'+400 Blep'},
+  {t:6,  type:'skin', amount:'wolf', e:'🔑', name:'Wolf Plekey'},
+  {t:7,  type:'gift', amount:1, e:'📦', name:'Pleb Box'},
+  {t:8,  type:'blep', amount:600, e:'⚡', name:'+600 Blep'},
+  {t:9,  type:'gold', amount:500, e:'👑', name:'+500 gold'},
+  {t:10, type:'gift', amount:1, e:'📦', name:'Mega Box'},
+  {t:11, type:'blep', amount:900, e:'⚡', name:'+900 Blep'},
+  {t:12, type:'gold', amount:700, e:'👑', name:'+700 gold'},
+  {t:13, type:'skin', amount:'bone', e:'🔑', name:'Bone Lord Plekey'},
+  {t:14, type:'gift', amount:1, e:'📦', name:'Mega Box'},
+  {t:15, type:'blep', amount:1500, e:'⚡', name:'+1,500 Blep'},
+  {t:16, type:'gold', amount:1000, e:'👑', name:'+1,000 gold'},
+  {t:17, type:'gift', amount:1, e:'📦', name:'Mega Box'},
+  {t:18, type:'blep', amount:2000, e:'⚡', name:'+2,000 Blep'},
+  {t:19, type:'gold', amount:1500, e:'👑', name:'+1,500 gold'},
   {t:20, type:'skin', amount:'king', e:'👑', name:'Pleb King Plekey'}
 ];
 function passTierXP(){ return PASS_XP_PER; }
@@ -1756,10 +1801,7 @@ function passState(t){      // locked | unlocked | claimed
 function claimPass(t){
   if(passState(t)!=='unlocked')return;
   const r=tierOf(t); if(!r)return;
-  if(r.type==='pleb'){
-    if(BPASS.unlocked.indexOf(r.k)<0) BPASS.unlocked.push(r.k);
-    showBanner('🎫 UNLOCKED: '+r.name+' pleb!','gold',1900);
-  }else if(r.type==='gold'){ PGOLD+=r.amount; saveJSON('plebania_pgold',PGOLD); showBanner('👑 +'+r.amount+' shop gold!','gold',1600); }
+  if(r.type==='gold'){ PGOLD+=r.amount; saveJSON('plebania_pgold',PGOLD); showBanner('👑 +'+r.amount+' shop gold!','gold',1600); }
   else if(r.type==='blep'){ PLEB+=r.amount; saveJSON('plebania_pleb',PLEB); showBanner('⚡ +'+r.amount+' Blep!','gold',1600); }
   else if(r.type==='gift'){ PLEB+=300; saveJSON('plebania_pleb',PLEB); if(Math.random()<0.35) rollKey(); showBanner('📦 Pleb Box: +300 Blep','gold',1600); }
   else if(r.type==='skin'){ const id=r.amount; if(!hasKey(id)){ PLEKEYS.push(id); saveJSON('plebania_plekeys',PLEKEYS); } showBanner('🔑 Plekey: '+r.name+'!','gold',1800); }
@@ -2844,8 +2886,13 @@ function hideOv(){ $('ov').classList.remove('on'); }
 $('ovMenu').onclick=()=>{ hideOv(); show('menu'); };
 populateWorldStrip();
 $('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
-$('barToggle').onclick=()=>{ const w=$('barwrap'); const hid=w.classList.toggle('hide');
-  $('barToggle').textContent=hid?'📋 Show tray':'📋 Hide tray'; SFX.ui(); };
+function toggleBar(force){ const w=$('barwrap'); const hid=(force!=null)?force:!w.classList.contains('hide');
+  w.classList.toggle('hide',hid);
+  if($('barToggle'))$('barToggle').textContent=hid?'📋 Show tray':'📋 Hide tray';
+  const fx=$('barToggleFixed'); if(fx){ fx.classList.toggle('show',hid); fx.textContent='📋 Show tray'; }
+  SFX.ui(); }
+$('barToggle').onclick=()=>toggleBar();
+if($('barToggleFixed'))$('barToggleFixed').onclick=()=>toggleBar(false);
 $('homeBtn').onclick=()=>{ if(!S||S.over)return; $('ov').classList.remove('on'); hideSel(); show('menu'); SFX.ui(); };
 $('upsBtn').onclick=()=>{ if(!S||S.over)return; openUp(); };
 $('upClose').onclick=()=>closeUp();
