@@ -234,6 +234,74 @@
   .pm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-content:start}
   .pi-slot{border:2.5px solid #2b2418;border-radius:12px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:30px}
   .pi-slot.have{border-color:#c08a1e;background:rgba(192,138,30,.12)}
+
+  /* ---------- ONE-SCREEN FIT + hand-drawn ART + checkout ---------- */
+  #mart{overflow:hidden;padding:12px 18px;display:flex;flex-direction:column}
+  #mart .mchrome{margin-bottom:8px;flex:0 0 auto}
+  #mart .mhome{padding:7px 16px;font-size:17px}
+  #mart .mpaper{max-width:1180px;width:100%;height:calc(100% - 56px);margin:0 auto;padding:12px 22px 12px;
+    display:flex;flex-direction:column;overflow:hidden}
+  .pm-head{gap:16px;margin-bottom:8px;flex:0 0 auto}
+  .pm-logo{font-size:40px}
+  .pm-tabs{gap:7px;margin-top:0}
+  .pm-tab{padding:5px 14px;font-size:15px}
+  #martBody{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+  .pm-back{margin-top:6px;flex:0 0 auto}
+  .pm-back .mbtn.small{font-size:15px;padding:7px 0}
+  .pbanner{font-size:19px;padding:5px 20px;margin:0 auto 8px}
+  .pm-2col{gap:16px;flex:1;min-height:0}
+  .pcard{padding:6px 6px;border-radius:14px}
+  .pdaily{gap:10px}
+  .pcyber{margin-top:12px;padding:8px 12px 10px}
+  .pcy-h{font-size:16px;margin-bottom:6px}
+  .pcy-grid{gap:8px}
+  .pcy-tag{font-size:12px;padding:3px 10px;top:-10px;right:-8px}
+  .pcy-price{margin-top:8px;font-size:17px}
+  .pm-grid{gap:7px;grid-template-columns:repeat(5,1fr)}
+  .pi-slot{font-size:20px;border-radius:9px}
+  .pm-sub2{font-size:17px;margin-bottom:6px}
+  .art{width:100%;height:100%;stroke:#2b2418;stroke-width:4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .pc-e{height:46px;display:flex;align-items:center;justify-content:center;margin-bottom:2px}
+  .pc-e .art{width:44px;height:44px}
+  .pcard .pc-n{font-size:14px;margin-top:3px}
+  .pcard .pc-p{font-size:13px;margin-top:2px;font-weight:700}
+  .pbuy{padding:4px 13px;font-size:14px}
+  .pm-sub{font-size:15px;margin:0}
+  /* money bundles tab */
+  .mrow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;flex:1;min-height:0}
+  .mbx{position:relative;border:2.5px solid #2b2418;border-radius:18px;padding:10px;display:flex;flex-direction:column;
+    align-items:center;justify-content:space-between;cursor:pointer;background:#fff}
+  .mbx:hover,.mcombo:hover{background:rgba(138,90,43,.07)}
+  .mbx .art{width:60px;height:60px}
+  .mbx .bt{font-weight:800;font-size:16px;color:#2b2418;text-align:center}
+  .mbx .bd{font-size:13px;color:#6a5a3a;text-align:center}
+  .mtag{position:absolute;right:-8px;top:-10px;background:#2b2418;color:#ffd24a;font-weight:800;font-size:13px;
+    padding:3px 11px;border-radius:999px;transform:rotate(6deg)}
+  .mcombo{position:relative;border:2.5px solid #2b2418;border-radius:18px;padding:10px 16px;display:flex;gap:16px;
+    align-items:center;justify-content:space-around;cursor:pointer;background:#fff;flex:0 0 auto;margin-top:12px}
+  .mcombo .art{width:56px;height:56px}
+  /* checkout sheet */
+  #checkout{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.62)}
+  #checkout.on{display:flex}
+  #checkout .sheet{width:430px;max-width:92%;max-height:94%;overflow:auto;border:3px solid #4a3616;border-radius:18px;
+    background:#fbfaf3;color:#2b2418;padding:20px 24px 18px;box-shadow:0 16px 44px rgba(0,0,0,.7);text-align:center;
+    font-family:'Chalkboard SE','Comic Sans MS','Segoe Print','Bradley Hand','Marker Felt',cursive,Georgia,serif}
+  #checkout .sheet *{font-family:inherit}
+  #checkout .cicon{height:70px;display:flex;align-items:center;justify-content:center}
+  #checkout .cicon .art{width:64px;height:64px}
+  #checkout h3{margin:4px 0 0;font-size:25px;font-weight:900}
+  #checkout .cprice{font-size:38px;font-weight:900;margin:2px 0 6px}
+  #checkout .ctest{display:inline-block;background:#2b2418;color:#ffd24a;font-weight:800;font-size:12px;padding:3px 12px;
+    border-radius:999px;margin-bottom:12px;letter-spacing:.5px}
+  #checkout .cf{display:flex;flex-direction:column;gap:8px;text-align:left;margin:8px 0}
+  #checkout .cf label{font-size:12px;font-weight:700;color:#6a5a3a}
+  #checkout .cf input{border:2.5px solid #2b2418;border-radius:8px;padding:8px 12px;font:700 16px inherit;background:#fff;width:100%}
+  #checkout .c2{display:flex;gap:8px}#checkout .c2>div{flex:1}
+  #checkout .crow{display:flex;gap:12px;margin-top:14px}
+  #checkout .crow>*{flex:1;border:2.5px solid #2b2418;border-radius:999px;padding:10px 0;font-weight:800;font-size:17px;cursor:pointer}
+  #checkout #coPay{background:#2b2418;color:#fbfaf3}
+  #checkout #coCancel{background:#fff;color:#2b2418}
+  #checkout .cnote{font-size:12px;color:#6a5a3a;margin-top:10px}
   .pk-plebs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
   .pk-pleb{border:2.5px solid #2b2418;border-radius:14px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:18px;color:#2b2418;background:#fbfaf3;user-select:none}
   .pk-pleb.on{background:#2b2418;color:#fbfaf3}
@@ -570,6 +638,30 @@
       <div id="martBody"></div>
       <div class="pm-back"><div class="mbtn small" id="martBack" style="width:220px">⬅ Back to Menu</div></div>
     </div>
+    <div id="checkout">
+      <div class="sheet">
+        <div class="cicon" id="coArt"></div>
+        <h3 id="coName">Item</h3>
+        <div class="cprice" id="coPrice">$0.00</div>
+        <div class="ctest">🧪 TEST MODE — no real payment</div>
+        <div class="pm-note" id="coDesc" style="margin:0 0 6px"></div>
+        <div class="cf">
+          <label>Card number</label>
+          <input id="coCard" inputmode="numeric" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242">
+          <div class="c2">
+            <div><label>Expiry</label><input id="coExp" placeholder="12/34" value="12/34"></div>
+            <div><label>CVC</label><input id="coCvc" inputmode="numeric" placeholder="123" value="123"></div>
+          </div>
+          <label>Name on card</label>
+          <input id="coName2" placeholder="PLEB KING" value="TEST PLEB">
+        </div>
+        <div class="crow">
+          <div id="coCancel">Cancel</div>
+          <div id="coPay">Pay $0.00</div>
+        </div>
+        <div class="cnote">Demo checkout — no card is charged. Real payments get switched on later.</div>
+      </div>
+    </div>
   </div>
 
   <!-- ============ PLEBPACK (equip your plebs) ============ -->
@@ -687,6 +779,8 @@ $('packHome').onclick=()=>{ SFX.ui(); show('menu'); };
 $('packBack').onclick=()=>show('menu');
 $('martBack').onclick=()=>show('menu');
 $('martHome').onclick=()=>{ SFX.ui(); show('menu'); };
+if($('coCancel'))$('coCancel').onclick=()=>closeCheckout();
+if($('coPay'))$('coPay').onclick=()=>payConfirm();
 $('howBack').onclick=()=>show('menu');
 $('worldsBack').onclick=()=>show('menu');
 $('playBtn').onclick=()=>{ initAudio(); show('worlds'); };
@@ -991,9 +1085,9 @@ const PLEB_CODES={
   'PLEB2026':{pleb:1000, key:true,   note:'Founder\u2019s Plekey!'}
 };
 const BOXES=[
-  {id:'wood', e:'📦', name:'Wooden Pleb Box', cost:150,  pleb:150,  keyChance:0.12, tag:'$2.99'},
-  {id:'iron', e:'🎁', name:'Iron Pleb Box',   cost:400,  pleb:500,  keyChance:0.28, tag:'$4.99'},
-  {id:'gold', e:'🏆', name:'Golden Pleb Box', cost:900,  pleb:1600, keyChance:0.6,  tag:'$9.99'}
+  {id:'wood', e:'📦', art:'boxwood', name:'Wooden Pleb Box', cost:150,  pleb:150,  keyChance:0.12, tag:'$2.99'},
+  {id:'iron', e:'🎁', art:'boxiron', name:'Iron Pleb Box',   cost:400,  pleb:500,  keyChance:0.28, tag:'$4.99'},
+  {id:'gold', e:'🏆', art:'boxgold', name:'Golden Pleb Box', cost:900,  pleb:1600, keyChance:0.6,  tag:'$9.99'}
 ];
 const BUNDLE={pleb:3000, papers:20, boxes:5, cost:1200, tag:'$14.99'};
 const MEGA=BUNDLE;                 // the big "3,000 Blep" pack in the sketch
@@ -1004,10 +1098,78 @@ const DAILY=[
   {key:'cube',  e:'🧊', name:'Cube Pleb', cost:2,  tag:'$0.99'}
 ];
 const CYBER={cost:30, tag:'$4.99', extra:'50% extra!', items:[
-  {e:'🔮', n:'Pledrong'}, {e:'🕷️', n:'Titaniplch'}, {e:'⚡', n:'50 Blep'}, {e:'🧬', n:'Glitch Mutation'}
+  {a:'orb', n:'Pledrong'}, {a:'spider', n:'Titaniplch'}, {a:'blep', n:'50 Blep'}, {a:'dna', n:'Glitch Mutation'}
 ]};
 const INDEX_SLOTS=20;
 let PLEDROP=loadJSON('plebania_pledrop',{});   // daily-pleb drops owned (from Nicholas's sketch)
+
+/* ---------- hand-drawn SVG art (no emojis) ---------- */
+const PLEKEY_SVG='<svg class="art" viewBox="0 0 132 112"><g fill="none" stroke="#2b2418" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">'+
+  '<circle cx="66" cy="34" r="17"/><path d="M50 40 L27 48"/><path d="M82 40 L105 48"/>'+
+  '<circle cx="20" cy="49" r="6.5"/><path d="M13.5 49 L3 49"/><path d="M7 49 L7 55"/><path d="M11 49 L11 55"/>'+
+  '<circle cx="112" cy="49" r="6.5"/><path d="M118.5 49 L129 49"/><path d="M125 49 L125 55"/><path d="M121 49 L121 55"/>'+
+  '<path d="M59 58 L55 82"/><path d="M73 58 L77 82"/><path d="M55 82 L48 85"/><path d="M77 82 L84 85"/>'+
+  '</g><circle cx="60" cy="31" r="2.6" fill="#2b2418"/><circle cx="72" cy="31" r="2.6" fill="#2b2418"/></svg>';
+const SHOP_ART={
+  plent:'<svg class="art" viewBox="0 0 64 64"><path d="M20 40 h24 v14 a3 3 0 0 1 -3 3 H23 a3 3 0 0 1 -3 -3 z"/><path d="M18 36 h28 l-3 6 H21 z"/><path d="M32 34 V20"/><path d="M32 24 C24 24 20 18 20 12 c8 0 12 5 12 12"/><path d="M32 26 C40 26 44 20 44 14 c-8 0 -12 5 -12 12"/></svg>',
+  cube:'<svg class="art" viewBox="0 0 64 64"><path d="M32 8 L56 20 L56 44 L32 56 L8 44 L8 20 Z"/><path d="M8 20 L32 32 L56 20"/><path d="M32 32 V56"/><circle cx="24" cy="40" r="2.2" fill="#2b2418"/><circle cx="40" cy="40" r="2.2" fill="#2b2418"/></svg>',
+  orb:'<svg class="art" viewBox="0 0 64 64"><circle cx="32" cy="28" r="16"/><path d="M32 44 v10"/><path d="M25 56 h14"/><path d="M22 23 a12 12 0 0 1 8 -8"/></svg>',
+  spider:'<svg class="art" viewBox="0 0 64 64"><circle cx="32" cy="34" r="11"/><path d="M32 23 v-6"/><path d="M24 15 l6 6"/><path d="M40 15 l-6 6"/><path d="M21 32 l-9 -6"/><path d="M21 38 h-9"/><path d="M23 43 l-8 7"/><path d="M43 32 l9 -6"/><path d="M43 38 h9"/><path d="M41 43 l8 7"/><circle cx="28" cy="32" r="1.8" fill="#2b2418"/><circle cx="36" cy="32" r="1.8" fill="#2b2418"/></svg>',
+  blep:'<svg class="art" viewBox="0 0 64 64"><path d="M34 6 L18 34 h12 l-4 24 L46 28 H33 z"/><circle cx="50" cy="14" r="5"/><path d="M55 14 h6"/></svg>',
+  dna:'<svg class="art" viewBox="0 0 64 64"><path d="M22 8 C42 22 22 42 42 56"/><path d="M42 8 C22 22 42 42 22 56"/><path d="M25 18 h14"/><path d="M23 30 h18"/><path d="M25 42 h14"/></svg>',
+  boxwood:'<svg class="art" viewBox="0 0 64 64"><path d="M10 24 h44 v25 a3 3 0 0 1 -3 3 H13 a3 3 0 0 1 -3 -3 z"/><path d="M8 16 h48 v10 H8 z"/><path d="M32 16 v36"/><path d="M26 16 c0 -6 3 -9 6 -9 c3 0 6 3 6 9"/></svg>',
+  boxiron:'<svg class="art" viewBox="0 0 64 64"><rect x="9" y="24" width="46" height="30" rx="3"/><path d="M9 24 h46"/><path d="M32 24 v30"/><path d="M32 24 c-6 -14 -22 -10 -14 0"/><path d="M32 24 c6 -14 22 -10 14 0"/></svg>',
+  boxgold:'<svg class="art" viewBox="0 0 64 64"><path d="M14 15 h36 v7 H14 z"/><path d="M18 22 h28 v8 a14 16 0 0 1 -28 0 z"/><path d="M28 50 h8 v8 h-8 z"/><path d="M20 58 h24"/></svg>',
+  mega:'<svg class="art" viewBox="0 0 64 64"><path d="M22 20 c-6 2 -10 8 -10 16 c0 12 9 20 20 20 s20 -8 20 -20 c0 -8 -4 -14 -10 -16"/><path d="M24 20 h16 l-2 -8 h-12 z"/><path d="M20 30 a12 10 0 0 0 24 0"/><circle cx="32" cy="44" r="3.4"/></svg>',
+  key:PLEKEY_SVG
+};
+function svg(k){ return SHOP_ART[k]||''; }
+
+/* ---------- real-money bundles (TEST checkout) ---------- */
+const BUNDLES=[
+  {key:'wood',  name:'Wooden Pleb Box', art:'boxwood', usd:2.99,  desc:'+150 Pleb \u26a1 \u00b7 12% Plekey', grant:()=>grantBox('wood')},
+  {key:'iron',  name:'Iron Pleb Box',   art:'boxiron', usd:4.99,  desc:'+500 Pleb \u26a1 \u00b7 28% Plekey', grant:()=>grantBox('iron')},
+  {key:'gold',  name:'Golden Pleb Box', art:'boxgold', usd:9.99,  desc:'+1,600 Pleb \u26a1 \u00b7 60% Plekey', grant:()=>grantBox('gold')},
+  {key:'mega',  name:'3,000 Blep Pack', art:'mega',    usd:14.99, desc:'3,000 Blep \u26a1 + 20 papers + 5 boxes', grant:()=>grantMega()},
+  {key:'combo', name:'Plekey Bundle',   art:'key',     usd:19.99, desc:'3,000 Blep + 20 papers + 5 boxes + a Plekey', grant:()=>grantCombo()}
+];
+let CO=null;                     // item currently in the checkout
+function grantBox(id){
+  const b=BOXES.find(x=>x.id===id); if(!b)return;
+  PLEB+=b.pleb; saveJSON('plebania_pleb',PLEB);
+  let key=false; if(Math.random()<b.keyChance) key=rollKey();
+  SFX.up(); for(let i=0;i<18;i++)burst(W/2,H/2,'#ffe08a');
+  showBanner(b.name+': +'+b.pleb+' Pleb'+(key?' + A PLEKEY!':''),'gold',1600); renderMart(); syncHud();
+}
+function grantMega(){
+  PLEB+=MEGA.pleb; PAPERS+=MEGA.papers; saveJSON('plebania_pleb',PLEB); saveJSON('plebania_papers',PAPERS);
+  for(let i=0;i<MEGA.boxes;i++){ if(Math.random()<0.3)rollKey(); }
+  SFX.up(); for(let i=0;i<20;i++)burst(W/2,H/2,'#ffe08a');
+  showBanner('\ud83d\udce6 Mega Pack: +'+MEGA.pleb+' Pleb \u26a1 + '+MEGA.papers+' Papers + '+MEGA.boxes+' Boxes','gold',1900); renderMart(); syncHud();
+}
+function grantCombo(){
+  PLEB+=COMBO.pleb; PAPERS+=COMBO.papers; saveJSON('plebania_pleb',PLEB); saveJSON('plebania_papers',PAPERS);
+  for(let i=0;i<COMBO.boxes;i++){ if(Math.random()<0.3)rollKey(); }
+  const lock=SKINS.filter(s=>!hasKey(s.id)); if(lock.length)rollKey();
+  SFX.up(); for(let i=0;i<20;i++)burst(W/2,H/2,'#ffe08a');
+  showBanner('\ud83d\udd11 Plekey Bundle: +'+COMBO.pleb+' Pleb \u26a1 + '+COMBO.papers+' papers + '+COMBO.boxes+' boxes + a Plekey!','gold',2000); renderMart(); syncHud();
+}
+function openCheckout(b){
+  CO=b; const co=$('checkout'); if(!co)return;
+  co.querySelector('#coArt').innerHTML=svg(b.art);
+  co.querySelector('#coName').textContent=b.name;
+  co.querySelector('#coDesc').textContent=b.desc||'';
+  co.querySelector('#coPrice').textContent='$'+b.usd.toFixed(2);
+  const pay=co.querySelector('#coPay'); if(pay)pay.textContent='Pay $'+b.usd.toFixed(2);
+  SFX.ui(); co.classList.add('on');
+}
+function closeCheckout(){ CO=null; const co=$('checkout'); if(co)co.classList.remove('on'); }
+function payConfirm(){
+  if(!CO)return; const b=CO; closeCheckout();
+  SFX.up(); for(let i=0;i<14;i++)burst(W/2,H/2,'#ffe08a');
+  showBanner('\u2705 TEST payment \u2014 no real charge \u2014 '+b.name,'gold',1700);
+  setTimeout(()=>{ try{ b.grant(); }catch(e){} }, 150);
+}
 const SKINS=[
   {id:'classic', e:'🧑‍🌾', name:'Classic Pleb', rarity:'Common',    col:'#f2cf62', cost:0},
   {id:'knight',  e:'🐴', name:'Turned Knight', rarity:'Rare',      col:'#d8b24a', cost:1200},
@@ -1111,44 +1273,27 @@ function renderMart(){
   const tabs=$('martTabs'); tabs.innerHTML='';
   TABS.forEach(([id,label])=>{ const t=document.createElement('div'); t.className='pm-tab'+(MARTTAB===id?' on':'');
     t.textContent=label; t.onclick=()=>{ MARTTAB=id; SFX.ui(); renderMart(); }; tabs.appendChild(t); });
-  const KEY='<svg class="pkey-svg" viewBox="0 0 132 112"><g fill="none" stroke="#2b2418" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">'+
-    '<circle cx="66" cy="34" r="17"/>'+
-    '<path d="M50 40 L27 48"/><path d="M82 40 L105 48"/>'+
-    '<circle cx="20" cy="49" r="6.5"/><path d="M13.5 49 L3 49"/><path d="M7 49 L7 55"/><path d="M11 49 L11 55"/>'+
-    '<circle cx="112" cy="49" r="6.5"/><path d="M118.5 49 L129 49"/><path d="M125 49 L125 55"/><path d="M121 49 L121 55"/>'+
-    '<path d="M59 58 L55 82"/><path d="M73 58 L77 82"/>'+
-    '<path d="M55 82 L48 85"/><path d="M77 82 L84 85"/>'+
-    '</g><circle cx="60" cy="31" r="2.6" fill="#2b2418"/><circle cx="72" cy="31" r="2.6" fill="#2b2418"/></svg>';
   const body=$('martBody');
-  const ex=document.createElement('div'); ex.id='martExtra';
 
-  // ---- MONEY BUNDLES tab: the fake-$$ money packs (gold only) ----
+  // ---- MONEY BUNDLES tab: the real-money packs (TEST checkout) ----
   if(MARTTAB==='money'){
     body.innerHTML=
-      '<div class="pm-sub" style="margin-top:0">Real-money style bundles \u2014 bought with \ud83d\udc51 shop gold (no real money!).</div>'+
-      '<div class="pm-r1">'+
-        '<div class="pbox" id="bx0"><div class="price">$2.99</div></div>'+
-        '<div class="pbox" id="bx1"><div class="price">$4.99</div></div>'+
-        '<div class="pbox" id="bx2"><div class="price">$9.99</div></div>'+
-      '</div>'+
-      '<div class="pm-r2">'+
-        '<div class="pbox tall" id="mega"><div class="price">$14.99</div></div>'+
-        '<div class="pcomb" id="combo">'+
-          '<div class="pcol"><div class="ppill">3,000 Blep</div>'+
-            '<div class="psqs"><div class="psq"><div class="q1">20</div><div class="q2"><span class="arr">\u2190</span>Adoption papers</div></div>'+
-            '<div class="psq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
-            '<div class="plabel">PLEDOPTION</div></div>'+
-          '<div class="pcol2"><div class="pt">Plekey</div>'+
-            '<div class="pbody">'+KEY+'<ul><li>- Custom sfx</li><li>- Unique style</li><li>- Different rarity</li></ul></div></div>'+
-          '<div class="price">$19.99</div>'+
-        '</div>'+
-      '</div>';
-    body.appendChild(ex);
-    body.querySelector('#bx0').onclick=()=>openBox('wood');
-    body.querySelector('#bx1').onclick=()=>openBox('iron');
-    body.querySelector('#bx2').onclick=()=>openBox('gold');
-    body.querySelector('#mega').onclick=buyMega;
-    body.querySelector('#combo').onclick=buyCombo;
+      '<div class="pm-sub" style="margin:0 0 8px">Tap a bundle \u2014 checkout works but takes <b>no real payment</b> yet (testing).</div>'+
+      '<div class="mrow">'+BUNDLES.slice(0,3).map(b=>
+        '<div class="mbx" data-buy="'+b.key+'"><div class="mtag">$'+b.usd.toFixed(2)+'</div>'+
+        '<div class="art">'+svg(b.art)+'</div>'+
+        '<div><div class="bt">'+b.name+'</div><div class="bd">'+b.desc+'</div></div>'+
+        '<div class="pbuy">Buy</div></div>').join('')+'</div>'+
+      '<div class="mcombo" data-buy="mega"><div class="mtag">$'+BUNDLES[3].usd.toFixed(2)+'</div>'+
+        '<div class="art">'+svg(BUNDLES[3].art)+'</div>'+
+        '<div><div class="bt">'+BUNDLES[3].name+'</div><div class="bd">'+BUNDLES[3].desc+'</div></div>'+
+        '<div class="pbuy">Buy</div></div>'+
+      '<div class="mcombo" data-buy="combo"><div class="mtag">$'+BUNDLES[4].usd.toFixed(2)+'</div>'+
+        '<div class="art">'+svg(BUNDLES[4].art)+'</div>'+
+        '<div><div class="bt">'+BUNDLES[4].name+'</div><div class="bd">'+BUNDLES[4].desc+'</div></div>'+
+        '<div class="pbuy">Buy</div></div>';
+    body.querySelectorAll('[data-buy]').forEach(el=>el.onclick=()=>{
+      const b=BUNDLES.find(x=>x.key===el.dataset.buy); if(b)openCheckout(b); });
     return;
   }
 
@@ -1158,7 +1303,7 @@ function renderMart(){
     for(let i=0;i<INDEX_SLOTS;i++){
       const owned = i< PLEKEYS.length;
       const sk = owned? SKINS.find(s=>s.id===PLEKEYS[i]) : null;
-      grid+='<div class="pi-slot'+(owned?' have':'')+'">'+(sk?sk.e:'')+'</div>';
+      grid+='<div class="pi-slot'+(owned?' have':'')+'">'+(sk?svg(sk.id==='classic'?'plent':'key'):'')+'</div>';
     }
     body.innerHTML=
       '<div class="pbanner">Index of everything</div>'+
@@ -1166,21 +1311,21 @@ function renderMart(){
         '<div class="pm-left">'+
           '<div class="pm-sub2">Daily Plebs</div>'+
           '<div class="pdaily">'+
-            DAILY.map(d=>'<div class="pcard" data-daily="'+d.key+'"><div class="pc-e">'+d.e+'</div><div class="pc-n">'+d.name+'</div>'+
-              '<div class="pc-p">👑 '+(d.cost*10)+'</div></div>').join('')+
+            DAILY.map(d=>'<div class="pcard" data-daily="'+d.key+'"><div class="pc-e">'+svg(d.key)+'</div><div class="pc-n">'+d.name+'</div>'+
+              '<div class="pc-p">\ud83d\udc51 '+(d.cost*10)+'</div></div>').join('')+
           '</div>'+
           '<div class="pcyber">'+
             '<div class="pcy-tag">'+CYBER.extra+'</div>'+
-            '<div class="pcy-h">🕹️ Cyber Pleb Deal</div>'+
+            '<div class="pcy-h">\ud83d\udce6 Cyber Pleb Deal</div>'+
             '<div class="pcy-grid">'+
-              CYBER.items.map(it=>'<div class="pcard small"><div class="pc-e">'+it.e+'</div><div class="pc-n">'+it.n+'</div></div>').join('')+
+              CYBER.items.map(it=>'<div class="pcard small"><div class="pc-e">'+svg(it.a)+'</div><div class="pc-n">'+it.n+'</div></div>').join('')+
             '</div>'+
-            '<div class="pcy-price"><span>👑 '+(CYBER.cost*10)+'</span><span class="pbuy" data-cyber="1">Get deal</span></div>'+
+            '<div class="pcy-price"><span>\ud83d\udc51 '+(CYBER.cost*10)+'</span><span class="pbuy" data-cyber="1">Get deal</span></div>'+
           '</div>'+
         '</div>'+
         '<div class="pm-right"><div class="pm-grid">'+grid+'</div></div>'+
       '</div>'+
-      '<div class="pm-sub" style="margin-top:14px">Spend \u26a1 Pleb in <b>Pleb boxes</b> to fill up your Index of everything. Daily Plebs &amp; the Cyber Pleb Deal are bought with \ud83d\udc51 shop gold.</div>';
+      '<div class="pm-sub" style="margin-top:8px">Spend \u26a1 Pleb in <b>Pleb boxes</b> to fill your Index. Daily Plebs &amp; the Cyber Deal are bought with \ud83d\udc51 shop gold.</div>';
     body.querySelectorAll('[data-daily]').forEach(el=>el.onclick=()=>buyDaily(el.dataset.daily));
     const cy=body.querySelector('[data-cyber]'); if(cy)cy.onclick=buyCyber;
     return;
@@ -1188,49 +1333,25 @@ function renderMart(){
 
   // ---- PLEB BOXES / CODES / GIFT / NEWS ----
   {
-    body.innerHTML=
-      '<div class="pm-r1">'+
-        '<div class="pbox" id="bx0"><div class="price">$2.99</div></div>'+
-        '<div class="pbox" id="bx1"><div class="price">$4.99</div></div>'+
-        '<div class="pbox" id="bx2"><div class="price">$9.99</div></div>'+
-      '</div>'+
-      '<div class="pm-r2">'+
-        '<div class="pbox tall" id="mega"><div class="price">$14.99</div></div>'+
-        '<div class="pcomb" id="combo">'+
-          '<div class="pcol"><div class="ppill">3,000 Blep</div>'+
-            '<div class="psqs"><div class="psq"><div class="q1">20</div><div class="q2"><span class="arr">\u2190</span>Adoption papers</div></div>'+
-            '<div class="psq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
-            '<div class="plabel">PLEDOPTION</div></div>'+
-          '<div class="pcol2"><div class="pt">Plekey</div>'+
-            '<div class="pbody">'+KEY+'<ul><li>- Custom sfx</li><li>- Unique style</li><li>- Different rarity</li></ul></div></div>'+
-          '<div class="price">$19.99</div>'+
-        '</div>'+
-      '</div>';
-    body.appendChild(ex);
-    body.querySelector('#bx0').onclick=()=>openBox('wood');
-    body.querySelector('#bx1').onclick=()=>openBox('iron');
-    body.querySelector('#bx2').onclick=()=>openBox('gold');
-    body.querySelector('#mega').onclick=buyMega;
-    body.querySelector('#combo').onclick=buyCombo;
     if(MARTTAB==='codes'){
-      ex.innerHTML='<div class="pm-code"><input id="codeInput" maxlength="24" placeholder="ENTER CODE\u2026"><div class="pm-btndisplay" id="codeGo">Redeem</div></div>'+
+      body.innerHTML='<div class="pm-code"><input id="codeInput" maxlength="24" placeholder="ENTER CODE\u2026"><div class="pm-btndisplay" id="codeGo">Redeem</div></div>'+
         '<div class="pm-note">Codes to try: WELCOME \u00b7 UPRISING \u00b7 PLEB2026</div>';
       body.querySelector('#codeGo').onclick=redeemCode;
       body.querySelector('#codeInput').addEventListener('keydown',e=>{ if(e.key==='Enter')redeemCode(); });
     }else if(MARTTAB==='gift'){
       const ready=!(GIFT&&Date.now()-GIFT<86400000);
-      ex.innerHTML='<div class="pm-note" style="margin-top:18px">Daily gift: +250 gold \ud83d\udc51 and +250 Pleb \u26a1</div>'+
+      body.innerHTML='<div class="pm-note">Daily gift: +250 gold \ud83d\udc51 and +250 Pleb \u26a1</div>'+
         '<div style="text-align:center"><div class="pm-btndisplay'+(ready?'':' cant')+'" id="giftGo">'+(ready?'Claim gift':'Come back tomorrow')+'</div></div>';
       if(ready)body.querySelector('#giftGo').onclick=claimGift;
     }else if(MARTTAB==='news'){
-      ex.innerHTML='<ul class="pm-news" style="margin-top:18px"><li>\u270a THE UPRISING \u2014 slain nobles defect to your mob!</li>'+
+      body.innerHTML='<ul class="pm-news"><li>\u270a THE UPRISING \u2014 slain nobles defect to your mob!</li>'+
         '<li>\ud83d\udde1\ufe0f Control your own hero \u2014 drag to run, he auto-attacks.</li>'+
         '<li>\ud83d\udd11 PLEB MART \u2014 Pledoption center, Money bundles, Pleb boxes, Codes, Gift &amp; News.</li>'+
         '<li>\u2728 Coming soon \u2014 more Plekeys, hero weapons, boss rush.</li></ul>';
     }else{ // boxes
-      ex.innerHTML='<div class="pm-sub" style="margin-top:14px">Spend \u26a1 Pleb on boxes \u2014 each can drop a \ud83d\udd11 Plekey for your hero.</div>'+
-        '<div class="pm-sk">'+BOXES.map(b=>'<div class="pm-skin"><div style="font-size:34px">'+b.e+'</div><div class="sn">'+b.name+'</div>'+
-          '<div class="sr">'+Math.round(b.keyChance*100)+'% Plekey</div>'+
+      body.innerHTML='<div class="pm-sub" style="margin-top:6px">Spend \u26a1 Pleb on boxes \u2014 each can drop a \ud83d\udd11 Plekey for your hero.</div>'+
+        '<div class="pm-sk">'+BOXES.map(b=>'<div class="pm-skin"><div style="height:52px;display:flex;align-items:center;justify-content:center">'+svg(b.art)+'</div><div class="sn">'+b.name+'</div>'+
+          '<div class="sr">'+Math.round(b.keyChance*100)+'% Plekey \u00b7 +'+b.pleb+' \u26a1</div>'+
           '<div class="pm-btndisplay'+(PLEB>=b.cost?'':' cant')+'" data-box="'+b.id+'">\u26a1 '+b.cost+'</div></div>').join('')+'</div>';
       body.querySelectorAll('[data-box]').forEach(el=>el.onclick=()=>openBox(el.dataset.box));
     }
