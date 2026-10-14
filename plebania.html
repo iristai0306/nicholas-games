@@ -229,22 +229,28 @@
   .mbuy.cant{filter:grayscale(.7) brightness(.7);cursor:default}
   #upshop .mclose{text-align:center;margin-top:16px}
 
-  #bar{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:6;
-    display:flex;gap:12px;padding:12px 14px;border-radius:16px;
+  #barwrap{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;z-index:6;
+    display:flex;flex-direction:column;gap:8px;align-items:center}
+  .barrow{display:flex;gap:10px;padding:9px 12px;border-radius:16px;
     border:2px solid #2c2008;background:linear-gradient(rgba(46,32,12,.95),rgba(24,16,6,.95));
-    box-shadow:0 8px 24px rgba(0,0,0,.6)}
-  .card{position:relative;width:104px;border-radius:12px;border:2px solid #3a2a10;cursor:pointer;
-    background:linear-gradient(rgba(70,52,22,.8),rgba(36,25,10,.85));padding:8px 6px 10px;text-align:center;
+    box-shadow:0 8px 24px rgba(0,0,0,.6);position:relative;align-items:flex-start}
+  .barrow[data-kind="buildings"]{border-color:#243a52;background:linear-gradient(rgba(16,30,48,.95),rgba(8,16,28,.95))}
+  .barrow .btag{position:absolute;left:10px;top:-11px;font:800 11px Georgia,serif;letter-spacing:2px;
+    padding:2px 9px;border-radius:8px;background:#2c2008;color:#f2cf62;border:2px solid #2c2008}
+  .barrow[data-kind="buildings"] .btag{background:#16283c;color:#9fd0ff}
+  .card{position:relative;width:96px;border-radius:12px;border:2px solid #3a2a10;cursor:pointer;
+    background:linear-gradient(rgba(70,52,22,.8),rgba(36,25,10,.85));padding:7px 6px 9px;text-align:center;
     box-shadow:0 3px 0 rgba(0,0,0,.4);transition:transform .06s}
+  .barrow[data-kind="buildings"] .card{background:linear-gradient(rgba(30,44,64,.8),rgba(14,24,38,.85));border-color:#31506e}
   .card:hover{transform:translateY(-3px)}
   .card.sel{border-color:#f2d375;box-shadow:0 0 0 2px #f2d375,0 0 18px rgba(242,211,117,.5)}
   .card.poor{filter:grayscale(.6) brightness(.62)}
   .card.locked{opacity:.7}
   .card.locked .ce{filter:grayscale(.3)}
-  .card .ce{font-size:27px;line-height:1}
-  .card .cn{font:700 13px Georgia,serif;color:#f5e8bf;margin-top:4px}
-  .card .cc{font:700 14px Georgia,serif;color:#f2cf62;margin-top:3px}
-  .card .cd{font:11px Georgia,serif;color:#c3ae7c;margin-top:3px;min-height:26px;line-height:1.15}
+  .card .ce{font-size:25px;line-height:1}
+  .card .cn{font:700 12px Georgia,serif;color:#f5e8bf;margin-top:4px}
+  .card .cc{font:700 13px Georgia,serif;color:#f2cf62;margin-top:3px}
+  .card .cd{font:10.5px Georgia,serif;color:#c3ae7c;margin-top:3px;min-height:30px;line-height:1.12}
 
   #banner{position:absolute;left:50%;top:92px;transform:translate(-50%,-8px);z-index:7;opacity:0;
     padding:10px 24px;border-radius:12px;border:2px solid #2c2008;
@@ -484,7 +490,10 @@
     <div id="banner"></div>
     <div id="tip"></div>
 
-    <div id="bar"></div>
+    <div id="barwrap">
+      <div class="barrow" id="bar" data-kind="units"><span class="btag">UNITS</span></div>
+      <div class="barrow" id="bar2" data-kind="buildings"><span class="btag">BUILDINGS</span></div>
+    </div>
 
     <div id="selPanel">
       <div class="sp-title"><span class="e" id="spE">🧑‍🌾</span><span id="spName">Farmhand</span></div>
@@ -534,6 +543,7 @@
       <div class="mbtn small" id="tutSkip" style="width:150px;opacity:.8">Skip</div>
       <div class="mbtn small" id="tutNext" style="width:180px">Next ▶</div>
     </div>
+    <div id="tutAuto" style="margin-top:12px;cursor:pointer;font:14px Georgia,serif;color:#d8c48c;opacity:.9">Auto-skip: ON</div>
   </div></div>
 
   <!-- ============ OVERLAYS ============ -->
@@ -619,17 +629,26 @@ const TUT=[
   {t:'Welcome to Plebania 🧑‍🌾',p:'You are the villagers — the plebs. The noble army is marching in to crush your village. You get TWO things: a HERO you control, and villagers you place.'},
   {t:'Your HERO is you 🗡️',p:'A pleb champion with a crown and sword stands on the field. DRAG anywhere on the map to run him around — he auto-attacks any noble he touches, and levels up as he fights. He\u2019ll get knocked down if he\u2019s swamped (back up in 5s).'},
   {t:'Place your villagers',p:'Tap a villager in the bar at the bottom, then tap a grass tile to place them. Tap the SAME tile again to confirm. They defend the line while you fight with your hero. Tap a placed villager to upgrade or sell.'},
+  {t:'Walls & traps 🧱',p:'There is a SECOND bar for BUILDINGS. Wall 🧱 and Barricade 🚧 block the path — nobles have to smash through them. Spikes 📌 and Pike Pit 🕳️ hurt anything that walks over them. Great for funnelling the army. (You can only place 3 of each villager.)'},
   {t:'You are the UPRISING ✊',p:'Here\u2019s the special bit: every noble you slay rips off its armour and DEFECTS to your side! They gather around your hero as a growing mob and fight for you. The more you kill, the bigger your uprising. Rally raises fresh defectors instantly.'},
   {t:'Rally the plebs ✊',p:'Things getting hairy? Hit RALLY — the mob swells, and every pleb attacks twice as fast with +25% damage for 6 seconds. Use the ⏩ button to speed up when you can handle it.'},
   {t:'Start with only 3',p:'You unlock new villagers as you survive: Poacher & Farm now, Militia at wave 3, Alchemist at wave 5, Catapult at wave 7. Earn gold 👑 by slaying nobles. Good luck, pleb!'}
 ];
 let tutI=0;
-function startTutorial(){ tutI=0; renderTut(); $('tut').classList.add('on'); pauseGame(true); }
+const TUTSEEN_KEY='plebania_tutseen';
+let AUTOSKIP=loadJSON('plebania_autoskip', true);   // default ON
+function startTutorial(){
+  if(AUTOSKIP && loadJSON(TUTSEEN_KEY,false)){ endTutorial(); return; }
+  tutI=0; renderTut(); $('tut').classList.add('on'); pauseGame(true);
+  const a=$('tutAuto'); if(a)a.textContent='Auto-skip: '+(AUTOSKIP?'ON':'OFF');
+}
 function renderTut(){ const s=TUT[tutI]; $('tutStep').textContent=(tutI+1)+' / '+TUT.length; $('tutT').textContent=s.t; $('tutP').textContent=s.p;
   $('tutNext').textContent = tutI>=TUT.length-1?'Let\'s go ⚔️':'Next ▶'; }
 $('tutNext').onclick=()=>{ if(tutI<TUT.length-1){ tutI++; renderTut(); } else endTutorial(); };
 $('tutSkip').onclick=()=>endTutorial();
-function endTutorial(){ $('tut').classList.remove('on'); pauseGame(false); initAudio(); }
+$('tutAuto').onclick=()=>{ AUTOSKIP=!AUTOSKIP; saveJSON('plebania_autoskip',AUTOSKIP);
+  $('tutAuto').textContent='Auto-skip: '+(AUTOSKIP?'ON':'OFF'); tip('Tutorial auto-skip '+(AUTOSKIP?'ON — won\u2019t show again':'OFF — will show next time'),1600); };
+function endTutorial(){ saveJSON(TUTSEEN_KEY,true); $('tut').classList.remove('on'); pauseGame(false); initAudio(); }
 function pauseGame(on){ if(S)S.paused=on; }
 
 /* ---------------- audio ---------------- */
@@ -674,6 +693,16 @@ const TOWERS={
 };
 const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm'];
 const MAXPER=3;                       // you may only place 3 of each unit type
+
+/* ---------------- BUILDINGS (the second bar) ---------------- */
+const BUILDINGS={
+  wall     : {id:'wall',     name:'Wall',      emoji:'🧱', cost:35, kind:'wall',   hp:260, dps:0,  color:'#a8916a', desc:'Blocks the path — nobles must smash it.'},
+  spikes   : {id:'spikes',   name:'Spikes',    emoji:'📌', cost:45, kind:'spikes', hp:0,   dps:16, color:'#c9d2dc', desc:'Hurts every noble walking over it.'},
+  barricade: {id:'barricade',name:'Barricade', emoji:'🚧', cost:55, kind:'wall',   hp:340, dps:0,  color:'#c08a4d', desc:'Tougher roadblock — buys you time.'},
+  trap     : {id:'trap',     name:'Pike Pit',  emoji:'🕳️', cost:70, kind:'spikes', hp:0,   dps:27, color:'#a0a0b0', desc:'Heavy damage to whoever steps on it.'}
+};
+const BORDER=['wall','spikes','barricade','trap'];
+function wallMaxHp(b){ return Math.round(BUILDINGS[b.k].hp*(1+((b.level||1)-1)*0.5)); }
 
 const ENEMIES={
   // --- World 1: the noble army (hand-drawn soldiers) ---
@@ -744,8 +773,8 @@ function newGame(world){
   S={
     world:w, gold:140, lives:20, wave:0, running:false, between:true, over:false, paused:false,
     reached:1, rally:0, speed:1,
-    towers:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
-    shake:0, hurt:0, slain:0, sel:null, build:'farmhand',
+    towers:[], buildings:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
+    shake:0, hurt:0, slain:0, sel:null, selB:null, build:'farmhand',
     waveTimer:0, farmAcc:0, mob:[], turned:0, mart:{}
   };
   hover=null; locked=null; buildPath(w);
@@ -754,7 +783,7 @@ function newGame(world){
     atkT:0, sword:0, walk:0, level:1, kills:0, down:false, downT:0 };
   hideOv(); hideSel();
   showBanner(WORLDS[w].emoji+' '+WORLDS[w].name+' — defend it!','gold',1700);
-  syncHud(); buildBar();
+  syncHud(); buildBar(); buildBar2();
   tip('🗡️ DRAG anywhere to run your hero · tap the grass to place villagers',3400);}
 buildPath(0);
 function syncHud(){
@@ -784,7 +813,7 @@ const UNLOCK={ farmhand:1, poacher:1, farm:1, militia:3, alchemist:5, catapult:7
 function unlockedUnit(k){ return S.reached>=UNLOCK[k]; }
 function countOf(k){ return S?S.towers.filter(o=>o.k===k).length:0; }
 function buildBar(){
-  const bar=$('bar'); bar.innerHTML='';
+  const bar=$('bar'); bar.innerHTML='<span class="btag">UNITS</span>';
   ORDER.forEach(k=>{
     const d=TOWERS[k]; const lock=!unlockedUnit(k); const have=countOf(k); const full=have>=MAXPER;
     const card=document.createElement('div');
@@ -804,6 +833,18 @@ function buildBar(){
       card.onclick=()=>{ if(S.over)return; S.build=k; locked=null; hideSel(); buildBar(); SFX.ui();
         tip('Selected '+d.name+' — tap a grass tile to place',1500); };
     }
+    bar.appendChild(card);
+  });
+}
+function buildBar2(){
+  const bar=$('bar2'); if(!bar)return; bar.innerHTML='<span class="btag">BUILDINGS</span>';
+  BORDER.forEach(id=>{ const d=BUILDINGS[id]; const sel=S.build==='b:'+id; const poor=S.gold<d.cost;
+    const card=document.createElement('div');
+    card.className='card'+(sel?' sel':'')+(poor?' poor':'');
+    card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
+      '<div class="cc">👑 '+d.cost+'</div><div class="cd">'+d.desc+'</div>';
+    card.onclick=()=>{ if(S.over)return; S.build='b:'+id; locked=null; hideSel(); buildBar(); SFX.ui();
+      tip('Selected '+d.name+' — tap a tile to place',1500); };
     bar.appendChild(card);
   });
 }
@@ -1038,7 +1079,13 @@ cv.addEventListener('pointermove',e=>{
   if(S.over||S.paused)return;
   if(!S.build){hover=null;return;}
   const t=tileAt(p.x,p.y);
-  if(!t||pathKeys.has(t.c+','+t.r)||S.towers.some(o=>o.c===t.c&&o.r===t.r)){hover=null;return;}
+  if(!t){hover=null;return;}
+  const isB=S.build.indexOf('b:')===0;
+  if(isB){
+    if(S.towers.some(o=>o.c===t.c&&o.r===t.r)){hover=null;return;}
+  }else{
+    if(pathKeys.has(t.c+','+t.r)||S.towers.some(o=>o.c===t.c&&o.r===t.r)||S.buildings.some(b=>b.c===t.c&&b.r===t.r)){hover=null;return;}
+  }
   hover={c:t.c,r:t.r};
 });
 cv.addEventListener('pointerleave',()=>{hover=null;});
@@ -1059,16 +1106,22 @@ cv.addEventListener('pointerup',e=>{
 function handleTap(p){
   // 1) tapping an existing villager selects/upgrades it
   const hit=S.towers.find(o=>Math.hypot(p.x-cx(o.c),p.y-cy(o.r))<TILE*0.62);
-  if(hit){ S.sel=hit; locked=null; showSel(hit); return; }
+  if(hit){ S.sel=hit; S.selB=null; locked=null; showSel(hit); return; }
+  // 1b) tapping a building selects it
+  const bh=S.buildings.find(o=>Math.hypot(p.x-cx(o.c),p.y-cy(o.r))<TILE*0.62);
+  if(bh){ S.selB=bh; S.sel=null; locked=null; showSel(bh); return; }
   hideSel();
-  // 2) build on a grass tile
+  // 2) build
   const t=tileAt(p.x,p.y);
-  if(!t||pathKeys.has(t.c+','+t.r)){ return; }
-  if(S.towers.some(o=>o.c===t.c&&o.r===t.r)){ return; }
+  if(!t){ return; }
   if(!S.build){return;}
+  // buildings may go anywhere (incl. on the path); units only on free grass
+  if(S.build.indexOf('b:')===0){ placeBuilding(p, S.build.slice(2)); return; }
+  if(pathKeys.has(t.c+','+t.r)){ return; }
+  if(S.towers.some(o=>o.c===t.c&&o.r===t.r)){ return; }
+  if(S.buildings.some(b=>b.c===t.c&&b.r===t.r)){ return; }
   if(!unlockedUnit(S.build)){ tip('That villager is locked 🔒',1400); return; }
   if(countOf(S.build)>=MAXPER){ tip('🚫 Max '+MAXPER+' '+TOWERS[S.build].name+'s — upgrade or sell one first',1700); return; }
-  // two-tap: first tap locks a preview on this tile; second tap on the SAME tile places
   if(!locked||locked.c!==t.c||locked.r!==t.r){ locked={c:t.c,r:t.r}; tip('Tap the same tile again to place ⚒️',1600); return; }
   const d=TOWERS[S.build];
   if(S.gold<d.cost){ tip('Need more gold! ('+d.cost+' 👑)',1400); return; }
@@ -1079,6 +1132,35 @@ function handleTap(p){
   for(let i=0;i<10;i++) burst(px,py,'#d9b45a');
   locked=null; syncHud(); buildBar();
 }
+/* ---------------- BUILDINGS: placement + combat helpers ---------------- */
+function placeBuilding(p,id){
+  const d=BUILDINGS[id]; if(!d)return;
+  const t=tileAt(p.x,p.y); if(!t)return;
+  if(S.towers.some(o=>o.c===t.c&&o.r===t.r)){ tip('Something is already here',1400); return; }
+  if(S.buildings.some(b=>b.c===t.c&&b.r===t.r)){ tip('A building is already here',1400); return; }
+  if(!locked||locked.c!==t.c||locked.r!==t.r){ locked={c:t.c,r:t.r}; tip('Tap the same tile again to place '+d.name+' ⚒️',1600); return; }
+  if(S.gold<d.cost){ tip('Need more gold! ('+d.cost+' 👑)',1400); return; }
+  S.gold-=d.cost;
+  S.buildings.push({c:t.c,r:t.r,k:id,level:1,spent:d.cost,hp:d.hp||1,flash:0});
+  SFX.place(); const px=cx(t.c),py=cy(t.r);
+  for(let i=0;i<10;i++) burst(px,py,'#cfe0f0');
+  locked=null; syncHud(); buildBar2();
+}
+function buildingAtTile(c,r){ return S.buildings.find(b=>b.c===c&&b.r===r)||null; }
+function damageBuilding(b,dmg){
+  if(!b)return;
+  b.hp-=dmg; b.flash=0.15;
+  if(b.hp<=0){ b.hp=0;
+    for(let i=0;i<16;i++)burst(cx(b.c),cy(b.r),'#c9b58a');
+    S.buildings=S.buildings.filter(x=>x!==b);
+    if(S.selB===b)hideSel();
+    if(S.build==='b:'+b.k)S.build=null;
+    showBanner('🧱 A wall was smashed!','red',1200); SFX.hit();
+  }
+}
+function hitEnemiesAt(x,y,r,dmg){
+  for(const e of S.enemies.slice()){ if(e.hp>0&&Math.hypot(e.x-x,e.y-y)<=r+e.sz*0.4){ damage(e,dmg,null); if(Math.random()<0.3)burst(e.x,e.y,'#fff2c0'); } }
+}
 function evt(e){
   const r=cv.getBoundingClientRect();
   return { x:(e.clientX-r.left)*(W/r.width), y:(e.clientY-r.top)*(H/r.height) };
@@ -1086,7 +1168,34 @@ function evt(e){
 
 /* ---------------- select panel ---------------- */
 function showSel(o){
-  const d=TOWERS[o.k]; const p=$('selPanel');
+  const p=$('selPanel');
+  if(BUILDINGS[o.k]){
+    const d=BUILDINGS[o.k];
+    $('spE').textContent=d.emoji; $('spName').textContent=d.name+'  ·  Lv '+o.level;
+    if(d.kind==='wall'){
+      $('spStats').innerHTML='🧱 HP: <b>'+Math.max(0,Math.round(o.hp))+' / '+wallMaxHp(o)+'</b>'+
+        '<br>🚧 Blocks the path — nobles smash it down.<br>👑 Spent: <b>'+o.spent+'</b>';
+    }else{
+      $('spStats').innerHTML='🩸 Damage: <b>'+Math.round(d.dps*(1+(o.level-1)*0.4))+'</b>/sec to anything on it'+
+        '<br>📌 Trap tile — enemies get hurt walking over.<br>👑 Spent: <b>'+o.spent+'</b>';
+    }
+    const upCost=Math.round(d.cost*0.8*o.level);
+    $('spUp').textContent=o.level>=5?'MAX LEVEL':'Upgrade 👑'+upCost;
+    $('spUp').disabled=o.level>=5||S.gold<upCost;
+    $('spUp').onclick=()=>{ if(o.level>=5)return; if(S.gold<upCost){tip('Need more gold!',1200);return;}
+      S.gold-=upCost; o.level++; o.spent+=upCost; if(d.kind==='wall')o.hp+=Math.round(d.hp*0.5); SFX.up();
+      for(let i=0;i<12;i++)burst(cx(o.c),cy(o.r),'#cfe0f0'); showSel(o); syncHud(); buildBar2();
+    };
+    $('spSell').onclick=()=>{ const val=Math.round(o.spent*0.6); S.gold+=val;
+      S.buildings=S.buildings.filter(x=>x!==o); hideSel(); syncHud(); buildBar2();
+      showBanner('Removed building · +👑'+val,'',1000); };
+    const bx=cx(o.c)-125, by=cy(o.r)-40;
+    p.style.left=Math.max(8,Math.min(W-260,bx))+'px';
+    p.style.top=Math.max(80,Math.min(H-230,by))+'px';
+    p.classList.add('on');
+    return;
+  }
+  const d=TOWERS[o.k];
   $('spE').textContent=d.emoji; $('spName').textContent=d.name+'  ·  Lv '+o.level;
   if(o.k==='farm'){
     $('spStats').innerHTML='💵 Income: <b>+'+Math.round(d.income*(1+(o.level-1)*0.6))+' gold</b> / 2.6s'+
@@ -1113,7 +1222,7 @@ function showSel(o){
   p.style.top=Math.max(80,Math.min(H-230,py))+'px';
   p.classList.add('on');
 }
-function hideSel(){ $('selPanel').classList.remove('on'); if(S)S.sel=null; }
+function hideSel(){ $('selPanel').classList.remove('on'); if(S){S.sel=null; S.selB=null;} }
 function effDmg(o){
   const d=TOWERS[o.k];
   let m=1+(o.level-1)*0.35;
@@ -1172,8 +1281,24 @@ function enemyUpdate(dt){
     if(!tgt){ leak(e); continue; }
     const dx=tgt.x-e.x, dy=tgt.y-e.y, dist=Math.hypot(dx,dy);
     if(dist<2){ e.wp++; if(e.wp>=PATH.length-1){leak(e);} continue; }
+    // WALL: a standing wall on the next tile blocks the march — but only once the noble is close enough to hit it
+    const nt=tileAt(tgt.x,tgt.y); const nb=nt?buildingAtTile(nt.c,nt.r):null;
+    if(nb&&BUILDINGS[nb.k].kind==='wall'&&Math.hypot(cx(nb.c)-e.x,cy(nb.r)-e.y)<TILE*0.66){
+      e.attackT=(e.attackT||0)-dt;
+      if(e.attackT<=0){ e.attackT=0.7; damageBuilding(nb, e.rank==='king'?60:e.rank==='boss'?40:e.rank==='champ'?22:12);
+        for(let i=0;i<3;i++)burst(cx(nb.c)+ (Math.random()-.5)*20, cy(nb.r)+(Math.random()-.5)*20, '#c9b58a'); }
+      if(e.hitT>0)e.hitT-=dt;
+      continue;
+    }
     e.x+=dx/dist*spd*dt; e.y+=dy/dist*spd*dt;
     e.facing = tgt.x>=e.x ? 1 : 1; // always march right-ish
+    // SPIKES / traps: hurt anything walking over them
+    const st=tileAt(e.x,e.y); const sb=st?buildingAtTile(st.c,st.r):null;
+    if(sb&&BUILDINGS[sb.k].kind==='spikes'){
+      e.hp-= BUILDINGS[sb.k].dps*(1+((sb.level||1)-1)*0.4)*dt;
+      if(Math.random()<0.3)burst(e.x,e.y+6,'#c9d2dc');
+      if(e.hp<=0){ kill(e,true); continue; }
+    }
     if(e.hitT>0)e.hitT-=dt;
     if(e.hp<=0) kill(e,false);
   }
@@ -1358,16 +1483,24 @@ function render(dt){
 
   // placement preview: locked (survives touch) takes priority, else mouse hover
   const ghost=locked||hover;
-  if(S.build&&ghost&&unlockedUnit(S.build)){
-    const gx=cx(ghost.c),gy=cy(ghost.r); const d=TOWERS[S.build];
-    const ok=S.gold>=d.cost;
-    drawRange(gx,gy,d.range, ok?'rgba(242,211,117,.18)':'rgba(200,60,40,.18)', ok?'#f2d375':'#e05a3a');
-    ctx.globalAlpha=locked?0.85:0.55;
-    drawPleb(gx,gy,S.build,d,0, ok?1:0.6);
-    ctx.globalAlpha=1;
-    if(locked){ // confirmed tile marker
-      ctx.strokeStyle=ok?'#f2d375':'#e05a3a'; ctx.lineWidth=3;
-      ctx.strokeRect(GX+ghost.c*TILE+3,GY+ghost.r*TILE+3,TILE-6,TILE-6);
+  if(S.build&&ghost){
+    const gx=cx(ghost.c),gy=cy(ghost.r);
+    if(S.build.indexOf('b:')===0){
+      const bid=S.build.slice(2), bd=BUILDINGS[bid]; const ok=S.gold>=bd.cost;
+      if(bd.kind==='spikes') drawRange(gx,gy,TILE*0.5, ok?'rgba(180,200,220,.18)':'rgba(200,60,40,.18)', ok?'#9fd0ff':'#e05a3a');
+      ctx.globalAlpha=locked?0.85:0.55;
+      drawBuilding({c:ghost.c,r:ghost.r,k:bid,level:1,hp:bd.hp});
+      ctx.globalAlpha=1;
+      if(locked){ ctx.strokeStyle=ok?'#9fd0ff':'#e05a3a'; ctx.lineWidth=3; strokeTile(ghost.c,ghost.r); }
+    }else if(unlockedUnit(S.build)){
+      const d=TOWERS[S.build];
+      const ok=S.gold>=d.cost;
+      drawRange(gx,gy,d.range, ok?'rgba(242,211,117,.18)':'rgba(200,60,40,.18)', ok?'#f2d375':'#e05a3a');
+      ctx.globalAlpha=locked?0.85:0.55;
+      drawPleb(gx,gy,S.build,d,0, ok?1:0.6);
+      ctx.globalAlpha=1;
+      if(locked){ ctx.strokeStyle=ok?'#f2d375':'#e05a3a'; ctx.lineWidth=3;
+        ctx.strokeRect(GX+ghost.c*TILE+3,GY+ghost.r*TILE+3,TILE-6,TILE-6); }
     }
   }
   // selected range
@@ -1375,6 +1508,9 @@ function render(dt){
     const d=TOWERS[S.sel.k];
     drawRange(cx(S.sel.c),cy(S.sel.r),d.range*(1+(S.sel.level-1)*0.12),'rgba(120,200,255,.16)','#7ec7ff');
   }
+
+  // buildings (walls & traps)
+  for(const b of S.buildings) drawBuilding(b);
 
   // towers
   const order=S.towers.slice().sort((a,b)=>a.r-b.r);
@@ -1637,6 +1773,39 @@ function drawTower(o){
 }
 function strokeTile(c,r){ ctx.strokeRect(GX+c*TILE+3,GY+r*TILE+3,TILE-6,TILE-6); }
 
+/* ---------- buildings: walls & traps ---------- */
+function drawBuilding(b){
+  const x=cx(b.c),y=cy(b.r); const d=BUILDINGS[b.k]; if(!d)return;
+  ctx.save(); ctx.translate(x,y);
+  if(b.flash>0){ ctx.shadowColor='#fff2c0'; ctx.shadowBlur=14; }
+  if(d.kind==='wall'){
+    const pct=Math.max(0,Math.min(1,b.hp/wallMaxHp(b)));
+    const rows=Math.min(4,Math.max(1,Math.ceil(pct*4)));
+    ctx.strokeStyle='#2b2418'; ctx.lineWidth=2;
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<4;c++){
+        const off=(r%2)?6:-3;
+        ctx.fillStyle=d.color; roundRect(-28+c*14+off,-6-r*9,13,8,2.5); ctx.fill(); ctx.stroke();
+      }
+    }
+    if(b.level>1){ for(let i=0;i<b.level;i++){ ctx.fillStyle='#ffd24a'; ctx.beginPath(); ctx.arc(-10+i*5-2,27,2.4,0,7); ctx.fill(); } }
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(-22,24,44,5);
+    ctx.fillStyle= pct>0.5?'#7bd45a':pct>0.25?'#f0c04a':'#e05a3a'; ctx.fillRect(-22,24,44*pct,5);
+  }else{
+    ctx.fillStyle='#3a3226'; roundRect(-25,2,50,10,3); ctx.fill();
+    ctx.strokeStyle='#2b2418'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle=d.color; ctx.strokeStyle='#20242a';
+    for(let i=0;i<4;i++){ const sx=-20+i*13;
+      ctx.beginPath(); ctx.moveTo(sx,-14); ctx.lineTo(sx+6,1); ctx.lineTo(sx+12,-14); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    if(b.level>1){ for(let i=0;i<b.level;i++){ ctx.fillStyle='#ffd24a'; ctx.beginPath(); ctx.arc(-10+i*5-2,24,2.4,0,7); ctx.fill(); } }
+  }
+  ctx.shadowBlur=0;
+  if(S.selB===b){ ctx.strokeStyle='#7ec7ff'; ctx.lineWidth=2; strokeTile(b.c,b.r); }
+  ctx.restore();
+}
+
 /* ---------- noble art ---------- */
 function drawEnemy(e){
   const x=e.x,y=e.y;
@@ -1815,6 +1984,7 @@ function loop(now){
       S.parts=S.parts.filter(q=>q.t<q.life);
       for(const t of S.dmg){ t.t+=dt; t.y+=t.vy*dt; t.vy*=0.92; }
       S.dmg=S.dmg.filter(t=>t.t<t.life);
+      for(const b of S.buildings) if(b.flash>0)b.flash-=dt;
       if(S.shake>0)S.shake=Math.max(0,S.shake-dt*40);
       if(S.hurt>0)S.hurt=Math.max(0,S.hurt-dt*1.6);
       if(S.rally>0){ S.rally-=dt; if(S.rally<=0){ S.rally=0; } }
@@ -1909,7 +2079,9 @@ document.addEventListener('keydown',e=>{ if(e.code==='Space'&&$('game').classLis
 })();
 
 /* debug hooks (verification) */
-window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked(){return unlocked;}, get PATH(){return PATH;} };
+window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked(){return unlocked;}, get PATH(){return PATH;},
+  spawnE:(t)=>spawn(t),
+  tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); mobUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
 
 // interval-driven loop: runs even when the game sits in an unfocused iframe
 setInterval(()=>loop(performance.now()),1000/60);
