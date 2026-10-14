@@ -211,6 +211,29 @@
   .pm-news{margin:0;padding-left:4px;list-style:none}
   .pm-news li{margin:9px 0;font-size:18px}
   .pm-back{text-align:center;margin-top:16px}
+  .pbanner{border:2.5px solid #2b2418;border-radius:999px;padding:8px 24px;font-weight:900;font-size:24px;text-align:center;
+    color:#2b2418;width:max-content;margin:0 auto 18px;letter-spacing:1px}
+  .pm-2col{display:grid;grid-template-columns:1.15fr 1fr;gap:20px}
+  .pm-sub2{font-weight:900;font-size:22px;color:#2b2418;margin:0 0 12px;text-align:center}
+  .pdaily{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pcard{border:2.5px solid #2b2418;border-radius:18px;padding:12px 8px;text-align:center;color:#2b2418;cursor:pointer;background:#fff}
+  .pcard:hover{background:rgba(138,90,43,.08)}
+  .pcard .pc-e{font-size:38px;line-height:1}
+  .pcard .pc-n{font-weight:700;font-size:18px;margin-top:6px}
+  .pcard .pc-p{font-weight:700;font-size:16px;margin-top:6px}
+  .pcard.small{cursor:default}
+  .pcyber{position:relative;border:2.5px solid #2b2418;border-radius:18px;padding:16px 14px;margin-top:24px}
+  .pcy-tag{position:absolute;right:-10px;top:-12px;background:#2b2418;color:#ffd24a;font-weight:800;font-size:14px;
+    padding:4px 12px;border-radius:999px;transform:rotate(6deg)}
+  .pcy-h{font-weight:900;font-size:20px;color:#2b2418;text-align:center;margin-bottom:12px}
+  .pcy-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .pcy-price{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-weight:900;font-size:22px;color:#2b2418}
+  .pbuy{border:2.5px solid #2b2418;border-radius:999px;padding:6px 18px;font-weight:800;font-size:16px;cursor:pointer;background:#fff}
+  .pbuy:hover{background:#2b2418;color:#fbfaf3}
+  .pm-right{display:flex;flex-direction:column}
+  .pm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-content:start}
+  .pi-slot{border:2.5px solid #2b2418;border-radius:12px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:30px}
+  .pi-slot.have{border-color:#c08a1e;background:rgba(192,138,30,.12)}
   .pk-plebs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
   .pk-pleb{border:2.5px solid #2b2418;border-radius:14px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:18px;color:#2b2418;background:#fbfaf3;user-select:none}
   .pk-pleb.on{background:#2b2418;color:#fbfaf3}
@@ -976,6 +999,15 @@ const BUNDLE={pleb:3000, papers:20, boxes:5, cost:1200, tag:'$14.99'};
 const MEGA=BUNDLE;                 // the big "3,000 Blep" pack in the sketch
 const PLEKEY_COST=1000;            // gold to adopt one random Plekey
 const COMBO={pleb:3000, papers:20, boxes:5, cost:1500, tag:'$19.99', name:'Plekey bundle'}; // papers+Blep+Plekey in ONE card
+const DAILY=[
+  {key:'plent', e:'🪴', name:'Plent',     cost:10, tag:'$1.99'},
+  {key:'cube',  e:'🧊', name:'Cube Pleb', cost:2,  tag:'$0.99'}
+];
+const CYBER={cost:30, tag:'$4.99', extra:'50% extra!', items:[
+  {e:'🔮', n:'Pledrong'}, {e:'🕷️', n:'Titaniplch'}, {e:'⚡', n:'50 Blep'}, {e:'🧬', n:'Glitch Mutation'}
+]};
+const INDEX_SLOTS=20;
+let PLEDROP=loadJSON('plebania_pledrop',{});   // daily-pleb drops owned (from Nicholas's sketch)
 const SKINS=[
   {id:'classic', e:'🧑‍🌾', name:'Classic Pleb', rarity:'Common',    col:'#f2cf62', cost:0},
   {id:'knight',  e:'🐴', name:'Turned Knight', rarity:'Rare',      col:'#d8b24a', cost:1200},
@@ -1027,6 +1059,24 @@ function buyCombo(){
   showBanner('\ud83d\udd11 Plekey bundle: +'+COMBO.pleb+' Pleb \u26a1 + '+COMBO.papers+' papers + '+COMBO.boxes+' boxes + a Plekey!','gold',2000);
   renderMart();
 }
+/* --- Pledoption Center: Daily Plebs + Cyber Pleb Deal (from Nicholas's sketch) --- */
+function buyDaily(key){
+  const d=DAILY.find(x=>x.key===key); if(!d)return;
+  const cost=d.cost*10;   // fake $ price -> shop gold (gold only, no real money)
+  if(PGOLD<cost){ tip('Need \ud83d\udc51'+cost+' shop gold for '+d.name,1600); return; }
+  PGOLD-=cost; saveJSON('plebania_pgold',PGOLD);
+  PLEDROP[key]=(PLEDROP[key]||0)+1; saveJSON('plebania_pledrop',PLEDROP);
+  SFX.up(); showBanner(d.e+' Adopted '+d.name+'!','gold',1500); renderMart();
+}
+function buyCyber(){
+  const cost=CYBER.cost*10;
+  if(PGOLD<cost){ tip('Need \ud83d\udc51'+cost+' shop gold for the Cyber Pleb Deal',1600); return; }
+  PGOLD-=cost; saveJSON('plebania_pgold',PGOLD);
+  PLEDROP.cyber=(PLEDROP.cyber||0)+1;
+  PLEB+=50; saveJSON('plebania_pleb',PLEB); saveJSON('plebania_pledrop',PLEDROP);
+  SFX.up(); for(let i=0;i<18;i++)burst(W/2,H/2,'#77e0ff');
+  showBanner('\ud83e\udd16 Cyber Pleb Deal! +50 Blep \u26a1 + a mutation','gold',1800); renderMart();
+}
 function buySkin(id){
   const s=SKINS.find(x=>x.id===id); if(!s)return;
   if(hasKey(id)){ EQUIPPED=(EQUIPPED===id)?'':id; saveJSON('plebania_key',EQUIPPED); SFX.ui(); renderMart();
@@ -1057,7 +1107,7 @@ function claimGift(){
 function renderMart(){
   $('martGold').textContent=Math.floor(PGOLD);
   $('martPleb').textContent=PLEB; $('martKeys').textContent=PLEKEYS.length;
-  const TABS=[['pledoption','Pledoption center'],['boxes','Pleb boxes'],['codes','Codes'],['gift','Gift'],['news','News']];
+  const TABS=[['pledoption','Pledoption center'],['money','Money bundles'],['boxes','Pleb boxes'],['codes','Codes'],['gift','Gift'],['news','News']];
   const tabs=$('martTabs'); tabs.innerHTML='';
   TABS.forEach(([id,label])=>{ const t=document.createElement('div'); t.className='pm-tab'+(MARTTAB===id?' on':'');
     t.textContent=label; t.onclick=()=>{ MARTTAB=id; SFX.ui(); renderMart(); }; tabs.appendChild(t); });
@@ -1070,56 +1120,120 @@ function renderMart(){
     '<path d="M55 82 L48 85"/><path d="M77 82 L84 85"/>'+
     '</g><circle cx="60" cy="31" r="2.6" fill="#2b2418"/><circle cx="72" cy="31" r="2.6" fill="#2b2418"/></svg>';
   const body=$('martBody');
-  body.innerHTML=
-    '<div class="pm-r1">'+
-      '<div class="pbox" id="bx0"><div class="price">$2.99</div></div>'+
-      '<div class="pbox" id="bx1"><div class="price">$4.99</div></div>'+
-      '<div class="pbox" id="bx2"><div class="price">$9.99</div></div>'+
-    '</div>'+
-    '<div class="pm-r2">'+
-      '<div class="pbox tall" id="mega"><div class="price">$14.99</div></div>'+
-      '<div class="pcomb" id="combo">'+
-        '<div class="pcol"><div class="ppill">3,000 Blep</div>'+
-          '<div class="psqs"><div class="psq"><div class="q1">20</div><div class="q2"><span class="arr">\u2190</span>Adoption papers</div></div>'+
-          '<div class="psq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
-          '<div class="plabel">PLEDOPTION</div></div>'+
-        '<div class="pcol2"><div class="pt">Plekey</div>'+
-          '<div class="pbody">'+KEY+'<ul><li>- Custom sfx</li><li>- Unique style</li><li>- Different rarity</li></ul></div></div>'+
-        '<div class="price">$19.99</div>'+
+  const ex=document.createElement('div'); ex.id='martExtra';
+
+  // ---- MONEY BUNDLES tab: the fake-$$ money packs (gold only) ----
+  if(MARTTAB==='money'){
+    body.innerHTML=
+      '<div class="pm-sub" style="margin-top:0">Real-money style bundles \u2014 bought with \ud83d\udc51 shop gold (no real money!).</div>'+
+      '<div class="pm-r1">'+
+        '<div class="pbox" id="bx0"><div class="price">$2.99</div></div>'+
+        '<div class="pbox" id="bx1"><div class="price">$4.99</div></div>'+
+        '<div class="pbox" id="bx2"><div class="price">$9.99</div></div>'+
       '</div>'+
-    '</div>'+
-    '<div id="martExtra"></div>';
-  body.querySelector('#bx0').onclick=()=>openBox('wood');
-  body.querySelector('#bx1').onclick=()=>openBox('iron');
-  body.querySelector('#bx2').onclick=()=>openBox('gold');
-  body.querySelector('#mega').onclick=buyMega;
-  body.querySelector('#combo').onclick=buyCombo;
-  const ex=body.querySelector('#martExtra');
-  if(MARTTAB==='codes'){
-    ex.innerHTML='<div class="pm-code"><input id="codeInput" maxlength="24" placeholder="ENTER CODE\u2026"><div class="pm-btndisplay" id="codeGo">Redeem</div></div>'+
-      '<div class="pm-note">Codes to try: WELCOME \u00b7 UPRISING \u00b7 PLEB2026</div>';
-    body.querySelector('#codeGo').onclick=redeemCode;
-    body.querySelector('#codeInput').addEventListener('keydown',e=>{ if(e.key==='Enter')redeemCode(); });
-  }else if(MARTTAB==='gift'){
-    const ready=!(GIFT&&Date.now()-GIFT<86400000);
-    ex.innerHTML='<div class="pm-note" style="margin-top:18px">Daily gift: +250 gold \ud83d\udc51 and +250 Pleb \u26a1</div>'+
-      '<div style="text-align:center"><div class="pm-btndisplay'+(ready?'':' cant')+'" id="giftGo">'+(ready?'Claim gift':'Come back tomorrow')+'</div></div>';
-    if(ready)body.querySelector('#giftGo').onclick=claimGift;
-  }else if(MARTTAB==='news'){
-    ex.innerHTML='<ul class="pm-news" style="margin-top:18px"><li>\u270a THE UPRISING \u2014 slain nobles defect to your mob!</li>'+
-      '<li>\ud83d\udde1\ufe0f Control your own hero \u2014 drag to run, he auto-attacks.</li>'+
-      '<li>\ud83d\udd11 PLEB MART \u2014 Pledoption center, Pleb boxes, Codes, Gift &amp; News.</li>'+
-      '<li>\u2728 Coming soon \u2014 more Plekeys, hero weapons, boss rush.</li></ul>';
-  }else if(MARTTAB==='pledoption'){
-    ex.innerHTML='<div class="pm-sub" style="margin-top:18px">Pledoption center \u2014 spend \u26a1 Pleb to adopt a Plekey (re-skins your hero).</div><div class="pm-sk" id="skinRow"></div>';
-    const row=ex.querySelector('#skinRow');
-    SKINS.forEach(s=>{ const owned=hasKey(s.id); const eq=EQUIPPED===s.id;
-      const el=document.createElement('div'); el.className='pm-skin'+(owned?' owned':'');
-      el.innerHTML='<div style="font-size:30px">'+s.e+'</div><div class="sn">'+s.name+'</div><div class="sr" style="color:'+RARCOL[s.rarity]+'">'+s.rarity+'</div>';
-      const btn=document.createElement('div'); btn.className='pm-btndisplay'+(owned||PLEB>=s.cost?'':' cant'); btn.style.marginTop='6px';
-      btn.textContent= eq?'\u2714 Equipped' : owned?'Equip' : ('\u26a1'+s.cost);
-      if(owned||PLEB>=s.cost)btn.onclick=()=>buySkin(s.id);
-      el.appendChild(btn); row.appendChild(el); });
+      '<div class="pm-r2">'+
+        '<div class="pbox tall" id="mega"><div class="price">$14.99</div></div>'+
+        '<div class="pcomb" id="combo">'+
+          '<div class="pcol"><div class="ppill">3,000 Blep</div>'+
+            '<div class="psqs"><div class="psq"><div class="q1">20</div><div class="q2"><span class="arr">\u2190</span>Adoption papers</div></div>'+
+            '<div class="psq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
+            '<div class="plabel">PLEDOPTION</div></div>'+
+          '<div class="pcol2"><div class="pt">Plekey</div>'+
+            '<div class="pbody">'+KEY+'<ul><li>- Custom sfx</li><li>- Unique style</li><li>- Different rarity</li></ul></div></div>'+
+          '<div class="price">$19.99</div>'+
+        '</div>'+
+      '</div>';
+    body.appendChild(ex);
+    body.querySelector('#bx0').onclick=()=>openBox('wood');
+    body.querySelector('#bx1').onclick=()=>openBox('iron');
+    body.querySelector('#bx2').onclick=()=>openBox('gold');
+    body.querySelector('#mega').onclick=buyMega;
+    body.querySelector('#combo').onclick=buyCombo;
+    return;
+  }
+
+  // ---- PLEDOPTION CENTER (1:1 with Nicholas's sketch: Daily Plebs + Cyber Pleb Deal | Index of everything) ----
+  if(MARTTAB==='pledoption'){
+    let grid='';
+    for(let i=0;i<INDEX_SLOTS;i++){
+      const owned = i< PLEKEYS.length;
+      const sk = owned? SKINS.find(s=>s.id===PLEKEYS[i]) : null;
+      grid+='<div class="pi-slot'+(owned?' have':'')+'">'+(sk?sk.e:'')+'</div>';
+    }
+    body.innerHTML=
+      '<div class="pbanner">Index of everything</div>'+
+      '<div class="pm-2col">'+
+        '<div class="pm-left">'+
+          '<div class="pm-sub2">Daily Plebs</div>'+
+          '<div class="pdaily">'+
+            DAILY.map(d=>'<div class="pcard" data-daily="'+d.key+'"><div class="pc-e">'+d.e+'</div><div class="pc-n">'+d.name+'</div>'+
+              '<div class="pc-p">👑 '+(d.cost*10)+'</div></div>').join('')+
+          '</div>'+
+          '<div class="pcyber">'+
+            '<div class="pcy-tag">'+CYBER.extra+'</div>'+
+            '<div class="pcy-h">🕹️ Cyber Pleb Deal</div>'+
+            '<div class="pcy-grid">'+
+              CYBER.items.map(it=>'<div class="pcard small"><div class="pc-e">'+it.e+'</div><div class="pc-n">'+it.n+'</div></div>').join('')+
+            '</div>'+
+            '<div class="pcy-price"><span>👑 '+(CYBER.cost*10)+'</span><span class="pbuy" data-cyber="1">Get deal</span></div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="pm-right"><div class="pm-grid">'+grid+'</div></div>'+
+      '</div>'+
+      '<div class="pm-sub" style="margin-top:14px">Spend \u26a1 Pleb in <b>Pleb boxes</b> to fill up your Index of everything. Daily Plebs &amp; the Cyber Pleb Deal are bought with \ud83d\udc51 shop gold.</div>';
+    body.querySelectorAll('[data-daily]').forEach(el=>el.onclick=()=>buyDaily(el.dataset.daily));
+    const cy=body.querySelector('[data-cyber]'); if(cy)cy.onclick=buyCyber;
+    return;
+  }
+
+  // ---- PLEB BOXES / CODES / GIFT / NEWS ----
+  {
+    body.innerHTML=
+      '<div class="pm-r1">'+
+        '<div class="pbox" id="bx0"><div class="price">$2.99</div></div>'+
+        '<div class="pbox" id="bx1"><div class="price">$4.99</div></div>'+
+        '<div class="pbox" id="bx2"><div class="price">$9.99</div></div>'+
+      '</div>'+
+      '<div class="pm-r2">'+
+        '<div class="pbox tall" id="mega"><div class="price">$14.99</div></div>'+
+        '<div class="pcomb" id="combo">'+
+          '<div class="pcol"><div class="ppill">3,000 Blep</div>'+
+            '<div class="psqs"><div class="psq"><div class="q1">20</div><div class="q2"><span class="arr">\u2190</span>Adoption papers</div></div>'+
+            '<div class="psq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
+            '<div class="plabel">PLEDOPTION</div></div>'+
+          '<div class="pcol2"><div class="pt">Plekey</div>'+
+            '<div class="pbody">'+KEY+'<ul><li>- Custom sfx</li><li>- Unique style</li><li>- Different rarity</li></ul></div></div>'+
+          '<div class="price">$19.99</div>'+
+        '</div>'+
+      '</div>';
+    body.appendChild(ex);
+    body.querySelector('#bx0').onclick=()=>openBox('wood');
+    body.querySelector('#bx1').onclick=()=>openBox('iron');
+    body.querySelector('#bx2').onclick=()=>openBox('gold');
+    body.querySelector('#mega').onclick=buyMega;
+    body.querySelector('#combo').onclick=buyCombo;
+    if(MARTTAB==='codes'){
+      ex.innerHTML='<div class="pm-code"><input id="codeInput" maxlength="24" placeholder="ENTER CODE\u2026"><div class="pm-btndisplay" id="codeGo">Redeem</div></div>'+
+        '<div class="pm-note">Codes to try: WELCOME \u00b7 UPRISING \u00b7 PLEB2026</div>';
+      body.querySelector('#codeGo').onclick=redeemCode;
+      body.querySelector('#codeInput').addEventListener('keydown',e=>{ if(e.key==='Enter')redeemCode(); });
+    }else if(MARTTAB==='gift'){
+      const ready=!(GIFT&&Date.now()-GIFT<86400000);
+      ex.innerHTML='<div class="pm-note" style="margin-top:18px">Daily gift: +250 gold \ud83d\udc51 and +250 Pleb \u26a1</div>'+
+        '<div style="text-align:center"><div class="pm-btndisplay'+(ready?'':' cant')+'" id="giftGo">'+(ready?'Claim gift':'Come back tomorrow')+'</div></div>';
+      if(ready)body.querySelector('#giftGo').onclick=claimGift;
+    }else if(MARTTAB==='news'){
+      ex.innerHTML='<ul class="pm-news" style="margin-top:18px"><li>\u270a THE UPRISING \u2014 slain nobles defect to your mob!</li>'+
+        '<li>\ud83d\udde1\ufe0f Control your own hero \u2014 drag to run, he auto-attacks.</li>'+
+        '<li>\ud83d\udd11 PLEB MART \u2014 Pledoption center, Money bundles, Pleb boxes, Codes, Gift &amp; News.</li>'+
+        '<li>\u2728 Coming soon \u2014 more Plekeys, hero weapons, boss rush.</li></ul>';
+    }else{ // boxes
+      ex.innerHTML='<div class="pm-sub" style="margin-top:14px">Spend \u26a1 Pleb on boxes \u2014 each can drop a \ud83d\udd11 Plekey for your hero.</div>'+
+        '<div class="pm-sk">'+BOXES.map(b=>'<div class="pm-skin"><div style="font-size:34px">'+b.e+'</div><div class="sn">'+b.name+'</div>'+
+          '<div class="sr">'+Math.round(b.keyChance*100)+'% Plekey</div>'+
+          '<div class="pm-btndisplay'+(PLEB>=b.cost?'':' cant')+'" data-box="'+b.id+'">\u26a1 '+b.cost+'</div></div>').join('')+'</div>';
+      body.querySelectorAll('[data-box]').forEach(el=>el.onclick=()=>openBox(el.dataset.box));
+    }
   }
 }
 
