@@ -86,6 +86,28 @@
   #worlds .wbig .wcheck{color:#8fd66a}
   .linklike{cursor:pointer;color:#d8c48c;font:15px Georgia,serif;text-decoration:underline;text-underline-offset:3px;opacity:.9}
   .linklike:hover{color:#f6e3ab}
+
+  /* ---------- LEADERBOARD ---------- */
+  #board{background:linear-gradient(#241708,#0f0a03);overflow:auto;padding:40px 60px;text-align:center}
+  #board.on{display:flex;flex-direction:column;align-items:center}
+  #board h2{font:900 50px Georgia,serif;color:#f2d375;margin:0 0 6px;text-shadow:0 3px 0 #000}
+  #board .sub{color:#d8c48c;font:italic 18px Georgia,serif;margin-bottom:24px}
+  .bd-wrap{width:min(980px,94vw);display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .bd-card{border:3px solid #2a1c08;border-radius:18px;padding:18px 20px;text-align:left;
+    background:linear-gradient(rgba(64,46,20,.92),rgba(30,20,8,.94));box-shadow:0 6px 0 #2a1c08,0 14px 26px rgba(0,0,0,.45)}
+  .bd-card h3{margin:0 0 12px;font:800 22px Georgia,serif;color:#f3e2b0;display:flex;align-items:center;gap:9px}
+  .bd-row{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:11px;margin:6px 0;background:rgba(0,0,0,.28)}
+  .bd-row.me{background:linear-gradient(rgba(242,207,98,.22),rgba(201,151,31,.22));border:2px solid #c9a24a}
+  .bd-row .rk{font:900 20px Georgia,serif;color:#ffd24a;width:34px;text-align:center}
+  .bd-row .nm{flex:1;font:800 17px Georgia,serif;color:#f3e2b0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bd-row .nm .you{color:#9fe08a;font-size:13px}
+  .bd-row .vl{font:900 20px Georgia,serif;color:#ffe08a}
+  .bd-big{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+  .bd-stat{border:3px solid #2a1c08;border-radius:16px;padding:14px 22px;background:linear-gradient(rgba(64,46,20,.92),rgba(30,20,8,.94));min-width:150px}
+  .bd-stat .v{font:900 34px Georgia,serif;color:#ffd24a}
+  .bd-stat .k{font:700 14px Georgia,serif;color:#d8c48c;margin-top:4px;letter-spacing:.5px}
+  #board .back{margin-top:26px}
+  .rankbadge{font:900 15px Georgia,serif;padding:3px 12px;border-radius:999px;display:inline-block}
   .menu-toggles{margin-top:14px;display:flex;flex-direction:column;gap:8px}
   .tg{cursor:pointer;user-select:none;font:700 15px Georgia,serif;color:#f0dc9e;padding:7px 12px;border-radius:10px;
     background:rgba(60,44,18,.55);border:2px solid #4a3616;width:max-content}
@@ -544,8 +566,11 @@
       <div class="tagline">Pitchforks up. The nobles are marching.</div>
       <div class="menu-btns">
         <div class="mbtn" id="playBtn"><span class="ic">⚔️</span> PLAY</div>
+        <div class="mbtn" id="battleBtn"><span class="ic">🏰</span> BATTLE (base wars)</div>
+        <div class="mbtn" id="rankedBtn"><span class="ic">⚔️</span> RANKED BATTLE</div>
         <div class="mbtn" id="martBtn"><span class="ic">🔑</span> PLEB MART</div>
         <div class="mbtn" id="packBtn"><span class="ic">🎒</span> PLEBPACK</div>
+        <div class="mbtn" id="boardBtn"><span class="ic">🏆</span> LEADERBOARD</div>
       </div>
       <div class="worldstrip" id="worldStrip"></div>
       <div style="margin-top:14px"><span class="linklike" id="howBtn">❔ How to Play</span></div>
@@ -601,6 +626,14 @@
     <div class="back"><div class="mbtn small" id="worldsBack" style="width:220px">⬅ Back to Menu</div></div>
   </div>
 
+  <!-- ============ LEADERBOARD ============ -->
+  <div id="board" class="screen">
+    <h2>🏆 Leaderboard</h2>
+    <div class="sub">Your bests, and how you stack up. Fight in Ranked to build a win streak.</div>
+    <div id="boardBody"></div>
+    <div class="back"><div class="mbtn small" id="boardBack" style="width:220px">⬅ Back to Menu</div></div>
+  </div>
+
   <!-- ============ GAME ============ -->
   <div id="game" class="screen">
     <canvas id="cv"></canvas>
@@ -614,6 +647,7 @@
       <div class="chip" title="The Uprising — nobles who defected to your side"><span class="ci">✊</span><span id="hMob">0</span></div>
       <div class="chip" title="Your hero"><span class="ci">🗡️</span><span id="hHero">100</span></div>
       <div class="spacer"></div>
+      <div id="raidBtn" title="Send a raid at the enemy base"><span id="raidLbl">🏇 RAID</span><span class="sub" id="raidSub">Ready</span></div>
       <div id="rallyBtn"><span id="rallyLbl">✊ RALLY</span><span class="sub" id="rallySub">Ready</span></div>
       <div id="speedBtn" title="Fast-forward">1×</div>
       <div id="startBtn">START WAVE ▶</div>
@@ -753,11 +787,12 @@ cv.width=W; cv.height=H;
 
 /* ---------------- screens ---------------- */
 function show(id){
-  ['menu','how','worlds','game','mart','pack'].forEach(s=>$(s).classList.toggle('on',s===id));
+  ['menu','how','worlds','game','mart','pack','board'].forEach(s=>$(s).classList.toggle('on',s===id));
   if(id==='menu')populateWorldStrip();
   if(id==='worlds')populateWorldSelect();
   if(id==='mart')renderMart();
   if(id==='pack')renderPack();
+  if(id==='board')renderBoard();
 }
 function populateWorldStrip(){
   const strip=$('worldStrip'); if(!strip)return; strip.innerHTML='';
@@ -792,6 +827,11 @@ function populateWorldSelect(){
   });
 }
 $('howBtn').onclick=()=>show('how');
+$('boardBtn').onclick=()=>{ SFX.ui(); show('board'); };
+$('boardBack').onclick=()=>show('menu');
+$('battleBtn').onclick=()=>{ initAudio(); newBattle(false); show('game'); };
+$('rankedBtn').onclick=()=>{ initAudio(); newBattle(true); show('game'); };
+if($('raidBtn'))$('raidBtn').onclick=()=>launchRaid();
 $('martBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('mart'); };
 $('packBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('pack'); SFX.ui(); };
 $('packHome').onclick=()=>{ SFX.ui(); show('menu'); };
@@ -803,7 +843,6 @@ if($('coPay'))$('coPay').onclick=()=>payConfirm();
 $('howBack').onclick=()=>show('menu');
 $('worldsBack').onclick=()=>show('menu');
 $('playBtn').onclick=()=>{ initAudio(); show('worlds'); };
-
 /* ---------------- tutorial ---------------- */
 const TUT=[
   {t:'Welcome to Plebania 🧑‍🌾',p:'You are the villagers — the plebs. The noble army is marching in to crush your village. You get TWO things: a HERO you control, and villagers you place.'},
@@ -1384,6 +1423,167 @@ function renderMart(){
 }
 
 /* =========================================================
+   LEADERBOARD (highest level / win streak / waves / kills / rank)
+   ========================================================= */
+const LB_KEY='plebania_lb';
+let LB=loadJSON(LB_KEY,{level:1,streak:0,bestStreak:0,waves:0,kills:0,rank:0});
+function saveLB(){ saveJSON(LB_KEY,LB); }
+const RANK_NAMES=['Bronze','Silver','Gold','Platinum','Diamond','Legend'];
+function rankTier(pts){ return RANK_NAMES[Math.max(0,Math.min(RANK_NAMES.length-1,Math.floor((pts||0)/4)))]; }
+function rankColor(pts){ const t=Math.max(0,Math.min(5,Math.floor((pts||0)/4)));
+  return ['#b08d57','#c8cdd4','#e8c04a','#7fd8d8','#8fb6ff','#ff9a3a'][t]; }
+const LB_RIVALS=[
+  {name:'Sir Killalot',   level:14, streak:9, waves:32, kills:420, rank:22},
+  {name:'BaronVonPleb',   level:12, streak:4, waves:29, kills:305, rank:16},
+  {name:'PitchforkPete',  level:11, streak:6, waves:27, kills:360, rank:15},
+  {name:'NoobSlayer99',   level:9,  streak:7, waves:22, kills:285, rank:12},
+  {name:'QueenOfTurnips', level:10, streak:3, waves:24, kills:252, rank:10},
+  {name:'LordLoaf',       level:7,  streak:5, waves:18, kills:210, rank:8},
+  {name:'GrumpyGus',      level:6,  streak:2, waves:15, kills:164, rank:5},
+  {name:'TinpotTom',      level:4,  streak:1, waves:11, kills:112, rank:3}
+];
+const LB_CATS=[
+  ['level','\ud83c\udf9a\ufe0f Highest Level',0],
+  ['streak','\ud83d\udd25 Longest Win Streak',0],
+  ['waves','\ud83c\udf0a Most Waves Beaten',0],
+  ['kills','\ud83d\udc80 Most Units Killed',0],
+  ['rank','\ud83c\udfc5 Highest Rank',0]
+];
+function recordStats(){
+  if(!S)return;
+  if(S.hero)LB.level=Math.max(LB.level,S.hero.level);
+  LB.waves=Math.max(LB.waves,S.wave);
+  LB.kills=Math.max(LB.kills,S.slain);
+  saveLB();
+}
+function renderBoard(){
+  const body=$('boardBody'); if(!body)return;
+  const me={name:'You', level:LB.level, streak:LB.bestStreak, waves:LB.waves, kills:LB.kills, rank:LB.rank, isMe:true};
+  let html='<div class="bd-big">'+
+    '<div class="bd-stat"><div class="v">'+LB.level+'</div><div class="k">HERO LEVEL</div></div>'+
+    '<div class="bd-stat"><div class="v">'+LB.bestStreak+'</div><div class="k">WIN STREAK</div></div>'+
+    '<div class="bd-stat"><div class="v">'+LB.waves+'</div><div class="k">WAVES BEATEN</div></div>'+
+    '<div class="bd-stat"><div class="v">'+LB.kills+'</div><div class="k">UNITS KILLED</div></div>'+
+    '<div class="bd-stat"><div class="v rankbadge" style="background:'+rankColor(LB.rank)+';color:#2b2418">'+rankTier(LB.rank)+'</div><div class="k">RANK \u00b7 '+LB.rank+' pts</div></div>'+
+    '</div><div class="bd-wrap">';
+  LB_CATS.forEach(([k,title])=>{
+    const rows=LB_RIVALS.concat([me]).slice().sort((a,b)=>b[k]-a[k]);
+    html+='<div class="bd-card"><h3>'+title+'</h3>';
+    rows.slice(0,6).forEach((r,i)=>{
+      const medal=i===0?'\ud83e\udd47':i===1?'\ud83e\udd48':i===2?'\ud83e\udd49':'#'+(i+1);
+      html+='<div class="bd-row'+(r.isMe?' me':'')+'"><div class="rk">'+medal+'</div><div class="nm">'+
+        r.name+(r.isMe?' <span class="you">(you)</span>':'')+'</div><div class="vl">'+r[k]+'</div></div>';
+    });
+    const idx=rows.findIndex(r=>r.isMe);
+    if(idx>=6){ const r=rows[idx]; html+='<div class="bd-row me"><div class="rk">#'+(idx+1)+'</div><div class="nm">'+r.name+' <span class="you">(you)</span></div><div class="vl">'+r[k]+'</div></div>'; }
+    html+='</div>';
+  });
+  html+='</div>';
+  body.innerHTML=html;
+}
+
+/* =========================================================
+   BATTLE MODE (base wars) - from Nicholas's sketch: enemy base vs your base,
+   winding road, villages defend, AI can place, RAID to crush their base.
+   ========================================================= */
+function newBattle(ranked){
+  newGame(S?S.world:0);
+  S.battle=true; S.ranked=!!ranked;
+  S.lives=15; S.reached=1;
+  S.ebMax=240+Math.round((LB.rank||0)*26); S.ebHp=S.ebMax;
+  S.raid=[]; S.aiWalls=[]; S.aiT=6; S.raidCd=0;
+  S.oppName = ranked ? LB_RIVALS[(Math.random()*LB_RIVALS.length)|0].name : 'The Baron';
+  S.running=true; S.between=false;
+  showBanner('\ud83c\udff0 BATTLE \u2014 smash '+S.oppName+'\u2019s base!','gold',2200);
+  tip('Placing villagers DEFENDS your base \ud83c\udfe0 \u00b7 hit RAID to attack theirs',4200);
+  syncHud(); buildBar(); buildBar2(); updateRaidBtn();
+}
+function launchRaid(){
+  if(!S||!S.battle||S.over||S.paused)return;
+  if((S.raidCd||0)>0)return;
+  const n=3+Math.round((LB.rank||0)*0.4);
+  const base=PATH[PATH.length-1];
+  for(let i=0;i<n;i++){
+    S.raid.push({x:base.x-14, y:base.y+(Math.random()-0.5)*34, hp:70, maxhp:70, dmg:16,
+      wp:PATH.length-2, off:Math.random()<0.35, t:Math.random()*6, lane:i});
+  }
+  S.raidCd=9; SFX.up(); showBanner('\ud83c\udfc7 RAID! '+n+' plebs charge the enemy base','gold',1500);
+  for(let i=0;i<14;i++)burst(base.x,base.y,'#ffd24a');
+  updateRaidBtn();
+}
+function aiWallAt(c,r){ return S.aiWalls.some(w=>w.c===c&&w.r===r&&w.hp>0); }
+function raidUpdate(dt){
+  if(!S||!S.battle||!S.raid)return;
+  for(const r of S.raid.slice()){
+    r.t+=dt;
+    let tgt = r.wp>=0 ? PATH[r.wp] : PATH[0];
+    if(r.off) tgt = PATH[0];
+    const dx=tgt.x-r.x, dy=tgt.y-r.y, d=Math.hypot(dx,dy)||1;
+    const ahead=tileAt(r.x-dx/d*22, r.y-dy/d*22);
+    if(!r.off && ahead && aiWallAt(ahead.c,ahead.r)){
+      const w=S.aiWalls.find(w=>w.c===ahead.c&&w.r===ahead.r);
+      w.hp-=r.dmg*dt*2.2; for(let i=0;i<2;i++)burst(cx(w.c),cy(w.r),'#e0792b');
+      if(w.hp<=0){ showBanner('\ud83e\uddf1 Your raiders smashed an enemy wall!','gold',1200); }
+      continue;
+    }
+    const spd=148;
+    if(d>4){ r.x+=dx/d*Math.min(spd*dt,d); r.y+=dy/d*Math.min(spd*dt,d); }
+    else if(r.wp>0) r.wp--;
+    if(Math.hypot(r.x-PATH[0].x, r.y-PATH[0].y) < 52){
+      S.ebHp-=r.dmg*dt; r.hitting=0.1;
+      if(Math.random()<0.4)burst(PATH[0].x+18,PATH[0].y+(Math.random()-0.5)*30,'#ffb347');
+      if(S.ebHp<=0){ S.ebHp=0; battleWin(); return; }
+    }
+  }
+  S.raid=S.raid.filter(r=>r.hp>0);
+}
+function battleAI(dt){
+  if(!S||!S.battle||S.over)return;
+  S.aiT-=dt;
+  if(S.aiT<=0){
+    S.aiT=5.5;
+    if(S.raid.length){
+      const lead=S.raid[S.raid.length-1];
+      const t=tileAt(lead.x-30,lead.y);
+      if(t && pathKeys.has(t.c+','+t.r) && !aiWallAt(t.c,t.r) && !S.buildings.some(b=>b.c===t.c&&b.r===t.r))
+        S.aiWalls.push({c:t.c,r:t.r,hp:90+Math.round((LB.rank||0)*12),maxhp:90+Math.round((LB.rank||0)*12)});
+    }
+    const t2=tileAt(PATH[1].x, PATH[1].y);
+    if(t2 && !aiWallAt(t2.c,t2.r)) S.aiWalls.push({c:t2.c,r:t2.r,hp:120+Math.round((LB.rank||0)*12),maxhp:120+Math.round((LB.rank||0)*12)});
+    S.aiWalls=S.aiWalls.filter(w=>w.hp>0);
+  }
+}
+function battleWin(){
+  if(S.over)return; S.over=true; S.running=false; hideSel();
+  recordStats();
+  if(S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); LB.rank++; }
+  saveLB();
+  $('ovT').style.color='#f6dd8b'; $('ovT').textContent='\ud83c\udff0 ENEMY BASE DESTROYED!';
+  $('ovP').innerHTML='You smashed <b>'+S.oppName+'</b>\u2019s base with '+S.raid.length+' raiders still standing.<br>'+
+    (S.ranked ? ('Win streak: <b>'+LB.streak+'</b> \u00b7 Rank: <b>'+rankTier(LB.rank)+'</b> ('+LB.rank+' pts)<br>') : '')+
+    'Foes felled: <b>'+S.slain+'</b>.';
+  $('ovAgain').style.display=''; $('ovAgain').textContent='RAID AGAIN';
+  $('ovAgain').onclick=()=>{ hideOv(); newBattle(S.ranked); };
+  $('ov').classList.add('on'); SFX.win();
+}
+function battleLose(){
+  if(S.over)return; S.over=true; S.running=false; hideSel();
+  recordStats(); if(S.ranked)LB.streak=0; saveLB();
+  $('ovT').style.color='#ff9a86'; $('ovT').textContent='YOUR BASE FELL';
+  $('ovP').innerHTML='<b>'+S.oppName+'</b>\u2019s army overran you before you could break their base.<br>'+
+    'Their base was at <b>'+Math.max(0,Math.round(S.ebHp/S.ebMax*100))+'%</b> \u2014 so close.';
+  $('ovAgain').style.display=''; $('ovAgain').textContent='RETRY BATTLE';
+  $('ovAgain').onclick=()=>{ hideOv(); newBattle(S.ranked); };
+  $('ov').classList.add('on'); SFX.lose();
+}
+function updateRaidBtn(){ if(!S||!$('raidBtn'))return;
+  const cd=Math.ceil(S.raidCd||0);
+  $('raidBtn').classList.toggle('cd',cd>0);
+  $('raidLbl').textContent=S.raid&&S.raid.length?('RAID ('+S.raid.length+')'):'RAID';
+  $('raidSub').textContent=cd>0?(cd+'s'):'Ready';
+}
+
+/* =========================================================
    PLEBPACK — equip your plebs (persistent gear, bought with shop gold)
    ========================================================= */
 const PACK_ITEMS={
@@ -1700,6 +1900,7 @@ function leak(e){
   if(S.sel&&S.towers.indexOf(S.sel)<0)hideSel();
   syncHud();
   if(S.lives<=0) endGame(false);
+  if(S.battle && S.lives<=0){ /* battleLose handled by endGame */ }
 }
 function kill(e,byPlayer){
   if(e.dead)return; e.dead=true;
@@ -1926,6 +2127,9 @@ function render(dt){
 
   // village (home) marker
   drawVillage();
+
+  // BATTLE MODE overlays: enemy base, raiders, AI walls
+  if(S.battle) drawBattle();
 
   ctx.restore();
 
@@ -2332,6 +2536,55 @@ function drawVillage(){
   ctx.restore();
 }
 
+/* ---------- BATTLE MODE overlays (base wars) ---------- */
+function drawBattle(){
+  const eb=PATH[0];
+  // AI walls (noble barricades you must smash through)
+  for(const w of S.aiWalls){
+    const x=cx(w.c), y=cy(w.r); const pct=Math.max(0,Math.min(1,w.hp/w.maxhp));
+    ctx.save(); ctx.translate(x,y);
+    ctx.strokeStyle='#2b2418'; ctx.lineWidth=2;
+    for(let r=0;r<3;r++)for(let c=0;c<4;c++){ const off=(r%2)?6:-3;
+      ctx.fillStyle='#8a4b2a'; roundRect(-28+c*14+2+off,-6-r*9,13,8,2.5); ctx.fill(); ctx.stroke(); }
+    ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(-22,22,44,5);
+    ctx.fillStyle=pct>0.5?'#7bd45a':pct>0.25?'#f0c04a':'#e05a3a'; ctx.fillRect(-22,22,44*pct,5);
+    ctx.restore();
+  }
+  // enemy base at the start of the road
+  const ex=eb.x, ey=eb.y;
+  ctx.save(); ctx.translate(ex-24,ey);
+  ctx.fillStyle='#4a2c2c'; ctx.fillRect(-2,-46,52,54);
+  ctx.fillStyle='#5b3434'; ctx.beginPath(); ctx.moveTo(-10,-46); ctx.lineTo(24,-74); ctx.lineTo(58,-46); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#1b1210'; ctx.fillRect(18,-20,18,26);
+  ctx.fillStyle='#ff8a5a'; ctx.fillRect(2,-34,10,10);
+  ctx.fillStyle='#e0b34a';
+  ctx.beginPath(); ctx.moveTo(-2,-52); ctx.lineTo(-2,-82); ctx.lineTo(-22,-74); ctx.lineTo(-2,-66); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#f6d9a8'; ctx.font='700 12px Georgia,serif'; ctx.textAlign='center'; ctx.fillText('ENEMY',22,-86);
+  // base health bar
+  const bw=120, bx=22-bw/2, by=-104;
+  ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(bx-2,by-2,bw+4,12);
+  const frac=Math.max(0,S.ebHp/S.ebMax);
+  ctx.fillStyle=frac>0.5?'#e05a3a':frac>0.25?'#f0c04a':'#7bd45a'; ctx.fillRect(bx,by,bw*frac,8);
+  ctx.fillStyle='#ffe0c0'; ctx.font='800 13px Georgia,serif';
+  ctx.strokeStyle='rgba(0,0,0,.8)'; ctx.lineWidth=3;
+  ctx.strokeText(Math.max(0,Math.ceil(S.ebHp))+' / '+S.ebMax,22,by-6); ctx.fillText(Math.max(0,Math.ceil(S.ebHp))+' / '+S.ebMax,22,by-6);
+  ctx.restore();
+  // raiders (your plebs marching on their base)
+  for(const r of S.raid){
+    ctx.save(); ctx.translate(r.x,r.y);
+    ctx.fillStyle='rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(0,20,16,5,0,0,7); ctx.fill();
+    const bob=Math.sin(r.t*10)*1.2; ctx.save(); ctx.scale(0.82,0.82); drawPlebShape(0,0,1,bob); ctx.restore();
+    ctx.fillStyle='#e0562a'; ctx.beginPath(); ctx.arc(0,-22,3,0,7); ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(-16,-34,32,4);
+    ctx.fillStyle='#7bd45a'; ctx.fillRect(-16,-34,32*Math.max(0,r.hp/r.maxhp),4);
+    ctx.restore();
+  }
+  // enemy base proximity flash
+  if(S.raid&&S.raid.some(r=>Math.hypot(r.x-ex,r.y-ey)<52)){
+    ctx.globalAlpha=0.10+Math.abs(Math.sin(performance.now()/90))*0.12; ctx.fillStyle='#ff7a3a'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1;
+  }
+}
+
 function roundRect(x,y,w,h,r){ ctx.beginPath();
   ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
   ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
@@ -2346,8 +2599,8 @@ function loop(now){
   if(S){
     if(!S.over&&active){
       dt*=S.speed||1;
-      // spawning
-      if(S.running){
+      // spawning (waves)
+      if(S.running && !S.battle){
         S.spawnT-=dt;
         if(S.spawnT<=0&&S.spawnQ.length){
           spawn(S.spawnQ.shift());
@@ -2360,6 +2613,13 @@ function loop(now){
       heroUpdate(dt);
       mobUpdate(dt);
       projUpdate(dt);
+      if(S.battle){
+        raidUpdate(dt);
+        battleAI(dt);
+        // the enemy garrison keeps marching down the road at your base
+        S.ebT=(S.ebT||0)-dt;
+        if(S.ebT<=0){ S.ebT=2.6; const w=WORLDS[S.world]; spawn(w.units.light); if(Math.random()<0.4)spawn(w.units.medium); }
+      }
       // decay fx
       for(const q of S.parts){ q.t+=dt; q.x+=q.vx*dt; q.y+=q.vy*dt; q.vy+=420*dt; }
       S.parts=S.parts.filter(q=>q.t<q.life);
@@ -2370,7 +2630,7 @@ function loop(now){
       if(S.hurt>0)S.hurt=Math.max(0,S.hurt-dt*1.6);
       if(S.rally>0){ S.rally-=dt; if(S.rally<=0){ S.rally=0; } }
       if(S.rallyCd>0){ S.rallyCd-=dt; if(S.rallyCd<0)S.rallyCd=0; }
-      S.uiAcc=(S.uiAcc||0)+dt; if(S.uiAcc>0.12){ S.uiAcc=0; updateRallyBtn();
+      S.uiAcc=(S.uiAcc||0)+dt; if(S.uiAcc>0.12){ S.uiAcc=0; updateRallyBtn(); if(S.battle)updateRaidBtn();
         if(S.hero&&$('hHero'))$('hHero').textContent=Math.max(0,Math.ceil(S.hero.hp));
         if($('hMob'))$('hMob').textContent=(S.mob?S.mob.length:0); }
     }
@@ -2381,6 +2641,7 @@ function loop(now){
   if(tipT&&Date.now()>tipT){ $('tip').classList.remove('on'); tipT=0; }
 }
 function endWave(){
+  if(S.battle){ return; }  // battle mode never ends in waves
   S.running=false; S.between=true;
   if(S.wave+1>S.reached){ S.reached=S.wave+1; }
   const bonus=20+S.wave*8;
@@ -2393,7 +2654,9 @@ function endWave(){
   syncHud(); buildBar();
 }
 function endGame(win){
+  if(S.battle){ return win?battleWin():battleLose(); }
   S.over=true; S.running=false;
+  recordStats();
   hideSel(); $('startBtn').classList.add('off');
   const last = S.world>=WORLDS.length-1;
   $('ovT').style.color = win?'#f6dd8b':'#ff9a86';
