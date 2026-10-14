@@ -1105,12 +1105,12 @@ cv.addEventListener('pointerup',e=>{
   handleTap(p);
 });
 function handleTap(p){
-  // 1) tapping an existing villager selects/upgrades it
+  // 1) tapping an existing villager selects/upgrades it (tap it again to deselect)
   const hit=S.towers.find(o=>Math.hypot(p.x-cx(o.c),p.y-cy(o.r))<TILE*0.62);
-  if(hit){ S.sel=hit; S.selB=null; locked=null; showSel(hit); return; }
-  // 1b) tapping a building selects it
+  if(hit){ if(S.sel===hit){ hideSel(); return; } S.sel=hit; S.selB=null; locked=null; showSel(hit); return; }
+  // 1b) tapping a building selects it (tap it again to deselect)
   const bh=S.buildings.find(o=>Math.hypot(p.x-cx(o.c),p.y-cy(o.r))<TILE*0.62);
-  if(bh){ S.selB=bh; S.sel=null; locked=null; showSel(bh); return; }
+  if(bh){ if(S.selB===bh){ hideSel(); return; } S.selB=bh; S.sel=null; locked=null; showSel(bh); return; }
   hideSel();
   // 2) build
   const t=tileAt(p.x,p.y);
