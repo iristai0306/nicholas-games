@@ -830,7 +830,7 @@ function buildBar(){
     }else{
       card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
         '<div class="cc">👑 '+d.cost+' <span style="color:#c3ae7c">· '+have+'/'+MAXPER+'</span></div><div class="cd">'+d.desc+'</div>';
-      card.onclick=()=>{ if(S.over)return; S.build=k; locked=null; hideSel(); buildBar(); SFX.ui();
+      card.onclick=()=>{ if(S.over)return; if(S.build===k){ S.build=null; locked=null; hideSel(); buildBar(); SFX.ui(); tip('Deselected '+d.name,1000); return; } S.build=k; locked=null; hideSel(); buildBar(); SFX.ui();
         tip('Selected '+d.name+' — tap a grass tile to place',1500); };
     }
     bar.appendChild(card);
@@ -843,7 +843,7 @@ function buildBar2(){
     card.className='card'+(sel?' sel':'')+(poor?' poor':'');
     card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
       '<div class="cc">👑 '+d.cost+'</div><div class="cd">'+d.desc+'</div>';
-    card.onclick=()=>{ if(S.over)return; S.build='b:'+id; locked=null; hideSel(); buildBar(); SFX.ui();
+    card.onclick=()=>{ if(S.over)return; const key='b:'+id; if(S.build===key){ S.build=null; locked=null; hideSel(); buildBar(); SFX.ui(); tip('Deselected '+d.name,1000); return; } S.build=key; locked=null; hideSel(); buildBar(); SFX.ui();
       tip('Selected '+d.name+' — tap a tile to place',1500); };
     bar.appendChild(card);
   });
