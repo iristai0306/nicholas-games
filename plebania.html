@@ -86,6 +86,11 @@
   #worlds .wbig .wcheck{color:#8fd66a}
   .linklike{cursor:pointer;color:#d8c48c;font:15px Georgia,serif;text-decoration:underline;text-underline-offset:3px;opacity:.9}
   .linklike:hover{color:#f6e3ab}
+  .menu-toggles{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .tg{cursor:pointer;user-select:none;font:700 15px Georgia,serif;color:#f0dc9e;padding:7px 12px;border-radius:10px;
+    background:rgba(60,44,18,.55);border:2px solid #4a3616;width:max-content}
+  .tg:hover{background:rgba(80,60,26,.7);color:#fff3c4}
+  .tg.off{color:#b7a06a;opacity:.85}
   .torch{position:absolute;width:16px;height:16px;border-radius:50%;
     background:radial-gradient(circle,#fff6c0,#ff9a1e 45%,rgba(255,120,0,0) 72%);
     filter:blur(.4px);animation:flick 1.3s infinite ease-in-out}
@@ -419,6 +424,10 @@
       </div>
       <div class="worldstrip" id="worldStrip"></div>
       <div style="margin-top:14px"><span class="linklike" id="howBtn">❔ How to Play</span></div>
+      <div class="menu-toggles">
+        <span class="tg" id="tgTut">📖 Tutorial auto-skip: ON</span>
+        <span class="tg" id="tgUp">✊ Uprising army: ON</span>
+      </div>
     </div>
     <div class="menu-foot">v2.0 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
@@ -637,19 +646,37 @@ const TUT=[
 let tutI=0;
 const TUTSEEN_KEY='plebania_tutseen';
 let AUTOSKIP=loadJSON('plebania_autoskip', true);   // default ON
+let UPRISING=loadJSON('plebania_uprising', false); // default OFF — no forced army; he can switch it on from the menu
+function refreshToggles(){
+  const a=$('tgTut'); if(a){ a.textContent='📖 Tutorial auto-skip: '+(AUTOSKIP?'ON':'OFF'); a.classList.toggle('off',!AUTOSKIP); }
+  const u=$('tgUp'); if(u){ u.textContent='✊ Uprising army: '+(UPRISING?'ON':'OFF'); u.classList.toggle('off',!UPRISING); }
+}
 function startTutorial(){
   if(AUTOSKIP && loadJSON(TUTSEEN_KEY,false)){ endTutorial(); return; }
   tutI=0; renderTut(); $('tut').classList.add('on'); pauseGame(true);
   const a=$('tutAuto'); if(a)a.textContent='Auto-skip: '+(AUTOSKIP?'ON':'OFF');
+  refreshToggles();
 }
-function renderTut(){ const s=TUT[tutI]; $('tutStep').textContent=(tutI+1)+' / '+TUT.length; $('tutT').textContent=s.t; $('tutP').textContent=s.p;
+function renderTut(){ const s=TUT[tutI]; $('tutStep').textContent=(tutI+1)+' / '+TUT.length; $('tutT').textContent=s.t; $('tutP').textContent=tutText(tutI);
   $('tutNext').textContent = tutI>=TUT.length-1?'Let\'s go ⚔️':'Next ▶'; }
+function tutText(i){
+  if(!UPRISING && i===4) return 'Your Uprising army is OFF right now — no nobles defect to you, so it\u2019s just you and your villagers. Turn it back on any time from the Menu (\u270a Uprising army).';
+  if(!UPRISING && i===5) return 'Things getting hairy? Hit RALLY — every pleb attacks twice as fast with +25% damage for 6 seconds. Use the \u23e9 button to speed up when you can handle it.';
+  return TUT[i].p;
+}
 $('tutNext').onclick=()=>{ if(tutI<TUT.length-1){ tutI++; renderTut(); } else endTutorial(); };
 $('tutSkip').onclick=()=>endTutorial();
 $('tutAuto').onclick=()=>{ AUTOSKIP=!AUTOSKIP; saveJSON('plebania_autoskip',AUTOSKIP);
-  $('tutAuto').textContent='Auto-skip: '+(AUTOSKIP?'ON':'OFF'); tip('Tutorial auto-skip '+(AUTOSKIP?'ON — won\u2019t show again':'OFF — will show next time'),1600); };
+  $('tutAuto').textContent='Auto-skip: '+(AUTOSKIP?'ON':'OFF'); refreshToggles(); tip('Tutorial auto-skip '+(AUTOSKIP?'ON — won\u2019t show again':'OFF — will show next time'),1600); };
 function endTutorial(){ saveJSON(TUTSEEN_KEY,true); $('tut').classList.remove('on'); pauseGame(false); initAudio(); }
 function pauseGame(on){ if(S)S.paused=on; }
+
+/* ---------------- menu toggles (always visible, so they're easy to find) ---------------- */
+$('tgTut').onclick=()=>{ AUTOSKIP=!AUTOSKIP; saveJSON('plebania_autoskip',AUTOSKIP); SFX.ui();
+  refreshToggles(); tip('Tutorial auto-skip '+(AUTOSKIP?'ON — skips after you\u2019ve seen it once':'OFF — always shows'),1700); };
+$('tgUp').onclick=()=>{ UPRISING=!UPRISING; saveJSON('plebania_uprising',UPRISING); SFX.ui();
+  refreshToggles(); tip('Uprising army '+(UPRISING?'ON — fallen nobles join your mob':'OFF — no armies, just you and your villagers'),2200); };
+refreshToggles();
 
 /* ---------------- audio ---------------- */
 let AC=null,muted=false;
@@ -1336,6 +1363,7 @@ function kill(e,byPlayer){
 }
 /* a defector — a pleb who was once a noble, now fights for you (powers your Rally) */
 function spawnTurned(e,n){
+  if(!UPRISING)return;
   const d=ENEMIES[e.type]||{};
   for(let i=0;i<(n||1);i++){
     S.mob.push({x:e.x+(Math.random()-0.5)*18, y:e.y+(Math.random()-0.5)*18,
@@ -2049,9 +2077,8 @@ $('rallyBtn').onclick=()=>{ if(!S||S.over||S.paused)return; if((S.rallyCd||0)>0)
   S.rally=6; S.rallyCd=30; SFX.up();
   // THE UPRISING: the crowd answers the call — a few fresh defectors rise up
   const n=4;
-  for(let i=0;i<n;i++){ S.mob.push({x:S.hero.x+(Math.random()-0.5)*70, y:S.hero.y+(Math.random()-0.5)*70, sz:22, t:Math.random()*6, lane:i, defend:0}); }
-  S.turned+=n;
-  showBanner('✊ RALLY! The mob swells +'+n+' and attacks twice as fast!','gold',1900);
+  if(UPRISING){ for(let i=0;i<n;i++){ S.mob.push({x:S.hero.x+(Math.random()-0.5)*70, y:S.hero.y+(Math.random()-0.5)*70, sz:22, t:Math.random()*6, lane:i, defend:0}); } S.turned+=n; }
+  showBanner(UPRISING?('✊ RALLY! The mob swells +'+n+' and attacks twice as fast!'):'✊ RALLY! Everyone attacks twice as fast!','gold',1900);
   for(const o of S.towers)for(let i=0;i<6;i++)burst(cx(o.c),cy(o.r),'#ffb347');
   for(let i=0;i<20;i++)burst(S.hero.x,S.hero.y,'#ffd24a');
   syncHud(); updateRallyBtn();
