@@ -146,9 +146,14 @@
 
   /* ---------- PLEB MART (its own screen — a 1:1 copy of Nicholas's drawing) ---------- */
   #mart{background:#241708;overflow:auto;padding:20px 24px 40px}
-  #mart .mchrome{max-width:1180px;margin:0 auto 12px;display:flex;gap:12px;align-items:center;justify-content:flex-end}
+  #mart .mchrome{max-width:1180px;margin:0 auto 12px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+  #mart .mchrome .mright{display:flex;gap:12px;align-items:center}
   #mart .mchrome .c{font:700 15px Georgia,serif;color:#e8d9ac;background:rgba(0,0,0,.3);
     border:1px solid #5a3f14;border-radius:999px;padding:6px 14px}
+  #mart .mhome{display:flex;align-items:center;gap:8px;cursor:pointer;border:3px solid #2a1c08;border-radius:14px;
+    padding:11px 24px;font:800 22px Georgia,serif;color:#3a2506;letter-spacing:1px;
+    background:linear-gradient(#f2cf62,#c9971f 55%,#8f6a12);box-shadow:0 5px 0 #4a3409}
+  #mart .mhome:active{transform:translateY(3px);box-shadow:0 2px 0 #4a3409}
   #mart .mpaper{max-width:1180px;margin:0 auto;background:#fbfaf3;border-radius:6px;
     box-shadow:0 18px 44px rgba(0,0,0,.6);padding:28px 32px 34px;position:relative;
     background-image:radial-gradient(rgba(0,0,0,.03) 1px,transparent 1px);background-size:5px 5px;
@@ -490,9 +495,12 @@
   <!-- ============ PLEB MART (its own screen — 1:1 copy of Nicholas's drawing) ============ -->
   <div id="mart" class="screen">
     <div class="mchrome">
-      <div class="c">👑 <span id="martGold">0</span></div>
-      <div class="c">⚡ <span id="martPleb">0</span> Pleb</div>
-      <div class="c">🔑 <span id="martKeys">0</span> Plekeys</div>
+      <div class="mhome" id="martHome">🏠 HOME</div>
+      <div class="mright">
+        <div class="c">👑 <span id="martGold">0</span></div>
+        <div class="c">⚡ <span id="martPleb">0</span> Pleb</div>
+        <div class="c">🔑 <span id="martKeys">0</span> Plekeys</div>
+      </div>
     </div>
     <div class="mpaper">
       <div class="pm-head">
@@ -597,6 +605,7 @@ function populateWorldSelect(){
 $('howBtn').onclick=()=>show('how');
 $('martBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('mart'); };
 $('martBack').onclick=()=>show('menu');
+$('martHome').onclick=()=>{ SFX.ui(); show('menu'); };
 $('howBack').onclick=()=>show('menu');
 $('worldsBack').onclick=()=>show('menu');
 $('playBtn').onclick=()=>{ initAudio(); show('worlds'); };
