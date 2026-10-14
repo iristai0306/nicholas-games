@@ -673,6 +673,7 @@ const TOWERS={
   farm     : {name:'Farm',     emoji:'🌾',   cost:60,  kind:'econ', income:7, every:2.6, color:'#c9a227', desc:'+7 gold / 2.6s'}
 };
 const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm'];
+const MAXPER=3;                       // you may only place 3 of each unit type
 
 const ENEMIES={
   // --- World 1: the noble army (hand-drawn soldiers) ---
@@ -781,19 +782,25 @@ function showBanner(txt,cls,ms){ const b=$('banner'); b.textContent=txt; b.class
 /* ---------------- build bar ---------------- */
 const UNLOCK={ farmhand:1, poacher:1, farm:1, militia:3, alchemist:5, catapult:7 };
 function unlockedUnit(k){ return S.reached>=UNLOCK[k]; }
+function countOf(k){ return S?S.towers.filter(o=>o.k===k).length:0; }
 function buildBar(){
   const bar=$('bar'); bar.innerHTML='';
   ORDER.forEach(k=>{
-    const d=TOWERS[k]; const lock=!unlockedUnit(k); const card=document.createElement('div');
-    card.className='card'+(k===S.build?' sel':'')+((S.gold<d.cost||lock)?' poor':'')+(lock?' locked':'');
+    const d=TOWERS[k]; const lock=!unlockedUnit(k); const have=countOf(k); const full=have>=MAXPER;
+    const card=document.createElement('div');
+    card.className='card'+(k===S.build?' sel':'')+((S.gold<d.cost||lock||full)?' poor':'')+(lock?' locked':'');
     card.dataset.k=k;
     if(lock){
       card.innerHTML='<div class="ce">🔒</div><div class="cn">'+d.name+'</div>'+
         '<div class="cc" style="color:#c9a24a">Wave '+UNLOCK[k]+'</div><div class="cd">Unlocks as you advance</div>';
       card.onclick=()=>{ tip('🔒 '+d.name+' unlocks at wave '+UNLOCK[k],1500); };
+    }else if(full){
+      card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
+        '<div class="cc" style="color:#e0792b">MAX '+MAXPER+'/'+MAXPER+'</div><div class="cd">You have all '+MAXPER+' '+d.name+'s</div>';
+      card.onclick=()=>{ tip('🚫 You can only place '+MAXPER+' '+d.name+'s',1500); };
     }else{
       card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
-        '<div class="cc">👑 '+d.cost+'</div><div class="cd">'+d.desc+'</div>';
+        '<div class="cc">👑 '+d.cost+' <span style="color:#c3ae7c">· '+have+'/'+MAXPER+'</span></div><div class="cd">'+d.desc+'</div>';
       card.onclick=()=>{ if(S.over)return; S.build=k; locked=null; hideSel(); buildBar(); SFX.ui();
         tip('Selected '+d.name+' — tap a grass tile to place',1500); };
     }
@@ -1060,6 +1067,7 @@ function handleTap(p){
   if(S.towers.some(o=>o.c===t.c&&o.r===t.r)){ return; }
   if(!S.build){return;}
   if(!unlockedUnit(S.build)){ tip('That villager is locked 🔒',1400); return; }
+  if(countOf(S.build)>=MAXPER){ tip('🚫 Max '+MAXPER+' '+TOWERS[S.build].name+'s — upgrade or sell one first',1700); return; }
   // two-tap: first tap locks a preview on this tile; second tap on the SAME tile places
   if(!locked||locked.c!==t.c||locked.r!==t.r){ locked={c:t.c,r:t.r}; tip('Tap the same tile again to place ⚒️',1600); return; }
   const d=TOWERS[S.build];
