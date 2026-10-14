@@ -358,6 +358,31 @@
   .pk-item .in{font-weight:700;font-size:15px;margin-top:5px}
   .pk-item .ic{font-size:14px;margin-top:5px;font-weight:700}
 
+  /* ---------- PLEBASS (battle pass) ---------- */
+  #pass{background:#1c1206;overflow:hidden;padding:12px 18px}
+  #pass.on{display:flex;flex-direction:column}
+  #pass .mpaper{max-width:1180px;width:100%;height:calc(100% - 56px);margin:0 auto;padding:14px 22px;display:flex;flex-direction:column;overflow:hidden}
+  #passBody{flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto}
+  .pa-xpwrap{border:2.5px solid #2b2418;border-radius:14px;padding:10px 14px;margin:0 0 12px;background:#fff}
+  .pa-xpbar{height:20px;border:2.5px solid #2b2418;border-radius:999px;overflow:hidden;background:#e8e2cf}
+  .pa-xpfill{height:100%;background:linear-gradient(90deg,#b06ad0,#f2cf62);transition:width .3s}
+  .pa-xplbl{display:flex;justify-content:space-between;font-weight:800;font-size:14px;color:#2b2418;margin-top:6px}
+  .pa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .pa-tier{position:relative;border:2.5px solid #2b2418;border-radius:16px;padding:10px 8px 12px;text-align:center;background:#fff;color:#2b2418}
+  .pa-tier .tn{position:absolute;top:-11px;left:10px;background:#2b2418;color:#fbfaf3;font-weight:800;font-size:13px;border-radius:8px;padding:2px 9px}
+  .pa-tier.locked{opacity:.55;filter:grayscale(.55)}
+  .pa-tier.unlocked{border-color:#3f8f3a;background:rgba(63,143,58,.10)}
+  .pa-tier.claimed{border-color:#c08a1e;background:rgba(192,138,30,.14)}
+  .pa-tier.plebreward{border-color:#b06ad0;background:rgba(176,106,208,.12)}
+  .pa-tier .te{height:58px;display:flex;align-items:center;justify-content:center}
+  .pa-tier .te .art{width:56px;height:56px}
+  .pa-tier .tn2{font-weight:800;font-size:15px;margin-top:4px;line-height:1.15}
+  .pa-tier .td{font-size:12px;color:#6a5a3a;margin-top:3px;min-height:28px;line-height:1.2}
+  .pa-tier .tg2{margin-top:6px;border:2px solid #2b2418;border-radius:999px;padding:4px 0;font-weight:800;font-size:13px;background:#fbfaf3}
+  .pa-tier.plebreward .tg2{background:linear-gradient(#e0a8f5,#b06ad0);color:#2b102a;border-color:#5a2a70}
+  .pa-tier .tg2.cant{filter:grayscale(.7) brightness(.85)}
+  .pa-tier .tg2.done{background:#3f8f3a;color:#fff;border-color:#2a6427}
+
   /* ---------- in-run UPGRADES overlay (⬆️) ---------- */
   #upshop{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
   #upshop.on{display:flex}
@@ -380,17 +405,22 @@
   .mbuy.cant{filter:grayscale(.7) brightness(.7);cursor:default}
   #upshop .mclose{text-align:center;margin-top:16px}
 
-  #barwrap{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;z-index:6;
-    display:flex;flex-direction:column;gap:8px;align-items:center}
-  .barrow{display:flex;gap:10px;padding:9px 12px;border-radius:16px;
+  #barwrap{position:absolute;left:0;right:0;bottom:8px;z-index:6;
+    display:flex;flex-direction:column;gap:6px;align-items:center;transition:transform .18s}
+  #barwrap.hide{transform:translateY(140%)}
+  #barTag{display:flex;gap:8px;align-items:center;opacity:.9}
+  #barTag .bt{border:2px solid #2c2008;border-radius:999px;padding:3px 12px;font:800 12px Georgia,serif;
+    color:#f2cf62;background:linear-gradient(rgba(46,32,12,.95),rgba(24,16,6,.95));cursor:pointer}
+  #barTag .bt:active{transform:translateY(1px)}
+  .barrow{display:flex;gap:7px;padding:7px 10px;border-radius:14px;
     border:2px solid #2c2008;background:linear-gradient(rgba(46,32,12,.95),rgba(24,16,6,.95));
-    box-shadow:0 8px 24px rgba(0,0,0,.6);position:relative;align-items:flex-start}
+    box-shadow:0 8px 24px rgba(0,0,0,.6);position:relative;align-items:flex-start;flex-wrap:wrap;justify-content:center;max-width:1100px}
   .barrow[data-kind="buildings"]{border-color:#243a52;background:linear-gradient(rgba(16,30,48,.95),rgba(8,16,28,.95))}
   .barrow .btag{position:absolute;left:10px;top:-11px;font:800 11px Georgia,serif;letter-spacing:2px;
     padding:2px 9px;border-radius:8px;background:#2c2008;color:#f2cf62;border:2px solid #2c2008}
   .barrow[data-kind="buildings"] .btag{background:#16283c;color:#9fd0ff}
-  .card{position:relative;width:96px;border-radius:12px;border:2px solid #3a2a10;cursor:pointer;
-    background:linear-gradient(rgba(70,52,22,.8),rgba(36,25,10,.85));padding:7px 6px 9px;text-align:center;
+  .card{position:relative;width:80px;border-radius:12px;border:2px solid #3a2a10;cursor:pointer;
+    background:linear-gradient(rgba(70,52,22,.8),rgba(36,25,10,.85));padding:6px 5px 7px;text-align:center;
     box-shadow:0 3px 0 rgba(0,0,0,.4);transition:transform .06s}
   .barrow[data-kind="buildings"] .card{background:linear-gradient(rgba(30,44,64,.8),rgba(14,24,38,.85));border-color:#31506e}
   .card:hover{transform:translateY(-3px)}
@@ -398,10 +428,11 @@
   .card.poor{filter:grayscale(.6) brightness(.62)}
   .card.locked{opacity:.7}
   .card.locked .ce{filter:grayscale(.3)}
-  .card .ce{font-size:25px;line-height:1}
-  .card .cn{font:700 12px Georgia,serif;color:#f5e8bf;margin-top:4px}
-  .card .cc{font:700 13px Georgia,serif;color:#f2cf62;margin-top:3px}
-  .card .cd{font:10.5px Georgia,serif;color:#c3ae7c;margin-top:3px;min-height:30px;line-height:1.12}
+  .card .ce{font-size:21px;line-height:1}
+  .card .cn{font:700 11px Georgia,serif;color:#f5e8bf;margin-top:3px}
+  .card .cc{font:700 12px Georgia,serif;color:#f2cf62;margin-top:2px}
+  .card .cd{font:9.5px Georgia,serif;color:#c3ae7c;margin-top:2px;min-height:24px;line-height:1.1}
+  .card.pass{box-shadow:0 0 0 2px #b06ad0,0 3px 0 rgba(0,0,0,.4)}
 
   #banner{position:absolute;left:50%;top:92px;transform:translate(-50%,-8px);z-index:7;opacity:0;
     padding:10px 24px;border-radius:12px;border:2px solid #2c2008;
@@ -570,6 +601,7 @@
         <div class="mbtn" id="rankedBtn"><span class="ic">⚔️</span> RANKED BATTLE</div>
         <div class="mbtn" id="martBtn"><span class="ic">🔑</span> PLEB MART</div>
         <div class="mbtn" id="packBtn"><span class="ic">🎒</span> PLEBPACK</div>
+        <div class="mbtn" id="passBtn"><span class="ic">🎫</span> PLEBASS</div>
         <div class="mbtn" id="boardBtn"><span class="ic">🏆</span> LEADERBOARD</div>
       </div>
       <div class="worldstrip" id="worldStrip"></div>
@@ -659,6 +691,7 @@
     <div id="tip"></div>
 
     <div id="barwrap">
+      <div id="barTag"><span class="bt" id="barToggle">📋 Hide tray</span></div>
       <div class="barrow" id="bar" data-kind="units"><span class="btag">UNITS</span></div>
       <div class="barrow" id="bar2" data-kind="buildings"><span class="btag">BUILDINGS</span></div>
     </div>
@@ -733,6 +766,25 @@
     </div>
   </div>
 
+  <!-- ============ PLEBASS (battle pass) ============ -->
+  <div id="pass" class="screen">
+    <div class="mchrome">
+      <div class="mhome" id="passHome">🏠 HOME</div>
+      <div class="mright">
+        <div class="c">⭐ <span id="passXp">0</span> XP</div>
+        <div class="c">🎫 Tier <span id="passTier">1</span>/<span id="passMax">20</span></div>
+      </div>
+    </div>
+    <div class="mpaper">
+      <div class="pm-head">
+        <div class="pm-logo"><span>PLEB</span><span>ASS</span></div>
+        <div class="pm-sub" style="margin:0;max-width:560px;text-align:left">Earn ⭐ XP by fighting — clear waves, slay foes, win battles. Climb tiers to unlock <b>new plebs</b>, gold and Blep. Free for every pleb.</div>
+      </div>
+      <div id="passBody"></div>
+      <div class="pm-back"><div class="mbtn small" id="passBack" style="width:220px">⬅ Back to Menu</div></div>
+    </div>
+  </div>
+
   <!-- ============ IN-RUN UPGRADES (⬆️) ============ -->
   <div id="upshop"><div class="mcard">
     <h2>⬆️ UPGRADES</h2>
@@ -787,11 +839,12 @@ cv.width=W; cv.height=H;
 
 /* ---------------- screens ---------------- */
 function show(id){
-  ['menu','how','worlds','game','mart','pack','board'].forEach(s=>$(s).classList.toggle('on',s===id));
+  ['menu','how','worlds','game','mart','pack','pass','board'].forEach(s=>$(s).classList.toggle('on',s===id));
   if(id==='menu')populateWorldStrip();
   if(id==='worlds')populateWorldSelect();
   if(id==='mart')renderMart();
   if(id==='pack')renderPack();
+  if(id==='pass')renderPass();
   if(id==='board')renderBoard();
 }
 function populateWorldStrip(){
@@ -834,6 +887,9 @@ $('rankedBtn').onclick=()=>{ initAudio(); newBattle(true); show('game'); };
 if($('raidBtn'))$('raidBtn').onclick=()=>launchRaid();
 $('martBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('mart'); };
 $('packBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('pack'); SFX.ui(); };
+$('passBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('pass'); SFX.ui(); };
+$('passHome').onclick=()=>{ SFX.ui(); show('menu'); };
+$('passBack').onclick=()=>show('menu');
 $('packHome').onclick=()=>{ SFX.ui(); show('menu'); };
 $('packBack').onclick=()=>show('menu');
 $('martBack').onclick=()=>show('menu');
@@ -926,11 +982,18 @@ const TOWERS={
   militia  : {name:'Militia',  emoji:'🛡️',   cost:80,  dmg:27, rate:1.05, range:96,  kind:'melee',  color:'#4a72b0', desc:'Tanky spear wall'},
   alchemist: {name:'Alchemist',emoji:'🧪',   cost:100, dmg:17, rate:1.0,  range:180, kind:'splash', splash:56, color:'#8a52c8', desc:'Potion lob · AoE'},
   catapult : {name:'Catapult', emoji:'🪨',   cost:140, dmg:46, rate:1.95, range:300, kind:'splash', splash:92, color:'#8a6a3a', desc:'Long range siege'},
-  farm     : {name:'Farm',     emoji:'🌾',   cost:60,  kind:'econ', income:7, every:2.6, color:'#c9a227', desc:'+7 gold / 2.6s'}
+  farm     : {name:'Farm',     emoji:'🌾',   cost:60,  kind:'econ', income:7, every:2.6, color:'#c9a227', desc:'+7 gold / 2.6s'},
+  // ---- PLEBASS battle-pass plebs (unlocked on the battle pass, not by wave) ----
+  berserker:{name:'Berserker', emoji:'🪓', cost:130, dmg:36, rate:0.46, range:76,  kind:'melee',  color:'#b0603a', desc:'Frenzied axe — fast & hard'},
+  longbow  :{name:'Longbowman',emoji:'🎯', cost:160, dmg:40, rate:1.35, range:360, kind:'ranged', color:'#3f7d5f', desc:'Sniper — huge range'},
+  dragonling:{name:'Dragonling',emoji:'🐉',cost:190, dmg:30, rate:1.2,  range:210, kind:'splash', splash:72, color:'#c0402a', desc:'Fire breath · AoE'},
+  knight   :{name:'Turned Knight',emoji:'🐴',cost:170,dmg:45, rate:0.9, range:94,  kind:'melee',  color:'#4a72b0', desc:'Defected noble — tanky bruiser'},
+  mortar   :{name:'Mortar',   emoji:'💣',   cost:240, dmg:70, rate:2.4,  range:380, kind:'splash', splash:104, color:'#7a6a3a', desc:'Siege range · heavy splash'},
+  orchard  :{name:'Orchard',  emoji:'🍎',   cost:120, kind:'econ', income:14, every:2.2, color:'#b03a3a', desc:'+14 gold / 2.2s'}
 };
-const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm'];
+const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm','berserker','longbow','dragonling','knight','mortar','orchard'];
 const MAXPER=3;                       // build a max of 3 of anything that is capped (see CAP)
-const CAP={farm:3};                   // only Farms are capped — other units you can place freely
+const CAP={farm:3, orchard:2};        // only Farms & Orchards are capped — other units you can place freely
 function capOf(k){ return CAP[k]||Infinity; }
 
 /* ---------------- BUILDINGS (the second bar) ---------------- */
@@ -1048,8 +1111,11 @@ let bnrT=0;
 function showBanner(txt,cls,ms){ const b=$('banner'); b.textContent=txt; b.className='on '+(cls||''); bnrT=Date.now()+(ms||1500); }
 
 /* ---------------- build bar ---------------- */
-const UNLOCK={ farmhand:1, poacher:1, farm:1, militia:3, alchemist:5, catapult:7 };
-function unlockedUnit(k){ return S.reached>=UNLOCK[k]; }
+const UNLOCK={ farmhand:1, poacher:1, farm:1, militia:3, alchemist:5, catapult:7,
+  berserker:9999, longbow:9999, dragonling:9999, knight:9999, mortar:9999, orchard:9999 };
+function unlockedUnit(k){
+  if(typeof BPASS!=='undefined'&&BPASS.unlocked&&BPASS.unlocked.indexOf(k)>=0) return true;
+  return S.reached>=(UNLOCK[k]||1); }
 function countOf(k){ return S?S.towers.filter(o=>o.k===k).length:0; }
 function buildBar(){
   const bar=$('bar'); bar.innerHTML='<span class="btag">UNITS</span>';
@@ -1557,6 +1623,7 @@ function battleWin(){
   if(S.over)return; S.over=true; S.running=false; hideSel();
   recordStats();
   if(S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); LB.rank++; }
+  addPassXP(S.ranked?150:100);
   saveLB();
   $('ovT').style.color='#f6dd8b'; $('ovT').textContent='\ud83c\udff0 ENEMY BASE DESTROYED!';
   $('ovP').innerHTML='You smashed <b>'+S.oppName+'</b>\u2019s base with '+S.raid.length+' raiders still standing.<br>'+
@@ -1635,6 +1702,97 @@ function packClick(slot,ti){
   PACK_EQ[k][slot]=(packTier(k,slot)===ti)?null:ti;
   saveJSON('plebania_pack_eq',PACK_EQ);
   SFX.ui(); renderPack();
+}
+
+/* =========================================================
+   PLEBASS — the battle pass. Earn ⭐ XP by fighting; climb tiers
+   to unlock new plebs + loot. New plebs unlock ONLY through here.
+   ========================================================= */
+const BPASS_KEY='plebania_bpass';
+let BPASS=loadJSON(BPASS_KEY,{xp:0,tiers:0,unlocked:[],claimed:[]});
+if(!BPASS.unlocked||!BPASS.unlocked.length) BPASS.unlocked=['berserker'];
+if(!BPASS.claimed) BPASS.claimed=[];
+function saveBP(){ saveJSON(BPASS_KEY,BPASS); }
+const PASS_MAX=20, PASS_XP_PER=90;   // 90 ⭐ per tier
+const PASS_TIERS=[
+  {t:1,  type:'pleb', k:'berserker', name:'Berserker',   e:'🪓', d:'Fast axe frenzy — unlock the Berserker pleb'},
+  {t:2,  type:'gold', amount:150, e:'👑', name:'+150 gold'},
+  {t:3,  type:'blep', amount:250, e:'⚡', name:'+250 Blep'},
+  {t:4,  type:'pleb', k:'longbow',   name:'Longbowman',  e:'🎯', d:'Sniper pleb — huge range'},
+  {t:5,  type:'gold', amount:250, e:'👑', name:'+250 gold'},
+  {t:6,  type:'gift', amount:1, e:'📦', name:'Pleb Box'},
+  {t:7,  type:'pleb', k:'dragonling',name:'Dragonling',  e:'🐉', d:'Fire breath pleb — AoE splash'},
+  {t:8,  type:'blep', amount:500, e:'⚡', name:'+500 Blep'},
+  {t:9,  type:'gold', amount:400, e:'👑', name:'+400 gold'},
+  {t:10, type:'pleb', k:'knight',    name:'Turned Knight',e:'🐴', d:'A defected noble joins your side'},
+  {t:11, type:'gift', amount:1, e:'📦', name:'Pleb Box'},
+  {t:12, type:'blep', amount:750, e:'⚡', name:'+750 Blep'},
+  {t:13, type:'gold', amount:500, e:'👑', name:'+500 gold'},
+  {t:14, type:'skin', amount:'knight', e:'🧑🌾', name:'Knight Plekey'},
+  {t:15, type:'pleb', k:'mortar',    name:'Mortar',      e:'💣', d:'Siege splash pleb — long range'},
+  {t:16, type:'gift', amount:1, e:'📦', name:'Pleb Box'},
+  {t:17, type:'blep', amount:1200, e:'⚡', name:'+1,200 Blep'},
+  {t:18, type:'gold', amount:800, e:'👑', name:'+800 gold'},
+  {t:19, type:'pleb', k:'orchard',   name:'Orchard',     e:'🍎', d:'Big economy — +14 gold / 2.2s'},
+  {t:20, type:'skin', amount:'king', e:'👑', name:'Pleb King Plekey'}
+];
+function passTierXP(){ return PASS_XP_PER; }
+function totalPassXP(){ return (PASS_MAX-1)*PASS_XP_PER; }
+function recomputeTiers(){ let t=0; while(t<PASS_MAX-1 && BPASS.xp>=(t+1)*PASS_XP_PER) t++; return t; }
+BPASS.tiers=recomputeTiers();
+function addPassXP(n){
+  if(!n)return; BPASS.xp+=n; const before=BPASS.tiers;
+  while(BPASS.tiers<PASS_MAX-1 && BPASS.xp>=(BPASS.tiers+1)*PASS_XP_PER) BPASS.tiers++;
+  if(BPASS.tiers>before){ SFX.up(); showBanner('🎫 PLEBASS TIER '+BPASS.tiers+' reached!','gold',2000); }
+  saveBP();
+}
+function tierOf(t){ return PASS_TIERS[t-1]; }
+function passState(t){      // locked | unlocked | claimed
+  const tier=BPASS.tiers+1;                 // tiers unlocked so far (tier N is claimable once reached)
+  if(BPASS.claimed.indexOf(t)>=0) return 'claimed';
+  if(t<=tier) return 'unlocked';
+  return 'locked';
+}
+function claimPass(t){
+  if(passState(t)!=='unlocked')return;
+  const r=tierOf(t); if(!r)return;
+  if(r.type==='pleb'){
+    if(BPASS.unlocked.indexOf(r.k)<0) BPASS.unlocked.push(r.k);
+    showBanner('🎫 UNLOCKED: '+r.name+' pleb!','gold',1900);
+  }else if(r.type==='gold'){ PGOLD+=r.amount; saveJSON('plebania_pgold',PGOLD); showBanner('👑 +'+r.amount+' shop gold!','gold',1600); }
+  else if(r.type==='blep'){ PLEB+=r.amount; saveJSON('plebania_pleb',PLEB); showBanner('⚡ +'+r.amount+' Blep!','gold',1600); }
+  else if(r.type==='gift'){ PLEB+=300; saveJSON('plebania_pleb',PLEB); if(Math.random()<0.35) rollKey(); showBanner('📦 Pleb Box: +300 Blep','gold',1600); }
+  else if(r.type==='skin'){ const id=r.amount; if(!hasKey(id)){ PLEKEYS.push(id); saveJSON('plebania_plekeys',PLEKEYS); } showBanner('🔑 Plekey: '+r.name+'!','gold',1800); }
+  BPASS.claimed.push(t); saveBP();
+  SFX.up(); for(let i=0;i<16;i++)burst(W/2,H/2,'#ffe08a');
+  renderPass();
+}
+function renderPass(){
+  if(!$('passBody'))return;
+  if($('passXp'))$('passXp').textContent=Math.floor(BPASS.xp);
+  if($('passTier'))$('passTier').textContent=BPASS.tiers+1;
+  if($('passMax'))$('passMax').textContent=PASS_MAX;
+  const next=BPASS.tiers+1, need=next*PASS_XP_PER;
+  const cur=BPASS.tiers*PASS_XP_PER;
+  const pct=Math.max(0,Math.min(100,Math.round((BPASS.xp-cur)/(need-cur)*100)));
+  let h='<div class="pa-xpwrap"><div class="pa-xpbar"><div class="pa-xpfill" style="width:'+(BPASS.tiers>=PASS_MAX-1?100:pct)+'%"></div></div>'+
+    '<div class="pa-xplbl"><span>⭐ '+Math.floor(BPASS.xp)+' XP</span><span>'+
+      (BPASS.tiers>=PASS_MAX-1?'ALL TIERS DONE 🎉':(need-BPASS.xp)+' XP to Tier '+next)+'</span></div></div>';
+  h+='<div class="pa-grid">';
+  PASS_TIERS.forEach(r=>{
+    const st=passState(r.t);
+    const art = r.type==='pleb' ? (TOWERS[r.k].emoji) : (r.type==='skin' ? '🔑' : r.e);
+    h+='<div class="pa-tier '+(r.type==='pleb'?'plebreward ':'')+st+'"><div class="tn">TIER '+r.t+'</div>'+
+      '<div class="te">'+art+'</div><div class="tn2">'+r.name+'</div>'+
+      '<div class="td">'+(r.d||(r.type==='blep'?'Pleb currency':r.type==='gold'?'Shop gold':r.type==='gift'?'Random loot box':'Plekey unlock'))+'</div>';
+    if(st==='claimed') h+='<div class="tg2 done">✔ Claimed</div>';
+    else if(st==='unlocked') h+='<div class="tg2" data-claim="'+r.t+'">Claim!</div>';
+    else h+='<div class="tg2 cant">🔒 Tier '+r.t+'</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  $('passBody').innerHTML=h;
+  $('passBody').querySelectorAll('[data-claim]').forEach(el=>el.onclick=()=>claimPass(+el.dataset.claim));
 }
 
 /* =========================================================
@@ -1906,6 +2064,7 @@ function kill(e,byPlayer){
   if(e.dead)return; e.dead=true;
   const bounty=Math.round(e.gold*(1+(e.rank==='boss'||e.rank==='king'?0:0)));
   S.gold+=e.gold; S.slain++;
+  addPassXP(e.rank==='boss'||e.rank==='king'?60:8);
   addDmg(e.x,e.y-e.sz*0.7,'+'+e.gold,'#8ef0ff');
   const big=e.rank==='boss'||e.rank==='king';
   for(let i=0;i<(big?34:14);i++)burst(e.x,e.y,big?'#ffcf5a':'#d8c088');
@@ -2646,6 +2805,7 @@ function endWave(){
   if(S.wave+1>S.reached){ S.reached=S.wave+1; }
   const bonus=20+S.wave*8;
   S.gold+=bonus;
+  addPassXP(45+S.wave*6);
   addDmg(W/2,H/2-40,'WAVE CLEAR  +👑'+bonus,'#8ef0ff');
   SFX.win();
   if(S.wave>=MAXWAVE){ endGame(true); return; }
@@ -2684,6 +2844,8 @@ function hideOv(){ $('ov').classList.remove('on'); }
 $('ovMenu').onclick=()=>{ hideOv(); show('menu'); };
 populateWorldStrip();
 $('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
+$('barToggle').onclick=()=>{ const w=$('barwrap'); const hid=w.classList.toggle('hide');
+  $('barToggle').textContent=hid?'📋 Show tray':'📋 Hide tray'; SFX.ui(); };
 $('homeBtn').onclick=()=>{ if(!S||S.over)return; $('ov').classList.remove('on'); hideSel(); show('menu'); SFX.ui(); };
 $('upsBtn').onclick=()=>{ if(!S||S.over)return; openUp(); };
 $('upClose').onclick=()=>closeUp();
