@@ -1276,25 +1276,31 @@ function renderMart(){
     t.textContent=label; t.onclick=()=>{ MARTTAB=id; SFX.ui(); renderMart(); }; tabs.appendChild(t); });
   const body=$('martBody');
 
-  // ---- MONEY BUNDLES tab: the real-money packs (TEST checkout) ----
+  // ---- MONEY BUNDLES tab: 1:1 with Nicholas's drawing (empty price boxes + Blep bundle + Plekey) ----
   if(MARTTAB==='money'){
     body.innerHTML=
-      '<div class="pm-sub" style="margin:0 0 8px">Tap a bundle \u2014 checkout works but takes <b>no real payment</b> yet (testing).</div>'+
-      '<div class="mrow">'+BUNDLES.slice(0,3).map(b=>
-        '<div class="mbx" data-buy="'+b.key+'"><div class="mtag">$'+b.usd.toFixed(2)+'</div>'+
-        '<div class="art">'+svg(b.art)+'</div>'+
-        '<div><div class="bt">'+b.name+'</div><div class="bd">'+b.desc+'</div></div>'+
-        '<div class="pbuy">Buy</div></div>').join('')+'</div>'+
-      '<div class="mcombo" data-buy="mega"><div class="mtag">$'+BUNDLES[3].usd.toFixed(2)+'</div>'+
-        '<div class="art">'+svg(BUNDLES[3].art)+'</div>'+
-        '<div><div class="bt">'+BUNDLES[3].name+'</div><div class="bd">'+BUNDLES[3].desc+'</div></div>'+
-        '<div class="pbuy">Buy</div></div>'+
-      '<div class="mcombo" data-buy="combo"><div class="mtag">$'+BUNDLES[4].usd.toFixed(2)+'</div>'+
-        '<div class="art">'+svg(BUNDLES[4].art)+'</div>'+
-        '<div><div class="bt">'+BUNDLES[4].name+'</div><div class="bd">'+BUNDLES[4].desc+'</div></div>'+
-        '<div class="pbuy">Buy</div></div>';
-    body.querySelectorAll('[data-buy]').forEach(el=>el.onclick=()=>{
-      const b=BUNDLES.find(x=>x.key===el.dataset.buy); if(b)openCheckout(b); });
+      '<div class="pm-r1">'+
+        '<div class="pbox" id="bx0"><div class="price">$2.99</div></div>'+
+        '<div class="pbox" id="bx1"><div class="price">$4.99</div></div>'+
+        '<div class="pbox" id="bx2"><div class="price">$9.99</div></div>'+
+      '</div>'+
+      '<div class="pm-r2">'+
+        '<div class="pbox tall" id="mega"><div class="price">$14.99</div></div>'+
+        '<div class="pcomb" id="combo">'+
+          '<div class="pcol"><div class="ppill">3,000 Blep</div>'+
+            '<div class="psqs"><div class="psq"><div class="q1">20</div><div class="q2"><span class="arr">\u2190</span>Adoption papers</div></div>'+
+            '<div class="psq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
+            '<div class="plabel">PLEDOPTION</div></div>'+
+          '<div class="pcol2"><div class="pt">Plekey</div>'+
+            '<div class="pbody">'+svg('key')+'<ul><li>- Custom sfx</li><li>- Unique style</li><li>- Different rarity</li></ul></div></div>'+
+          '<div class="price">$19.99</div>'+
+        '</div>'+
+      '</div>';
+    body.querySelector('#bx0').onclick=()=>openCheckout(BUNDLES[0]);
+    body.querySelector('#bx1').onclick=()=>openCheckout(BUNDLES[1]);
+    body.querySelector('#bx2').onclick=()=>openCheckout(BUNDLES[2]);
+    body.querySelector('#mega').onclick=()=>openCheckout(BUNDLES[3]);
+    body.querySelector('#combo').onclick=()=>openCheckout(BUNDLES[4]);
     return;
   }
 
