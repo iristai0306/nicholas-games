@@ -144,66 +144,59 @@
     background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);box-shadow:0 4px 0 #4a3409}
   #martBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
 
-  /* ---------- PLEB MART (its own screen — built from Nicholas's sketch) ---------- */
-  #mart{background:#241708;overflow:auto;padding:30px 40px 46px}
-  #mart .mpaper{max-width:1180px;margin:0 auto;border:3px solid #31281c;border-radius:18px;
-    background:linear-gradient(#fdf9ee,#f0e6cc);box-shadow:0 16px 40px rgba(0,0,0,.55);padding:22px 26px 24px}
-  .pm-head{display:flex;align-items:flex-start;gap:26px;flex-wrap:wrap;border-bottom:3px solid #31281c;padding-bottom:14px;margin-bottom:18px}
-  .pm-logo{font:900 46px/0.84 Georgia,'Times New Roman',serif;color:#2b2418;letter-spacing:2px}
+  /* ---------- PLEB MART (its own screen — a 1:1 copy of Nicholas's drawing) ---------- */
+  #mart{background:#241708;overflow:auto;padding:20px 24px 40px}
+  #mart .mchrome{max-width:1180px;margin:0 auto 12px;display:flex;gap:12px;align-items:center;justify-content:flex-end}
+  #mart .mchrome .c{font:700 15px Georgia,serif;color:#e8d9ac;background:rgba(0,0,0,.3);
+    border:1px solid #5a3f14;border-radius:999px;padding:6px 14px}
+  #mart .mpaper{max-width:1180px;margin:0 auto;background:#fbfaf3;border-radius:6px;
+    box-shadow:0 18px 44px rgba(0,0,0,.6);padding:28px 32px 34px;position:relative;
+    background-image:radial-gradient(rgba(0,0,0,.03) 1px,transparent 1px);background-size:5px 5px;
+    font-family:'Chalkboard SE','Comic Sans MS','Segoe Print','Bradley Hand','Marker Felt',cursive,Georgia,serif;color:#2b2418}
+  #mart .mpaper *{font-family:inherit}
+  .pm-head{display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;margin-bottom:22px}
+  .pm-logo{font-weight:900;font-size:56px;line-height:.82;letter-spacing:2px;color:#2b2418}
   .pm-logo span{display:block}
-  .pm-cr{display:flex;gap:12px;align-items:center;margin-left:auto;flex-wrap:wrap}
-  .pm-cr .c{font:800 16px Georgia,serif;color:#2b2418;border:2px solid #31281c;border-radius:999px;padding:6px 14px;background:#fcf7ea}
-  .pm-tabs{display:flex;gap:10px;flex-wrap:wrap;width:100%;margin-top:2px}
-  .pm-tab{border:2.5px solid #31281c;border-radius:999px;padding:8px 20px;font:700 17px Georgia,serif;color:#2b2418;
-    background:#fcf7ea;cursor:pointer;transition:transform .06s}
-  .pm-tab:hover{transform:translateY(-2px)}
-  .pm-tab.on{background:#31281c;color:#fcf7ea}
-  .pm-row{display:flex;gap:18px;align-items:stretch;flex-wrap:wrap}
-  .pm-box{position:relative;border:2.5px solid #31281c;border-radius:16px;background:#fcf7ea;padding:16px 16px 46px;
-    min-height:140px;flex:1 1 190px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-  .pm-box .pm-e{font-size:46px;line-height:1}
-  .pm-box .pm-n{font:800 17px Georgia,serif;color:#2b2418;margin-top:8px}
-  .pm-box .pm-d{font:13px Georgia,serif;color:#5a4d36;margin-top:4px}
-  .pm-price{position:absolute;right:14px;bottom:10px;font:800 22px Georgia,serif;color:#2b2418}
-  .pm-buy{position:absolute;left:14px;bottom:10px;border:2px solid #31281c;border-radius:10px;padding:5px 12px;
-    font:800 14px Georgia,serif;color:#fcf7ea;background:#31281c;cursor:pointer}
-  .pm-buy.cant{opacity:.38;cursor:default}
-  .pm-tall{flex:0 0 232px;min-height:210px}
-  .pm-bundle{flex:1 1 320px;border:2.5px solid #31281c;border-radius:16px;background:#fcf7ea;padding:16px;
-    display:flex;flex-direction:column;align-items:center}
-  .pm-pill{border:2.5px solid #31281c;border-radius:999px;padding:6px 24px;font:800 21px Georgia,serif;color:#2b2418}
-  .pm-sqs{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;justify-content:center}
-  .pm-sq{border:2.5px solid #31281c;border-radius:12px;padding:10px 16px;min-width:156px;text-align:center}
-  .pm-sq .q1{font:900 30px Georgia,serif;color:#2b2418}
-  .pm-sq .q2{font:700 15px Georgia,serif;color:#2b2418}
-  .pm-arrow{font:900 26px Georgia,serif;color:#2b2418;margin-right:4px}
-  .pm-bl{font:800 16px Georgia,serif;color:#2b2418;margin-top:14px;letter-spacing:1px}
-  .pm-plekey{flex:0 0 300px;border:2.5px solid #31281c;border-radius:16px;background:#fcf7ea;padding:14px 16px 46px;position:relative}
-  .pm-plekey .pt{font:800 20px Georgia,serif;color:#2b2418;text-align:center}
-  .pm-plekey .pbody{display:flex;gap:12px;align-items:center;margin-top:8px}
-  .pm-plekey .pchar{font-size:54px;line-height:1}
-  .pm-plekey ul{margin:0;padding-left:18px;font:14px Georgia,serif;color:#3f3524}
-  .pm-plekey li{margin:5px 0}
-  .pm-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  .pm-card{position:relative;border:2.5px solid #31281c;border-radius:14px;background:#fcf7ea;padding:16px;text-align:center}
-  .pm-card .pe{font-size:44px}
-  .pm-card .pn{font:800 17px Georgia,serif;color:#2b2418;margin-top:6px}
-  .pm-card .pd{font:13px Georgia,serif;color:#5a4d36;margin-top:4px;line-height:1.35}
-  .pm-btndisplay{display:inline-block;border:2px solid #31281c;border-radius:10px;padding:7px 16px;margin-top:10px;
-    font:800 15px Georgia,serif;color:#fcf7ea;background:#31281c;cursor:pointer}
-  .pm-btndisplay.cant{opacity:.38;cursor:default}
-  .pm-code{display:flex;gap:10px;justify-content:center;margin:14px 0}
-  .pm-code input{flex:1;max-width:340px;padding:11px 14px;border-radius:10px;border:2.5px solid #31281c;background:#fffdf6;color:#2b2418;font:800 16px Georgia,serif}
-  .pm-note{color:#8a5a2b;font:italic 13px Georgia,serif;text-align:center;margin:10px 0 2px}
-  .pm-news{font:15px/1.6 Georgia,serif;color:#3f3524;padding-left:6px}
-  .pm-news li{margin:8px 0}
-  .pm-sk{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}
-  .pm-skin{border:2.5px solid #31281c;border-radius:12px;padding:8px 4px;text-align:center;background:#fcf7ea}
+  .pm-tabs{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .pm-tab{border:2.5px solid #2b2418;border-radius:999px;padding:7px 22px;font-weight:700;font-size:20px;color:#2b2418;
+    background:transparent;cursor:pointer}
+  .pm-tab.on{background:#2b2418;color:#fbfaf3}
+  .pm-r1{display:grid;grid-template-columns:1fr 1.28fr 1.5fr;gap:16px}
+  .pm-r2{display:grid;grid-template-columns:.92fr 1.55fr 1.42fr;gap:16px;margin-top:16px}
+  .pbox{position:relative;border:2.5px solid #2b2418;min-height:152px;cursor:pointer;border-radius:22px 28px 20px 26px/26px 20px 28px 22px}
+  .pbox.tall{min-height:252px}
+  .pbox:hover,.pplekey:hover,.pbundle:hover{border-color:#8a5a2b;background:rgba(138,90,43,.06)}
+  .price{position:absolute;right:16px;bottom:10px;font-weight:700;font-size:27px;color:#2b2418}
+  .pbundle{position:relative;border:2.5px solid #2b2418;border-radius:24px;min-height:252px;padding:18px 12px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
+  .ppill{border:2.5px solid #2b2418;border-radius:999px;padding:6px 28px;font-weight:700;font-size:25px;color:#2b2418}
+  .psqs{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap;justify-content:center}
+  .psq{border:2.5px solid #2b2418;border-radius:12px;padding:10px 16px;min-width:152px;text-align:center;color:#2b2418}
+  .psq .q1{font-weight:700;font-size:31px}
+  .psq .q2{font-weight:700;font-size:18px;margin-top:2px}
+  .psq .arr{font-weight:900;margin-right:3px}
+  .plabel{font-weight:700;font-size:21px;margin-top:16px;letter-spacing:1px;color:#2b2418}
+  .pplekey{position:relative;border:2.5px solid #2b2418;border-radius:24px;min-height:252px;padding:14px 16px 48px;cursor:pointer}
+  .pplekey .pt{font-weight:700;font-size:23px;color:#2b2418}
+  .pplekey .pbody{display:flex;gap:8px;align-items:center;margin-top:6px}
+  .pplekey ul{list-style:none;margin:0;padding:0;font-size:19px;color:#2b2418}
+  .pplekey li{margin:7px 0}
+  .pkey-svg{width:104px;height:104px;flex:0 0 auto}
+  .pm-sub{text-align:center;font-size:19px;margin:0 0 16px;color:#2b2418}
+  .pm-sk{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+  .pm-skin{border:2.5px solid #2b2418;border-radius:16px;padding:10px 6px;text-align:center}
   .pm-skin.owned{border-color:#3f8f3a}
-  .pm-skin .sn{font:700 12px Georgia,serif;color:#2b2418;margin-top:6px}
-  .pm-skin .sr{font:11px Georgia,serif;margin-top:2px}
-  .pm-back{text-align:center;margin-top:20px}
-  .pm-sub{color:#5a4d36;font:italic 15px Georgia,serif;text-align:center;margin:0 0 14px}
+  .pm-skin .sn{font-weight:700;font-size:15px;margin-top:6px}
+  .pm-skin .sr{font-size:13px;margin-top:2px;font-weight:700}
+  .pm-btndisplay{display:inline-block;border:2.5px solid #2b2418;border-radius:999px;padding:5px 15px;margin-top:8px;
+    font-weight:700;font-size:15px;cursor:pointer}
+  .pm-btndisplay.cant{opacity:.4;cursor:default}
+  .pm-code{display:flex;gap:10px;justify-content:center;margin:16px 0}
+  .pm-code input{flex:1;max-width:320px;padding:11px 14px;border-radius:10px;border:2.5px solid #2b2418;background:#fff;font:700 17px inherit}
+  .pm-note{text-align:center;font-size:15px;margin:10px 0}
+  .pm-news{margin:0;padding-left:4px;list-style:none}
+  .pm-news li{margin:9px 0;font-size:18px}
+  .pm-back{text-align:center;margin-top:16px}
 
   /* ---------- in-run UPGRADES overlay (⬆️) ---------- */
   #upshop{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
@@ -494,16 +487,16 @@
     </div>
   </div>
 
-  <!-- ============ PLEB MART (its own screen — built from Nicholas's sketch) ============ -->
+  <!-- ============ PLEB MART (its own screen — 1:1 copy of Nicholas's drawing) ============ -->
   <div id="mart" class="screen">
+    <div class="mchrome">
+      <div class="c">👑 <span id="martGold">0</span></div>
+      <div class="c">⚡ <span id="martPleb">0</span> Pleb</div>
+      <div class="c">🔑 <span id="martKeys">0</span> Plekeys</div>
+    </div>
     <div class="mpaper">
       <div class="pm-head">
         <div class="pm-logo"><span>PLEB</span><span>MART</span></div>
-        <div class="pm-cr">
-          <div class="c">👑 <span id="martGold">0</span></div>
-          <div class="c">⚡ <span id="martPleb">0</span> Pleb</div>
-          <div class="c">🔑 <span id="martKeys">0</span> Plekeys</div>
-        </div>
         <div class="pm-tabs" id="martTabs"></div>
       </div>
       <div id="martBody"></div>
@@ -930,10 +923,50 @@ function renderMart(){
   const tabs=$('martTabs'); tabs.innerHTML='';
   TABS.forEach(([id,label])=>{ const t=document.createElement('div'); t.className='pm-tab'+(MARTTAB===id?' on':'');
     t.textContent=label; t.onclick=()=>{ MARTTAB=id; SFX.ui(); renderMart(); }; tabs.appendChild(t); });
+  const KEY='<svg class="pkey-svg" viewBox="0 0 100 100"><g fill="none" stroke="#2b2418" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="48" cy="40" r="16"/><path d="M33 38 L20 33"/><path d="M63 38 L77 33"/><path d="M41 56 L38 74"/><path d="M55 56 L58 74"/><path d="M38 74 L30 76"/><path d="M58 74 L66 76"/></g><circle cx="42" cy="36" r="2.6" fill="#2b2418"/><circle cx="54" cy="36" r="2.6" fill="#2b2418"/></svg>';
   const body=$('martBody');
-  if(MARTTAB==='pledoption'){
-    body.innerHTML='<div class="pm-sub">Adopt a pleb \u2014 spend \u26a1 Pleb to unlock collectible PLEKEYS that re-skin your hero.</div><div class="pm-sk" id="skinRow"></div>';
-    const row=body.querySelector('#skinRow');
+  body.innerHTML=
+    '<div class="pm-r1">'+
+      '<div class="pbox" id="bx0"><div class="price">$2.99</div></div>'+
+      '<div class="pbox" id="bx1"><div class="price">$4.99</div></div>'+
+      '<div class="pbox" id="bx2"><div class="price">$9.99</div></div>'+
+    '</div>'+
+    '<div class="pm-r2">'+
+      '<div class="pbox tall" id="mega"><div class="price">$14.99</div></div>'+
+      '<div class="pbundle" id="bundle"><div class="ppill">3,000 Blep</div>'+
+        '<div class="psqs"><div class="psq"><div class="q1">20</div><div class="q2"><span class="arr">\u2190</span>Adoption papers</div></div>'+
+        '<div class="psq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
+        '<div class="plabel">PLEDOPTION</div></div>'+
+      '<div class="pplekey" id="plekey"><div class="pt">Plekey</div>'+
+        '<div class="pbody">'+KEY+'<ul><li>- Custom sfx</li><li>- Unique style</li><li>- Different rarity</li></ul></div>'+
+        '<div class="price">$19.99</div></div>'+
+    '</div>'+
+    '<div id="martExtra"></div>';
+  body.querySelector('#bx0').onclick=()=>openBox('wood');
+  body.querySelector('#bx1').onclick=()=>openBox('iron');
+  body.querySelector('#bx2').onclick=()=>openBox('gold');
+  body.querySelector('#mega').onclick=buyMega;
+  body.querySelector('#bundle').onclick=buyMega;
+  body.querySelector('#plekey').onclick=buyPlekey;
+  const ex=body.querySelector('#martExtra');
+  if(MARTTAB==='codes'){
+    ex.innerHTML='<div class="pm-code"><input id="codeInput" maxlength="24" placeholder="ENTER CODE\u2026"><div class="pm-btndisplay" id="codeGo">Redeem</div></div>'+
+      '<div class="pm-note">Codes to try: WELCOME \u00b7 UPRISING \u00b7 PLEB2026</div>';
+    body.querySelector('#codeGo').onclick=redeemCode;
+    body.querySelector('#codeInput').addEventListener('keydown',e=>{ if(e.key==='Enter')redeemCode(); });
+  }else if(MARTTAB==='gift'){
+    const ready=!(GIFT&&Date.now()-GIFT<86400000);
+    ex.innerHTML='<div class="pm-note" style="margin-top:18px">Daily gift: +250 gold \ud83d\udc51 and +250 Pleb \u26a1</div>'+
+      '<div style="text-align:center"><div class="pm-btndisplay'+(ready?'':' cant')+'" id="giftGo">'+(ready?'Claim gift':'Come back tomorrow')+'</div></div>';
+    if(ready)body.querySelector('#giftGo').onclick=claimGift;
+  }else if(MARTTAB==='news'){
+    ex.innerHTML='<ul class="pm-news" style="margin-top:18px"><li>\u270a THE UPRISING \u2014 slain nobles defect to your mob!</li>'+
+      '<li>\ud83d\udde1\ufe0f Control your own hero \u2014 drag to run, he auto-attacks.</li>'+
+      '<li>\ud83d\udd11 PLEB MART \u2014 Pledoption center, Pleb boxes, Codes, Gift &amp; News.</li>'+
+      '<li>\u2728 Coming soon \u2014 more Plekeys, hero weapons, boss rush.</li></ul>';
+  }else if(MARTTAB==='pledoption'){
+    ex.innerHTML='<div class="pm-sub" style="margin-top:18px">Pledoption center \u2014 spend \u26a1 Pleb to adopt a Plekey (re-skins your hero).</div><div class="pm-sk" id="skinRow"></div>';
+    const row=ex.querySelector('#skinRow');
     SKINS.forEach(s=>{ const owned=hasKey(s.id); const eq=EQUIPPED===s.id;
       const el=document.createElement('div'); el.className='pm-skin'+(owned?' owned':'');
       el.innerHTML='<div style="font-size:30px">'+s.e+'</div><div class="sn">'+s.name+'</div><div class="sr" style="color:'+RARCOL[s.rarity]+'">'+s.rarity+'</div>';
@@ -941,52 +974,6 @@ function renderMart(){
       btn.textContent= eq?'\u2714 Equipped' : owned?'Equip' : ('\u26a1'+s.cost);
       if(owned||PLEB>=s.cost)btn.onclick=()=>buySkin(s.id);
       el.appendChild(btn); row.appendChild(el); });
-  }else if(MARTTAB==='boxes'){
-    body.innerHTML='<div class="pm-sub">Grab a Pleb box \u2014 a pile of \u26a1 Pleb and a chance at a KEY \ud83d\udd11. Then the big bundle below.</div>'+
-      '<div class="pm-row" id="boxRow"></div>'+
-      '<div class="pm-row" style="margin-top:18px">'+
-        '<div class="pm-box pm-tall" id="megaBox"></div>'+
-        '<div class="pm-bundle"><div class="pm-pill">3,000 Blep</div>'+
-          '<div class="pm-sqs"><div class="pm-sq"><div class="q1">20</div><div class="q2"><span class="pm-arrow">\u2190</span>Adoption papers</div></div>'+
-          '<div class="pm-sq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
-          '<div class="pm-bl">PLEDOPTION</div></div>'+
-        '<div class="pm-plekey"><div class="pt">Plekey</div>'+
-          '<div class="pbody"><div class="pchar">\ud83e\udd16</div><ul><li>Custom sfx</li><li>Unique style</li><li>Different rarity</li></ul></div>'+
-          '<div class="pm-price" style="position:absolute;right:14px;bottom:10px;font:800 22px Georgia,serif">$19.99</div></div>'+
-      '</div>';
-    const row=body.querySelector('#boxRow');
-    BOXES.forEach(b=>{ const el=document.createElement('div'); el.className='pm-box';
-      el.innerHTML='<div class="pm-e">'+b.e+'</div><div class="pm-n">'+b.name+'</div><div class="pm-d">+'+b.pleb+' Pleb \u26a1 \u00b7 '+Math.round(b.keyChance*100)+'% Plekey</div>';
-      const btn=document.createElement('div'); btn.className='pm-buy'+(PGOLD<b.cost?' cant':''); btn.textContent='\ud83d\udc51 '+b.cost;
-      if(PGOLD>=b.cost)btn.onclick=()=>openBox(b.id); el.appendChild(btn);
-      const pr=document.createElement('div'); pr.className='pm-price'; pr.textContent=b.tag; el.appendChild(pr);
-      row.appendChild(el); });
-    const mega=body.querySelector('#megaBox');
-    mega.innerHTML='<div class="pm-e">\ud83d\udce6</div><div class="pm-n">Mega Pack</div><div class="pm-d">3,000 Pleb + 20 papers + 5\u00d7 Pleb Box</div>';
-    const mb=document.createElement('div'); mb.className='pm-buy'+(PGOLD<MEGA.cost?' cant':''); mb.textContent='\ud83d\udc51 '+MEGA.cost;
-    if(PGOLD>=MEGA.cost)mb.onclick=()=>buyMega(); mega.appendChild(mb);
-    const mp=document.createElement('div'); mp.className='pm-price'; mp.textContent=MEGA.tag; mega.appendChild(mp);
-    const pk=body.querySelector('.pm-plekey');
-    const pb=document.createElement('div'); pb.className='pm-buy'+(PGOLD<PLEKEY_COST?' cant':''); pb.textContent='\ud83d\udc51 '+PLEKEY_COST; pb.style.position='absolute'; pb.style.left='14px'; pb.style.bottom='10px';
-    if(PGOLD>=PLEKEY_COST)pb.onclick=()=>buyPlekey(); pk.appendChild(pb);
-  }else if(MARTTAB==='codes'){
-    body.innerHTML='<div class="pm-sub">Got a code? Type it in for free plunder \u26a1\ud83d\udc51.</div>'+
-      '<div class="pm-code"><input id="codeInput" maxlength="24" placeholder="ENTER CODE\u2026"><div class="pm-btndisplay" id="codeGo">Redeem</div></div>'+
-      '<div class="pm-note">Psst\u2026 try WELCOME , UPRISING , or PLEB2026 </div>';
-    body.querySelector('#codeGo').onclick=redeemCode;
-    body.querySelector('#codeInput').addEventListener('keydown',e=>{ if(e.key==='Enter')redeemCode(); });
-  }else if(MARTTAB==='gift'){
-    const ready=!(GIFT&&Date.now()-GIFT<86400000);
-    body.innerHTML='<div class="pm-sub">Come back every day for a free gift \ud83c\udf81.</div>'+
-      '<div class="pm-box" style="max-width:320px;margin:0 auto"><div class="pm-e">\ud83c\udf81</div><div class="pm-n">Daily Gift</div><div class="pm-d">+250 gold \ud83d\udc51 and +250 Pleb \u26a1</div>'+
-      '<div class="pm-btndisplay'+(ready?'':' cant')+'" id="giftGo" style="margin-top:12px">'+(ready?'Claim gift':'Come back tomorrow')+'</div></div>';
-    if(ready)body.querySelector('#giftGo').onclick=claimGift;
-  }else{
-    body.innerHTML='<div class="pm-sub">Latest from Plebania \ud83d\udcf0</div><ul class="pm-news">'+
-      '<li><b>\u270a v2.0</b> \u2014 THE UPRISING: slain nobles defect to your mob!</li>'+
-      '<li><b>\ud83d\udde1\ufe0f v2.0</b> \u2014 control your own hero. Drag to run, he auto-attacks.</li>'+
-      '<li><b>\ud83d\udd11 v2.1</b> \u2014 PLEB MART: Pledoption center, Pleb boxes, Codes, Gift &amp; News.</li>'+
-      '<li><b>\u2728 Coming soon</b> \u2014 more Plekeys, hero weapons, boss rush.</li></ul>';
   }
 }
 
