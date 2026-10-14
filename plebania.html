@@ -638,10 +638,10 @@ const TUT=[
   {t:'Welcome to Plebania 🧑‍🌾',p:'You are the villagers — the plebs. The noble army is marching in to crush your village. You get TWO things: a HERO you control, and villagers you place.'},
   {t:'Your HERO is you 🗡️',p:'A pleb champion with a crown and sword stands on the field. DRAG anywhere on the map to run him around — he auto-attacks any noble he touches, and levels up as he fights. He\u2019ll get knocked down if he\u2019s swamped (back up in 5s).'},
   {t:'Place your villagers',p:'Tap a villager in the bar at the bottom, then tap a grass tile to place them. Tap the SAME tile again to confirm. They defend the line while you fight with your hero. Tap a placed villager to upgrade or sell.'},
-  {t:'Walls & traps 🧱',p:'There is a SECOND bar for BUILDINGS. Wall 🧱 and Barricade 🚧 block the path — nobles have to smash through them. Spikes 📌 and Pike Pit 🕳️ hurt anything that walks over them. Great for funnelling the army. (You can only place 3 of each villager.)'},
+  {t:'Walls & traps 🧱',p:'There is a SECOND bar for BUILDINGS. Wall 🧱 and Barricade 🚧 block the path — nobles have to smash through them. Spikes 📌 and Pike Pit 🕳️ hurt anything that walks over them. Great for funnelling the army. (Farms are capped at 3 — everything else you can place as much as you like.)'},
   {t:'You are the UPRISING ✊',p:'Here\u2019s the special bit: every noble you slay rips off its armour and DEFECTS to your side! They gather around your hero as a growing mob and fight for you. The more you kill, the bigger your uprising. Rally raises fresh defectors instantly.'},
   {t:'Rally the plebs ✊',p:'Things getting hairy? Hit RALLY — the mob swells, and every pleb attacks twice as fast with +25% damage for 6 seconds. Use the ⏩ button to speed up when you can handle it.'},
-  {t:'Start with only 3',p:'You unlock new villagers as you survive: Poacher & Farm now, Militia at wave 3, Alchemist at wave 5, Catapult at wave 7. Earn gold 👑 by slaying nobles. Good luck, pleb!'}
+  {t:'Unlock new villagers',p:'You unlock new villagers as you survive: Poacher & Farm now, Militia at wave 3, Alchemist at wave 5, Catapult at wave 7. Earn gold 👑 by slaying nobles. Farms are limited to 3, but you can place as many fighters as you want. Good luck, pleb!'}
 ];
 let tutI=0;
 const TUTSEEN_KEY='plebania_tutseen';
@@ -719,7 +719,9 @@ const TOWERS={
   farm     : {name:'Farm',     emoji:'🌾',   cost:60,  kind:'econ', income:7, every:2.6, color:'#c9a227', desc:'+7 gold / 2.6s'}
 };
 const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm'];
-const MAXPER=3;                       // you may only place 3 of each unit type
+const MAXPER=3;                       // build a max of 3 of anything that is capped (see CAP)
+const CAP={farm:3};                   // only Farms are capped — other units you can place freely
+function capOf(k){ return CAP[k]||Infinity; }
 
 /* ---------------- BUILDINGS (the second bar) ---------------- */
 const BUILDINGS={
@@ -842,7 +844,7 @@ function countOf(k){ return S?S.towers.filter(o=>o.k===k).length:0; }
 function buildBar(){
   const bar=$('bar'); bar.innerHTML='<span class="btag">UNITS</span>';
   ORDER.forEach(k=>{
-    const d=TOWERS[k]; const lock=!unlockedUnit(k); const have=countOf(k); const full=have>=MAXPER;
+    const d=TOWERS[k]; const lock=!unlockedUnit(k); const have=countOf(k); const cap=capOf(k); const full=have>=cap;
     const card=document.createElement('div');
     card.className='card'+(k===S.build?' sel':'')+((S.gold<d.cost||lock||full)?' poor':'')+(lock?' locked':'');
     card.dataset.k=k;
@@ -852,11 +854,12 @@ function buildBar(){
       card.onclick=()=>{ tip('🔒 '+d.name+' unlocks at wave '+UNLOCK[k],1500); };
     }else if(full){
       card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
-        '<div class="cc" style="color:#e0792b">MAX '+MAXPER+'/'+MAXPER+'</div><div class="cd">You have all '+MAXPER+' '+d.name+'s</div>';
-      card.onclick=()=>{ tip('🚫 You can only place '+MAXPER+' '+d.name+'s',1500); };
+        '<div class="cc" style="color:#e0792b">MAX '+cap+'/'+cap+'</div><div class="cd">You have all '+cap+' '+d.name+'s</div>';
+      card.onclick=()=>{ tip('🚫 You can only place '+cap+' '+d.name+'s',1500); };
     }else{
+      const capTxt=isFinite(cap)?(' <span style="color:#c3ae7c">· '+have+'/'+cap+'</span>'):(' <span style="color:#c3ae7c">· '+have+'</span>');
       card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
-        '<div class="cc">👑 '+d.cost+' <span style="color:#c3ae7c">· '+have+'/'+MAXPER+'</span></div><div class="cd">'+d.desc+'</div>';
+        '<div class="cc">👑 '+d.cost+capTxt+'</div><div class="cd">'+d.desc+'</div>';
       card.onclick=()=>{ if(S.over)return; if(S.build===k){ S.build=null; locked=null; hideSel(); buildBar(); SFX.ui(); tip('Deselected '+d.name,1000); return; } S.build=k; locked=null; hideSel(); buildBar(); SFX.ui();
         tip('Selected '+d.name+' — tap a grass tile to place',1500); };
     }
@@ -1149,7 +1152,7 @@ function handleTap(p){
   if(S.towers.some(o=>o.c===t.c&&o.r===t.r)){ return; }
   if(S.buildings.some(b=>b.c===t.c&&b.r===t.r)){ return; }
   if(!unlockedUnit(S.build)){ tip('That villager is locked 🔒',1400); return; }
-  if(countOf(S.build)>=MAXPER){ tip('🚫 Max '+MAXPER+' '+TOWERS[S.build].name+'s — upgrade or sell one first',1700); return; }
+  if(countOf(S.build)>=capOf(S.build)){ const cap=capOf(S.build); tip('🚫 Max '+cap+' '+TOWERS[S.build].name+'s — upgrade or sell one first',1700); return; }
   if(!locked||locked.c!==t.c||locked.r!==t.r){ locked={c:t.c,r:t.r}; tip('Tap the same tile again to place ⚒️',1600); return; }
   const d=TOWERS[S.build];
   if(S.gold<d.cost){ tip('Need more gold! ('+d.cost+' 👑)',1400); return; }
