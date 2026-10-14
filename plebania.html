@@ -190,7 +190,7 @@
   .pplekey .pbody{display:flex;gap:8px;align-items:center;margin-top:6px}
   .pplekey ul{list-style:none;margin:0;padding:0;font-size:19px;color:#2b2418}
   .pplekey li{margin:7px 0}
-  .pkey-svg{width:104px;height:104px;flex:0 0 auto}
+  .pkey-svg{width:126px;height:106px;flex:0 0 auto}
   .pm-sub{text-align:center;font-size:19px;margin:0 0 16px;color:#2b2418}
   .pm-sk{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
   .pm-skin{border:2.5px solid #2b2418;border-radius:16px;padding:10px 6px;text-align:center}
@@ -948,7 +948,14 @@ function renderMart(){
   const tabs=$('martTabs'); tabs.innerHTML='';
   TABS.forEach(([id,label])=>{ const t=document.createElement('div'); t.className='pm-tab'+(MARTTAB===id?' on':'');
     t.textContent=label; t.onclick=()=>{ MARTTAB=id; SFX.ui(); renderMart(); }; tabs.appendChild(t); });
-  const KEY='<svg class="pkey-svg" viewBox="0 0 100 100"><g fill="none" stroke="#2b2418" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="48" cy="40" r="16"/><path d="M33 38 L20 33"/><path d="M63 38 L77 33"/><path d="M41 56 L38 74"/><path d="M55 56 L58 74"/><path d="M38 74 L30 76"/><path d="M58 74 L66 76"/></g><circle cx="42" cy="36" r="2.6" fill="#2b2418"/><circle cx="54" cy="36" r="2.6" fill="#2b2418"/></svg>';
+  const KEY='<svg class="pkey-svg" viewBox="0 0 132 112"><g fill="none" stroke="#2b2418" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">'+
+    '<circle cx="66" cy="34" r="17"/>'+
+    '<path d="M50 40 L27 48"/><path d="M82 40 L105 48"/>'+
+    '<circle cx="20" cy="49" r="6.5"/><path d="M13.5 49 L3 49"/><path d="M7 49 L7 55"/><path d="M11 49 L11 55"/>'+
+    '<circle cx="112" cy="49" r="6.5"/><path d="M118.5 49 L129 49"/><path d="M125 49 L125 55"/><path d="M121 49 L121 55"/>'+
+    '<path d="M59 58 L55 82"/><path d="M73 58 L77 82"/>'+
+    '<path d="M55 82 L48 85"/><path d="M77 82 L84 85"/>'+
+    '</g><circle cx="60" cy="31" r="2.6" fill="#2b2418"/><circle cx="72" cy="31" r="2.6" fill="#2b2418"/></svg>';
   const body=$('martBody');
   body.innerHTML=
     '<div class="pm-r1">'+
