@@ -211,6 +211,20 @@
   .pm-news{margin:0;padding-left:4px;list-style:none}
   .pm-news li{margin:9px 0;font-size:18px}
   .pm-back{text-align:center;margin-top:16px}
+  .pk-plebs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .pk-pleb{border:2.5px solid #2b2418;border-radius:14px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:18px;color:#2b2418;background:#fbfaf3;user-select:none}
+  .pk-pleb.on{background:#2b2418;color:#fbfaf3}
+  .pk-slots{display:flex;flex-direction:column;gap:14px}
+  .pk-slot{border:2.5px solid #2b2418;border-radius:16px;padding:12px 14px}
+  .pk-slot .hd{font-weight:700;font-size:20px;margin-bottom:10px;color:#2b2418}
+  .pk-items{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .pk-item{border:2.5px solid #2b2418;border-radius:14px;padding:10px 6px;text-align:center;color:#2b2418;cursor:pointer;background:#fff}
+  .pk-item:hover{transform:translateY(-2px)}
+  .pk-item.owned{border-color:#3f8f3a}
+  .pk-item.eq{background:#2b2418;color:#fbfaf3}
+  .pk-item .ie{font-size:30px;line-height:1}
+  .pk-item .in{font-weight:700;font-size:15px;margin-top:5px}
+  .pk-item .ic{font-size:14px;margin-top:5px;font-weight:700}
 
   /* ---------- in-run UPGRADES overlay (⬆️) ---------- */
   #upshop{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
@@ -421,6 +435,7 @@
       <div class="menu-btns">
         <div class="mbtn" id="playBtn"><span class="ic">⚔️</span> PLAY</div>
         <div class="mbtn" id="martBtn"><span class="ic">🔑</span> PLEB MART</div>
+        <div class="mbtn" id="packBtn"><span class="ic">🎒</span> PLEBPACK</div>
       </div>
       <div class="worldstrip" id="worldStrip"></div>
       <div style="margin-top:14px"><span class="linklike" id="howBtn">❔ How to Play</span></div>
@@ -534,6 +549,22 @@
     </div>
   </div>
 
+  <!-- ============ PLEBPACK (equip your plebs) ============ -->
+  <div id="pack" class="screen">
+    <div class="mchrome">
+      <div class="mhome" id="packHome">🏠 HOME</div>
+      <div class="mright"><div class="c">👑 <span id="packGold">0</span> shop gold</div></div>
+    </div>
+    <div class="mpaper">
+      <div class="pm-head">
+        <div class="pm-logo"><span>PLEB</span><span>PACK</span></div>
+        <div class="pm-sub" style="margin:0;max-width:520px;text-align:left">Kit out your plebs with gear — buy it once with 👑 shop gold and it sticks forever.</div>
+      </div>
+      <div id="packBody"></div>
+      <div class="pm-back"><div class="mbtn small" id="packBack" style="width:220px">⬅ Back to Menu</div></div>
+    </div>
+  </div>
+
   <!-- ============ IN-RUN UPGRADES (⬆️) ============ -->
   <div id="upshop"><div class="mcard">
     <h2>⬆️ UPGRADES</h2>
@@ -588,10 +619,11 @@ cv.width=W; cv.height=H;
 
 /* ---------------- screens ---------------- */
 function show(id){
-  ['menu','how','worlds','game','mart'].forEach(s=>$(s).classList.toggle('on',s===id));
+  ['menu','how','worlds','game','mart','pack'].forEach(s=>$(s).classList.toggle('on',s===id));
   if(id==='menu')populateWorldStrip();
   if(id==='worlds')populateWorldSelect();
   if(id==='mart')renderMart();
+  if(id==='pack')renderPack();
 }
 function populateWorldStrip(){
   const strip=$('worldStrip'); if(!strip)return; strip.innerHTML='';
@@ -627,6 +659,9 @@ function populateWorldSelect(){
 }
 $('howBtn').onclick=()=>show('how');
 $('martBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('mart'); };
+$('packBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('pack'); SFX.ui(); };
+$('packHome').onclick=()=>{ SFX.ui(); show('menu'); };
+$('packBack').onclick=()=>show('menu');
 $('martBack').onclick=()=>show('menu');
 $('martHome').onclick=()=>{ SFX.ui(); show('menu'); };
 $('howBack').onclick=()=>show('menu');
@@ -1089,6 +1124,60 @@ function renderMart(){
 }
 
 /* =========================================================
+   PLEBPACK — equip your plebs (persistent gear, bought with shop gold)
+   ========================================================= */
+const PACK_ITEMS={
+  weapon:[ {n:'Pitchfork',   e:'🥢', cost:120, d:0.15},
+           {n:'Iron Blade',  e:'🗡️', cost:320, d:0.32},
+           {n:'Plebsword',   e:'⚔️', cost:700, d:0.55} ],
+  armour:[ {n:'Cloth Vest',  e:'🎽', cost:120, d:0.15},
+           {n:'Chainmail',   e:'🛡️', cost:320, d:0.32},
+           {n:'Pleb Plate',  e:'🏋️', cost:700, d:0.55} ],
+  boots:[  {n:'Leathers',    e:'👟', cost:120, d:0.12},
+           {n:'Greaves',     e:'👢', cost:320, d:0.24},
+           {n:'Winged Boots',e:'🪽', cost:700, d:0.40} ]
+};
+const PACK_SLOTS=[['weapon','🗡️ Weapon','more damage'],['armour','🛡️ Armour','more range &amp; farm gold'],['boots','👟 Boots','attack faster']];
+let PACK_OWN=loadJSON('plebania_pack_own',{});   // keyed 'slot:tier' → true (bought)
+let PACK_EQ=loadJSON('plebania_pack_eq',{});     // {unitKey:{weapon:tier,armour:tier,boots:tier}}
+let PACKPLEB='farmhand';
+function packTier(k,slot){ const e=PACK_EQ[k]; return (e&&e[slot]!=null)?e[slot]:null; }
+function packEffect(k,slot){ const t=packTier(k,slot); return t==null?0:PACK_ITEMS[slot][t].d; }
+function renderPack(){
+  if($('packGold'))$('packGold').textContent=Math.floor(PGOLD);
+  const body=$('packBody'); if(!body)return;
+  let h='<div class="pk-plebs">';
+  ORDER.forEach(k=>{ const d=TOWERS[k]; h+='<div class="pk-pleb'+(PACKPLEB===k?' on':'')+'" data-k="'+k+'">'+d.emoji+' '+d.name+'</div>'; });
+  h+='</div><div class="pk-slots">';
+  PACK_SLOTS.forEach(([slot,label,note])=>{
+    h+='<div class="pk-slot"><div class="hd">'+label+' <span style="font-size:14px;font-weight:400;opacity:.65">'+note+'</span></div><div class="pk-items">';
+    PACK_ITEMS[slot].forEach((it,ti)=>{
+      const owned=!!PACK_OWN[slot+':'+ti]; const eq=packTier(PACKPLEB,slot)===ti;
+      h+='<div class="pk-item'+(owned?' owned':'')+(eq?' eq':'')+'" data-slot="'+slot+'" data-ti="'+ti+'">'+
+        '<div class="ie">'+it.e+'</div><div class="in">'+it.n+'</div>'+
+        '<div class="ic">'+(eq?'✔ Equipped':owned?'Equip':'👑 '+it.cost)+'</div></div>';
+    });
+    h+='</div></div>';
+  });
+  h+='</div>';
+  body.innerHTML=h;
+  body.querySelectorAll('.pk-pleb').forEach(el=>el.onclick=()=>{ PACKPLEB=el.dataset.k; SFX.ui(); renderPack(); });
+  body.querySelectorAll('.pk-item').forEach(el=>el.onclick=()=>packClick(el.dataset.slot, +el.dataset.ti));
+}
+function packClick(slot,ti){
+  const key=slot+':'+ti; const it=PACK_ITEMS[slot][ti]; const k=PACKPLEB;
+  if(!PACK_EQ[k])PACK_EQ[k]={};
+  if(!PACK_OWN[key]){
+    if(PGOLD<it.cost){ tip('Need 👑'+it.cost+' shop gold for the '+it.n,1700); SFX.ui(); return; }
+    PGOLD-=it.cost; PACK_OWN[key]=true; saveJSON('plebania_pack_own',PACK_OWN); saveJSON('plebania_pgold',PGOLD);
+    SFX.up(); showBanner('Bought '+it.e+' '+it.n+' for '+TOWERS[k].name+'!','gold',1500);
+  }
+  PACK_EQ[k][slot]=(packTier(k,slot)===ti)?null:ti;
+  saveJSON('plebania_pack_eq',PACK_EQ);
+  SFX.ui(); renderPack();
+}
+
+/* =========================================================
    PLACEMENT (two-tap) + selection
    ========================================================= */
 /* INPUT — DRAG anywhere = run your hero · TAP = place/select a villager · mouse hover = preview */
@@ -1258,7 +1347,7 @@ function effDmg(o){
   const d=TOWERS[o.k];
   let m=1+(o.level-1)*0.35;
   if(S.rally>0)m*=1.25;
-  return d.dmg*m;
+  return d.dmg*m*(1+packEffect(o.k,'weapon'));
 }
 
 /* =========================================================
@@ -1386,9 +1475,9 @@ function towerUpdate(dt){
     const px=cx(o.c),py=cy(o.r);
 
     if(o.k==='farm'){
-      S.farmAcc+=dt; const every=d.every;
+      S.farmAcc+=dt; const every=d.every*(1-packEffect(o.k,'boots'));
       if(S.farmAcc>=every){
-        S.farmAcc=0; const inc=Math.round(d.income*(1+(o.level-1)*0.6));
+        S.farmAcc=0; const inc=Math.round(d.income*(1+(o.level-1)*0.6)*(1+packEffect(o.k,'weapon')+packEffect(o.k,'armour')));
         S.gold+=inc; addDmg(px,py-20,'+'+inc,'#ffe08a'); syncHud();
       }
       continue;
@@ -1396,7 +1485,7 @@ function towerUpdate(dt){
     if(o.cd>0){ o.cd-=dt; continue; }
 
     // find target
-    const range=d.range*(1+(o.level-1)*0.12);
+    const range=d.range*(1+(o.level-1)*0.12)*(1+packEffect(o.k,'armour'));
     let best=null,bd=1e9;
     for(const e of S.enemies){
       const dd=Math.hypot(e.x-px,e.y-py);
@@ -1404,7 +1493,7 @@ function towerUpdate(dt){
     }
     if(!best)continue;
     o.angle=Math.atan2(best.y-py,best.x-px);
-    let cd=d.rate; if(S.rally>0)cd*=0.5;
+    let cd=d.rate*(1-packEffect(o.k,'boots')); if(S.rally>0)cd*=0.5;
     o.cd=cd; o.flash=0.12; o.jab=0.14;
 
     if(d.kind==='melee'){
@@ -2111,7 +2200,7 @@ document.addEventListener('keydown',e=>{ if(e.code==='Space'&&$('game').classLis
 
 /* debug hooks (verification) */
 window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked(){return unlocked;}, get PATH(){return PATH;},
-  spawnE:(t)=>spawn(t),
+  spawnE:(t)=>spawn(t), effDmg:(o)=>effDmg(o), packEff:(k,s)=>packEffect(k,s),
   tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); mobUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
 
 // interval-driven loop: runs even when the game sits in an unfocused iframe
