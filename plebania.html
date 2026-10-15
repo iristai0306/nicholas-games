@@ -664,7 +664,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.7 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.8 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1616,7 +1616,10 @@ function rankColor(pts){ const t=Math.max(0,Math.min(5,Math.floor((pts||0)/4)));
 /* ---- LIVE leaderboard: real accounts, shared in real time over MQTT (no signup, no rate cap) ---- */
 const MQTT_LIB='https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js';
 const MQTT_BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081/mqtt'];
-const MQTT_TOPIC='plebania/leaderboard/v1';
+const MQTT_TOPIC='plebania/leaderboard/v1';                  // legacy merged board (read once, for migration)
+const MQTT_BASE='plebania/accounts/v2/';                     // one retained topic per player (never clobbers others)
+const MQTT_WILD=MQTT_BASE+'+';
+function myTopic(){ return MQTT_BASE+(ME?ME.key:''); }
 const ACC_KEY='plebania_account';
 let CLOUD={accounts:{}};          // cache of the shared board
 let ME=loadJSON(ACC_KEY,null);    // {key, name} of the signed-in player
@@ -1650,30 +1653,56 @@ function mergeBoards(a,b){
   });
   return out;
 }
+function upsertAcct(j){
+  if(!j||typeof j!=='object'||!j.key) return false;
+  const k=String(j.key).toLowerCase(); const cur=CLOUD.accounts[k]||{};
+  CLOUD.accounts[k]={ u:j.u||cur.u||k, pw:j.pw||cur.pw, key:k,
+    level:Math.max(j.level||0,cur.level||0), streak:Math.max(j.streak||0,cur.streak||0),
+    waves:Math.max(j.waves||0,cur.waves||0), kills:Math.max(j.kills||0,cur.kills||0), rank:Math.max(j.rank||0,cur.rank||0), time:Math.max(j.time||0,cur.time||0) };
+  return true;
+}
+function subscribeBoard(){ if(!MQTT_C)return; try{ MQTT_C.subscribe(MQTT_WILD,{qos:1},()=>{}); MQTT_C.subscribe(MQTT_TOPIC,{qos:1},()=>{}); }catch(e){} }
 function attachMQTT(c){
-  c.on('connect',()=>{ MQTT_READY=true; cloudOk=true; c.subscribe(MQTT_TOPIC,{qos:1},()=>{}); });   // re-subscribe on reconnect
+  c.on('connect',()=>{ MQTT_READY=true; cloudOk=true; subscribeBoard(); });   // re-subscribe on reconnect
   c.on('message',(t,m)=>{
-    try{ const j=JSON.parse(m.toString()); if(j&&j.accounts){
-      CLOUD=mergeBoards(CLOUD,j); MQTT_GOT=true;
-      const bd=$('board'); if(bd&&bd.classList.contains('on')) renderBoard();   // live-update an open board
-    } }catch(e){}
+    try{ const j=JSON.parse(m.toString());
+      if(t===MQTT_TOPIC){ if(j&&j.accounts){ CLOUD=mergeBoards(CLOUD,j); MQTT_GOT=true; } }   // legacy board (migration)
+      else if(upsertAcct(j)){ MQTT_GOT=true; }                                                // one player's own record
+      const bd=$('board'); if(bd&&bd.classList.contains('on')) renderBoard();                  // live-update an open board
+    }catch(e){}
   });
 }
-async function cloudGet(){
+async function ensureMQTT(){
+  if(MQTT_C&&MQTT_READY) return MQTT_C;
+  if(!window.mqtt) await loadScript(MQTT_LIB);
+  const c=await connectMQTT(); MQTT_C=c; MQTT_READY=true; cloudOk=true; attachMQTT(c); subscribeBoard();
+  return c;
+}
+async function cloudGet(){                       // read the whole board (all players' retained records)
   MQTT_GOT=false;
-  if(MQTT_C&&MQTT_READY){ try{ MQTT_C.subscribe(MQTT_TOPIC,{qos:1},()=>{}); }catch(e){} }   // ask broker to resend retained
-  else {
-    if(!window.mqtt) await loadScript(MQTT_LIB);
-    const c=await connectMQTT(); MQTT_C=c; MQTT_READY=true; cloudOk=true; attachMQTT(c); c.subscribe(MQTT_TOPIC,{qos:1},()=>{});
-  }
+  await ensureMQTT();
+  subscribeBoard();                              // ask brokers to resend retained records
   const t0=Date.now();
-  while(!MQTT_GOT && Date.now()-t0<4500) await new Promise(r=>setTimeout(r,120));   // wait for the retained board
+  while(!MQTT_GOT && Date.now()-t0<4000) await new Promise(r=>setTimeout(r,120));
   return CLOUD;
+}
+function accountLookup(key){                     // authoritative existence check on the account's own topic
+  return new Promise(async(resolve)=>{
+    try{ await ensureMQTT(); }catch(e){ resolve(undefined); return; }
+    const topic=MQTT_BASE+key; let done=false;
+    const h=(t,m)=>{ if(t!==topic||done)return; done=true; let j=null; try{j=JSON.parse(m.toString());}catch(e){}
+      try{ MQTT_C.removeListener('message',h); }catch(e){} resolve(j||undefined); };
+    MQTT_C.on('message',h);
+    try{ MQTT_C.subscribe(topic,{qos:1},()=>{}); }catch(e){}
+    setTimeout(()=>{ if(!done){ done=true; try{ MQTT_C.removeListener('message',h); }catch(e){} resolve(undefined); } },3500);
+  });
 }
 function cloudPut(){ return new Promise((resolve,reject)=>{
   if(!MQTT_C||!MQTT_C.connected){ reject(new Error('offline')); return; }
-  CLOUD.v=1; CLOUD.at=Date.now();
-  MQTT_C.publish(MQTT_TOPIC, JSON.stringify(CLOUD), {retain:true,qos:1}, (err)=>err?reject(err):resolve()); }); }
+  if(!ME){ resolve(); return; }
+  const rec=Object.assign({at:Date.now()}, CLOUD.accounts[ME.key]||{});
+  rec.key=ME.key; rec.u=rec.u||ME.name;
+  MQTT_C.publish(myTopic(), JSON.stringify(rec), {retain:true,qos:1}, (err)=>err?reject(err):resolve()); }); }
 async function cloudSync(force){ if(!CLOUD_DIRTY&&!force)return; if(!MQTT_READY){ CLOUD_DIRTY=true; return; } CLOUD_DIRTY=false; try{ await cloudPut(); }catch(e){ CLOUD_DIRTY=true; } }
 function cloudTouch(){ CLOUD_DIRTY=true; clearTimeout(cloudT); cloudT=setTimeout(()=>cloudSync(false),2000); }
 function rivalName(){ const ks=Object.keys(CLOUD.accounts||{}); if(!ks.length)return 'The Baron';
@@ -1690,10 +1719,11 @@ async function doAuth(){
   if(p.length<4){ authMsg('Password needs at least 4 characters.'); return; }
   const key=u.toLowerCase(); const go=$('auGo'); go.classList.add('busy'); authMsg('Connecting\u2026',true);
   try{ await cloudGet(); }catch(e){ /* offline: allow local play, board syncs later */ }
-  const ex=CLOUD.accounts[key];
+  let ex=CLOUD.accounts[key];
+  try{ const rec=await accountLookup(key); if(rec&&rec.u) ex=rec; }catch(e){}   // authoritative check on the account's own topic
   if(AUTHMODE==='up'){
     if(ex){ go.classList.remove('busy'); authMsg('That username is taken \u2014 try another.'); return; }
-    CLOUD.accounts[key]={u:u, pw:hashPw(p), level:0, streak:0, waves:0, kills:0, rank:0, key:key};
+    CLOUD.accounts[key]={u:u, pw:hashPw(p), level:0, streak:0, waves:0, kills:0, rank:0, time:0, key:key};
   }else{
     if(!ex){ go.classList.remove('busy'); authMsg('No account called \u201ct'+u+'\u201d. Create one first.'); return; }
     if(ex.pw!==hashPw(p)){ go.classList.remove('busy'); authMsg('Wrong password \u2014 try again.'); return; }
