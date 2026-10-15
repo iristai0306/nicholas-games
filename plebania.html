@@ -1590,20 +1590,48 @@ const RANK_NAMES=['Bronze','Silver','Gold','Platinum','Diamond','Legend'];
 function rankTier(pts){ return RANK_NAMES[Math.max(0,Math.min(RANK_NAMES.length-1,Math.floor((pts||0)/4)))]; }
 function rankColor(pts){ const t=Math.max(0,Math.min(5,Math.floor((pts||0)/4)));
   return ['#b08d57','#c8cdd4','#e8c04a','#7fd8d8','#8fb6ff','#ff9a3a'][t]; }
-/* ---- LIVE leaderboard: real accounts shared across real players ---- */
-const API_BASE='https://api.restful-api.dev/objects';
-const CLOUD_ID='ff808181a09d98f701a13e15c3df64d6';   // shared plebania leaderboard blob (Wayne)
+/* ---- LIVE leaderboard: real accounts, shared in real time over MQTT (no signup, no rate cap) ---- */
+const MQTT_LIB='https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js';
+const MQTT_BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081/mqtt'];
+const MQTT_TOPIC='plebania/leaderboard/v1';
 const ACC_KEY='plebania_account';
 let CLOUD={accounts:{}};          // cache of the shared board
 let ME=loadJSON(ACC_KEY,null);    // {key, name} of the signed-in player
-let CLOUD_DIRTY=false, cloudT=null, cloudOk=true;
+let CLOUD_DIRTY=false, cloudT=null, cloudOk=true, MQTT_C=null, MQTT_READY=false;
 function hashPw(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h)^s.charCodeAt(i); } return ('v1_'+(h>>>0).toString(36)+'_'+s.length); }
-async function cloudGet(){ const r=await fetch(API_BASE+'/'+CLOUD_ID+'?x='+Date.now(),{cache:'no-store'});
-  const j=await r.json(); CLOUD=(j&&j.data&&j.data.accounts)?j.data:{accounts:{}}; cloudOk=true; return CLOUD; }
-async function cloudPut(){ CLOUD.v=1; await fetch(API_BASE+'/'+CLOUD_ID,{method:'PUT',headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({name:'plebania_shop_lb_v1',data:CLOUD})}); }
-async function cloudSync(){ if(!CLOUD_DIRTY)return; CLOUD_DIRTY=false; try{ await cloudPut(); }catch(e){ CLOUD_DIRTY=true; } }
-function cloudTouch(){ CLOUD_DIRTY=true; clearTimeout(cloudT); cloudT=setTimeout(cloudSync,1400); }
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('load')); document.head.appendChild(s); }); }
+function connectMQTT(){
+  return new Promise((resolve,reject)=>{
+    let i=0;
+    const tryNext=()=>{ if(i>=MQTT_BROKERS.length){ reject(new Error('no broker')); return; }
+      const url=MQTT_BROKERS[i++]; let settled=false, c;
+      try{ c=(window.mqtt.connect)(url,{connectTimeout:8000,reconnectPeriod:4000,clientId:'pleb_'+Math.random().toString(36).slice(2,10)}); }
+      catch(e){ tryNext(); return; }
+      const fail=()=>{ if(settled)return; settled=true; try{c.end(true);}catch(e){} tryNext(); };
+      c.on('connect',()=>{ if(settled)return; settled=true; resolve(c); });
+      c.on('error',()=>{});
+      setTimeout(fail,9000);
+    };
+    tryNext();
+  });
+}
+function attachMQTT(c){
+  c.on('connect',()=>{ MQTT_READY=true; cloudOk=true; c.subscribe(MQTT_TOPIC,{qos:1},()=>{}); });   // re-subscribe on reconnect
+  c.on('message',(t,m)=>{ try{ const j=JSON.parse(m.toString()); if(j&&j.accounts) CLOUD=j; }catch(e){} });
+}
+async function cloudGet(){
+  if(MQTT_READY) return CLOUD;
+  if(!window.mqtt) await loadScript(MQTT_LIB);
+  const c=await connectMQTT(); MQTT_C=c; MQTT_READY=true; cloudOk=true; attachMQTT(c); c.subscribe(MQTT_TOPIC,{qos:1},()=>{});
+  await new Promise((resolve)=>setTimeout(resolve,1500));   // let the retained board arrive
+  return CLOUD;
+}
+function cloudPut(){ return new Promise((resolve,reject)=>{
+  if(!MQTT_C||!MQTT_C.connected){ reject(new Error('offline')); return; }
+  CLOUD.v=1; CLOUD.at=Date.now();
+  MQTT_C.publish(MQTT_TOPIC, JSON.stringify(CLOUD), {retain:true,qos:1}, (err)=>err?reject(err):resolve()); }); }
+async function cloudSync(force){ if(!CLOUD_DIRTY&&!force)return; if(!MQTT_READY){ CLOUD_DIRTY=true; return; } CLOUD_DIRTY=false; try{ await cloudPut(); }catch(e){ CLOUD_DIRTY=true; } }
+function cloudTouch(){ CLOUD_DIRTY=true; clearTimeout(cloudT); cloudT=setTimeout(()=>cloudSync(false),2000); }
 function rivalName(){ const ks=Object.keys(CLOUD.accounts||{}); if(!ks.length)return 'The Baron';
   const a=CLOUD.accounts[ks[(Math.random()*ks.length)|0]]; return a&&a.u?a.u:'The Baron'; }
 
@@ -1617,7 +1645,7 @@ async function doAuth(){
   if(u.length<2){ authMsg('Username needs at least 2 characters.'); return; }
   if(p.length<4){ authMsg('Password needs at least 4 characters.'); return; }
   const key=u.toLowerCase(); const go=$('auGo'); go.classList.add('busy'); authMsg('Connecting\u2026',true);
-  try{ await cloudGet(); }catch(e){ go.classList.remove('busy'); authMsg('Could not reach the server. Check your internet and try again.'); return; }
+  try{ await cloudGet(); }catch(e){ /* offline: allow local play, board syncs later */ }
   const ex=CLOUD.accounts[key];
   if(AUTHMODE==='up'){
     if(ex){ go.classList.remove('busy'); authMsg('That username is taken \u2014 try another.'); return; }
@@ -1642,7 +1670,7 @@ function loadLocalFor(me){
 }
 function refreshUserChip(){ const nm=$('userName'); if(nm)nm.textContent=ME?ME.name:'—'; }
 function enterGame(){ SFX.up(); refreshUserChip(); show('menu'); populateWorldStrip(); }
-function signOut(){ ME=null; saveJSON(ACC_KEY,null); cloudSync(); refreshUserChip(); show('auth'); setAuthMode('in'); authMsg('Signed out.',true); }
+function signOut(){ ME=null; saveJSON(ACC_KEY,null); cloudSync(true); refreshUserChip(); show('auth'); setAuthMode('in'); authMsg('Signed out.',true); }
 
 const LB_CATS=[
   ['level','\ud83c\udf9a\ufe0f Highest Level',0],
@@ -3049,8 +3077,8 @@ populateWorldStrip();
     checkOrient();
   });
   checkOrient();
-  setInterval(cloudSync, 8000);
-  document.addEventListener('visibilitychange',()=>{ if(document.hidden)cloudSync(); });
+  setInterval(()=>cloudSync(false), 60000);   // gentle safety flush (only if dirty)
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden)cloudSync(true); });
 })();
 $('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
 function toggleBar(force){ const w=$('barwrap'); const hid=(force!=null)?force:!w.classList.contains('hide');
