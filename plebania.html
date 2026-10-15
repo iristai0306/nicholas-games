@@ -55,6 +55,7 @@
   .mbtn:hover{transform:translateY(-2px)}
   .mbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #4a3409}
   .mbtn.small{font-size:19px;padding:13px 20px;background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);color:#3a2a08}
+  .mbtn.off{filter:grayscale(.75) brightness(.72)}
   .menu-foot{position:absolute;left:72px;bottom:26px;z-index:5;font:14px Georgia,serif;color:#c8b079;opacity:.85;
     text-shadow:0 2px 4px #000}
   #userchip{margin-top:16px;font:700 15px Georgia,serif;color:#f0dc9e}
@@ -128,6 +129,9 @@
 
   /* ---------- LEADERBOARD ---------- */
   #board{background:linear-gradient(#241708,#0f0a03);overflow:auto;padding:40px 60px;text-align:center}
+  #account{background:linear-gradient(#241708,#0f0a03);overflow:auto;padding:40px 60px;text-align:center}
+  .acct-btns{display:flex;gap:16px;justify-content:center;margin-top:26px;flex-wrap:wrap}
+  .acct-tile{border:3px solid #2a1c08;border-radius:16px;padding:14px 22px;background:linear-gradient(rgba(64,46,20,.92),rgba(30,20,8,.94));min-width:150px}
   #board.on{display:flex;flex-direction:column;align-items:center}
   #board h2{font:900 50px Georgia,serif;color:#f2d375;margin:0 0 6px;text-shadow:0 3px 0 #000}
   #board .sub{color:#d8c48c;font:italic 18px Georgia,serif;margin-bottom:24px}
@@ -386,6 +390,7 @@
   .pk-plebs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
   .pk-pleb{border:2.5px solid #2b2418;border-radius:14px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:18px;color:#2b2418;background:#fbfaf3;user-select:none}
   .pk-pleb.on{background:#2b2418;color:#fbfaf3}
+  .pk-empty{opacity:.55;font:italic 16px Georgia,serif;color:#6a5a3a;padding:8px 2px}
   .pk-slots{display:flex;flex-direction:column;gap:14px}
   .pk-slot{border:2.5px solid #2b2418;border-radius:16px;padding:12px 14px}
   .pk-slot .hd{font-weight:700;font-size:20px;margin-bottom:10px;color:#2b2418}
@@ -657,7 +662,7 @@
         <span class="tg" id="tgTut">📖 Tutorial auto-skip: ON</span>
         <span class="tg" id="tgUp">✊ Uprising army: ON</span>
       </div>
-      <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="signOut">Sign out</a></div>
+      <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
     <div class="menu-foot">v2.0 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
@@ -712,6 +717,17 @@
     <div class="sub">Your bests, and how you stack up. Fight in Ranked to build a win streak.</div>
     <div id="boardBody"></div>
     <div class="back"><div class="mbtn small" id="boardBack" style="width:220px">⬅ Back to Menu</div></div>
+  </div>
+
+  <!-- ============ MY ACCOUNT ============ -->
+  <div id="account" class="screen">
+    <h2>👤 My Account</h2>
+    <div class="sub">Your pleb record. Switch accounts any time — everything saves to the cloud.</div>
+    <div id="accountBody"></div>
+    <div class="acct-btns">
+      <div class="mbtn small" id="acctSwitch" style="width:240px">🔄 Switch account</div>
+      <div class="mbtn small" id="acctBack" style="width:200px">⬅ Back to menu</div>
+    </div>
   </div>
 
   <!-- ============ GAME ============ -->
@@ -849,10 +865,10 @@
     <h1 id="tutT">Welcome to Plebania</h1>
     <p id="tutP">You are the villagers. The noble army is coming to crush you. Here's the plan:</p>
     <div class="ov-btns">
-      <div class="mbtn small" id="tutSkip" style="width:150px;opacity:.8">Skip</div>
-      <div class="mbtn small" id="tutNext" style="width:180px">Next ▶</div>
+      <div class="mbtn small" id="tutSkip" style="width:104px;opacity:.8">Skip</div>
+      <div class="mbtn small" id="tutNext" style="width:150px">Next ▶</div>
+      <div class="mbtn small" id="tutAuto" style="width:168px">Auto-skip: ON</div>
     </div>
-    <div id="tutAuto" style="margin-top:12px;cursor:pointer;font:14px Georgia,serif;color:#d8c48c;opacity:.9">Auto-skip: ON</div>
   </div></div>
 
   <!-- ============ OVERLAYS ============ -->
@@ -921,13 +937,14 @@ cv.width=W; cv.height=H;
 
 /* ---------------- screens ---------------- */
 function show(id){
-  ['menu','how','worlds','game','mart','pack','pass','board','auth'].forEach(s=>$(s).classList.toggle('on',s===id));
+  ['menu','how','worlds','game','mart','pack','pass','board','auth','account'].forEach(s=>$(s).classList.toggle('on',s===id));
   if(id==='menu')populateWorldStrip();
   if(id==='worlds')populateWorldSelect();
   if(id==='mart')renderMart();
   if(id==='pack')renderPack();
   if(id==='pass')renderPass();
   if(id==='board')renderBoard();
+  if(id==='account')renderAccount();
 }
 function populateWorldStrip(){
   const strip=$('worldStrip'); if(!strip)return; strip.innerHTML='';
@@ -969,6 +986,9 @@ $('auGo').onclick=doAuth;
 $('auPass').addEventListener('keydown',e=>{ if(e.key==='Enter')doAuth(); });
 $('auUser').addEventListener('keydown',e=>{ if(e.key==='Enter')doAuth(); });
 $('signOut').onclick=()=>signOut();
+$('acctOpen').onclick=()=>{ SFX.ui(); show('account'); };
+$('acctBack').onclick=()=>{ SFX.ui(); show('menu'); };
+$('acctSwitch').onclick=()=>switchAccount();
 $('rotateSkip').onclick=()=>{ ROTATE_SKIP=true; try{ localStorage.setItem('plebania_rotate_skip','1'); }catch(e){} checkOrient(); };
 $('boardBack').onclick=()=>show('menu');
 $('battleBtn').onclick=()=>{ initAudio(); newBattle(false); show('game'); };
@@ -1009,7 +1029,7 @@ function refreshToggles(){
 function startTutorial(){
   if(AUTOSKIP && loadJSON(TUTSEEN_KEY,false)){ endTutorial(); return; }
   tutI=0; renderTut(); $('tut').classList.add('on'); pauseGame(true);
-  const a=$('tutAuto'); if(a)a.textContent='Auto-skip: '+(AUTOSKIP?'ON':'OFF');
+  const a=$('tutAuto'); if(a){ a.textContent='Auto-skip: '+(AUTOSKIP?'ON':'OFF'); a.classList.toggle('off',!AUTOSKIP); }
   refreshToggles();
 }
 function renderTut(){ const s=TUT[tutI]; $('tutStep').textContent=(tutI+1)+' / '+TUT.length; $('tutT').textContent=s.t; $('tutP').textContent=tutText(tutI);
@@ -1022,7 +1042,7 @@ function tutText(i){
 $('tutNext').onclick=()=>{ if(tutI<TUT.length-1){ tutI++; renderTut(); } else endTutorial(); };
 $('tutSkip').onclick=()=>endTutorial();
 $('tutAuto').onclick=()=>{ AUTOSKIP=!AUTOSKIP; saveJSON('plebania_autoskip',AUTOSKIP);
-  $('tutAuto').textContent='Auto-skip: '+(AUTOSKIP?'ON':'OFF'); refreshToggles(); tip('Tutorial auto-skip '+(AUTOSKIP?'ON — won\u2019t show again':'OFF — will show next time'),1600); };
+  $('tutAuto').textContent='Auto-skip: '+(AUTOSKIP?'ON':'OFF'); $('tutAuto').classList.toggle('off',!AUTOSKIP); refreshToggles(); tip('Tutorial auto-skip '+(AUTOSKIP?'ON — won\u2019t show again':'OFF — will show next time'),1600); };
 function endTutorial(){ saveJSON(TUTSEEN_KEY,true); $('tut').classList.remove('on'); pauseGame(false); initAudio(); }
 function pauseGame(on){ if(S)S.paused=on; }
 
@@ -1597,7 +1617,7 @@ const MQTT_TOPIC='plebania/leaderboard/v1';
 const ACC_KEY='plebania_account';
 let CLOUD={accounts:{}};          // cache of the shared board
 let ME=loadJSON(ACC_KEY,null);    // {key, name} of the signed-in player
-let CLOUD_DIRTY=false, cloudT=null, cloudOk=true, MQTT_C=null, MQTT_READY=false;
+let CLOUD_DIRTY=false, cloudT=null, cloudOk=true, MQTT_C=null, MQTT_READY=false, MQTT_GOT=false;
 function hashPw(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h)^s.charCodeAt(i); } return ('v1_'+(h>>>0).toString(36)+'_'+s.length); }
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('load')); document.head.appendChild(s); }); }
 function connectMQTT(){
@@ -1615,15 +1635,36 @@ function connectMQTT(){
     tryNext();
   });
 }
+function mergeBoards(a,b){
+  const out={accounts:{},v:1};
+  const A=(a&&a.accounts)||{}, B=(b&&b.accounts)||{};
+  const keys={}; Object.keys(A).forEach(k=>keys[k]=1); Object.keys(B).forEach(k=>keys[k]=1);
+  Object.keys(keys).forEach(k=>{
+    const x=A[k]||{}, y=B[k]||{};
+    out.accounts[k]={ u:y.u||x.u||k, pw:x.pw||y.pw, key:k,
+      level:Math.max(x.level||0,y.level||0), streak:Math.max(x.streak||0,y.streak||0),
+      waves:Math.max(x.waves||0,y.waves||0), kills:Math.max(x.kills||0,y.kills||0), rank:Math.max(x.rank||0,y.rank||0) };
+  });
+  return out;
+}
 function attachMQTT(c){
   c.on('connect',()=>{ MQTT_READY=true; cloudOk=true; c.subscribe(MQTT_TOPIC,{qos:1},()=>{}); });   // re-subscribe on reconnect
-  c.on('message',(t,m)=>{ try{ const j=JSON.parse(m.toString()); if(j&&j.accounts) CLOUD=j; }catch(e){} });
+  c.on('message',(t,m)=>{
+    try{ const j=JSON.parse(m.toString()); if(j&&j.accounts){
+      CLOUD=mergeBoards(CLOUD,j); MQTT_GOT=true;
+      const bd=$('board'); if(bd&&bd.classList.contains('on')) renderBoard();   // live-update an open board
+    } }catch(e){}
+  });
 }
 async function cloudGet(){
-  if(MQTT_READY) return CLOUD;
-  if(!window.mqtt) await loadScript(MQTT_LIB);
-  const c=await connectMQTT(); MQTT_C=c; MQTT_READY=true; cloudOk=true; attachMQTT(c); c.subscribe(MQTT_TOPIC,{qos:1},()=>{});
-  await new Promise((resolve)=>setTimeout(resolve,1500));   // let the retained board arrive
+  MQTT_GOT=false;
+  if(MQTT_C&&MQTT_READY){ try{ MQTT_C.subscribe(MQTT_TOPIC,{qos:1},()=>{}); }catch(e){} }   // ask broker to resend retained
+  else {
+    if(!window.mqtt) await loadScript(MQTT_LIB);
+    const c=await connectMQTT(); MQTT_C=c; MQTT_READY=true; cloudOk=true; attachMQTT(c); c.subscribe(MQTT_TOPIC,{qos:1},()=>{});
+  }
+  const t0=Date.now();
+  while(!MQTT_GOT && Date.now()-t0<4500) await new Promise(r=>setTimeout(r,120));   // wait for the retained board
   return CLOUD;
 }
 function cloudPut(){ return new Promise((resolve,reject)=>{
@@ -1662,13 +1703,38 @@ async function doAuth(){
   enterGame();
 }
 function loadLocalFor(me){
-  // pull this account's saved stats into the local LB, then push merged back
+  // account's cloud stats are the source of truth — reset local bests to that account
   const a=CLOUD.accounts[me.key]||{};
-  LB.level=Math.max(LB.level,a.level||0); LB.bestStreak=Math.max(LB.bestStreak,a.streak||0);
-  LB.waves=Math.max(LB.waves,a.waves||0); LB.kills=Math.max(LB.kills,a.kills||0); LB.rank=Math.max(LB.rank,a.rank||0);
+  LB.level=Math.max(1,a.level||1); LB.bestStreak=a.streak||0;
+  LB.waves=a.waves||0; LB.kills=a.kills||0; LB.rank=a.rank||0;
   LB.streak=0; saveLB(); pushScore(); refreshUserChip();
 }
 function refreshUserChip(){ const nm=$('userName'); if(nm)nm.textContent=ME?ME.name:'—'; }
+function accountStats(){
+  const worlds=(typeof unlocked!=='undefined')?Math.min(unlocked,WORLDS.length):1;
+  return [
+    ['🪜','HERO LEVEL', LB.level],
+    ['🔥','BEST WIN STREAK', LB.bestStreak],
+    ['🌊','WAVES BEATEN', LB.waves],
+    ['💀','UNITS KILLED', LB.kills],
+    ['🏅','RANK', rankTier(LB.rank)+' · '+LB.rank+' pts'],
+    ['🎫','PLEBASS TIER', BPASS.tiers],
+    ['🗺️','WORLDS UNLOCKED', worlds+'/'+WORLDS.length],
+    ['🧑‍🌾','PLEBS IN ARMY', armyCount()+'/'+MAX_ARMY],
+    ['👑','SHOP GOLD', Math.floor(PGOLD)],
+    ['⚡','BLEP', Math.floor(PLEB)],
+    ['🔑','PLEKEYS', PLEKEYS.length]
+  ];
+}
+function renderAccount(){
+  const body=$('accountBody'); if(!body)return;
+  let h='<div class="bd-big"><div class="acct-tile" style="min-width:300px"><div class="v" style="font:900 30px Georgia,serif;color:#ffd24a">'+(ME?ME.name:'—')+'</div><div class="k" style="font:700 14px Georgia,serif;color:#d8c48c;margin-top:4px">YOUR ACCOUNT</div></div></div>';
+  h+='<div class="bd-big">';
+  accountStats().forEach(([e,k,v])=>{ h+='<div class="acct-tile"><div class="v" style="font:900 30px Georgia,serif;color:#ffd24a">'+e+' '+v+'</div><div class="k" style="font:700 13px Georgia,serif;color:#d8c48c;margin-top:4px;letter-spacing:.5px">'+k+'</div></div>'; });
+  h+='</div>';
+  body.innerHTML=h;
+}
+function switchAccount(){ cloudSync(true); ME=null; saveJSON(ACC_KEY,null); refreshUserChip(); show('auth'); setAuthMode('in'); authMsg('Sign in with another account (or create a new one).',true); }
 function enterGame(){ SFX.up(); refreshUserChip(); show('menu'); populateWorldStrip(); }
 function signOut(){ ME=null; saveJSON(ACC_KEY,null); cloudSync(true); refreshUserChip(); show('auth'); setAuthMode('in'); authMsg('Signed out.',true); }
 
@@ -1860,6 +1926,9 @@ const PLEB_GATE={ berserker:250, longbow:320, dragonling:380, knight:340, mortar
 function plebOwned(k){ return !!PACK_OWN['pleb:'+k]; }
 const PACK_SLOTS=[['weapon','🗡️ Weapon','more damage'],['armour','🛡️ Armour','more range &amp; farm gold'],['boots','👟 Boots','attack faster']];
 const PACK_EXTRA=['berserker','longbow','dragonling','knight','mortar','orchard'];   // plebs you equip into your army
+const MAX_ARMY=5;                                                                    // max extra plebs equipped at once
+function armyCount(){ return PACK_EXTRA.filter(k=>PACK_OWN['equipped:'+k]).length; }
+function plebInArmy(k){ return !isExtra(k) || !!PACK_OWN['equipped:'+k]; }
 let PACK_OWN=loadJSON('plebania_pack_own',{});   // keyed 'slot:tier' → true (bought)
 let PACK_EQ=loadJSON('plebania_pack_eq',{});     // {unitKey:{weapon:tier,armour:tier,boots:tier}}
 let PACKPLEB='farmhand';
@@ -1869,10 +1938,13 @@ function renderPack(){
   if($('packGold'))$('packGold').textContent=Math.floor(PGOLD);
   const body=$('packBody'); if(!body)return;
   let h='<div class="pk-plebs">';
-  ORDER.forEach(k=>{ const d=TOWERS[k]; h+='<div class="pk-pleb'+(PACKPLEB===k?' on':'')+'" data-k="'+k+'">'+d.emoji+' '+d.name+'</div>'; });
+  ORDER.filter(plebInArmy).forEach(k=>{ const d=TOWERS[k]; h+='<div class="pk-pleb'+(PACKPLEB===k?' on':'')+'" data-k="'+k+'">'+d.emoji+' '+d.name+'</div>'; });
+  if(!ORDER.filter(plebInArmy).length) h+='<div class="pk-empty">No plebs equipped — buy &amp; equip one below 👇</div>';
   h+='</div>';
+  // keep a valid selection
+  if(!plebInArmy(PACKPLEB)) PACKPLEB=(ORDER.filter(plebInArmy)[0])||'farmhand';
   // ---- equip extra plebs into your army (buy here) ----
-  h+='<div class="pk-slot"><div class="hd">🧑🌾 Plebs <span style="font-size:14px;font-weight:400;opacity:.65">buy a pleb to add it to your build bar, then equip it</span></div><div class="pk-items">';
+  h+='<div class="pk-slot"><div class="hd">🧑🌾 Plebs <span style="font-size:14px;font-weight:400;opacity:.65">buy a pleb to add it to your army, then equip it \u2014 <b style="color:'+(armyCount()>=MAX_ARMY?'#c0392b':'#2b2418')+'">'+armyCount()+'/'+MAX_ARMY+' equipped</b></span></div><div class="pk-items">';
   PACK_EXTRA.forEach(k=>{
     const d=TOWERS[k]; const owned=plebOwned(k); const equipped=!!PACK_OWN['equipped:'+k];
     const cost=PLEB_GATE[k];
@@ -1903,12 +1975,15 @@ function packPlebClick(k){
   if(!owned){
     const cost=PLEB_GATE[k];
     if(PGOLD<cost){ tip('Need 👑'+cost+' shop gold to buy the '+d.name,1700); SFX.ui(); return; }
-    PGOLD-=cost; PACK_OWN['pleb:'+k]=true; PACK_OWN['equipped:'+k]=true;
+    PGOLD-=cost; PACK_OWN['pleb:'+k]=true;
     saveJSON('plebania_pack_own',PACK_OWN); saveJSON('plebania_pgold',PGOLD);
     SFX.up(); for(let i=0;i<14;i++)burst(W/2,H/2,'#ffe08a');
-    showBanner('🧑🌾 Bought the '+d.name+'! Added to your army.','gold',1600);
+    if(armyCount()<MAX_ARMY){ PACK_OWN['equipped:'+k]=true; saveJSON('plebania_pack_own',PACK_OWN); showBanner('🧑🌾 Bought the '+d.name+'! Equipped to your army.','gold',1600); }
+    else { showBanner('🧑🌾 Bought the '+d.name+'! Army full ('+armyCount()+'/'+MAX_ARMY+') \u2014 unequip one to use it.','gold',2200); }
   }else{
-    PACK_OWN['equipped:'+k]=!PACK_OWN['equipped:'+k];
+    const eq=!!PACK_OWN['equipped:'+k];
+    if(!eq && armyCount()>=MAX_ARMY){ tip('🚫 You can only equip '+MAX_ARMY+' plebs \u2014 unequip one first',1900); SFX.ui(); return; }
+    PACK_OWN['equipped:'+k]=!eq;
     saveJSON('plebania_pack_own',PACK_OWN);
     showBanner(PACK_OWN['equipped:'+k]?('✔ '+d.name+' equipped'):('Unequipped '+d.name),'gold',1200);
   }
