@@ -57,6 +57,32 @@
   .mbtn.small{font-size:19px;padding:13px 20px;background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);color:#3a2a08}
   .menu-foot{position:absolute;left:72px;bottom:26px;z-index:5;font:14px Georgia,serif;color:#c8b079;opacity:.85;
     text-shadow:0 2px 4px #000}
+  #userchip{margin-top:16px;font:700 15px Georgia,serif;color:#f0dc9e}
+  #userchip .u{color:#f6dd8b}
+  #userchip a{color:#d8c48c;text-decoration:underline;cursor:pointer;margin-left:10px}
+  #userchip a:hover{color:#fff3c4}
+
+  /* ---------- AUTH (sign in / create account) ---------- */
+  #auth{background:linear-gradient(#241708,#0f0a03);overflow:auto}
+  #auth.on{display:flex;flex-direction:column;align-items:center;justify-content:center}
+  #auth .acard{width:430px;max-width:92%;background:linear-gradient(#fff9ec,#f1e5c8);border:4px solid #2b2418;
+    border-radius:22px;padding:26px 28px 24px;box-shadow:0 16px 40px rgba(0,0,0,.65);text-align:center}
+  #auth .alogo{font:900 50px/1 Georgia,serif;color:#2b2418;letter-spacing:2px}
+  #auth .alogo span{display:block;font-size:13px;letter-spacing:9px;color:#8a6a1e;margin-top:7px}
+  #auth .asub{font:italic 16px Georgia,serif;color:#5a4a2a;margin:9px 0 16px}
+  #auth .atabs{display:flex;gap:8px;justify-content:center;margin-bottom:6px}
+  #auth .atab{border:2.5px solid #2b2418;border-radius:12px;padding:8px 16px;font:800 15px Georgia,serif;cursor:pointer;color:#2b2418;background:#fbfaf3}
+  #auth .atab.on{background:#2b2418;color:#f6e3ab}
+  #auth label{display:block;text-align:left;font:800 12px Georgia,serif;color:#5a4a2a;letter-spacing:1px;margin:12px 0 4px}
+  #auth input{width:100%;box-sizing:border-box;border:2.5px solid #2b2418;border-radius:10px;padding:10px 12px;font:16px Georgia,serif;background:#fff;color:#2b2418;outline:none}
+  #auth input:focus{box-shadow:0 0 0 3px rgba(201,151,31,.4)}
+  #auth .ago{margin-top:18px;border:3px solid #2a1c08;border-radius:13px;padding:13px;cursor:pointer;text-align:center;
+    background:linear-gradient(#f2cf62,#c9971f 55%,#8f6a12);color:#3a2506;font:800 21px Georgia,serif;box-shadow:0 5px 0 #4a3409}
+  #auth .ago:active{transform:translateY(3px);box-shadow:0 2px 0 #4a3409}
+  #auth .ago.busy{filter:grayscale(.4) brightness(.9);cursor:default}
+  #auth .amsg{min-height:20px;margin-top:12px;font:700 14px Georgia,serif;color:#a33}
+  #auth .amsg.ok{color:#2f7a2a}
+  #auth .anote{margin-top:12px;font:12px Georgia,serif;color:#7a6a48;line-height:1.4}
   .worldstrip{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
   .wchip{width:118px;border:2px solid #2a1c08;border-radius:14px;padding:10px 8px;text-align:center;cursor:pointer;
     background:linear-gradient(rgba(64,46,20,.9),rgba(34,23,9,.92));box-shadow:0 4px 0 #2a1c08,0 10px 20px rgba(0,0,0,.4);
@@ -108,6 +134,7 @@
   .bd-stat .v{font:900 34px Georgia,serif;color:#ffd24a}
   .bd-stat .k{font:700 14px Georgia,serif;color:#d8c48c;margin-top:4px;letter-spacing:.5px}
   #board .back{margin-top:26px}
+  .bd-sub{margin:0 0 10px;font:italic 16px Georgia,serif;color:#d8c48c;opacity:.9}
   .rankbadge{font:900 15px Georgia,serif;padding:3px 12px;border-radius:999px;display:inline-block}
   .menu-toggles{margin-top:14px;display:flex;flex-direction:column;gap:8px}
   .tg{cursor:pointer;user-select:none;font:700 15px Georgia,serif;color:#f0dc9e;padding:7px 12px;border-radius:10px;
@@ -491,7 +518,7 @@
 <div id="app"><div id="stage">
 
   <!-- ============ MENU ============ -->
-  <div id="menu" class="screen on">
+  <div id="menu" class="screen">
     <svg class="scene" viewBox="0 0 1280 800" preserveAspectRatio="xMidYMid slice">
       <defs>
         <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
@@ -618,8 +645,28 @@
         <span class="tg" id="tgTut">📖 Tutorial auto-skip: ON</span>
         <span class="tg" id="tgUp">✊ Uprising army: ON</span>
       </div>
+      <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="signOut">Sign out</a></div>
     </div>
     <div class="menu-foot">v2.0 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+  </div>
+
+  <!-- ============ SIGN IN / CREATE ACCOUNT ============ -->
+  <div id="auth" class="screen">
+    <div class="acard">
+      <div class="alogo">PLEBANIA<span>TOWER DEFENSE</span></div>
+      <div class="asub">Make your account to fight for the leaderboard.</div>
+      <div class="atabs">
+        <div class="atab on" id="tabSignIn">Sign in</div>
+        <div class="atab" id="tabCreate">Create account</div>
+      </div>
+      <label>Username</label>
+      <input id="auUser" maxlength="16" autocomplete="off" placeholder="e.g. PlebKing99">
+      <label>Password</label>
+      <input id="auPass" type="password" maxlength="40" autocomplete="off" placeholder="at least 4 characters">
+      <div class="ago" id="auGo">Sign in</div>
+      <div class="amsg" id="auMsg"></div>
+      <div class="anote">Your name and scores show on the leaderboard. Pick a password you will remember — keep it secret.</div>
+    </div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -848,7 +895,7 @@ cv.width=W; cv.height=H;
 
 /* ---------------- screens ---------------- */
 function show(id){
-  ['menu','how','worlds','game','mart','pack','pass','board'].forEach(s=>$(s).classList.toggle('on',s===id));
+  ['menu','how','worlds','game','mart','pack','pass','board','auth'].forEach(s=>$(s).classList.toggle('on',s===id));
   if(id==='menu')populateWorldStrip();
   if(id==='worlds')populateWorldSelect();
   if(id==='mart')renderMart();
@@ -890,6 +937,12 @@ function populateWorldSelect(){
 }
 $('howBtn').onclick=()=>show('how');
 $('boardBtn').onclick=()=>{ SFX.ui(); show('board'); };
+$('tabSignIn').onclick=()=>setAuthMode('in');
+$('tabCreate').onclick=()=>setAuthMode('up');
+$('auGo').onclick=doAuth;
+$('auPass').addEventListener('keydown',e=>{ if(e.key==='Enter')doAuth(); });
+$('auUser').addEventListener('keydown',e=>{ if(e.key==='Enter')doAuth(); });
+$('signOut').onclick=()=>signOut();
 $('boardBack').onclick=()=>show('menu');
 $('battleBtn').onclick=()=>{ initAudio(); newBattle(false); show('game'); };
 $('rankedBtn').onclick=()=>{ initAudio(); newBattle(true); show('game'); };
@@ -1510,16 +1563,60 @@ const RANK_NAMES=['Bronze','Silver','Gold','Platinum','Diamond','Legend'];
 function rankTier(pts){ return RANK_NAMES[Math.max(0,Math.min(RANK_NAMES.length-1,Math.floor((pts||0)/4)))]; }
 function rankColor(pts){ const t=Math.max(0,Math.min(5,Math.floor((pts||0)/4)));
   return ['#b08d57','#c8cdd4','#e8c04a','#7fd8d8','#8fb6ff','#ff9a3a'][t]; }
-const LB_RIVALS=[
-  {name:'Sir Killalot',   level:14, streak:9, waves:32, kills:420, rank:22},
-  {name:'BaronVonPleb',   level:12, streak:4, waves:29, kills:305, rank:16},
-  {name:'PitchforkPete',  level:11, streak:6, waves:27, kills:360, rank:15},
-  {name:'NoobSlayer99',   level:9,  streak:7, waves:22, kills:285, rank:12},
-  {name:'QueenOfTurnips', level:10, streak:3, waves:24, kills:252, rank:10},
-  {name:'LordLoaf',       level:7,  streak:5, waves:18, kills:210, rank:8},
-  {name:'GrumpyGus',      level:6,  streak:2, waves:15, kills:164, rank:5},
-  {name:'TinpotTom',      level:4,  streak:1, waves:11, kills:112, rank:3}
-];
+/* ---- LIVE leaderboard: real accounts shared across real players ---- */
+const API_BASE='https://api.restful-api.dev/objects';
+const CLOUD_ID='ff808181a09d98f701a13e15c3df64d6';   // shared plebania leaderboard blob (Wayne)
+const ACC_KEY='plebania_account';
+let CLOUD={accounts:{}};          // cache of the shared board
+let ME=loadJSON(ACC_KEY,null);    // {key, name} of the signed-in player
+let CLOUD_DIRTY=false, cloudT=null, cloudOk=true;
+function hashPw(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h)^s.charCodeAt(i); } return ('v1_'+(h>>>0).toString(36)+'_'+s.length); }
+async function cloudGet(){ const r=await fetch(API_BASE+'/'+CLOUD_ID+'?x='+Date.now(),{cache:'no-store'});
+  const j=await r.json(); CLOUD=(j&&j.data&&j.data.accounts)?j.data:{accounts:{}}; cloudOk=true; return CLOUD; }
+async function cloudPut(){ CLOUD.v=1; await fetch(API_BASE+'/'+CLOUD_ID,{method:'PUT',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({name:'plebania_shop_lb_v1',data:CLOUD})}); }
+async function cloudSync(){ if(!CLOUD_DIRTY)return; CLOUD_DIRTY=false; try{ await cloudPut(); }catch(e){ CLOUD_DIRTY=true; } }
+function cloudTouch(){ CLOUD_DIRTY=true; clearTimeout(cloudT); cloudT=setTimeout(cloudSync,1400); }
+function rivalName(){ const ks=Object.keys(CLOUD.accounts||{}); if(!ks.length)return 'The Baron';
+  const a=CLOUD.accounts[ks[(Math.random()*ks.length)|0]]; return a&&a.u?a.u:'The Baron'; }
+
+/* ---- accounts: sign up / sign in ---- */
+let AUTHMODE='in';
+function setAuthMode(m){ AUTHMODE=m; $('tabSignIn').classList.toggle('on',m==='in'); $('tabCreate').classList.toggle('on',m==='up');
+  $('auGo').textContent=(m==='in'?'Sign in':'Create account & play'); authMsg(''); }
+function authMsg(t,ok){ const el=$('auMsg'); if(!el)return; el.textContent=t||''; el.classList.toggle('ok',!!ok); }
+async function doAuth(){
+  const u=($('auUser').value||'').trim(); const p=($('auPass').value||'');
+  if(u.length<2){ authMsg('Username needs at least 2 characters.'); return; }
+  if(p.length<4){ authMsg('Password needs at least 4 characters.'); return; }
+  const key=u.toLowerCase(); const go=$('auGo'); go.classList.add('busy'); authMsg('Connecting\u2026',true);
+  try{ await cloudGet(); }catch(e){ go.classList.remove('busy'); authMsg('Could not reach the server. Check your internet and try again.'); return; }
+  const ex=CLOUD.accounts[key];
+  if(AUTHMODE==='up'){
+    if(ex){ go.classList.remove('busy'); authMsg('That username is taken \u2014 try another.'); return; }
+    CLOUD.accounts[key]={u:u, pw:hashPw(p), level:0, streak:0, waves:0, kills:0, rank:0, key:key};
+  }else{
+    if(!ex){ go.classList.remove('busy'); authMsg('No account called \u201ct'+u+'\u201d. Create one first.'); return; }
+    if(ex.pw!==hashPw(p)){ go.classList.remove('busy'); authMsg('Wrong password \u2014 try again.'); return; }
+  }
+  ME={key:key, name:ex?ex.u:u}; saveJSON(ACC_KEY,ME);
+  CLOUD_DIRTY=true; try{ await cloudPut(); }catch(e){}
+  loadLocalFor(ME);
+  go.classList.remove('busy'); authMsg('');
+  $('auPass').value='';
+  enterGame();
+}
+function loadLocalFor(me){
+  // pull this account's saved stats into the local LB, then push merged back
+  const a=CLOUD.accounts[me.key]||{};
+  LB.level=Math.max(LB.level,a.level||0); LB.bestStreak=Math.max(LB.bestStreak,a.streak||0);
+  LB.waves=Math.max(LB.waves,a.waves||0); LB.kills=Math.max(LB.kills,a.kills||0); LB.rank=Math.max(LB.rank,a.rank||0);
+  LB.streak=0; saveLB(); pushScore(); refreshUserChip();
+}
+function refreshUserChip(){ const nm=$('userName'); if(nm)nm.textContent=ME?ME.name:'—'; }
+function enterGame(){ SFX.up(); refreshUserChip(); show('menu'); populateWorldStrip(); }
+function signOut(){ ME=null; saveJSON(ACC_KEY,null); cloudSync(); refreshUserChip(); show('auth'); setAuthMode('in'); authMsg('Signed out.',true); }
+
 const LB_CATS=[
   ['level','\ud83c\udf9a\ufe0f Highest Level',0],
   ['streak','\ud83d\udd25 Longest Win Streak',0],
@@ -1533,30 +1630,56 @@ function recordStats(){
   LB.waves=Math.max(LB.waves,S.wave);
   LB.kills=Math.max(LB.kills,S.slain);
   saveLB();
+  pushScore();
+}
+/* push my stats into the shared board under my account key */
+function pushScore(){
+  if(!ME||!CLOUD||!CLOUD.accounts)return;
+  const a=CLOUD.accounts[ME.key]||(CLOUD.accounts[ME.key]={});
+  a.u=ME.name;
+  a.level=Math.max(a.level||0,LB.level);
+  a.streak=Math.max(a.streak||0,LB.bestStreak);
+  a.waves=Math.max(a.waves||0,LB.waves);
+  a.kills=Math.max(a.kills||0,LB.kills);
+  a.rank=Math.max(a.rank||0,LB.rank);
+  CLOUD.accounts[ME.key]=a; cloudTouch();
+}
+function boardMe(){
+  const name=ME?ME.name:'You';
+  const a=ME&&CLOUD.accounts?CLOUD.accounts[ME.key]:null;
+  if(a) return {name, level:a.level||0, streak:a.streak||0, waves:a.waves||0, kills:a.kills||0, rank:a.rank||0, isMe:true};
+  return {name, level:LB.level, streak:LB.bestStreak, waves:LB.waves, kills:LB.kills, rank:LB.rank, isMe:true};
 }
 function renderBoard(){
   const body=$('boardBody'); if(!body)return;
-  const me={name:'You', level:LB.level, streak:LB.bestStreak, waves:LB.waves, kills:LB.kills, rank:LB.rank, isMe:true};
+  const me=boardMe();
   let html='<div class="bd-big">'+
-    '<div class="bd-stat"><div class="v">'+LB.level+'</div><div class="k">HERO LEVEL</div></div>'+
-    '<div class="bd-stat"><div class="v">'+LB.bestStreak+'</div><div class="k">WIN STREAK</div></div>'+
-    '<div class="bd-stat"><div class="v">'+LB.waves+'</div><div class="k">WAVES BEATEN</div></div>'+
-    '<div class="bd-stat"><div class="v">'+LB.kills+'</div><div class="k">UNITS KILLED</div></div>'+
-    '<div class="bd-stat"><div class="v rankbadge" style="background:'+rankColor(LB.rank)+';color:#2b2418">'+rankTier(LB.rank)+'</div><div class="k">RANK \u00b7 '+LB.rank+' pts</div></div>'+
+    '<div class="bd-stat"><div class="v">'+me.level+'</div><div class="k">HERO LEVEL</div></div>'+
+    '<div class="bd-stat"><div class="v">'+me.streak+'</div><div class="k">WIN STREAK</div></div>'+
+    '<div class="bd-stat"><div class="v">'+me.waves+'</div><div class="k">WAVES BEATEN</div></div>'+
+    '<div class="bd-stat"><div class="v">'+me.kills+'</div><div class="k">UNITS KILLED</div></div>'+
+    '<div class="bd-stat"><div class="v rankbadge" style="background:'+rankColor(me.rank)+';color:#2b2418">'+rankTier(me.rank)+'</div><div class="k">RANK \u00b7 '+me.rank+' pts</div></div>'+
     '</div><div class="bd-wrap">';
+  const rowsAll=Object.keys(CLOUD.accounts||{}).map(k=>({name:CLOUD.accounts[k].u||'Pleb', level:CLOUD.accounts[k].level||0, streak:CLOUD.accounts[k].streak||0, waves:CLOUD.accounts[k].waves||0, kills:CLOUD.accounts[k].kills||0, rank:CLOUD.accounts[k].rank||0, key:k}));
+  const mine=boardMe();
+  if(!rowsAll.some(r=>ME&&r.key===ME.key)) rowsAll.push(Object.assign({key:ME?ME.key:'me'},mine));
+  rowsAll.forEach(r=>{ if(ME&&r.key===ME.key) r.isMe=true; });
+  const total=rowsAll.length;
+  const SHOW=Math.min(total,200);
   LB_CATS.forEach(([k,title])=>{
-    const rows=LB_RIVALS.concat([me]).slice().sort((a,b)=>b[k]-a[k]);
+    const rows=rowsAll.slice().sort((a,b)=>b[k]-a[k]);
     html+='<div class="bd-card"><h3>'+title+'</h3>';
-    rows.slice(0,6).forEach((r,i)=>{
+    rows.slice(0,SHOW).forEach((r,i)=>{
       const medal=i===0?'\ud83e\udd47':i===1?'\ud83e\udd48':i===2?'\ud83e\udd49':'#'+(i+1);
       html+='<div class="bd-row'+(r.isMe?' me':'')+'"><div class="rk">'+medal+'</div><div class="nm">'+
         r.name+(r.isMe?' <span class="you">(you)</span>':'')+'</div><div class="vl">'+r[k]+'</div></div>';
     });
     const idx=rows.findIndex(r=>r.isMe);
-    if(idx>=6){ const r=rows[idx]; html+='<div class="bd-row me"><div class="rk">#'+(idx+1)+'</div><div class="nm">'+r.name+' <span class="you">(you)</span></div><div class="vl">'+r[k]+'</div></div>'; }
+    if(idx>=SHOW){ const r=rows[idx]; html+='<div class="bd-row me"><div class="rk">#'+(idx+1)+'</div><div class="nm">'+r.name+' <span class="you">(you)</span></div><div class="vl">'+r[k]+'</div></div>'; }
     html+='</div>';
   });
   html+='</div>';
+  html='<div class="bd-sub">'+total+' player'+(total===1?'':'s')+' on the board'+(total>SHOW?(' \u00b7 top '+SHOW+' shown'):'')+'</div>'+html;
   body.innerHTML=html;
 }
 
@@ -1570,7 +1693,7 @@ function newBattle(ranked){
   S.lives=15; S.reached=1;
   S.ebMax=240+Math.round((LB.rank||0)*26); S.ebHp=S.ebMax;
   S.raid=[]; S.aiWalls=[]; S.aiT=6; S.raidCd=0;
-  S.oppName = ranked ? LB_RIVALS[(Math.random()*LB_RIVALS.length)|0].name : 'The Baron';
+  S.oppName = ranked ? rivalName() : 'The Baron';
   S.running=true; S.between=false;
   showBanner('\ud83c\udff0 BATTLE \u2014 smash '+S.oppName+'\u2019s base!','gold',2200);
   tip('Placing villagers DEFENDS your base \ud83c\udfe0 \u00b7 hit RAID to attack theirs',4200);
@@ -2885,6 +3008,20 @@ function endGame(win){
 function hideOv(){ $('ov').classList.remove('on'); }
 $('ovMenu').onclick=()=>{ hideOv(); show('menu'); };
 populateWorldStrip();
+/* ---- BOOT: require an account, then sync the shared leaderboard ---- */
+(function boot(){
+  setAuthMode('in');
+  cloudGet().then(()=>{
+    if(ME){ pushScore(); refreshUserChip(); show('menu'); }
+    else show('auth');
+  }).catch(()=>{
+    cloudOk=false;
+    if(ME){ refreshUserChip(); show('menu'); }
+    else { show('auth'); authMsg('Offline \u2014 connect to the internet to make an account.',false); }
+  });
+  setInterval(cloudSync, 8000);
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden)cloudSync(); });
+})();
 $('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
 function toggleBar(force){ const w=$('barwrap'); const hid=(force!=null)?force:!w.classList.contains('hide');
   w.classList.toggle('hide',hid);
