@@ -664,7 +664,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.8 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.9 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1230,17 +1230,12 @@ function countOf(k){ return S?S.towers.filter(o=>o.k===k).length:0; }
 function buildBar(){
   const bar=$('bar'); bar.innerHTML='<span class="btag">UNITS</span>';
   ORDER.forEach(k=>{
-    const d=TOWERS[k]; const lock=!unlockedUnit(k); const have=countOf(k); const cap=capOf(k); const full=have>=cap;
+    if(!unlockedUnit(k)) return;                    // hide locked units entirely — don't show what you can't use yet
+    const d=TOWERS[k]; const have=countOf(k); const cap=capOf(k); const full=have>=cap;
     const card=document.createElement('div');
-    card.className='card'+(k===S.build?' sel':'')+((S.gold<d.cost||lock||full)?' poor':'')+(lock?' locked':'');
+    card.className='card'+(k===S.build?' sel':'')+((S.gold<d.cost||full)?' poor':'');
     card.dataset.k=k;
-    if(lock){
-      const extra=isExtra(k);
-      card.innerHTML='<div class="ce">🔒</div><div class="cn">'+d.name+'</div>'+
-        '<div class="cc" style="color:#c9a24a">'+(extra?'🎒 PLEBPACK':'Wave '+UNLOCK[k])+'</div>'+
-        '<div class="cd">'+(extra?'Buy &amp; equip it to unlock':'Unlocks as you advance')+'</div>';
-      card.onclick=()=>{ tip(extra?('🔒 Buy the '+d.name+' in PLEB MART, then equip it in PLEBPACK 🎒'):('🔒 '+d.name+' unlocks at wave '+UNLOCK[k]),1800); };
-    }else if(full){
+    if(full){
       card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
         '<div class="cc" style="color:#e0792b">MAX '+cap+'/'+cap+'</div><div class="cd">You have all '+cap+' '+d.name+'s</div>';
       card.onclick=()=>{ tip('🚫 You can only place '+cap+' '+d.name+'s',1500); };
