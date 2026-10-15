@@ -664,7 +664,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.0 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.7 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1604,7 +1604,10 @@ function renderMart(){
    LEADERBOARD (highest level / win streak / waves / kills / rank)
    ========================================================= */
 const LB_KEY='plebania_lb';
-let LB=loadJSON(LB_KEY,{level:1,streak:0,bestStreak:0,waves:0,kills:0,rank:0});
+let LB=loadJSON(LB_KEY,{level:1,streak:0,bestStreak:0,waves:0,kills:0,rank:0,time:0});
+function fmtTime(s){ s=Math.max(0,Math.round(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
+  if(h>0) return h+'h '+m+'m'; if(m>0) return m+'m '+Math.floor(s%60)+'s'; return s+'s'; }
+function fmtStat(k,v){ return k==='time'?fmtTime(v):v; }
 function saveLB(){ saveJSON(LB_KEY,LB); }
 const RANK_NAMES=['Bronze','Silver','Gold','Platinum','Diamond','Legend'];
 function rankTier(pts){ return RANK_NAMES[Math.max(0,Math.min(RANK_NAMES.length-1,Math.floor((pts||0)/4)))]; }
@@ -1643,7 +1646,7 @@ function mergeBoards(a,b){
     const x=A[k]||{}, y=B[k]||{};
     out.accounts[k]={ u:y.u||x.u||k, pw:x.pw||y.pw, key:k,
       level:Math.max(x.level||0,y.level||0), streak:Math.max(x.streak||0,y.streak||0),
-      waves:Math.max(x.waves||0,y.waves||0), kills:Math.max(x.kills||0,y.kills||0), rank:Math.max(x.rank||0,y.rank||0) };
+      waves:Math.max(x.waves||0,y.waves||0), kills:Math.max(x.kills||0,y.kills||0), rank:Math.max(x.rank||0,y.rank||0), time:Math.max(x.time||0,y.time||0) };
   });
   return out;
 }
@@ -1696,9 +1699,13 @@ async function doAuth(){
     if(ex.pw!==hashPw(p)){ go.classList.remove('busy'); authMsg('Wrong password \u2014 try again.'); return; }
   }
   ME={key:key, name:ex?ex.u:u}; saveJSON(ACC_KEY,ME);
-  CLOUD_DIRTY=true; try{ await cloudPut(); }catch(e){}
+  CLOUD_DIRTY=true;
+  let saved=false;
+  for(let i=0;i<3 && !saved;i++){ try{ await cloudPut(); saved=true; }catch(e){ await new Promise(r=>setTimeout(r,600)); } }
+  if(!saved){ CLOUD_DIRTY=true; }
   loadLocalFor(ME);
-  go.classList.remove('busy'); authMsg('');
+  go.classList.remove('busy');
+  authMsg(saved?'':'\u26a0\ufe0f Account made, but couldn\u2019t reach the cloud \u2014 it will sync when you\u2019re back online.', !saved);
   $('auPass').value='';
   enterGame();
 }
@@ -1706,7 +1713,7 @@ function loadLocalFor(me){
   // account's cloud stats are the source of truth — reset local bests to that account
   const a=CLOUD.accounts[me.key]||{};
   LB.level=Math.max(1,a.level||1); LB.bestStreak=a.streak||0;
-  LB.waves=a.waves||0; LB.kills=a.kills||0; LB.rank=a.rank||0;
+  LB.waves=a.waves||0; LB.kills=a.kills||0; LB.rank=a.rank||0; LB.time=a.time||0;
   LB.streak=0; saveLB(); pushScore(); refreshUserChip();
 }
 function refreshUserChip(){ const nm=$('userName'); if(nm)nm.textContent=ME?ME.name:'—'; }
@@ -1723,7 +1730,8 @@ function accountStats(){
     ['🧑‍🌾','PLEBS IN ARMY', armyCount()+'/'+MAX_ARMY],
     ['👑','SHOP GOLD', Math.floor(PGOLD)],
     ['⚡','BLEP', Math.floor(PLEB)],
-    ['🔑','PLEKEYS', PLEKEYS.length]
+    ['🔑','PLEKEYS', PLEKEYS.length],
+    ['⏱️','TIME PLAYED', fmtTime(LB.time||0)]
   ];
 }
 function renderAccount(){
@@ -1743,7 +1751,8 @@ const LB_CATS=[
   ['streak','\ud83d\udd25 Longest Win Streak',0],
   ['waves','\ud83c\udf0a Most Waves Beaten',0],
   ['kills','\ud83d\udc80 Most Units Killed',0],
-  ['rank','\ud83c\udfc5 Highest Rank',0]
+  ['rank','\ud83c\udfc5 Highest Rank',0],
+  ['time','\u23f1\ufe0f Most Time Played',1]
 ];
 function recordStats(){
   if(!S)return;
@@ -1763,13 +1772,14 @@ function pushScore(){
   a.waves=Math.max(a.waves||0,LB.waves);
   a.kills=Math.max(a.kills||0,LB.kills);
   a.rank=Math.max(a.rank||0,LB.rank);
+  a.time=Math.max(a.time||0,LB.time||0);
   CLOUD.accounts[ME.key]=a; cloudTouch();
 }
 function boardMe(){
   const name=ME?ME.name:'You';
   const a=ME&&CLOUD.accounts?CLOUD.accounts[ME.key]:null;
-  if(a) return {name, level:a.level||0, streak:a.streak||0, waves:a.waves||0, kills:a.kills||0, rank:a.rank||0, isMe:true};
-  return {name, level:LB.level, streak:LB.bestStreak, waves:LB.waves, kills:LB.kills, rank:LB.rank, isMe:true};
+  if(a) return {name, level:a.level||0, streak:a.streak||0, waves:a.waves||0, kills:a.kills||0, rank:a.rank||0, time:a.time||0, isMe:true};
+  return {name, level:LB.level, streak:LB.bestStreak, waves:LB.waves, kills:LB.kills, rank:LB.rank, time:LB.time||0, isMe:true};
 }
 function renderBoard(){
   const body=$('boardBody'); if(!body)return;
@@ -1780,8 +1790,9 @@ function renderBoard(){
     '<div class="bd-stat"><div class="v">'+me.waves+'</div><div class="k">WAVES BEATEN</div></div>'+
     '<div class="bd-stat"><div class="v">'+me.kills+'</div><div class="k">UNITS KILLED</div></div>'+
     '<div class="bd-stat"><div class="v rankbadge" style="background:'+rankColor(me.rank)+';color:#2b2418">'+rankTier(me.rank)+'</div><div class="k">RANK \u00b7 '+me.rank+' pts</div></div>'+
+    '<div class="bd-stat"><div class="v">'+fmtTime(me.time)+'</div><div class="k">TIME PLAYED</div></div>'+
     '</div><div class="bd-wrap">';
-  const rowsAll=Object.keys(CLOUD.accounts||{}).map(k=>({name:CLOUD.accounts[k].u||'Pleb', level:CLOUD.accounts[k].level||0, streak:CLOUD.accounts[k].streak||0, waves:CLOUD.accounts[k].waves||0, kills:CLOUD.accounts[k].kills||0, rank:CLOUD.accounts[k].rank||0, key:k}));
+  const rowsAll=Object.keys(CLOUD.accounts||{}).map(k=>({name:CLOUD.accounts[k].u||'Pleb', level:CLOUD.accounts[k].level||0, streak:CLOUD.accounts[k].streak||0, waves:CLOUD.accounts[k].waves||0, kills:CLOUD.accounts[k].kills||0, rank:CLOUD.accounts[k].rank||0, time:CLOUD.accounts[k].time||0, key:k}));
   const mine=boardMe();
   if(!rowsAll.some(r=>ME&&r.key===ME.key)) rowsAll.push(Object.assign({key:ME?ME.key:'me'},mine));
   rowsAll.forEach(r=>{ if(ME&&r.key===ME.key) r.isMe=true; });
@@ -1793,10 +1804,10 @@ function renderBoard(){
     rows.slice(0,SHOW).forEach((r,i)=>{
       const medal=i===0?'\ud83e\udd47':i===1?'\ud83e\udd48':i===2?'\ud83e\udd49':'#'+(i+1);
       html+='<div class="bd-row'+(r.isMe?' me':'')+'"><div class="rk">'+medal+'</div><div class="nm">'+
-        r.name+(r.isMe?' <span class="you">(you)</span>':'')+'</div><div class="vl">'+r[k]+'</div></div>';
+        r.name+(r.isMe?' <span class="you">(you)</span>':'')+'</div><div class="vl">'+fmtStat(k,r[k])+'</div></div>';
     });
     const idx=rows.findIndex(r=>r.isMe);
-    if(idx>=SHOW){ const r=rows[idx]; html+='<div class="bd-row me"><div class="rk">#'+(idx+1)+'</div><div class="nm">'+r.name+' <span class="you">(you)</span></div><div class="vl">'+r[k]+'</div></div>'; }
+    if(idx>=SHOW){ const r=rows[idx]; html+='<div class="bd-row me"><div class="rk">#'+(idx+1)+'</div><div class="nm">'+r.name+' <span class="you">(you)</span></div><div class="vl">'+fmtStat(k,r[k])+'</div></div>'; }
     html+='</div>';
   });
   html+='</div>';
@@ -3047,9 +3058,15 @@ function roundRect(x,y,w,h,r){ ctx.beginPath();
    LOOP
    ========================================================= */
 let last=performance.now();
+let PLAYFLUSH=0;
 function loop(now){
   let dt=Math.min(0.05,(now-last)/1000); last=now;
   const active = $('game').classList.contains('on') && !(S&&S.paused);
+  if(S&&active){
+    LB.time=(LB.time||0)+dt;                       // track time played (real seconds)
+    PLAYFLUSH+=dt;
+    if(PLAYFLUSH>=15){ PLAYFLUSH=0; saveLB(); pushScore(); }   // periodic check-point
+  }
   if(S){
     if(!S.over&&active){
       dt*=S.speed||1;
@@ -3153,7 +3170,7 @@ populateWorldStrip();
   });
   checkOrient();
   setInterval(()=>cloudSync(false), 60000);   // gentle safety flush (only if dirty)
-  document.addEventListener('visibilitychange',()=>{ if(document.hidden)cloudSync(true); });
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden){ saveLB(); pushScore(); cloudSync(false); } });
 })();
 $('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
 function toggleBar(force){ const w=$('barwrap'); const hid=(force!=null)?force:!w.classList.contains('hide');
@@ -3163,7 +3180,7 @@ function toggleBar(force){ const w=$('barwrap'); const hid=(force!=null)?force:!
   SFX.ui(); }
 $('barToggle').onclick=()=>toggleBar();
 if($('barToggleFixed'))$('barToggleFixed').onclick=()=>toggleBar(false);
-$('homeBtn').onclick=()=>{ if(!S||S.over)return; $('ov').classList.remove('on'); hideSel(); show('menu'); SFX.ui(); };
+$('homeBtn').onclick=()=>{ if(!S||S.over)return; saveLB(); pushScore(); $('ov').classList.remove('on'); hideSel(); show('menu'); SFX.ui(); };
 $('upsBtn').onclick=()=>{ if(!S||S.over)return; openUp(); };
 $('upClose').onclick=()=>closeUp();
 document.addEventListener('keydown',e=>{ if(e.code==='Escape'&&$('upshop').classList.contains('on'))closeUp(); });
