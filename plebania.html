@@ -83,6 +83,18 @@
   #auth .amsg{min-height:20px;margin-top:12px;font:700 14px Georgia,serif;color:#a33}
   #auth .amsg.ok{color:#2f7a2a}
   #auth .anote{margin-top:12px;font:12px Georgia,serif;color:#7a6a48;line-height:1.4}
+
+  /* ---------- ROTATE TO LANDSCAPE (phone held upright) ---------- */
+  #rotate{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:#0b0a07;color:#f3e6c8;text-align:center;padding:32px}
+  #rotate.on{display:flex}
+  #rotate .ph{font-size:82px;line-height:1;animation:tilt 2.1s ease-in-out infinite;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6))}
+  @keyframes tilt{0%,20%{transform:rotate(0)}55%,100%{transform:rotate(-90deg)}}
+  #rotate h2{font:900 clamp(26px,7vw,34px)/1.1 Georgia,serif;color:#f6dd8b;margin:22px 0 10px;text-shadow:0 3px 0 #000}
+  #rotate p{font:16px Georgia,serif;color:#d8c48c;max-width:320px;line-height:1.5;margin:0}
+  #rotate .skip{margin-top:26px;border:2px solid #6a5220;border-radius:999px;padding:10px 20px;font:700 15px Georgia,serif;
+    color:#e8d9ac;background:linear-gradient(rgba(46,32,12,.95),rgba(24,16,6,.95));cursor:pointer}
+  #rotate .skip:active{transform:translateY(2px)}
   .worldstrip{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
   .wchip{width:118px;border:2px solid #2a1c08;border-radius:14px;padding:10px 8px;text-align:center;cursor:pointer;
     background:linear-gradient(rgba(64,46,20,.9),rgba(34,23,9,.92));box-shadow:0 4px 0 #2a1c08,0 10px 20px rgba(0,0,0,.4);
@@ -874,6 +886,8 @@
   </div>
 </div>
 
+<div id="rotate"><div class="ph">📱</div><h2>Rotate your phone</h2><p>PLEBANIA plays sideways — turn your phone to landscape so the battlefield fills the screen.</p><div class="skip" id="rotateSkip">Play anyway</div></div>
+
 <script>
 (function(){
 "use strict";
@@ -888,6 +902,18 @@ function fit(){
   stage.style.transform='scale('+s+')';
 }
 addEventListener('resize',fit); fit();
+
+/* ---- rotate-to-landscape gate (game is a 1280x800 landscape stage) ---- */
+let ROTATE_SKIP=false;
+try{ ROTATE_SKIP=localStorage.getItem('plebania_rotate_skip')==='1'; }catch(e){}
+function checkOrient(){
+  const r=$('rotate'); if(!r)return;
+  const portrait=innerHeight>innerWidth+40;
+  const onAuth=document.getElementById('auth')&&document.getElementById('auth').classList.contains('on');
+  r.classList.toggle('on', portrait && !ROTATE_SKIP && !onAuth);
+}
+addEventListener('resize',checkOrient);
+addEventListener('orientationchange',()=>setTimeout(checkOrient,120));
 
 const $=id=>document.getElementById(id);
 const cv=$('cv'), ctx=cv.getContext('2d');
@@ -943,6 +969,7 @@ $('auGo').onclick=doAuth;
 $('auPass').addEventListener('keydown',e=>{ if(e.key==='Enter')doAuth(); });
 $('auUser').addEventListener('keydown',e=>{ if(e.key==='Enter')doAuth(); });
 $('signOut').onclick=()=>signOut();
+$('rotateSkip').onclick=()=>{ ROTATE_SKIP=true; try{ localStorage.setItem('plebania_rotate_skip','1'); }catch(e){} checkOrient(); };
 $('boardBack').onclick=()=>show('menu');
 $('battleBtn').onclick=()=>{ initAudio(); newBattle(false); show('game'); };
 $('rankedBtn').onclick=()=>{ initAudio(); newBattle(true); show('game'); };
@@ -3014,11 +3041,14 @@ populateWorldStrip();
   cloudGet().then(()=>{
     if(ME){ pushScore(); refreshUserChip(); show('menu'); }
     else show('auth');
+    checkOrient();
   }).catch(()=>{
     cloudOk=false;
     if(ME){ refreshUserChip(); show('menu'); }
     else { show('auth'); authMsg('Offline \u2014 connect to the internet to make an account.',false); }
+    checkOrient();
   });
+  checkOrient();
   setInterval(cloudSync, 8000);
   document.addEventListener('visibilitychange',()=>{ if(document.hidden)cloudSync(); });
 })();
