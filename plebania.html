@@ -56,6 +56,9 @@
   .mbtn:active{transform:translateY(3px);box-shadow:0 2px 0 #4a3409}
   .mbtn.small{font-size:19px;padding:13px 20px;background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);color:#3a2a08}
   .mbtn.off{filter:grayscale(.75) brightness(.72)}
+  .mbtn.danger{background:linear-gradient(#f2b0a6,#c25a4c 60%,#7c2e23);color:#2a0a06}
+  .mbtn.danger.confirm{animation:delpulse .8s ease-in-out infinite}
+  @keyframes delpulse{0%,100%{transform:translateY(0);box-shadow:0 6px 0 #4a3409}50%{transform:translateY(1px);box-shadow:0 3px 0 #4a3409,0 0 18px rgba(255,90,70,.7)}}
   .menu-foot{position:absolute;left:72px;bottom:26px;z-index:5;font:14px Georgia,serif;color:#c8b079;opacity:.85;
     text-shadow:0 2px 4px #000}
   #userchip{margin-top:16px;font:700 15px Georgia,serif;color:#f0dc9e}
@@ -728,6 +731,10 @@
       <div class="mbtn small" id="acctSwitch" style="width:240px">🔄 Switch account</div>
       <div class="mbtn small" id="acctBack" style="width:200px">⬅ Back to menu</div>
     </div>
+    <div class="acct-btns" style="margin-top:14px">
+      <div class="mbtn small danger" id="acctDel" style="width:300px">🗑️ Delete my account</div>
+    </div>
+    <div id="acctDelMsg" style="color:#f0a58c;font:15px Georgia,serif;margin-top:10px;min-height:20px"></div>
   </div>
 
   <!-- ============ GAME ============ -->
@@ -989,6 +996,7 @@ $('signOut').onclick=()=>signOut();
 $('acctOpen').onclick=()=>{ SFX.ui(); show('account'); };
 $('acctBack').onclick=()=>{ SFX.ui(); show('menu'); };
 $('acctSwitch').onclick=()=>switchAccount();
+$('acctDel').onclick=()=>deleteAccount();
 $('rotateSkip').onclick=()=>{ ROTATE_SKIP=true; try{ localStorage.setItem('plebania_rotate_skip','1'); }catch(e){} checkOrient(); };
 $('boardBack').onclick=()=>show('menu');
 $('battleBtn').onclick=()=>{ initAudio(); newBattle(false); show('game'); };
@@ -1766,10 +1774,43 @@ function renderAccount(){
   accountStats().forEach(([e,k,v])=>{ h+='<div class="acct-tile"><div class="v" style="font:900 30px Georgia,serif;color:#ffd24a">'+e+' '+v+'</div><div class="k" style="font:700 13px Georgia,serif;color:#d8c48c;margin-top:4px;letter-spacing:.5px">'+k+'</div></div>'; });
   h+='</div>';
   body.innerHTML=h;
+  resetDelBtn(); delMsg('');
 }
 function switchAccount(){ cloudSync(true); ME=null; saveJSON(ACC_KEY,null); refreshUserChip(); show('auth'); setAuthMode('in'); authMsg('Sign in with another account (or create a new one).',true); }
 function enterGame(){ SFX.up(); refreshUserChip(); show('menu'); populateWorldStrip(); }
 function signOut(){ ME=null; saveJSON(ACC_KEY,null); cloudSync(true); refreshUserChip(); show('auth'); setAuthMode('in'); authMsg('Signed out.',true); }
+/* ---- delete my own account: two-tap confirm, wipes the cloud record + local data ---- */
+function delMsg(t){ const el=$('acctDelMsg'); if(el)el.textContent=t||''; }
+function resetDelBtn(){ const b=$('acctDel'); if(b){ b.classList.remove('confirm'); b.innerHTML='\ud83d\uddd1\ufe0f Delete my account'; } }
+function deleteAccount(){
+  if(!ME){ return; }
+  const b=$('acctDel');
+  if(!b.classList.contains('confirm')){          // first tap = ask for confirmation
+    SFX.ui(); b.classList.add('confirm'); b.innerHTML='\u26a0\ufe0f Tap again to PERMANENTLY delete';
+    delMsg('This removes '+ME.name+' from the leaderboard and clears your stats on this device. Cannot be undone.');
+    return;
+  }
+  b.classList.remove('confirm'); b.classList.add('off'); b.innerHTML='Deleting\u2026'; delMsg('');
+  const key=ME.key, name=ME.name;
+  cloudSync(true);                                // flush any last stats first
+  const finish=()=>{
+    try{ MQTT_C.publish(myTopic(), '', {retain:true,qos:1}); }catch(e){}   // empty retained payload = record gone
+    if(CLOUD&&CLOUD.accounts) delete CLOUD.accounts[key];
+    // wipe this account's local stats so nothing lingers on the device
+    ['plebania_lb','plebania_pgold','plebania_pleb','plebania_plekeys','plebania_key',
+     'plebania_papers','plebania_gift','plebania_pledrop','plebania_plebpass'].forEach(k=>saveJSON(k,null));
+    ME=null; saveJSON(ACC_KEY,null); refreshUserChip();
+    show('auth'); setAuthMode('in');
+    authMsg('\ud83d\uddd1\ufe0f \u201c'+name+'\u201d has been deleted. Create a new account any time.',true);
+  };
+  const c=MQTT_C;
+  if(c&&c.connected){
+    c.publish(myTopic(), '', {retain:true,qos:1}, ()=>{ setTimeout(finish,400); });   // give the broker a beat to clear it
+  } else {
+    delMsg('\u26a0\ufe0f You\u2019re offline \u2014 the cloud copy can\u2019t be removed right now.');
+    b.classList.remove('off'); resetDelBtn();
+  }
+}
 
 const LB_CATS=[
   ['level','\ud83c\udf9a\ufe0f Highest Level',0],
