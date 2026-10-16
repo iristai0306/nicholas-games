@@ -203,6 +203,14 @@
     background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);box-shadow:0 4px 0 #4a3409}
   #speedBtn.on{background:linear-gradient(#ffe08a,#e8b83a 60%,#a8842b);box-shadow:0 4px 0 #5a4409,0 0 14px rgba(255,210,90,.6)}
   #speedBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
+  #autoBtn{pointer-events:auto;cursor:pointer;border:2px solid #2a1c08;border-radius:12px;
+    min-width:78px;height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+    font:800 13px Georgia,serif;color:#3a2506;line-height:1.05;text-align:center;padding:0 8px;
+    background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);box-shadow:0 4px 0 #4a3409}
+  #autoBtn .ai{font-size:15px}
+  #autoBtn.on{background:linear-gradient(#ffe08a,#e8b83a 60%,#a8842b);box-shadow:0 4px 0 #5a4409,0 0 10px rgba(255,210,90,.5)}
+  #autoBtn.off{filter:grayscale(.7) brightness(.75)}
+  #autoBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
   .spacer{flex:1}
   #startBtn{pointer-events:auto;cursor:pointer;border:3px solid #2a1c08;border-radius:12px;
     padding:12px 26px;font:800 22px Georgia,serif;color:#3a2506;letter-spacing:1px;
@@ -667,7 +675,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.9 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.11 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -752,6 +760,7 @@
       <div class="spacer"></div>
       <div id="raidBtn" title="Send a raid at the enemy base"><span id="raidLbl">🏇 RAID</span><span class="sub" id="raidSub">Ready</span></div>
       <div id="rallyBtn"><span id="rallyLbl">✊ RALLY</span><span class="sub" id="rallySub">Ready</span></div>
+      <div id="autoBtn" title="Tutorial auto-skip"><span class="ai">⏭️</span><span id="autoLbl">Auto ON</span></div>
       <div id="speedBtn" title="Fast-forward">1×</div>
       <div id="startBtn">START WAVE ▶</div>
       <div id="upsBtn" title="Upgrades">⬆️</div>
@@ -1033,6 +1042,8 @@ let UPRISING=loadJSON('plebania_uprising', false); // default OFF — no forced 
 function refreshToggles(){
   const a=$('tgTut'); if(a){ a.textContent='📖 Tutorial auto-skip: '+(AUTOSKIP?'ON':'OFF'); a.classList.toggle('off',!AUTOSKIP); }
   const u=$('tgUp'); if(u){ u.textContent='✊ Uprising army: '+(UPRISING?'ON':'OFF'); u.classList.toggle('off',!UPRISING); }
+  const ab=$('autoBtn'); if(ab){ const l=$('autoLbl'); if(l)l.textContent='Auto '+(AUTOSKIP?'ON':'OFF');
+    ab.classList.toggle('on',AUTOSKIP); ab.classList.toggle('off',!AUTOSKIP); }
 }
 function startTutorial(){
   if(AUTOSKIP && loadJSON(TUTSEEN_KEY,false)){ endTutorial(); return; }
@@ -3260,6 +3271,8 @@ $('rallyBtn').onclick=()=>{ if(!S||S.over||S.paused)return; if((S.rallyCd||0)>0)
   for(let i=0;i<20;i++)burst(S.hero.x,S.hero.y,'#ffd24a');
   syncHud(); updateRallyBtn();
 };
+$('autoBtn').onclick=()=>{ AUTOSKIP=!AUTOSKIP; saveJSON('plebania_autoskip',AUTOSKIP);
+  refreshToggles(); tip('Tutorial auto-skip '+(AUTOSKIP?'ON — won\u2019t show again':'OFF — will show next time'),1600); };
 $('speedBtn').onclick=()=>{ if(!S)return; S.speed=S.speed===1?2:1;
   $('speedBtn').textContent=S.speed+'×'; $('speedBtn').classList.toggle('on',S.speed>1); SFX.ui();
   tip(S.speed===2?'Fast-forward ON ⏩':'Normal speed',1200);
