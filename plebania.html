@@ -698,7 +698,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.16 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.17 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1647,29 +1647,56 @@ function saveLB(){ saveJSON(LB_KEY,LB); }
 /* Values set by hand in the admin panel. Kept until they're confirmed published,
    so a stale leaderboard record can't overwrite them (that's why rank "didn't work"). */
 let ADMINSET=loadJSON('plebania_adminset',null);   // {at, v:{level,streak,waves,kills,rank,time}}
-const RANK_NAMES=['Bronze','Silver','Gold','Platinum','Diamond','Legend'];
-/* elo needed to REACH each tier. Used to be 4 points per tier, which is why one
-   win felt like it did nothing (and one win used to max you out at Legend). */
-const RANK_STEPS=[0,120,320,650,1100,1700];
-function rankTierIdx(pts){ pts=Math.max(0,pts||0); let i=0;
+/* 9 tiers x 3 divisions = 27 ranks. Division 1 is the bottom of a tier,
+   division 3 is the top, then you promote into the next tier. */
+const RANK_TIERS=[
+  {n:'Bronze',       c:'#b08d57'},
+  {n:'Silver',       c:'#c8cdd4'},
+  {n:'Gold',         c:'#e8c04a'},
+  {n:'Platinum',     c:'#7fd8d8'},
+  {n:'Diamond',      c:'#8fb6ff'},
+  {n:'Obsidian',     c:'#8a5cf6'},
+  {n:'Nemesis',      c:'#ff4d6d'},
+  {n:'Arch Nemesis', c:'#e01e37'},
+  {n:'Pro',          c:'#00e5b0'}
+];
+/* elo needed to REACH each of the 27 ranks (index 0 = Bronze 1).
+   Gaps widen as you climb so the top ranks actually mean something. */
+const RANK_STEPS=[
+      0,   60,  130,                       // Bronze 1-3
+    210,  290,  380,                       // Silver 1-3
+    480,  590,  710,                       // Gold 1-3
+    850, 1000, 1160,                       // Platinum 1-3
+   1340, 1530, 1740,                       // Diamond 1-3
+   1970, 2210, 2480,                       // Obsidian 1-3
+   2770, 3080, 3420,                       // Nemesis 1-3
+   3790, 4190, 4620,                       // Arch Nemesis 1-3
+   5090, 5590, 6130                        // Pro 1-3
+];
+const RANK_MAX=RANK_STEPS[RANK_STEPS.length-1];
+function rankPos(pts){ pts=Math.max(0,pts||0); let i=0;
   for(let j=0;j<RANK_STEPS.length;j++) if(pts>=RANK_STEPS[j]) i=j; return i; }
-function rankTier(pts){ return RANK_NAMES[rankTierIdx(pts)]; }
-function rankColor(pts){ return ['#b08d57','#c8cdd4','#e8c04a','#7fd8d8','#8fb6ff','#ff9a3a'][rankTierIdx(pts)]; }
-function rankNextAt(pts){ const i=rankTierIdx(pts); return i>=RANK_STEPS.length-1?null:RANK_STEPS[i+1]; }
+function rankTierIdx(pts){ return Math.floor(rankPos(pts)/3); }
+function rankDiv(pts){ return (rankPos(pts)%3)+1; }
+function rankTier(pts){ const p=rankPos(pts); return RANK_TIERS[Math.floor(p/3)].n+' '+((p%3)+1); }
+function rankColor(pts){ return RANK_TIERS[rankTierIdx(pts)].c; }
+function rankNextAt(pts){ const p=rankPos(pts); return p>=RANK_STEPS.length-1?null:RANK_STEPS[p+1]; }
+function rankNextName(pts){ const p=rankPos(pts); if(p>=RANK_STEPS.length-1)return null;
+  const q=p+1; return RANK_TIERS[Math.floor(q/3)].n+' '+((q%3)+1); }
 /* how much elo a ranked win pays. Bigger vs harder opponents, and streaks pay. */
 function eloWin(){
   const streak=Math.max(1,(LB.streak||0)+1);
-  const tier=rankTierIdx(LB.rank);
-  const base=28;
+  const tier=rankTierIdx(LB.rank);            // 0..8
+  const base=30;
   const streakB=Math.min(25,streak*5);        // win streaks ramp up
-  const tierB=tier*6;                          // higher tier = tougher fight = more elo
-  const smash=(S&&S.ebHp<=0)?12:0;             // bonus for actually destroying their base
+  const tierB=tier*8;                          // higher tier = tougher fight = more elo
+  const smash=(S&&S.ebHp<=0)?14:0;             // bonus for actually destroying their base
   return base+streakB+tierB+smash;
 }
 /* losing a ranked battle costs elo now (it used to only reset your streak) */
 function eloLose(){
-  const tier=rankTierIdx(LB.rank);
-  return Math.min(30,10+tier*3);
+  const tier=rankTierIdx(LB.rank);            // 0..8
+  return Math.min(40,10+tier*4);
 }
 /* ---- LIVE leaderboard: real accounts, shared in real time over MQTT (no signup, no rate cap) ---- */
 const MQTT_LIB='https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js';
@@ -1826,7 +1853,7 @@ function accountStats(){
     ['🔥','BEST WIN STREAK', LB.bestStreak],
     ['🌊','WAVES BEATEN', LB.waves],
     ['💀','UNITS KILLED', LB.kills],
-    ['🏅','RANK', rankTier(LB.rank)+' · '+LB.rank+' pts'],
+    ['🏅','RANK', rankTier(LB.rank)+' · '+LB.rank+' pts'+(rankNextAt(LB.rank)!=null?(' — '+((rankNextAt(LB.rank)-LB.rank))+' to '+rankNextName(LB.rank)):' — MAXED')],
     ['🎫','PLEBASS TIER', BPASS.tiers],
     ['🗺️','WORLDS UNLOCKED', worlds+'/'+WORLDS.length],
     ['🧑‍🌾','PLEBS IN ARMY', armyCount()+'/'+MAX_ARMY],
@@ -2089,7 +2116,7 @@ function newBattle(ranked){
   newGame(S?S.world:0);
   S.battle=true; S.ranked=!!ranked;
   S.lives=15; S.reached=1;
-  S.ebMax=240+rankTierIdx(LB.rank)*170; S.ebHp=S.ebMax;
+  S.ebMax=240+rankTierIdx(LB.rank)*130; S.ebHp=S.ebMax;
   S.raid=[]; S.aiWalls=[]; S.aiT=6; S.raidCd=0; S.nextWaveT=2.5;
   S.oppName = ranked ? rivalName() : 'The Baron';
   S.running=false; S.between=true;
@@ -2101,7 +2128,7 @@ function newBattle(ranked){
 function launchRaid(){
   if(!S||!S.battle||S.over||S.paused)return;
   if((S.raidCd||0)>0)return;
-  const n=3+Math.round(rankTierIdx(LB.rank)*1.5);
+  const n=3+Math.round(rankTierIdx(LB.rank)*1.2);
   const base=PATH[PATH.length-1];
   for(let i=0;i<n;i++){
     S.raid.push({x:base.x-14, y:base.y+(Math.random()-0.5)*34, hp:70, maxhp:70, dmg:16,
@@ -2146,10 +2173,10 @@ function battleAI(dt){
       const lead=S.raid[S.raid.length-1];
       const t=tileAt(lead.x-30,lead.y);
       if(t && pathKeys.has(t.c+','+t.r) && !aiWallAt(t.c,t.r) && !S.buildings.some(b=>b.c===t.c&&b.r===t.r))
-        S.aiWalls.push({c:t.c,r:t.r,hp:90+rankTierIdx(LB.rank)*45,maxhp:90+rankTierIdx(LB.rank)*45});
+        S.aiWalls.push({c:t.c,r:t.r,hp:90+rankTierIdx(LB.rank)*38,maxhp:90+rankTierIdx(LB.rank)*38});
     }
     const t2=tileAt(PATH[1].x, PATH[1].y);
-    if(t2 && !aiWallAt(t2.c,t2.r)) S.aiWalls.push({c:t2.c,r:t2.r,hp:120+rankTierIdx(LB.rank)*45,maxhp:120+rankTierIdx(LB.rank)*45});
+    if(t2 && !aiWallAt(t2.c,t2.r)) S.aiWalls.push({c:t2.c,r:t2.r,hp:120+rankTierIdx(LB.rank)*38,maxhp:120+rankTierIdx(LB.rank)*38});
     S.aiWalls=S.aiWalls.filter(w=>w.hp>0);
   }
 }
