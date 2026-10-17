@@ -671,11 +671,10 @@
       <div style="margin-top:14px"><span class="linklike" id="howBtn">❔ How to Play</span></div>
       <div class="menu-toggles">
         <span class="tg" id="tgTut">📖 Tutorial auto-skip: ON</span>
-        <span class="tg" id="tgUp">✊ Uprising army: ON</span>
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.11 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.12 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -694,8 +693,7 @@
       </div>
       <div class="panel">
         <h3>⚔️ Commands &amp; Tricks</h3>
-        <div class="row"><span class="e">✊</span><span><b>THE UPRISING</b> — every noble you slay <b>throws off its armour and joins your mob</b>! They swarm around your hero, picking fights. Bigger mob = bigger uprising. This is what makes Plebania special.</span></div>
-        <div class="row"><span class="e">🗡️</span><span><b>Your Hero</b> — drag anywhere to run your crowned hero around. He auto-attacks and levels up. Rally calls <b>+4 new defectors</b> to him at once.</span></div>
+        <div class="row"><span class="e">🗡️</span><span><b>Your Hero</b> — drag anywhere to run your crowned hero around. He auto-attacks and levels up as he fights.</span></div>
         <div class="row"><span class="e">✊</span><span><b>RALLY</b> — hit it when things get hairy: every pleb attacks <b>twice as fast +25% damage</b> for 6 seconds. 30s cooldown.</span></div>
         <div class="row"><span class="e">⏩</span><span><b>Fast-forward</b> — the ×1 button doubles game speed when you've got it under control.</span></div>
         <div class="row"><span class="e">👀</span><span><b>Next</b> — the HUD shows what's marching in on the next wave. Plan ahead!</span></div>
@@ -755,7 +753,6 @@
       <div class="chip"><span class="ci">🏠</span><span id="hLives">20</span></div>
       <div class="chip"><span class="ci">🌊</span><span id="hWave">0/10</span></div>
       <div class="chip" title="Next wave"><span class="ci">👀</span><span id="hNext">—</span></div>
-      <div class="chip" title="The Uprising — nobles who defected to your side"><span class="ci">✊</span><span id="hMob">0</span></div>
       <div class="chip" title="Your hero"><span class="ci">🗡️</span><span id="hHero">100</span></div>
       <div class="spacer"></div>
       <div id="raidBtn" title="Send a raid at the enemy base"><span id="raidLbl">🏇 RAID</span><span class="sub" id="raidSub">Ready</span></div>
@@ -1031,17 +1028,14 @@ const TUT=[
   {t:'Your HERO is you 🗡️',p:'A pleb champion with a crown and sword stands on the field. DRAG anywhere on the map to run him around — he auto-attacks any noble he touches, and levels up as he fights. He\u2019ll get knocked down if he\u2019s swamped (back up in 5s).'},
   {t:'Place your villagers',p:'Tap a villager in the bar at the bottom, then tap a grass tile to place them. Tap the SAME tile again to confirm. They defend the line while you fight with your hero. Tap a placed villager to upgrade or sell.'},
   {t:'Walls & traps 🧱',p:'There is a SECOND bar for BUILDINGS. Wall 🧱 and Barricade 🚧 block the path — nobles have to smash through them. Spikes 📌 and Pike Pit 🕳️ hurt anything that walks over them. Great for funnelling the army. (Farms are capped at 3 — everything else you can place as much as you like.)'},
-  {t:'You are the UPRISING ✊',p:'Here\u2019s the special bit: every noble you slay rips off its armour and DEFECTS to your side! They gather around your hero as a growing mob and fight for you. The more you kill, the bigger your uprising. Rally raises fresh defectors instantly.'},
-  {t:'Rally the plebs ✊',p:'Things getting hairy? Hit RALLY — the mob swells, and every pleb attacks twice as fast with +25% damage for 6 seconds. Use the ⏩ button to speed up when you can handle it.'},
+  {t:'Rally the plebs ✊',p:'Things getting hairy? Hit RALLY — every pleb attacks twice as fast with +25% damage for 6 seconds. Use the \u23e9 button to speed up when you can handle it.'},
   {t:'Unlock new villagers',p:'You unlock new villagers as you survive: Poacher & Farm now, Militia at wave 3, Alchemist at wave 5, Catapult at wave 7. Earn gold 👑 by slaying nobles. Farms are limited to 3, but you can place as many fighters as you want. Good luck, pleb!'}
 ];
 let tutI=0;
 const TUTSEEN_KEY='plebania_tutseen';
 let AUTOSKIP=loadJSON('plebania_autoskip', true);   // default ON
-let UPRISING=loadJSON('plebania_uprising', false); // default OFF — no forced army; he can switch it on from the menu
 function refreshToggles(){
   const a=$('tgTut'); if(a){ a.textContent='📖 Tutorial auto-skip: '+(AUTOSKIP?'ON':'OFF'); a.classList.toggle('off',!AUTOSKIP); }
-  const u=$('tgUp'); if(u){ u.textContent='✊ Uprising army: '+(UPRISING?'ON':'OFF'); u.classList.toggle('off',!UPRISING); }
   const ab=$('autoBtn'); if(ab){ const l=$('autoLbl'); if(l)l.textContent='Auto '+(AUTOSKIP?'ON':'OFF');
     ab.classList.toggle('on',AUTOSKIP); ab.classList.toggle('off',!AUTOSKIP); }
 }
@@ -1053,11 +1047,7 @@ function startTutorial(){
 }
 function renderTut(){ const s=TUT[tutI]; $('tutStep').textContent=(tutI+1)+' / '+TUT.length; $('tutT').textContent=s.t; $('tutP').textContent=tutText(tutI);
   $('tutNext').textContent = tutI>=TUT.length-1?'Let\'s go ⚔️':'Next ▶'; }
-function tutText(i){
-  if(!UPRISING && i===4) return 'Your Uprising army is OFF right now — no nobles defect to you, so it\u2019s just you and your villagers. Turn it back on any time from the Menu (\u270a Uprising army).';
-  if(!UPRISING && i===5) return 'Things getting hairy? Hit RALLY — every pleb attacks twice as fast with +25% damage for 6 seconds. Use the \u23e9 button to speed up when you can handle it.';
-  return TUT[i].p;
-}
+function tutText(i){ return TUT[i].p; }
 $('tutNext').onclick=()=>{ if(tutI<TUT.length-1){ tutI++; renderTut(); } else endTutorial(); };
 $('tutSkip').onclick=()=>endTutorial();
 $('tutAuto').onclick=()=>{ AUTOSKIP=!AUTOSKIP; saveJSON('plebania_autoskip',AUTOSKIP);
@@ -1068,8 +1058,6 @@ function pauseGame(on){ if(S)S.paused=on; }
 /* ---------------- menu toggles (always visible, so they're easy to find) ---------------- */
 $('tgTut').onclick=()=>{ AUTOSKIP=!AUTOSKIP; saveJSON('plebania_autoskip',AUTOSKIP); SFX.ui();
   refreshToggles(); tip('Tutorial auto-skip '+(AUTOSKIP?'ON — skips after you\u2019ve seen it once':'OFF — always shows'),1700); };
-$('tgUp').onclick=()=>{ UPRISING=!UPRISING; saveJSON('plebania_uprising',UPRISING); SFX.ui();
-  refreshToggles(); tip('Uprising army '+(UPRISING?'ON — fallen nobles join your mob':'OFF — no armies, just you and your villagers'),2200); };
 refreshToggles();
 
 /* ---------------- audio ---------------- */
@@ -1205,13 +1193,14 @@ function newGame(world){
     reached:1, rally:0, speed:1,
     towers:[], buildings:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
     shake:0, hurt:0, slain:0, sel:null, selB:null, build:'farmhand',
-    waveTimer:0, farmAcc:0, mob:[], turned:0, mart:{}
+    waveTimer:0, farmAcc:0, mart:{}
   };
   hover=null; locked=null; buildPath(w);
   // THE HERO — a pleb champion you control (drag to move, auto-attacks)
   S.hero={ x:W*0.42, y:H*0.52, tx:null, ty:null, hp:120, maxhp:120, dmg:30, range:80, rate:0.42,
     atkT:0, sword:0, walk:0, level:1, kills:0, down:false, downT:0 };
   hideOv(); hideSel();
+  if($('startBtn'))$('startBtn').style.display='';
   showBanner(WORLDS[w].emoji+' '+WORLDS[w].name+' — defend it!','gold',1700);
   syncHud(); buildBar(); buildBar2();
   tip('🗡️ DRAG anywhere to run your hero · tap the grass to place villagers',3400);}
@@ -1223,7 +1212,6 @@ function syncHud(){
   $('hWorldIc').textContent=WORLDS[S.world].emoji;
   $('hWorld').textContent=WORLDS[S.world].name;
   if($('hHero')&&S.hero)$('hHero').textContent=Math.max(0,Math.ceil(S.hero.hp));
-  if($('hMob'))$('hMob').textContent=(S.mob?S.mob.length:0);
   sUpdateNext();
 }
 function previewWave(w){
@@ -1286,8 +1274,6 @@ const UPGRADES=[
   {id:'sword', e:'🗡️', name:'Longer Sword',  desc:'+15 hero damage.',                base:60, mul:1.7,  max:6},
   {id:'boots', e:'👢', name:'Running Boots',  desc:'+18% hero move speed.',           base:55, mul:1.7,  max:6},
   {id:'armor', e:'🛡️', name:'Peasant Armour', desc:'+35 hero max HP & heals 40.',     base:55, mul:1.7,  max:6},
-  {id:'crowd', e:'✊', name:'Angry Crowd',    desc:'+6% mob damage.',                 base:50, mul:1.65, max:8},
-  {id:'revolt',e:'🔥', name:'Revolt Spirit',  desc:'+1 extra defector per noble slain.', base:95, mul:1.9, max:6},
   {id:'banner',e:'🚩', name:'Plebania Banner',desc:'+1 life (a safe buffer).',        base:90, mul:1.8,  max:8}
 ];
 function martCost(u){ return Math.round(u.base*Math.pow(u.mul,(S.mart[u.id]||0))); }
@@ -1600,8 +1586,7 @@ function renderMart(){
         '<div style="text-align:center"><div class="pm-btndisplay'+(ready?'':' cant')+'" id="giftGo">'+(ready?'Claim gift':'Come back tomorrow')+'</div></div>';
       if(ready)body.querySelector('#giftGo').onclick=claimGift;
     }else if(MARTTAB==='news'){
-      body.innerHTML='<ul class="pm-news"><li>\u270a THE UPRISING \u2014 slain nobles defect to your mob!</li>'+
-        '<li>\ud83d\udde1\ufe0f Control your own hero \u2014 drag to run, he auto-attacks.</li>'+
+      body.innerHTML='<ul class="pm-news"><li>\ud83d\udde1\ufe0f Control your own hero \u2014 drag to run, he auto-attacks.</li>'+
         '<li>\ud83d\udd11 PLEB MART \u2014 Pledoption center, Money bundles, Pleb boxes, Codes, Gift &amp; News.</li>'+
         '<li>\u2728 Coming soon \u2014 more Plekeys, hero weapons, boss rush.</li></ul>';
     }else{ // boxes
@@ -1901,9 +1886,10 @@ function newBattle(ranked){
   S.battle=true; S.ranked=!!ranked;
   S.lives=15; S.reached=1;
   S.ebMax=240+Math.round((LB.rank||0)*26); S.ebHp=S.ebMax;
-  S.raid=[]; S.aiWalls=[]; S.aiT=6; S.raidCd=0;
+  S.raid=[]; S.aiWalls=[]; S.aiT=6; S.raidCd=0; S.nextWaveT=2.5;
   S.oppName = ranked ? rivalName() : 'The Baron';
-  S.running=true; S.between=false;
+  S.running=false; S.between=true;
+  if($('startBtn'))$('startBtn').style.display='none';   // battle waves auto-start
   showBanner('\ud83c\udff0 BATTLE \u2014 smash '+S.oppName+'\u2019s base!','gold',2200);
   tip('Placing villagers DEFENDS your base \ud83c\udfe0 \u00b7 hit RAID to attack theirs',4200);
   syncHud(); buildBar(); buildBar2(); updateRaidBtn();
@@ -1969,8 +1955,12 @@ function battleWin(){
   if(S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); LB.rank++; }
   addPassXP(S.ranked?150:100);
   saveLB();
-  $('ovT').style.color='#f6dd8b'; $('ovT').textContent='\ud83c\udff0 ENEMY BASE DESTROYED!';
-  $('ovP').innerHTML='You smashed <b>'+S.oppName+'</b>\u2019s base with '+S.raid.length+' raiders still standing.<br>'+
+  const smashed=(S.ebHp<=0);
+  $('ovT').style.color='#f6dd8b';
+  $('ovT').textContent=smashed?'\ud83c\udff0 ENEMY BASE DESTROYED!':'\ud83d\udee1\ufe0f GARRISON BROKEN!';
+  $('ovP').innerHTML=(smashed
+      ? 'You smashed <b>'+S.oppName+'</b>\u2019s base with '+S.raid.length+' raiders still standing.'
+      : 'You held every wave \u2014 <b>'+S.oppName+'</b>\u2019s garrison broke and fled.')+'<br>'+
     (S.ranked ? ('Win streak: <b>'+LB.streak+'</b> \u00b7 Rank: <b>'+rankTier(LB.rank)+'</b> ('+LB.rank+' pts)<br>') : '')+
     'Foes felled: <b>'+S.slain+'</b>.';
   $('ovAgain').style.display=''; $('ovAgain').textContent='RAID AGAIN';
@@ -2452,22 +2442,8 @@ function kill(e,byPlayer){
   const big=e.rank==='boss'||e.rank==='king';
   for(let i=0;i<(big?34:14);i++)burst(e.x,e.y,big?'#ffcf5a':'#d8c088');
   SFX.kill(); if(big){S.shake=Math.max(S.shake,12);SFX.big();showBanner(e.name+' SLAIN!','gold',1500);}
-  // THE UPRISING: the fallen noble throws off its armour and joins your mob!
-  spawnTurned(e, (e.rank==='king'?6:e.rank==='boss'?3:1)+(S.mart.revolt||0));
   syncHud();
 }
-/* a defector — a pleb who was once a noble, now fights for you (powers your Rally) */
-function spawnTurned(e,n){
-  if(!UPRISING)return;
-  const d=ENEMIES[e.type]||{};
-  for(let i=0;i<(n||1);i++){
-    S.mob.push({x:e.x+(Math.random()-0.5)*18, y:e.y+(Math.random()-0.5)*18,
-      sz:Math.max(16,Math.min(30,(e.sz||24)*0.8)), t:Math.random()*6, lane:e.wp||0, defend:0, emoji:d.emoji});
-  }
-  S.turned+=n;
-}
-
-
 /* =========================================================
    TOWERS
    ========================================================= */
@@ -2642,9 +2618,6 @@ function render(dt){
 
   // enemies
   for(const e of S.enemies) drawEnemy(e);
-
-  // the uprising mob
-  drawMob();
 
   // hero (drawn on top so you can always see him)
   drawHero();
@@ -3022,37 +2995,6 @@ function drawHero(){
   if(skin){ ctx.font='16px serif'; ctx.strokeText(skin.e,x+34,hy+6); ctx.fillText(skin.e,x+34,hy+6); }
   ctx.restore();
 }
-/* ---- THE UPRISING mob: defectors fight for you and rally around your hero ---- */
-function mobUpdate(dt){
-  if(!S.mob||!S.mob.length)return;
-  const h=S.hero;
-  for(const m of S.mob.slice()){
-    m.t+=dt;
-    let best=null,bd=1e9;
-    for(const e of S.enemies){ const d=Math.hypot(e.x-m.x,e.y-m.y); if(d<bd){bd=d;best=e;} }
-    let tx,ty;
-    if(best&&bd<230){ tx=best.x; ty=best.y; }
-    else { const ang=m.t*0.6+(m.lane||0)*1.3; tx=h.x+Math.cos(ang)*56; ty=h.y+Math.sin(ang)*56; }
-    const dx=tx-m.x, dy=ty-m.y, d=Math.hypot(dx,dy)||1;
-    const spd=152;
-    if(d>6){ const step=Math.min(spd*dt,d); m.x+=dx/d*step; m.y+=dy/d*step; m.walk=(m.walk||0)+dt*10; }
-    if(best&&bd<best.sz*0.5+16){
-      m.atkT=(m.atkT||0)-dt;
-      if(m.atkT<=0){ m.atkT=0.5; damage(best, Math.round((6+Math.round(S.turned*0.06))*(1+(S.mart.crowd||0)*0.06)), null); for(let i=0;i<2;i++)burst(m.x,m.y,'#f0e0a8'); }
-    }
-  }
-}
-function drawMob(){
-  if(!S.mob||!S.mob.length)return;
-  for(const m of S.mob){
-    const s=Math.max(0.5,Math.min(0.85,m.sz/34));
-    const bob=Math.sin(m.walk||0)*1.0;
-    ctx.save(); ctx.globalAlpha=0.95; ctx.translate(m.x,m.y);
-    ctx.save(); ctx.scale(s,s); drawPlebShape(0,0,1,bob); ctx.restore();
-    ctx.fillStyle='#f2cf62'; ctx.beginPath(); ctx.arc(0,-m.sz*0.72-3,2.6,0,7); ctx.fill();
-    ctx.restore();
-  }
-}
 function drawProj(p){
   if(p.kind==='catapult'){ ctx.fillStyle='#8a6a3a'; ctx.beginPath(); ctx.arc(p.x,p.y,7,0,7); ctx.fill();
     ctx.fillStyle='#b98a4d'; ctx.beginPath(); ctx.arc(p.x-2,p.y-2,3,0,7); ctx.fill(); }
@@ -3148,7 +3090,7 @@ function loop(now){
     if(!S.over&&active){
       dt*=S.speed||1;
       // spawning (waves)
-      if(S.running && !S.battle){
+      if(S.running){
         S.spawnT-=dt;
         if(S.spawnT<=0&&S.spawnQ.length){
           spawn(S.spawnQ.shift());
@@ -3159,14 +3101,17 @@ function loop(now){
       enemyUpdate(dt);
       towerUpdate(dt);
       heroUpdate(dt);
-      mobUpdate(dt);
       projUpdate(dt);
       if(S.battle){
         raidUpdate(dt);
         battleAI(dt);
-        // the enemy garrison keeps marching down the road at your base
-        S.ebT=(S.ebT||0)-dt;
-        if(S.ebT<=0){ S.ebT=2.6; const w=WORLDS[S.world]; spawn(w.units.light); if(Math.random()<0.4)spawn(w.units.medium); }
+        // RAID cooldown MUST tick down, or you can only ever raid once
+        if(S.raidCd>0){ S.raidCd-=dt; if(S.raidCd<0)S.raidCd=0; }
+        // battle waves end and the next one rolls in on its own
+        if(!S.running&&!S.over){
+          S.nextWaveT=(S.nextWaveT||0)-dt;
+          if(S.nextWaveT<=0&&S.wave<MAXWAVE) startWave();
+        }
       }
       // decay fx
       for(const q of S.parts){ q.t+=dt; q.x+=q.vx*dt; q.y+=q.vy*dt; q.vy+=420*dt; }
@@ -3180,7 +3125,7 @@ function loop(now){
       if(S.rallyCd>0){ S.rallyCd-=dt; if(S.rallyCd<0)S.rallyCd=0; }
       S.uiAcc=(S.uiAcc||0)+dt; if(S.uiAcc>0.12){ S.uiAcc=0; updateRallyBtn(); if(S.battle)updateRaidBtn();
         if(S.hero&&$('hHero'))$('hHero').textContent=Math.max(0,Math.ceil(S.hero.hp));
-        if($('hMob'))$('hMob').textContent=(S.mob?S.mob.length:0); }
+        }
     }
     render(dt);
   }
@@ -3189,7 +3134,6 @@ function loop(now){
   if(tipT&&Date.now()>tipT){ $('tip').classList.remove('on'); tipT=0; }
 }
 function endWave(){
-  if(S.battle){ return; }  // battle mode never ends in waves
   S.running=false; S.between=true;
   if(S.wave+1>S.reached){ S.reached=S.wave+1; }
   const bonus=20+S.wave*8;
@@ -3198,6 +3142,11 @@ function endWave(){
   addDmg(W/2,H/2-40,'WAVE CLEAR  +👑'+bonus,'#8ef0ff');
   SFX.win();
   if(S.wave>=MAXWAVE){ endGame(true); return; }
+  if(S.battle){
+    S.nextWaveT=3.5;
+    showBanner('Wave '+S.wave+'/'+MAXWAVE+' cleared!  ·  RAID their base \ud83c\udfc7','gold',1900);
+    syncHud(); buildBar(); return;
+  }
   $('startBtn').classList.remove('off');
   showBanner('Wave '+S.wave+'/'+MAXWAVE+' cleared! +👑'+bonus+'  ·  build up','gold',2000);
   syncHud(); buildBar();
@@ -3263,10 +3212,7 @@ $('upClose').onclick=()=>closeUp();
 document.addEventListener('keydown',e=>{ if(e.code==='Escape'&&$('upshop').classList.contains('on'))closeUp(); });
 $('rallyBtn').onclick=()=>{ if(!S||S.over||S.paused)return; if((S.rallyCd||0)>0)return;
   S.rally=6; S.rallyCd=30; SFX.up();
-  // THE UPRISING: the crowd answers the call — a few fresh defectors rise up
-  const n=4;
-  if(UPRISING){ for(let i=0;i<n;i++){ S.mob.push({x:S.hero.x+(Math.random()-0.5)*70, y:S.hero.y+(Math.random()-0.5)*70, sz:22, t:Math.random()*6, lane:i, defend:0}); } S.turned+=n; }
-  showBanner(UPRISING?('✊ RALLY! The mob swells +'+n+' and attacks twice as fast!'):'✊ RALLY! Everyone attacks twice as fast!','gold',1900);
+  showBanner('✊ RALLY! Everyone attacks twice as fast!','gold',1900);
   for(const o of S.towers)for(let i=0;i<6;i++)burst(cx(o.c),cy(o.r),'#ffb347');
   for(let i=0;i<20;i++)burst(S.hero.x,S.hero.y,'#ffd24a');
   syncHud(); updateRallyBtn();
@@ -3299,7 +3245,7 @@ document.addEventListener('keydown',e=>{ if(e.code==='Space'&&$('game').classLis
 /* debug hooks (verification) */
 window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked(){return unlocked;}, get PATH(){return PATH;},
   spawnE:(t)=>spawn(t), effDmg:(o)=>effDmg(o), packEff:(k,s)=>packEffect(k,s),
-  tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); mobUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
+  tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
 
 // interval-driven loop: runs even when the game sits in an unfocused iframe
 setInterval(()=>loop(performance.now()),1000/60);
