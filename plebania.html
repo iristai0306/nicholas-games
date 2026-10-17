@@ -698,7 +698,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.15 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.16 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1648,9 +1648,29 @@ function saveLB(){ saveJSON(LB_KEY,LB); }
    so a stale leaderboard record can't overwrite them (that's why rank "didn't work"). */
 let ADMINSET=loadJSON('plebania_adminset',null);   // {at, v:{level,streak,waves,kills,rank,time}}
 const RANK_NAMES=['Bronze','Silver','Gold','Platinum','Diamond','Legend'];
-function rankTier(pts){ return RANK_NAMES[Math.max(0,Math.min(RANK_NAMES.length-1,Math.floor((pts||0)/4)))]; }
-function rankColor(pts){ const t=Math.max(0,Math.min(5,Math.floor((pts||0)/4)));
-  return ['#b08d57','#c8cdd4','#e8c04a','#7fd8d8','#8fb6ff','#ff9a3a'][t]; }
+/* elo needed to REACH each tier. Used to be 4 points per tier, which is why one
+   win felt like it did nothing (and one win used to max you out at Legend). */
+const RANK_STEPS=[0,120,320,650,1100,1700];
+function rankTierIdx(pts){ pts=Math.max(0,pts||0); let i=0;
+  for(let j=0;j<RANK_STEPS.length;j++) if(pts>=RANK_STEPS[j]) i=j; return i; }
+function rankTier(pts){ return RANK_NAMES[rankTierIdx(pts)]; }
+function rankColor(pts){ return ['#b08d57','#c8cdd4','#e8c04a','#7fd8d8','#8fb6ff','#ff9a3a'][rankTierIdx(pts)]; }
+function rankNextAt(pts){ const i=rankTierIdx(pts); return i>=RANK_STEPS.length-1?null:RANK_STEPS[i+1]; }
+/* how much elo a ranked win pays. Bigger vs harder opponents, and streaks pay. */
+function eloWin(){
+  const streak=Math.max(1,(LB.streak||0)+1);
+  const tier=rankTierIdx(LB.rank);
+  const base=28;
+  const streakB=Math.min(25,streak*5);        // win streaks ramp up
+  const tierB=tier*6;                          // higher tier = tougher fight = more elo
+  const smash=(S&&S.ebHp<=0)?12:0;             // bonus for actually destroying their base
+  return base+streakB+tierB+smash;
+}
+/* losing a ranked battle costs elo now (it used to only reset your streak) */
+function eloLose(){
+  const tier=rankTierIdx(LB.rank);
+  return Math.min(30,10+tier*3);
+}
 /* ---- LIVE leaderboard: real accounts, shared in real time over MQTT (no signup, no rate cap) ---- */
 const MQTT_LIB='https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js';
 const MQTT_BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081/mqtt'];
@@ -1832,19 +1852,22 @@ function renderAccount(){
    ========================================================= */
 const ADMIN_NAMES=['plebo'];                 // add more usernames here for co-admins
 /* every stat the admin can set to an exact number */
+/* no caps — type whatever number you want. (worlds is bounded by how many
+   worlds actually exist, plekeys by how many skins exist — those are counts
+   of real things, not stats.) */
 const STAT_FIELDS=[
-  {k:'level',   e:'📜', n:'Hero level',           min:1, max:9999,      get:()=>LB.level,      set:v=>{LB.level=v;} },
-  {k:'streak',  e:'🔥', n:'Best win streak',      min:0, max:9999,      get:()=>LB.bestStreak, set:v=>{LB.bestStreak=v;} },
-  {k:'waves',   e:'🌊', n:'Waves beaten',         min:0, max:99999,     get:()=>LB.waves,      set:v=>{LB.waves=v;} },
-  {k:'kills',   e:'💀', n:'Units killed',         min:0, max:999999,    get:()=>LB.kills,      set:v=>{LB.kills=v;} },
-  {k:'rank',    e:'🏅', n:'Rank points',          min:0, max:9999,      get:()=>LB.rank,       set:v=>{LB.rank=v;} },
-  {k:'time',    e:'⏱',     n:'Time played (seconds)',min:0, max:9999999,   get:()=>LB.time||0,    set:v=>{LB.time=v;} },
-  {k:'gold',    e:'👑', n:'Shop gold',            min:0, max:99999999,  get:()=>PGOLD,         set:v=>{PGOLD=v; saveJSON('plebania_pgold',PGOLD);} },
-  {k:'blep',    e:'⚡',     n:'Blep',                 min:0, max:99999999,  get:()=>PLEB,          set:v=>{PLEB=v; saveJSON('plebania_pleb',PLEB);} },
-  {k:'papers',  e:'📄', n:'Papers',               min:0, max:99999,     get:()=>PAPERS,        set:v=>{PAPERS=v; saveJSON('plebania_papers',PAPERS);} },
-  {k:'xp',      e:'⭐',     n:'PLEBASS XP',           min:0, max:999999,    get:()=>BPASS.xp,      set:v=>{BPASS.xp=v; BPASS.tiers=recomputeTiers(); saveJSON(BPASS_KEY,BPASS);} },
-  {k:'worlds',  e:'🗺', n:'Worlds unlocked',      min:1, max:WORLDS.length, get:()=>unlocked,  set:v=>{unlocked=v; saveWorld();} },
-  {k:'plekeys', e:'🔑', n:'Plekeys owned',        min:0, max:SKINS.length,  get:()=>PLEKEYS.length,
+  {k:'level',   e:'📜', n:'Hero level',           get:()=>LB.level,      set:v=>{LB.level=v;} },
+  {k:'streak',  e:'🔥', n:'Best win streak',      get:()=>LB.bestStreak, set:v=>{LB.bestStreak=v;} },
+  {k:'waves',   e:'🌊', n:'Waves beaten',         get:()=>LB.waves,      set:v=>{LB.waves=v;} },
+  {k:'kills',   e:'💀', n:'Units killed',         get:()=>LB.kills,      set:v=>{LB.kills=v;} },
+  {k:'rank',    e:'🏅', n:'Rank points / ELO',    get:()=>LB.rank,       set:v=>{LB.rank=v;} },
+  {k:'time',    e:'⏱',     n:'Time played (seconds)',get:()=>LB.time||0,    set:v=>{LB.time=v;} },
+  {k:'gold',    e:'👑', n:'Shop gold',            get:()=>PGOLD,         set:v=>{PGOLD=v; saveJSON('plebania_pgold',PGOLD);} },
+  {k:'blep',    e:'⚡',     n:'Blep',                 get:()=>PLEB,          set:v=>{PLEB=v; saveJSON('plebania_pleb',PLEB);} },
+  {k:'papers',  e:'📄', n:'Papers',               get:()=>PAPERS,        set:v=>{PAPERS=v; saveJSON('plebania_papers',PAPERS);} },
+  {k:'xp',      e:'⭐',     n:'PLEBASS XP',           get:()=>BPASS.xp,      set:v=>{BPASS.xp=v; BPASS.tiers=recomputeTiers(); saveJSON(BPASS_KEY,BPASS);} },
+  {k:'worlds',  e:'🗺', n:'Worlds unlocked',      get:()=>unlocked,      set:v=>{unlocked=Math.max(1,Math.min(WORLDS.length,v)); saveWorld();} },
+  {k:'plekeys', e:'🔑', n:'Plekeys owned',        get:()=>PLEKEYS.length,
       set:v=>{ PLEKEYS=SKINS.slice(0,v).map(sk=>sk.id); saveJSON('plebania_plekeys',PLEKEYS); } }
 ];
 function isAdmin(){ return !!(ME && ADMIN_NAMES.indexOf(String(ME.key||'').toLowerCase())>=0); }
@@ -1865,11 +1888,11 @@ function renderAdmin(){
      '<div class="admbtn '+(GODMODE?'good':'off')+'" data-act="god">🛡️ God mode: '+(GODMODE?'ON':'OFF')+'</div>'+
      '</div></div>';
   h+='<div class="admpanel"><h3>🎯 Set exact stats</h3>'+
-     '<div style="font:15px Georgia,serif;color:#d8c48c;margin:-4px 0 14px">Type the exact number you want, then hit Apply. Works <b>up and down</b>.</div>'+
+     '<div style="font:15px Georgia,serif;color:#d8c48c;margin:-4px 0 14px">Type any number you want — no limits. Works <b>up and down</b>.</div>'+
      '<div class="admstats">';
   STAT_FIELDS.forEach(f=>{
     h+='<label class="admstat"><span class="e">'+f.e+'</span><span class="n">'+f.n+'</span>'+
-       '<input class="adminput" id="st_'+f.k+'" type="number" inputmode="numeric" min="'+f.min+'" max="'+f.max+'" value="'+f.get()+'"></label>';
+       '<input class="adminput" id="st_'+f.k+'" type="text" inputmode="numeric" value="'+f.get()+'"></label>';
   });
   h+='</div><div class="admbtns" style="margin-top:16px">'+
      '<div class="admbtn good" data-act="setstats">✅ Apply stats</div></div></div>';
@@ -1912,10 +1935,10 @@ function adminSetStats(){
   let changed=0;
   STAT_FIELDS.forEach(f=>{
     const el=$('st_'+f.k); if(!el)return;
-    let v=parseFloat(el.value);
+    let v=parseFloat(String(el.value).replace(/[^0-9.\-]/g,''));
     if(isNaN(v))return;
     v=Math.round(v);
-    v=Math.max(f.min,Math.min(f.max,v));
+    if(v<0)v=0;
     f.set(v); changed++;
   });
   saveLB(); saveWorld();
@@ -2066,7 +2089,7 @@ function newBattle(ranked){
   newGame(S?S.world:0);
   S.battle=true; S.ranked=!!ranked;
   S.lives=15; S.reached=1;
-  S.ebMax=240+Math.round((LB.rank||0)*26); S.ebHp=S.ebMax;
+  S.ebMax=240+rankTierIdx(LB.rank)*170; S.ebHp=S.ebMax;
   S.raid=[]; S.aiWalls=[]; S.aiT=6; S.raidCd=0; S.nextWaveT=2.5;
   S.oppName = ranked ? rivalName() : 'The Baron';
   S.running=false; S.between=true;
@@ -2078,7 +2101,7 @@ function newBattle(ranked){
 function launchRaid(){
   if(!S||!S.battle||S.over||S.paused)return;
   if((S.raidCd||0)>0)return;
-  const n=3+Math.round((LB.rank||0)*0.4);
+  const n=3+Math.round(rankTierIdx(LB.rank)*1.5);
   const base=PATH[PATH.length-1];
   for(let i=0;i<n;i++){
     S.raid.push({x:base.x-14, y:base.y+(Math.random()-0.5)*34, hp:70, maxhp:70, dmg:16,
@@ -2123,26 +2146,26 @@ function battleAI(dt){
       const lead=S.raid[S.raid.length-1];
       const t=tileAt(lead.x-30,lead.y);
       if(t && pathKeys.has(t.c+','+t.r) && !aiWallAt(t.c,t.r) && !S.buildings.some(b=>b.c===t.c&&b.r===t.r))
-        S.aiWalls.push({c:t.c,r:t.r,hp:90+Math.round((LB.rank||0)*12),maxhp:90+Math.round((LB.rank||0)*12)});
+        S.aiWalls.push({c:t.c,r:t.r,hp:90+rankTierIdx(LB.rank)*45,maxhp:90+rankTierIdx(LB.rank)*45});
     }
     const t2=tileAt(PATH[1].x, PATH[1].y);
-    if(t2 && !aiWallAt(t2.c,t2.r)) S.aiWalls.push({c:t2.c,r:t2.r,hp:120+Math.round((LB.rank||0)*12),maxhp:120+Math.round((LB.rank||0)*12)});
+    if(t2 && !aiWallAt(t2.c,t2.r)) S.aiWalls.push({c:t2.c,r:t2.r,hp:120+rankTierIdx(LB.rank)*45,maxhp:120+rankTierIdx(LB.rank)*45});
     S.aiWalls=S.aiWalls.filter(w=>w.hp>0);
   }
 }
 function battleWin(){
   if(S.over)return; S.over=true; S.running=false; hideSel();
   recordStats();
-  if(S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); LB.rank++; }
+  if(S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); S.eloGain=eloWin(); LB.rank+=S.eloGain; }
   addPassXP(S.ranked?150:100);
-  saveLB();
+  saveLB(); pushScore();
   const smashed=(S.ebHp<=0);
   $('ovT').style.color='#f6dd8b';
   $('ovT').textContent=smashed?'\ud83c\udff0 ENEMY BASE DESTROYED!':'\ud83d\udee1\ufe0f GARRISON BROKEN!';
   $('ovP').innerHTML=(smashed
       ? 'You smashed <b>'+S.oppName+'</b>\u2019s base with '+S.raid.length+' raiders still standing.'
       : 'You held every wave \u2014 <b>'+S.oppName+'</b>\u2019s garrison broke and fled.')+'<br>'+
-    (S.ranked ? ('Win streak: <b>'+LB.streak+'</b> \u00b7 Rank: <b>'+rankTier(LB.rank)+'</b> ('+LB.rank+' pts)<br>') : '')+
+    (S.ranked ? ('<b style="color:#9fe08a">+'+S.eloGain+' ELO</b> \u00b7 Win streak: <b>'+LB.streak+'</b> \u00b7 Rank: <b>'+rankTier(LB.rank)+'</b> ('+LB.rank+' pts)<br>') : '')+
     'Foes felled: <b>'+S.slain+'</b>.';
   $('ovAgain').style.display=''; $('ovAgain').textContent='RAID AGAIN';
   $('ovAgain').onclick=()=>{ hideOv(); newBattle(S.ranked); };
@@ -2150,9 +2173,12 @@ function battleWin(){
 }
 function battleLose(){
   if(S.over)return; S.over=true; S.running=false; hideSel();
-  recordStats(); if(S.ranked)LB.streak=0; saveLB();
+  recordStats();
+  if(S.ranked){ LB.streak=0; S.eloLoss=eloLose(); LB.rank=Math.max(0,LB.rank-S.eloLoss); }
+  saveLB(); pushScore();
   $('ovT').style.color='#ff9a86'; $('ovT').textContent='YOUR BASE FELL';
-  $('ovP').innerHTML='<b>'+S.oppName+'</b>\u2019s army overran you before you could break their base.<br>'+
+  $('ovP').innerHTML=(S.ranked?('<b style="color:#ff9a86">-'+S.eloLoss+' ELO</b><br>'):'')+
+    '<b>'+S.oppName+'</b>\u2019s army overran you before you could break their base.<br>'+
     'Their base was at <b>'+Math.max(0,Math.round(S.ebHp/S.ebMax*100))+'%</b> \u2014 so close.';
   $('ovAgain').style.display=''; $('ovAgain').textContent='RETRY BATTLE';
   $('ovAgain').onclick=()=>{ hideOv(); newBattle(S.ranked); };
