@@ -135,6 +135,21 @@
   #account{background:linear-gradient(#241708,#0f0a03);overflow:auto;padding:40px 60px;text-align:center}
   .acct-btns{display:flex;gap:16px;justify-content:center;margin-top:26px;flex-wrap:wrap}
   .acct-tile{border:3px solid #2a1c08;border-radius:16px;padding:14px 22px;background:linear-gradient(rgba(64,46,20,.92),rgba(30,20,8,.94));min-width:150px}
+  .admbadge{display:inline-block;margin-left:8px;font:900 11px Georgia,serif;letter-spacing:1px;padding:2px 8px;border-radius:8px;
+    color:#3a1a06;background:linear-gradient(#ffe9a8,#e8b83a 60%,#a8842b);vertical-align:middle}
+  #admin{background:linear-gradient(#241708,#0f0a03);overflow:auto;padding:40px 60px;text-align:center}
+  #admin h2{color:#ffd24a}
+  .admpanel{max-width:900px;margin:0 auto 18px;border:3px solid #6a5220;border-radius:16px;padding:16px 20px;
+    background:linear-gradient(rgba(64,46,20,.92),rgba(30,20,8,.94))}
+  .admpanel h3{margin:0 0 12px;font:900 18px Georgia,serif;color:#ffe08a;letter-spacing:1px}
+  .admbtns{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+  .admbtn{cursor:pointer;border:3px solid #2a1c08;border-radius:12px;padding:11px 18px;font:800 16px Georgia,serif;
+    color:#3a2506;background:linear-gradient(#f2cf62,#c9971f 55%,#8f6a12);box-shadow:0 4px 0 #4a3409;min-width:190px}
+  .admbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #4a3409}
+  .admbtn.good{background:linear-gradient(#b8f08a,#6fbf3a 55%,#3f7a1c);color:#173006}
+  .admbtn.danger{background:linear-gradient(#ff9a86,#d94a2a 55%,#8f2a12);color:#2a0b04}
+  .admbtn.off{filter:grayscale(.75) brightness(.72)}
+  .admbtn.sm{min-width:150px;padding:8px 14px;font-size:14px}
   #board.on{display:flex;flex-direction:column;align-items:center}
   #board h2{font:900 50px Georgia,serif;color:#f2d375;margin:0 0 6px;text-shadow:0 3px 0 #000}
   #board .sub{color:#d8c48c;font:italic 18px Georgia,serif;margin-bottom:24px}
@@ -674,7 +689,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.12 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.13 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -734,6 +749,7 @@
     <div class="sub">Your pleb record. Switch accounts any time — everything saves to the cloud.</div>
     <div id="accountBody"></div>
     <div class="acct-btns">
+      <div class="mbtn small" id="acctAdmin" style="width:240px;display:none">👑 Admin panel</div>
       <div class="mbtn small" id="acctSwitch" style="width:240px">🔄 Switch account</div>
       <div class="mbtn small" id="acctBack" style="width:200px">⬅ Back to menu</div>
     </div>
@@ -741,6 +757,14 @@
       <div class="mbtn small danger" id="acctDel" style="width:300px">🗑️ Delete my account</div>
     </div>
     <div id="acctDelMsg" style="color:#f0a58c;font:15px Georgia,serif;margin-top:10px;min-height:20px"></div>
+  </div>
+
+  <!-- ============ ADMIN ============ -->
+  <div id="admin" class="screen">
+    <h2>👑 Admin Panel</h2>
+    <div class="sub">Signed in as <b id="admWho">—</b> · full powers unlocked.</div>
+    <div id="admBody"></div>
+    <div class="acct-btns"><div class="mbtn small" id="admBack" style="width:220px">⬅ Back to menu</div></div>
   </div>
 
   <!-- ============ GAME ============ -->
@@ -950,7 +974,7 @@ cv.width=W; cv.height=H;
 
 /* ---------------- screens ---------------- */
 function show(id){
-  ['menu','how','worlds','game','mart','pack','pass','board','auth','account'].forEach(s=>$(s).classList.toggle('on',s===id));
+  ['menu','how','worlds','game','mart','pack','pass','board','auth','account','admin'].forEach(s=>$(s).classList.toggle('on',s===id));
   if(id==='menu')populateWorldStrip();
   if(id==='worlds')populateWorldSelect();
   if(id==='mart')renderMart();
@@ -958,6 +982,7 @@ function show(id){
   if(id==='pass')renderPass();
   if(id==='board')renderBoard();
   if(id==='account')renderAccount();
+  if(id==='admin')renderAdmin();
 }
 function populateWorldStrip(){
   const strip=$('worldStrip'); if(!strip)return; strip.innerHTML='';
@@ -1000,6 +1025,8 @@ $('auPass').addEventListener('keydown',e=>{ if(e.key==='Enter')doAuth(); });
 $('auUser').addEventListener('keydown',e=>{ if(e.key==='Enter')doAuth(); });
 $('signOut').onclick=()=>signOut();
 $('acctOpen').onclick=()=>{ SFX.ui(); show('account'); };
+if($('acctAdmin'))$('acctAdmin').onclick=()=>{ SFX.ui(); show('admin'); };
+if($('admBack'))$('admBack').onclick=()=>{ SFX.ui(); show('menu'); };
 $('acctBack').onclick=()=>{ SFX.ui(); show('menu'); };
 $('acctSwitch').onclick=()=>switchAccount();
 $('acctDel').onclick=()=>deleteAccount();
@@ -1745,7 +1772,8 @@ function loadLocalFor(me){
   LB.waves=a.waves||0; LB.kills=a.kills||0; LB.rank=a.rank||0; LB.time=a.time||0;
   LB.streak=0; saveLB(); pushScore(); refreshUserChip();
 }
-function refreshUserChip(){ const nm=$('userName'); if(nm)nm.textContent=ME?ME.name:'—'; }
+function refreshUserChip(){ const nm=$('userName'); if(nm)nm.textContent=ME?ME.name:'—';
+  const adm=$('acctAdmin'); if(adm) adm.style.display=isAdmin()?'':'none'; }
 function accountStats(){
   const worlds=(typeof unlocked!=='undefined')?Math.min(unlocked,WORLDS.length):1;
   return [
@@ -1770,7 +1798,73 @@ function renderAccount(){
   accountStats().forEach(([e,k,v])=>{ h+='<div class="acct-tile"><div class="v" style="font:900 30px Georgia,serif;color:#ffd24a">'+e+' '+v+'</div><div class="k" style="font:700 13px Georgia,serif;color:#d8c48c;margin-top:4px;letter-spacing:.5px">'+k+'</div></div>'; });
   h+='</div>';
   body.innerHTML=h;
+  const adm=$('acctAdmin'); if(adm) adm.style.display=isAdmin()?'':'none';
   resetDelBtn(); delMsg('');
+}
+/* =========================================================
+   ADMIN — Plebo runs Plebania. Powers are derived from the
+   signed-in username, so nothing can be spoofed from the board.
+   ========================================================= */
+const ADMIN_NAMES=['plebo'];                 // add more usernames here for co-admins
+function isAdmin(){ return !!(ME && ADMIN_NAMES.indexOf(String(ME.key||'').toLowerCase())>=0); }
+let GODMODE=loadJSON('plebania_godmode',false);
+function renderAdmin(){
+  const body=$('admBody'); if(!body)return;
+  const who=$('admWho'); if(who)who.textContent=ME?ME.name:'—';
+  if(!isAdmin()){ body.innerHTML='<div class="admpanel"><h3>🚫 Not an admin</h3>This account does not have admin powers.</div>'; return; }
+  let h='';
+  h+='<div class="admpanel"><h3>💰 Give myself stuff</h3><div class="admbtns">'+
+     '<div class="admbtn" data-act="gold">💰 +10,000 shop gold</div>'+
+     '<div class="admbtn" data-act="blep">⚡ +10,000 Blep</div>'+
+     '<div class="admbtn" data-act="keys">🔑 Unlock every Plekey</div>'+
+     '<div class="admbtn" data-act="plebs">🧑‍🌾 Own + equip all plebs</div>'+
+     '<div class="admbtn" data-act="gear">🗡️ Own all pack gear</div>'+
+     '<div class="admbtn" data-act="worlds">🗺️ Unlock all worlds</div>'+
+     '<div class="admbtn" data-act="pass">🎫 Max out PLEBASS</div>'+
+     '<div class="admbtn '+(GODMODE?'good':'off')+'" data-act="god">🛡️ God mode: '+(GODMODE?'ON':'OFF')+'</div>'+
+     '</div></div>';
+  h+='<div class="admpanel"><h3>⚠️ Danger zone</h3><div class="admbtns">'+
+     '<div class="admbtn danger sm" data-act="reset">♻️ Reset my stats</div>'+
+     '</div><div style="font:15px Georgia,serif;color:#d8c48c;margin-top:12px">Tap an account below twice to wipe it off the leaderboard.</div>'+
+     '<div style="margin-top:10px">';
+  const ks=Object.keys(CLOUD.accounts||{});
+  if(!ks.length) h+='<div style="color:#d8c48c;font:15px Georgia,serif">No accounts on the board yet.</div>';
+  ks.forEach(k=>{ const a=CLOUD.accounts[k];
+    h+='<div class="bd-row'+(ME&&k===ME.key?' me':'')+'"><div class="rk">'+String(a.u||k).charAt(0).toUpperCase()+'</div>'+
+       '<div class="nm">'+(a.u||k)+(ADMIN_NAMES.indexOf(k)>=0?' <span class="admbadge">👑</span>':'')+'</div>'+
+       '<div class="vl" style="font-size:14px"><span class="admkill" data-key="'+k+'" style="cursor:pointer;color:#ff9a86">🗑️ delete</span></div></div>'; });
+  h+='</div></div>';
+  body.innerHTML=h;
+  body.querySelectorAll('[data-act]').forEach(el=>el.onclick=()=>adminAct(el.dataset.act));
+  body.querySelectorAll('.admkill').forEach(el=>el.onclick=()=>adminKill(el.dataset.key,el));
+}
+function adminAct(a){
+  if(!isAdmin())return;
+  if(a==='gold'){ PGOLD+=10000; saveJSON('plebania_pgold',PGOLD); showBanner('👑 +10,000 shop gold','gold',1500); }
+  else if(a==='blep'){ PLEB+=10000; saveJSON('plebania_pleb',PLEB); showBanner('⚡ +10,000 Blep','gold',1500); }
+  else if(a==='keys'){ SKINS.forEach(sk=>{ if(!hasKey(sk.id)) PLEKEYS.push(sk.id); }); saveJSON('plebania_plekeys',PLEKEYS); showBanner('🔑 Every Plekey unlocked','gold',1600); }
+  else if(a==='plebs'){ let eq=armyCount();
+      PACK_EXTRA.forEach(k=>{ PACK_OWN['pleb:'+k]=true; if(eq<MAX_ARMY && !PACK_OWN['equipped:'+k]){ PACK_OWN['equipped:'+k]=true; eq++; } });
+      saveJSON('plebania_pack_own',PACK_OWN); showBanner('🧑‍🌾 All plebs owned ('+eq+'/'+MAX_ARMY+' equipped)','gold',1900); }
+  else if(a==='gear'){ Object.keys(PACK_ITEMS).forEach(slot=>PACK_ITEMS[slot].forEach((it,ti)=>{ PACK_OWN[slot+':'+ti]=true; }));
+      saveJSON('plebania_pack_own',PACK_OWN); showBanner('🗡️ All pack gear owned','gold',1600); }
+  else if(a==='worlds'){ unlocked=WORLDS.length; saveWorld(); populateWorldStrip(); showBanner('🗺️ Every world unlocked','gold',1600); }
+  else if(a==='pass'){ BPASS.xp=totalPassXP(); BPASS.tiers=recomputeTiers(); saveJSON(BPASS_KEY,BPASS); showBanner('🎫 PLEBASS maxed — tier '+BPASS.tiers,'gold',1800); }
+  else if(a==='god'){ GODMODE=!GODMODE; saveJSON('plebania_godmode',GODMODE); showBanner(GODMODE?'🛡️ God mode ON — you cannot die':'🛡️ God mode OFF',GODMODE?'gold':'red',1700); }
+  else if(a==='reset'){ LB.level=1; LB.bestStreak=0; LB.waves=0; LB.kills=0; LB.rank=0; LB.time=0; LB.streak=0; saveLB(); pushScore(); showBanner('♻️ Your stats were reset','red',1600); }
+  SFX.up(); renderAdmin();
+}
+let admKillKey=null;
+function adminKill(key,el){
+  if(!isAdmin())return;
+  if(admKillKey!==key){ admKillKey=key; el.textContent='⚠️ tap again to delete'; el.style.color='#ffd24a';
+    setTimeout(()=>{ if(admKillKey===key){ admKillKey=null; if(el.isConnected){ el.textContent='🗑️ delete'; el.style.color='#ff9a86'; } } },4000);
+    return; }
+  admKillKey=null;
+  try{ if(MQTT_C) MQTT_C.publish(MQTT_BASE+key,'',{retain:true,qos:1}); }catch(e){}
+  delete CLOUD.accounts[key];
+  if(ME&&ME.key===key){ signOut(); return; }
+  showBanner('🗑️ Account deleted','red',1600); renderAdmin();
 }
 function switchAccount(){ cloudSync(true); ME=null; saveJSON(ACC_KEY,null); refreshUserChip(); show('auth'); setAuthMode('in'); authMsg('Sign in with another account (or create a new one).',true); }
 function enterGame(){ SFX.up(); refreshUserChip(); show('menu'); populateWorldStrip(); }
@@ -1866,7 +1960,7 @@ function renderBoard(){
     rows.slice(0,SHOW).forEach((r,i)=>{
       const medal=i===0?'\ud83e\udd47':i===1?'\ud83e\udd48':i===2?'\ud83e\udd49':'#'+(i+1);
       html+='<div class="bd-row'+(r.isMe?' me':'')+'"><div class="rk">'+medal+'</div><div class="nm">'+
-        r.name+(r.isMe?' <span class="you">(you)</span>':'')+'</div><div class="vl">'+fmtStat(k,r[k])+'</div></div>';
+        r.name+(ADMIN_NAMES.indexOf(String(r.key||'').toLowerCase())>=0?' <span class="admbadge">👑</span>':'')+(r.isMe?' <span class="you">(you)</span>':'')+'</div><div class="vl">'+fmtStat(k,r[k])+'</div></div>';
     });
     const idx=rows.findIndex(r=>r.isMe);
     if(idx>=SHOW){ const r=rows[idx]; html+='<div class="bd-row me"><div class="rk">#'+(idx+1)+'</div><div class="nm">'+r.name+' <span class="you">(you)</span></div><div class="vl">'+fmtStat(k,r[k])+'</div></div>'; }
@@ -2417,6 +2511,7 @@ function enemyUpdate(dt){
 }
 function leak(e){
   e.hp=0;
+  if(GODMODE){ return; }                      // admin god mode: nothing gets through to your lives
   S.lives--; S.hurt=1; S.shake=Math.max(S.shake,14); SFX.life();
   // a villager may be slain
   if(S.towers.length>0){
@@ -3101,6 +3196,7 @@ function loop(now){
       enemyUpdate(dt);
       towerUpdate(dt);
       heroUpdate(dt);
+      if(GODMODE&&S.hero){ S.hero.hp=S.hero.maxhp; S.hero.down=false; }
       projUpdate(dt);
       if(S.battle){
         raidUpdate(dt);
