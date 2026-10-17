@@ -698,7 +698,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.18 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.19 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -787,6 +787,7 @@
       <div class="chip"><span class="ci">🌊</span><span id="hWave">0/10</span></div>
       <div class="chip" title="Next wave"><span class="ci">👀</span><span id="hNext">—</span></div>
       <div class="chip" title="Your hero"><span class="ci">🗡️</span><span id="hHero">100</span></div>
+      <div class="chip" title="Level"><span class="ci">🪜</span><span id="hLv">1</span></div>
       <div class="spacer"></div>
       <div id="raidBtn" title="Send a raid at the enemy base"><span id="raidLbl">🏇 RAID</span><span class="sub" id="raidSub">Ready</span></div>
       <div id="rallyBtn"><span id="rallyLbl">✊ RALLY</span><span class="sub" id="rallySub">Ready</span></div>
@@ -1234,7 +1235,7 @@ function newGame(world){
   hover=null; locked=null; buildPath(w);
   // THE HERO — a pleb champion you control (drag to move, auto-attacks)
   S.hero={ x:W*0.42, y:H*0.52, tx:null, ty:null, hp:120, maxhp:120, dmg:30, range:80, rate:0.42,
-    atkT:0, sword:0, walk:0, level:1, kills:0, down:false, downT:0 };
+    atkT:0, sword:0, walk:0, level:1, xp:0, xpNeed:5, kills:0, down:false, downT:0 };
   hideOv(); hideSel();
   if($('startBtn'))$('startBtn').style.display='';
   showBanner(WORLDS[w].emoji+' '+WORLDS[w].name+' — defend it!','gold',1700);
@@ -1248,6 +1249,7 @@ function syncHud(){
   $('hWorldIc').textContent=WORLDS[S.world].emoji;
   $('hWorld').textContent=WORLDS[S.world].name;
   if($('hHero')&&S.hero)$('hHero').textContent=Math.max(0,Math.ceil(S.hero.hp));
+  if($('hLv')&&S.hero)$('hLv').textContent=S.hero.level+' ('+(S.hero.xp||0)+'/'+(S.hero.xpNeed||5)+')';
   sUpdateNext();
 }
 function previewWave(w){
@@ -2021,7 +2023,7 @@ function seasonPanelHTML(){
 function accountStats(){
   const worlds=(typeof unlocked!=='undefined')?Math.min(unlocked,WORLDS.length):1;
   return [
-    ['🪜','HERO LEVEL', LB.level],
+    ['🪜','LEVEL', LB.level],
     ['🔥','BEST WIN STREAK', LB.bestStreak],
     ['🌊','WAVES BEATEN', LB.waves],
     ['💀','UNITS KILLED', LB.kills],
@@ -2056,7 +2058,7 @@ const ADMIN_NAMES=['plebo'];                 // add more usernames here for co-a
    worlds actually exist, plekeys by how many skins exist — those are counts
    of real things, not stats.) */
 const STAT_FIELDS=[
-  {k:'level',   e:'📜', n:'Hero level',           get:()=>LB.level,      set:v=>{LB.level=v;} },
+  {k:'level',   e:'🪜', n:'Level',                get:()=>LB.level,      set:v=>{LB.level=v;} },
   {k:'streak',  e:'🔥', n:'Best win streak',      get:()=>LB.bestStreak, set:v=>{LB.bestStreak=v;} },
   {k:'waves',   e:'🌊', n:'Waves beaten',         get:()=>LB.waves,      set:v=>{LB.waves=v;} },
   {k:'kills',   e:'💀', n:'Units killed',         get:()=>LB.kills,      set:v=>{LB.kills=v;} },
@@ -2212,7 +2214,7 @@ function deleteAccount(){
 }
 
 const LB_CATS=[
-  ['level','\ud83c\udf9a\ufe0f Highest Level',0],
+  ['level','🪜 Highest Level',0],
   ['streak','\ud83d\udd25 Longest Win Streak',0],
   ['waves','\ud83c\udf0a Most Waves Beaten',0],
   ['kills','\ud83d\udc80 Most Units Killed',0],
@@ -2253,7 +2255,7 @@ function renderBoard(){
   const body=$('boardBody'); if(!body)return;
   const me=boardMe();
   let html='<div class="bd-big">'+
-    '<div class="bd-stat"><div class="v">'+me.level+'</div><div class="k">HERO LEVEL</div></div>'+
+    '<div class="bd-stat"><div class="v">'+me.level+'</div><div class="k">LEVEL</div></div>'+
     '<div class="bd-stat"><div class="v">'+me.streak+'</div><div class="k">WIN STREAK</div></div>'+
     '<div class="bd-stat"><div class="v">'+me.waves+'</div><div class="k">WAVES BEATEN</div></div>'+
     '<div class="bd-stat"><div class="v">'+me.kills+'</div><div class="k">UNITS KILLED</div></div>'+
@@ -2377,10 +2379,14 @@ function battleWin(){
 function battleLose(){
   if(S.over)return; S.over=true; S.running=false; hideSel();
   recordStats();
-  if(S.ranked){ LB.streak=0; S.eloLoss=eloLose(); LB.rank=Math.max(0,LB.rank-S.eloLoss); seasonAddElo(-S.eloLoss); }
+  const hadStreak=LB.streak||0;
+  if(S.ranked){ S.eloLoss=eloLose(); LB.rank=Math.max(0,LB.rank-S.eloLoss); seasonAddElo(-S.eloLoss); }
+  LB.streak=0;                       // losing ANY battle mode breaks your win streak
+  S.streakLost=hadStreak;
   saveLB(); pushScore();
   $('ovT').style.color='#ff9a86'; $('ovT').textContent='YOUR BASE FELL';
-  $('ovP').innerHTML=(S.ranked?('<b style="color:#ff9a86">-'+S.eloLoss+' ELO</b><br>'):'')+
+  $('ovP').innerHTML=(S.streakLost?('<b style="color:#ff9a86">🔥 Win streak of '+S.streakLost+' lost</b><br>'):'')+
+    (S.ranked?('<b style="color:#ff9a86">-'+S.eloLoss+' ELO</b><br>'):'')+
     '<b>'+S.oppName+'</b>\u2019s army overran you before you could break their base.<br>'+
     'Their base was at <b>'+Math.max(0,Math.round(S.ebHp/S.ebMax*100))+'%</b> \u2014 so close.';
   $('ovAgain').style.display=''; $('ovAgain').textContent='RETRY BATTLE';
@@ -2927,8 +2933,7 @@ function heroUpdate(dt){
     h.atkT=S.rally>0?h.rate*0.5:h.rate; h.sword=0.18;
     damage(best, h.dmg*(S.rally>0?1.25:1), null); SFX.jab();
     for(let i=0;i<5;i++)burst((h.x+best.x)/2,(h.y+best.y)/2,'#ffe9a8');
-    if(best.hp<=0){ h.kills++; if(h.kills%6===0){ h.level++; h.dmg+=12; h.maxhp+=30; h.hp=Math.min(h.maxhp,h.hp+40); SFX.up();
-      showBanner('🗡️ Hero reached Lv'+h.level+'!','gold',1300); } }
+    if(best.hp<=0){ h.kills++; addHeroXP(h, xpForKill(best)); }
   }
   // foes in contact hurt the hero
   let hurt=0;
@@ -2936,6 +2941,32 @@ function heroUpdate(dt){
   if(hurt>0) h.hp-=hurt*dt;
   if(h.hp<=0){ h.hp=0; h.down=true; h.downT=5; h.tx=null; h.ty=null; SFX.lose();
     showBanner('💀 Your hero is down! Back in 5s…','red',1800); }
+}
+/* ---- LEVELING ----------------------------------------------------------
+   Each level costs more than the last, so the higher you get the harder it is.
+   XP per kill depends on how tough the enemy was. */
+function levelXPNeed(level){
+  const n=Math.max(0,(level||1)-1);
+  return Math.max(3, Math.round(6 + 1.2*n + 0.35*n*n));   // quadratic: every level costs more than the last
+}
+const XP_BY_RANK={silver:1,undead:1,beast:1,gold:2,red:3,champ:5,boss:10,king:25};
+function xpForKill(e){ return XP_BY_RANK[e&&e.rank]||1; }
+/* returns true when a level was gained */
+function addHeroXP(h,n){
+  if(!h)return false;
+  h.xp=(h.xp||0)+n;
+  let leveled=false;
+  if(!h.xpNeed)h.xpNeed=levelXPNeed(h.level||1);
+  while(h.xp>=h.xpNeed){
+    h.xp-=h.xpNeed; h.level++; leveled=true;
+    h.dmg+=12; h.maxhp+=30; h.hp=Math.min(h.maxhp,h.hp+40);
+    h.xpNeed=levelXPNeed(h.level);
+  }
+  if(leveled){ if(typeof SFX!=='undefined')SFX.up();
+    showBanner('🪜 Level '+h.level+'!  ('+h.xp+'/'+h.xpNeed+' to next)','gold',1700);
+    if(typeof syncHud==='function')syncHud();
+  }
+  return leveled;
 }
 function projUpdate(dt){
   for(const p of S.projs){
