@@ -150,6 +150,15 @@
   .admbtn.danger{background:linear-gradient(#ff9a86,#d94a2a 55%,#8f2a12);color:#2a0b04}
   .admbtn.off{filter:grayscale(.75) brightness(.72)}
   .admbtn.sm{min-width:150px;padding:8px 14px;font-size:14px}
+  .admstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;text-align:left}
+  .admstat{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.32);border:2px solid #4a3616;
+    border-radius:10px;padding:8px 10px}
+  .admstat .e{font-size:17px}
+  .admstat .n{flex:1;font:700 13px Georgia,serif;color:#e8d6a4;line-height:1.2}
+  .adminput{width:104px;text-align:right;font:800 15px Georgia,serif;color:#3a2506;background:#f4e6bd;
+    border:2px solid #6a5220;border-radius:8px;padding:5px 8px;-moz-appearance:textfield}
+  .adminput::-webkit-outer-spin-button,.adminput::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .adminput:focus{outline:none;border-color:#ffd24a;box-shadow:0 0 8px rgba(255,210,90,.55)}
   #board.on{display:flex;flex-direction:column;align-items:center}
   #board h2{font:900 50px Georgia,serif;color:#f2d375;margin:0 0 6px;text-shadow:0 3px 0 #000}
   #board .sub{color:#d8c48c;font:italic 18px Georgia,serif;margin-bottom:24px}
@@ -689,7 +698,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.13 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.14 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1806,6 +1815,22 @@ function renderAccount(){
    signed-in username, so nothing can be spoofed from the board.
    ========================================================= */
 const ADMIN_NAMES=['plebo'];                 // add more usernames here for co-admins
+/* every stat the admin can set to an exact number */
+const STAT_FIELDS=[
+  {k:'level',   e:'📜', n:'Hero level',           min:1, max:9999,      get:()=>LB.level,      set:v=>{LB.level=v;} },
+  {k:'streak',  e:'🔥', n:'Best win streak',      min:0, max:9999,      get:()=>LB.bestStreak, set:v=>{LB.bestStreak=v;} },
+  {k:'waves',   e:'🌊', n:'Waves beaten',         min:0, max:99999,     get:()=>LB.waves,      set:v=>{LB.waves=v;} },
+  {k:'kills',   e:'💀', n:'Units killed',         min:0, max:999999,    get:()=>LB.kills,      set:v=>{LB.kills=v;} },
+  {k:'rank',    e:'🏅', n:'Rank points',          min:0, max:9999,      get:()=>LB.rank,       set:v=>{LB.rank=v;} },
+  {k:'time',    e:'⏱',     n:'Time played (seconds)',min:0, max:9999999,   get:()=>LB.time||0,    set:v=>{LB.time=v;} },
+  {k:'gold',    e:'👑', n:'Shop gold',            min:0, max:99999999,  get:()=>PGOLD,         set:v=>{PGOLD=v; saveJSON('plebania_pgold',PGOLD);} },
+  {k:'blep',    e:'⚡',     n:'Blep',                 min:0, max:99999999,  get:()=>PLEB,          set:v=>{PLEB=v; saveJSON('plebania_pleb',PLEB);} },
+  {k:'papers',  e:'📄', n:'Papers',               min:0, max:99999,     get:()=>PAPERS,        set:v=>{PAPERS=v; saveJSON('plebania_papers',PAPERS);} },
+  {k:'xp',      e:'⭐',     n:'PLEBASS XP',           min:0, max:999999,    get:()=>BPASS.xp,      set:v=>{BPASS.xp=v; BPASS.tiers=recomputeTiers(); saveJSON(BPASS_KEY,BPASS);} },
+  {k:'worlds',  e:'🗺', n:'Worlds unlocked',      min:1, max:WORLDS.length, get:()=>unlocked,  set:v=>{unlocked=v; saveWorld();} },
+  {k:'plekeys', e:'🔑', n:'Plekeys owned',        min:0, max:SKINS.length,  get:()=>PLEKEYS.length,
+      set:v=>{ PLEKEYS=SKINS.slice(0,v).map(sk=>sk.id); saveJSON('plebania_plekeys',PLEKEYS); } }
+];
 function isAdmin(){ return !!(ME && ADMIN_NAMES.indexOf(String(ME.key||'').toLowerCase())>=0); }
 let GODMODE=loadJSON('plebania_godmode',false);
 function renderAdmin(){
@@ -1823,6 +1848,15 @@ function renderAdmin(){
      '<div class="admbtn" data-act="pass">🎫 Max out PLEBASS</div>'+
      '<div class="admbtn '+(GODMODE?'good':'off')+'" data-act="god">🛡️ God mode: '+(GODMODE?'ON':'OFF')+'</div>'+
      '</div></div>';
+  h+='<div class="admpanel"><h3>🎯 Set exact stats</h3>'+
+     '<div style="font:15px Georgia,serif;color:#d8c48c;margin:-4px 0 14px">Type the exact number you want, then hit Apply. Works <b>up and down</b>.</div>'+
+     '<div class="admstats">';
+  STAT_FIELDS.forEach(f=>{
+    h+='<label class="admstat"><span class="e">'+f.e+'</span><span class="n">'+f.n+'</span>'+
+       '<input class="adminput" id="st_'+f.k+'" type="number" inputmode="numeric" min="'+f.min+'" max="'+f.max+'" value="'+f.get()+'"></label>';
+  });
+  h+='</div><div class="admbtns" style="margin-top:16px">'+
+     '<div class="admbtn good" data-act="setstats">✅ Apply stats</div></div></div>';
   h+='<div class="admpanel"><h3>⚠️ Danger zone</h3><div class="admbtns">'+
      '<div class="admbtn danger sm" data-act="reset">♻️ Reset my stats</div>'+
      '</div><div style="font:15px Georgia,serif;color:#d8c48c;margin-top:12px">Tap an account below twice to wipe it off the leaderboard.</div>'+
@@ -1851,8 +1885,34 @@ function adminAct(a){
   else if(a==='worlds'){ unlocked=WORLDS.length; saveWorld(); populateWorldStrip(); showBanner('🗺️ Every world unlocked','gold',1600); }
   else if(a==='pass'){ BPASS.xp=totalPassXP(); BPASS.tiers=recomputeTiers(); saveJSON(BPASS_KEY,BPASS); showBanner('🎫 PLEBASS maxed — tier '+BPASS.tiers,'gold',1800); }
   else if(a==='god'){ GODMODE=!GODMODE; saveJSON('plebania_godmode',GODMODE); showBanner(GODMODE?'🛡️ God mode ON — you cannot die':'🛡️ God mode OFF',GODMODE?'gold':'red',1700); }
+  else if(a==='setstats'){ const n=adminSetStats(); showBanner('🎯 '+n+' stats set','gold',1600); }
   else if(a==='reset'){ LB.level=1; LB.bestStreak=0; LB.waves=0; LB.kills=0; LB.rank=0; LB.time=0; LB.streak=0; saveLB(); pushScore(); showBanner('♻️ Your stats were reset','red',1600); }
   SFX.up(); renderAdmin();
+}
+/* write the exact numbers typed into the stat editor. Bypasses the Math.max()
+   merge used by normal play, so LOWERING a stat actually sticks. */
+function adminSetStats(){
+  if(!isAdmin())return 0;
+  let changed=0;
+  STAT_FIELDS.forEach(f=>{
+    const el=$('st_'+f.k); if(!el)return;
+    let v=parseFloat(el.value);
+    if(isNaN(v))return;
+    v=Math.round(v);
+    v=Math.max(f.min,Math.min(f.max,v));
+    f.set(v); changed++;
+  });
+  saveLB(); saveWorld();
+  // publish these EXACT values (cloudPut sends the record verbatim — no max() merge)
+  if(ME&&CLOUD&&CLOUD.accounts){
+    const a=CLOUD.accounts[ME.key]||(CLOUD.accounts[ME.key]={});
+    a.u=ME.name; a.key=ME.key;
+    a.level=LB.level; a.streak=LB.bestStreak; a.waves=LB.waves;
+    a.kills=LB.kills; a.rank=LB.rank; a.time=LB.time||0;
+    CLOUD.accounts[ME.key]=a;
+    try{ cloudPut().catch(()=>{}); }catch(e){}
+  }
+  return changed;
 }
 let admKillKey=null;
 function adminKill(key,el){
