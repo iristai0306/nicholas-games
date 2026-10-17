@@ -698,7 +698,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.17 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.18 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1663,17 +1663,137 @@ const RANK_TIERS=[
 /* elo needed to REACH each of the 27 ranks (index 0 = Bronze 1).
    Gaps widen as you climb so the top ranks actually mean something. */
 const RANK_STEPS=[
-      0,   60,  130,                       // Bronze 1-3
-    210,  290,  380,                       // Silver 1-3
-    480,  590,  710,                       // Gold 1-3
-    850, 1000, 1160,                       // Platinum 1-3
-   1340, 1530, 1740,                       // Diamond 1-3
-   1970, 2210, 2480,                       // Obsidian 1-3
-   2770, 3080, 3420,                       // Nemesis 1-3
-   3790, 4190, 4620,                       // Arch Nemesis 1-3
-   5090, 5590, 6130                        // Pro 1-3
+      0,   60,  120,                       // Bronze 1-3
+    190,  270,  370,                       // Silver 1-3
+    470,  590,  720,                       // Gold 1-3
+    870, 1040, 1230,                       // Platinum 1-3
+   1450, 1700, 1970,                       // Diamond 1-3
+   2290, 2640, 3040,                       // Obsidian 1-3
+   3490, 4000, 4580,                       // Nemesis 1-3
+   5230, 5960, 6800,                       // Arch Nemesis 1-3
+   7740, 8800, 10000                       // Pro 1-3  (Pro 3 = 10,000 elo)
 ];
 const RANK_MAX=RANK_STEPS[RANK_STEPS.length-1];
+/* =========================================================
+   SEASONS — one per calendar month. The top 100 ranked players
+   at the end of the month win a pleb nobody else can get.
+   There's no server, so each player publishes their own season
+   elo to the board and the reward is settled client-side when
+   the month rolls over (next time they open the game).
+   ========================================================= */
+const SEASON_KEY='plebania_season';
+const SEASON_TOP=100;
+/* 12 reward plebs — one per month, cycling. Which pleb a season pays is derived
+   from the season id, so every client agrees without coordinating. */
+const SEASON_PLEBS=[
+  {n:'Frost Warden',   e:'\u2744\ufe0f',       cost:170, dmg:55, rate:0.85, range:105, kind:'melee',  color:'#7fd8ff', t:'Freezing strikes'},
+  {n:'Ember Champion', e:'🔥',          cost:180, dmg:44, rate:1.05, range:190, kind:'splash', splash:66, color:'#ff8a3a', t:'Burning blast'},
+  {n:'Void Reaper',    e:'🌑',          cost:200, dmg:68, rate:1.00, range:100, kind:'melee',  color:'#8a5cf6', t:'Cuts through armour'},
+  {n:'Storm Herald',   e:'\u26a1',              cost:190, dmg:50, rate:1.15, range:300, kind:'ranged', color:'#ffe066', t:'Long-range bolts'},
+  {n:'Iron Sentinel',  e:'🛡\ufe0f',   cost:175, dmg:40, rate:0.65, range:112, kind:'melee',  color:'#b9c2cc', t:'Unbreakable wall'},
+  {n:'Blood Duelist',  e:'🩸',          cost:195, dmg:62, rate:0.58, range:92,  kind:'melee',  color:'#e01e37', t:'Blistering attacks'},
+  {n:'Crystal Sage',   e:'🔮',          cost:190, dmg:48, rate:1.25, range:260, kind:'splash', splash:80, color:'#7fd8d8', t:'Shattering blast'},
+  {n:'Bone Marshal',   e:'💀',          cost:185, dmg:46, rate:0.95, range:340, kind:'ranged', color:'#d8d0b8', t:'Bone volleys'},
+  {n:'Sunforged',      e:'🗡\ufe0f',   cost:200, dmg:58, rate:0.72, range:100, kind:'melee',  color:'#ffd24a', t:'Molten blade'},
+  {n:'Night Stalker',  e:'🐺',          cost:185, dmg:54, rate:0.90, range:240, kind:'ranged', color:'#5c7cff', t:'Silent hunter'},
+  {n:'Gold Baron',     e:'👑',          cost:160, kind:'econ', income:24, every:1.9, color:'#c9a227', t:'+24 gold / 1.9s'},
+  {n:'Titan',          e:'🗿',          cost:210, dmg:80, rate:1.40, range:118, kind:'melee',  color:'#8a6a3a', t:'Crushing blows'}
+];
+let SEASON=loadJSON(SEASON_KEY,null);
+function seasonNow(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function seasonDaysLeft(){ const d=new Date(); const end=new Date(d.getFullYear(),d.getMonth()+1,1);
+  return Math.max(0,Math.ceil((end.getTime()-d.getTime())/86400000)); }
+function seasonPlebKey(sid){ return 'season_'+String(sid).replace('-',''); }
+function seasonPlebIdx(sid){ const p=String(sid).split('-');
+  const y=parseInt(p[0],10)||2026, m=(parseInt(p[1],10)||1)-1;
+  return ((y*12+m)%12+12)%12; }
+function seasonPlebBase(sid){ return SEASON_PLEBS[seasonPlebIdx(sid)]; }
+function seasonPlebName(sid){ return seasonPlebBase(sid).n; }
+function seasonPlebDef(sid){
+  const t=seasonPlebBase(sid);
+  const d={name:t.n, emoji:t.e, cost:t.cost||180};
+  if(t.dmg!=null){ d.dmg=t.dmg; d.rate=t.rate; d.range=t.range; d.kind=t.kind; }
+  if(t.splash!=null)d.splash=t.splash;
+  if(t.income!=null){ d.kind='econ'; d.income=t.income; d.every=t.every; }
+  d.color=t.color; d.desc=t.t+' \u00b7 Season '+sid+' top-'+SEASON_TOP+' reward';
+  return d;
+}
+/* make every earned season pleb a real, placeable unit */
+function installSeasonPlebs(){
+  if(!SEASON||!SEASON.rewards)return;
+  SEASON.rewards.forEach(sid=>{
+    const k=seasonPlebKey(sid);
+    try{ if(!TOWERS[k]) TOWERS[k]=seasonPlebDef(sid);
+         if(ORDER.indexOf(k)<0) ORDER.push(k); }catch(e){}
+  });
+}
+function seasonIsOwned(sid){ return !!(SEASON&&SEASON.rewards&&SEASON.rewards.indexOf(sid)>=0); }
+function seasonStandings(sid){
+  const rows=[];
+  Object.keys(CLOUD.accounts||{}).forEach(k=>{
+    const a=CLOUD.accounts[k];
+    if(!a||a.sid!==sid)return;
+    const se=Math.max(0,a.se||0); if(se<=0)return;
+    rows.push({key:k,name:a.u||k,se:se});
+  });
+  return rows.sort((x,y)=>y.se-x.se);
+}
+function mySeasonPlace(sid){
+  const rows=seasonStandings(sid);
+  const myKey=ME?String(ME.key).toLowerCase():null;
+  let idx=rows.findIndex(r=>r.key===myKey);
+  if(idx<0 && SEASON && SEASON.id===sid && (SEASON.elo||0)>0){
+    rows.push({key:myKey,name:ME?ME.name:'You',se:SEASON.elo||0});
+    rows.sort((x,y)=>y.se-x.se);
+    idx=rows.findIndex(r=>r.key===myKey);
+  }
+  return {place:idx>=0?idx+1:0,total:rows.length};
+}
+/* who qualified last season — returns {place,total,qualified} */
+function settleSeason(prevSid,myElo){
+  if(!prevSid)return null;
+  if(seasonIsOwned(prevSid))return null;            // already paid out
+  if(!(myElo>0))return null;                        // didn't play ranked that season
+  const rows=seasonStandings(prevSid);
+  const myKey=ME?String(ME.key).toLowerCase():null;
+  let idx=rows.findIndex(r=>r.key===myKey);
+  if(idx<0){ rows.push({key:myKey,name:ME?ME.name:'You',se:myElo}); rows.sort((a,b)=>b.se-a.se);
+             idx=rows.findIndex(r=>r.key===myKey); }
+  const place=idx>=0?idx+1:rows.length;
+  return {place:place,total:rows.length,qualified:place<=SEASON_TOP};
+}
+function grantSeasonPleb(sid){
+  const k=seasonPlebKey(sid);
+  if(!SEASON.rewards)SEASON.rewards=[];
+  if(SEASON.rewards.indexOf(sid)<0)SEASON.rewards.push(sid);
+  PACK_OWN['pleb:'+k]=true;
+  saveJSON('plebania_pack_own',PACK_OWN);
+  saveJSON(SEASON_KEY,SEASON);
+  installSeasonPlebs();
+  return true;
+}
+let SEASON_NOTICE=null;
+function seasonRoll(){
+  const cur=seasonNow();
+  if(!SEASON||!SEASON.id){ SEASON={id:cur,elo:0,best:0,rewards:(SEASON&&SEASON.rewards)||[]};
+    saveJSON(SEASON_KEY,SEASON); return null; }
+  if(SEASON.id===cur)return null;
+  const prev=SEASON.id, prevElo=SEASON.elo||0, prevBest=SEASON.best||0;
+  const res=settleSeason(prev,prevElo);
+  SEASON={id:cur,elo:0,best:Math.max(prevBest,prevElo),rewards:(SEASON.rewards||[]).slice()};
+  if(res&&res.qualified) grantSeasonPleb(prev);
+  saveJSON(SEASON_KEY,SEASON);
+  installSeasonPlebs();
+  if(res) SEASON_NOTICE={prev:prev,place:res.place,total:res.total,qualified:res.qualified};
+  return res;
+}
+function seasonAddElo(n){
+  if(!SEASON)seasonRoll();
+  if(!SEASON)return;
+  SEASON.elo=Math.max(0,(SEASON.elo||0)+n);
+  SEASON.best=Math.max(SEASON.best||0,SEASON.elo);
+  saveJSON(SEASON_KEY,SEASON);
+}
 function rankPos(pts){ pts=Math.max(0,pts||0); let i=0;
   for(let j=0;j<RANK_STEPS.length;j++) if(pts>=RANK_STEPS[j]) i=j; return i; }
 function rankTierIdx(pts){ return Math.floor(rankPos(pts)/3); }
@@ -1687,9 +1807,9 @@ function rankNextName(pts){ const p=rankPos(pts); if(p>=RANK_STEPS.length-1)retu
 function eloWin(){
   const streak=Math.max(1,(LB.streak||0)+1);
   const tier=rankTierIdx(LB.rank);            // 0..8
-  const base=30;
-  const streakB=Math.min(25,streak*5);        // win streaks ramp up
-  const tierB=tier*8;                          // higher tier = tougher fight = more elo
+  const base=35;
+  const streakB=Math.min(30,streak*5);        // win streaks ramp up
+  const tierB=tier*10;                         // higher tier = tougher fight = more elo
   const smash=(S&&S.ebHp<=0)?14:0;             // bonus for actually destroying their base
   return base+streakB+tierB+smash;
 }
@@ -1742,7 +1862,10 @@ function upsertAcct(j){
   if(!j||typeof j!=='object'||!j.key) return false;
   const k=String(j.key).toLowerCase(); const cur=CLOUD.accounts[k]||{};
   const own=!!(typeof ME!=='undefined'&&ME&&k===String(ME.key).toLowerCase());
-  CLOUD.accounts[k]={ u:j.u||cur.u||k, pw:j.pw||cur.pw, key:k, at:j.at||cur.at,
+  const newerAt=(j.at||0)>=(cur.at||0);
+  CLOUD.accounts[k]={ u:j.u||cur.u||k, pw:j.pw||cur.pw||(j.pw||cur.pw), key:k, at:j.at||cur.at,
+    sid: own?(j.sid||null):(newerAt?(j.sid!==undefined?j.sid:cur.sid):(cur.sid!==undefined?cur.sid:j.sid)),
+    se:  own?(j.se||0):(newerAt?(j.se||0):(cur.se||0)),
     level:own?(j.level||0):Math.max(j.level||0,cur.level||0),
     streak:own?(j.streak||0):Math.max(j.streak||0,cur.streak||0),
     waves:own?(j.waves||0):Math.max(j.waves||0,cur.waves||0),
@@ -1843,9 +1966,58 @@ function loadLocalFor(me){
     LB.waves=a.waves||0; LB.kills=a.kills||0; LB.rank=a.rank||0; LB.time=a.time||0;
   }
   LB.streak=0; saveLB(); pushScore(); refreshUserChip();
+  // if the board already knows about a LATER season than us, we skipped a month:
+  // settle the one we were in and move forward.
+  if(a&&a.sid && SEASON && String(a.sid)>String(SEASON.id)){
+    const old=SEASON.id, oldElo=SEASON.elo||0;
+    const res=settleSeason(old,oldElo);
+    SEASON={id:a.sid,elo:Math.max(0,a.se||0),best:Math.max(SEASON.best||0,oldElo),rewards:(SEASON.rewards||[]).slice()};
+    if(res&&res.qualified) grantSeasonPleb(old);
+    saveJSON(SEASON_KEY,SEASON);
+    if(res) SEASON_NOTICE={prev:old,place:res.place,total:res.total,qualified:res.qualified};
+  }
+  seasonRoll(); installSeasonPlebs();
 }
 function refreshUserChip(){ const nm=$('userName'); if(nm)nm.textContent=ME?ME.name:'—';
   const adm=$('acctAdmin'); if(adm) adm.style.display=isAdmin()?'':'none'; }
+/* season card on the account screen */
+function seasonPanelHTML(){
+  seasonRoll(); installSeasonPlebs();
+  if(!SEASON)return '';
+  const sid=SEASON.id, se=SEASON.elo||0;
+  const b=seasonPlebBase(sid), def=seasonPlebDef(sid);
+  const pl=mySeasonPlace(sid);
+  const owned=seasonIsOwned(sid);
+  let status;
+  if(se<=0) status='Play a <b>ranked battle</b> to enter this season.';
+  else if(pl.place && pl.place<=SEASON_TOP) status='<b style="color:#9fe08a">You\u2019re in the top '+SEASON_TOP+' \u2014 on track for the reward.</b>';
+  else status='Outside the top '+SEASON_TOP+'. Keep winning to climb.';
+  let h='<div class="admpanel" style="margin-top:24px;text-align:left">'+
+    '<h3>🏆 Season '+sid+'</h3>'+
+    '<div style="font:15px Georgia,serif;color:#d8c48c;margin:-4px 0 14px">Top '+SEASON_TOP+
+      ' ranked players when the month ends win a pleb nobody else can get:'+
+      ' <b style="color:'+def.color+'">'+def.emoji+' '+b.n+'</b></div>';
+  h+='<div class="bd-big" style="margin-bottom:16px">'+
+     '<div class="acct-tile"><div class="v" style="font:900 30px Georgia,serif;color:#ffd24a">'+se+'</div><div class="k" style="font:700 13px Georgia,serif;color:#d8c48c;margin-top:4px">SEASON ELO</div></div>'+
+     '<div class="acct-tile"><div class="v" style="font:900 30px Georgia,serif;color:#ffd24a">'+(pl.place?('#'+pl.place):'\u2014')+'</div><div class="k" style="font:700 13px Georgia,serif;color:#d8c48c;margin-top:4px">YOUR PLACE'+(pl.total?(' of '+pl.total):'')+'</div></div>'+
+     '<div class="acct-tile"><div class="v" style="font:900 30px Georgia,serif;color:#ffd24a">'+seasonDaysLeft()+'</div><div class="k" style="font:700 13px Georgia,serif;color:#d8c48c;margin-top:4px">DAYS LEFT</div></div>'+
+     '</div>';
+  h+='<div style="font:15px Georgia,serif;color:#e8d6a4;margin-bottom:14px">'+status+'</div>';
+  if(owned){
+    h+='<div style="font:15px Georgia,serif;color:#9fe08a;margin-bottom:10px"><b>\u2705 Won this season\u2019s pleb: '+def.emoji+' '+b.n+'</b> \u2014 it\u2019s in your build tray.</div>';
+  }
+  const won=(SEASON.rewards||[]).slice().reverse();
+  if(won.length){
+    h+='<div style="font:700 13px Georgia,serif;color:#d8c48c;margin:6px 0 8px;letter-spacing:.5px">SEASON PLEBS WON</div><div class="admstats">';
+    won.forEach(sid2=>{ const bb=seasonPlebBase(sid2), dd=seasonPlebDef(sid2);
+      h+='<div class="admstat"><span class="e">'+bb.e+'</span><span class="n"><b>'+bb.n+'</b><br><span style="opacity:.7">Season '+sid2+'</span></span></div>'; });
+    h+='</div>';
+  }else{
+    h+='<div style="font:14px Georgia,serif;color:#d8c48c;opacity:.75">No season plebs won yet \u2014 the first one is '+b.e+' '+b.n+'.</div>';
+  }
+  h+='</div>';
+  return h;
+}
 function accountStats(){
   const worlds=(typeof unlocked!=='undefined')?Math.min(unlocked,WORLDS.length):1;
   return [
@@ -1869,6 +2041,7 @@ function renderAccount(){
   h+='<div class="bd-big">';
   accountStats().forEach(([e,k,v])=>{ h+='<div class="acct-tile"><div class="v" style="font:900 30px Georgia,serif;color:#ffd24a">'+e+' '+v+'</div><div class="k" style="font:700 13px Georgia,serif;color:#d8c48c;margin-top:4px;letter-spacing:.5px">'+k+'</div></div>'; });
   h+='</div>';
+  h+=seasonPanelHTML();
   body.innerHTML=h;
   const adm=$('acctAdmin'); if(adm) adm.style.display=isAdmin()?'':'none';
   resetDelBtn(); delMsg('');
@@ -2066,6 +2239,8 @@ function pushScore(){
   a.kills=exact?LB.kills:Math.max(a.kills||0,LB.kills);
   a.rank=exact?LB.rank:Math.max(a.rank||0,LB.rank);
   a.time=exact?(LB.time||0):Math.max(a.time||0,LB.time||0);
+  a.sid=SEASON?SEASON.id:null;          // season elo resets monthly, so it is
+  a.se=SEASON?(SEASON.elo||0):0;        // published alongside its season id
   CLOUD.accounts[ME.key]=a; cloudTouch();
 }
 function boardMe(){
@@ -2113,6 +2288,7 @@ function renderBoard(){
    winding road, villages defend, AI can place, RAID to crush their base.
    ========================================================= */
 function newBattle(ranked){
+  seasonRoll(); installSeasonPlebs();
   newGame(S?S.world:0);
   S.battle=true; S.ranked=!!ranked;
   S.lives=15; S.reached=1;
@@ -2183,7 +2359,7 @@ function battleAI(dt){
 function battleWin(){
   if(S.over)return; S.over=true; S.running=false; hideSel();
   recordStats();
-  if(S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); S.eloGain=eloWin(); LB.rank+=S.eloGain; }
+  if(S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); S.eloGain=eloWin(); LB.rank+=S.eloGain; seasonAddElo(S.eloGain); }
   addPassXP(S.ranked?150:100);
   saveLB(); pushScore();
   const smashed=(S.ebHp<=0);
@@ -2201,7 +2377,7 @@ function battleWin(){
 function battleLose(){
   if(S.over)return; S.over=true; S.running=false; hideSel();
   recordStats();
-  if(S.ranked){ LB.streak=0; S.eloLoss=eloLose(); LB.rank=Math.max(0,LB.rank-S.eloLoss); }
+  if(S.ranked){ LB.streak=0; S.eloLoss=eloLose(); LB.rank=Math.max(0,LB.rank-S.eloLoss); seasonAddElo(-S.eloLoss); }
   saveLB(); pushScore();
   $('ovT').style.color='#ff9a86'; $('ovT').textContent='YOUR BASE FELL';
   $('ovP').innerHTML=(S.ranked?('<b style="color:#ff9a86">-'+S.eloLoss+' ELO</b><br>'):'')+
@@ -3477,6 +3653,20 @@ document.addEventListener('keydown',e=>{ if(e.code==='Space'&&$('game').classLis
     L.appendChild(d);
   }
 })();
+
+/* boot: settle any finished season, then install the reward plebs we've earned */
+try{
+  seasonRoll(); installSeasonPlebs();
+  if(SEASON_NOTICE){
+    const n=SEASON_NOTICE; SEASON_NOTICE=null;
+    setTimeout(()=>{
+      try{
+        if(n.qualified) showBanner('🏆 SEASON '+n.prev+' REWARD \u2014 '+seasonPlebName(n.prev)+' joined your army!','gold',5200);
+        else showBanner('Season '+n.prev+' ended \u2014 you finished #'+n.place+' of '+n.total,'red',4200);
+      }catch(e){}
+    },1400);
+  }
+}catch(e){ console.warn('season boot',e); }
 
 /* debug hooks (verification) */
 window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked(){return unlocked;}, get PATH(){return PATH;},
