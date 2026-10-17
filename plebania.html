@@ -698,7 +698,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.19 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.20 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1070,11 +1070,15 @@ const TUT=[
 ];
 let tutI=0;
 const TUTSEEN_KEY='plebania_tutseen';
-let AUTOSKIP=loadJSON('plebania_autoskip', true);   // default ON
+let AUTOSKIP=loadJSON('plebania_autoskip', true);   // tutorial auto-skip (menu toggle)
+/* The big ⏭️ AUTO button in the HUD controls the thing you actually feel:
+   waves starting on their own instead of waiting for START WAVE. */
+let AUTOWAVE=loadJSON('plebania_autowave', true);   // default ON
+const AUTO_WAVE_DELAY=3.0;                          // seconds of build time between waves
 function refreshToggles(){
   const a=$('tgTut'); if(a){ a.textContent='📖 Tutorial auto-skip: '+(AUTOSKIP?'ON':'OFF'); a.classList.toggle('off',!AUTOSKIP); }
-  const ab=$('autoBtn'); if(ab){ const l=$('autoLbl'); if(l)l.textContent='Auto '+(AUTOSKIP?'ON':'OFF');
-    ab.classList.toggle('on',AUTOSKIP); ab.classList.toggle('off',!AUTOSKIP); }
+  const ab=$('autoBtn'); if(ab){ const l=$('autoLbl'); if(l)l.textContent='Auto '+(AUTOWAVE?'ON':'OFF');
+    ab.classList.toggle('on',AUTOWAVE); ab.classList.toggle('off',!AUTOWAVE); }
 }
 function startTutorial(){
   if(AUTOSKIP && loadJSON(TUTSEEN_KEY,false)){ endTutorial(); return; }
@@ -1088,8 +1092,14 @@ function tutText(i){ return TUT[i].p; }
 $('tutNext').onclick=()=>{ if(tutI<TUT.length-1){ tutI++; renderTut(); } else endTutorial(); };
 $('tutSkip').onclick=()=>endTutorial();
 $('tutAuto').onclick=()=>{ AUTOSKIP=!AUTOSKIP; saveJSON('plebania_autoskip',AUTOSKIP);
-  $('tutAuto').textContent='Auto-skip: '+(AUTOSKIP?'ON':'OFF'); $('tutAuto').classList.toggle('off',!AUTOSKIP); refreshToggles(); tip('Tutorial auto-skip '+(AUTOSKIP?'ON — won\u2019t show again':'OFF — will show next time'),1600); };
-function endTutorial(){ saveJSON(TUTSEEN_KEY,true); $('tut').classList.remove('on'); pauseGame(false); initAudio(); }
+  $('tutAuto').textContent='Auto-skip: '+(AUTOSKIP?'ON':'OFF'); $('tutAuto').classList.toggle('off',!AUTOSKIP); refreshToggles();
+  tip(AUTOSKIP?'Tutorial auto-skip ON \u2014 it won\u2019t pop up next time':'Tutorial auto-skip OFF \u2014 it\u2019ll show again next game',1900); };
+function endTutorial(){
+  saveJSON(TUTSEEN_KEY,true);
+  if(!AUTOSKIP){ AUTOSKIP=true; saveJSON('plebania_autoskip',AUTOSKIP); }   // they skipped it — don't nag again
+  refreshToggles();
+  $('tut').classList.remove('on'); pauseGame(false); initAudio();
+}
 function pauseGame(on){ if(S)S.paused=on; }
 
 /* ---------------- menu toggles (always visible, so they're easy to find) ---------------- */
@@ -2776,7 +2786,7 @@ function waveComp(w){
 function startWave(){
   if(S.over||S.running)return;
   if(S.wave>=MAXWAVE)return;
-  S.wave++; S.running=true; S.between=false;
+  S.wave++; S.running=true; S.between=false; S.autoT=0;
   S.spawnQ=waveComp(S.wave); S.spawnT=0; S.spawnGap=0.68;
   $('startBtn').classList.add('off');
   syncHud();
@@ -3540,6 +3550,11 @@ function loop(now){
         }
         if(S.spawnQ.length===0&&S.enemies.length===0) endWave();
       }
+      // AUTO: campaign waves roll in on their own after a short build window
+      if(!S.battle && AUTOWAVE && !S.running && !S.over && S.wave<MAXWAVE){
+        S.autoT=(S.autoT||0)+dt;
+        if(S.autoT>=AUTO_WAVE_DELAY){ S.autoT=0; startWave(); }
+      }else if(S.autoT){ S.autoT=0; }
       enemyUpdate(dt);
       towerUpdate(dt);
       heroUpdate(dt);
@@ -3577,7 +3592,7 @@ function loop(now){
   if(tipT&&Date.now()>tipT){ $('tip').classList.remove('on'); tipT=0; }
 }
 function endWave(){
-  S.running=false; S.between=true;
+  S.running=false; S.between=true; S.autoT=0;
   if(S.wave+1>S.reached){ S.reached=S.wave+1; }
   const bonus=20+S.wave*8;
   S.gold+=bonus;
@@ -3660,8 +3675,10 @@ $('rallyBtn').onclick=()=>{ if(!S||S.over||S.paused)return; if((S.rallyCd||0)>0)
   for(let i=0;i<20;i++)burst(S.hero.x,S.hero.y,'#ffd24a');
   syncHud(); updateRallyBtn();
 };
-$('autoBtn').onclick=()=>{ AUTOSKIP=!AUTOSKIP; saveJSON('plebania_autoskip',AUTOSKIP);
-  refreshToggles(); tip('Tutorial auto-skip '+(AUTOSKIP?'ON — won\u2019t show again':'OFF — will show next time'),1600); };
+$('autoBtn').onclick=()=>{ AUTOWAVE=!AUTOWAVE; saveJSON('plebania_autowave',AUTOWAVE); SFX.ui();
+  if(S){ S.autoT=0; }
+  refreshToggles();
+  tip(AUTOWAVE?'\u23ed\ufe0f Auto ON \u2014 waves start themselves':'\u23ed\ufe0f Auto OFF \u2014 hit START WAVE yourself',1700); };
 $('speedBtn').onclick=()=>{ if(!S)return; S.speed=S.speed===1?2:1;
   $('speedBtn').textContent=S.speed+'×'; $('speedBtn').classList.toggle('on',S.speed>1); SFX.ui();
   tip(S.speed===2?'Fast-forward ON ⏩':'Normal speed',1200);
