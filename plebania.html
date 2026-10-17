@@ -698,7 +698,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.14 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.15 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1644,6 +1644,9 @@ function fmtTime(s){ s=Math.max(0,Math.round(s||0)); const h=Math.floor(s/3600),
   if(h>0) return h+'h '+m+'m'; if(m>0) return m+'m '+Math.floor(s%60)+'s'; return s+'s'; }
 function fmtStat(k,v){ return k==='time'?fmtTime(v):v; }
 function saveLB(){ saveJSON(LB_KEY,LB); }
+/* Values set by hand in the admin panel. Kept until they're confirmed published,
+   so a stale leaderboard record can't overwrite them (that's why rank "didn't work"). */
+let ADMINSET=loadJSON('plebania_adminset',null);   // {at, v:{level,streak,waves,kills,rank,time}}
 const RANK_NAMES=['Bronze','Silver','Gold','Platinum','Diamond','Legend'];
 function rankTier(pts){ return RANK_NAMES[Math.max(0,Math.min(RANK_NAMES.length-1,Math.floor((pts||0)/4)))]; }
 function rankColor(pts){ const t=Math.max(0,Math.min(5,Math.floor((pts||0)/4)));
@@ -1691,14 +1694,20 @@ function mergeBoards(a,b){
 function upsertAcct(j){
   if(!j||typeof j!=='object'||!j.key) return false;
   const k=String(j.key).toLowerCase(); const cur=CLOUD.accounts[k]||{};
-  CLOUD.accounts[k]={ u:j.u||cur.u||k, pw:j.pw||cur.pw, key:k,
-    level:Math.max(j.level||0,cur.level||0), streak:Math.max(j.streak||0,cur.streak||0),
-    waves:Math.max(j.waves||0,cur.waves||0), kills:Math.max(j.kills||0,cur.kills||0), rank:Math.max(j.rank||0,cur.rank||0), time:Math.max(j.time||0,cur.time||0) };
+  const own=!!(typeof ME!=='undefined'&&ME&&k===String(ME.key).toLowerCase());
+  CLOUD.accounts[k]={ u:j.u||cur.u||k, pw:j.pw||cur.pw, key:k, at:j.at||cur.at,
+    level:own?(j.level||0):Math.max(j.level||0,cur.level||0),
+    streak:own?(j.streak||0):Math.max(j.streak||0,cur.streak||0),
+    waves:own?(j.waves||0):Math.max(j.waves||0,cur.waves||0),
+    kills:own?(j.kills||0):Math.max(j.kills||0,cur.kills||0),
+    rank:own?(j.rank||0):Math.max(j.rank||0,cur.rank||0),
+    time:own?(j.time||0):Math.max(j.time||0,cur.time||0) };
   return true;
 }
 function subscribeBoard(){ if(!MQTT_C)return; try{ MQTT_C.subscribe(MQTT_WILD,{qos:1},()=>{}); MQTT_C.subscribe(MQTT_TOPIC,{qos:1},()=>{}); }catch(e){} }
 function attachMQTT(c){
-  c.on('connect',()=>{ MQTT_READY=true; cloudOk=true; subscribeBoard(); });   // re-subscribe on reconnect
+  c.on('connect',()=>{ MQTT_READY=true; cloudOk=true; subscribeBoard();       // re-subscribe on reconnect
+    if(CLOUD_DIRTY) setTimeout(()=>cloudSync(false),400); });                 // flush anything that couldn't publish earlier
   c.on('message',(t,m)=>{
     try{ const j=JSON.parse(m.toString());
       if(t===MQTT_TOPIC){ if(j&&j.accounts){ CLOUD=mergeBoards(CLOUD,j); MQTT_GOT=true; } }   // legacy board (migration)
@@ -1777,8 +1786,15 @@ async function doAuth(){
 function loadLocalFor(me){
   // account's cloud stats are the source of truth — reset local bests to that account
   const a=CLOUD.accounts[me.key]||{};
-  LB.level=Math.max(1,a.level||1); LB.bestStreak=a.streak||0;
-  LB.waves=a.waves||0; LB.kills=a.kills||0; LB.rank=a.rank||0; LB.time=a.time||0;
+  const pend=ADMINSET&&ADMINSET.v;
+  if(pend && (ADMINSET.at||0)>=(a.at||0)){
+    // an admin set these by hand and hasn't published yet — the cloud copy is stale, trust the edit
+    LB.level=Math.max(1,pend.level); LB.bestStreak=pend.streak||0;
+    LB.waves=pend.waves||0; LB.kills=pend.kills||0; LB.rank=pend.rank||0; LB.time=pend.time||0;
+  }else{
+    LB.level=Math.max(1,a.level||1); LB.bestStreak=a.streak||0;
+    LB.waves=a.waves||0; LB.kills=a.kills||0; LB.rank=a.rank||0; LB.time=a.time||0;
+  }
   LB.streak=0; saveLB(); pushScore(); refreshUserChip();
 }
 function refreshUserChip(){ const nm=$('userName'); if(nm)nm.textContent=ME?ME.name:'—';
@@ -1903,15 +1919,25 @@ function adminSetStats(){
     f.set(v); changed++;
   });
   saveLB(); saveWorld();
-  // publish these EXACT values (cloudPut sends the record verbatim — no max() merge)
+  // remember these exact values until they're safely on the board
+  ADMINSET={ at:Date.now(), v:{level:LB.level,streak:LB.bestStreak,waves:LB.waves,
+    kills:LB.kills,rank:LB.rank,time:LB.time||0} };
+  saveJSON('plebania_adminset',ADMINSET);
   if(ME&&CLOUD&&CLOUD.accounts){
     const a=CLOUD.accounts[ME.key]||(CLOUD.accounts[ME.key]={});
     a.u=ME.name; a.key=ME.key;
     a.level=LB.level; a.streak=LB.bestStreak; a.waves=LB.waves;
     a.kills=LB.kills; a.rank=LB.rank; a.time=LB.time||0;
     CLOUD.accounts[ME.key]=a;
-    try{ cloudPut().catch(()=>{}); }catch(e){}
   }
+  // publish verbatim (cloudPut sends the record as-is — no max() merge). If the broker
+  // isn't up yet this queues and retries on connect instead of silently dying.
+  CLOUD_DIRTY=true;
+  const done=()=>{ ADMINSET=null; saveJSON('plebania_adminset',null); CLOUD_DIRTY=false; };
+  try{
+    const pr=cloudPut();
+    if(pr&&pr.then) pr.then(done).catch(()=>{ cloudTouch(); });
+  }catch(e){ cloudTouch(); }
   return changed;
 }
 let admKillKey=null;
@@ -1983,12 +2009,13 @@ function pushScore(){
   if(!ME||!CLOUD||!CLOUD.accounts)return;
   const a=CLOUD.accounts[ME.key]||(CLOUD.accounts[ME.key]={});
   a.u=ME.name;
-  a.level=Math.max(a.level||0,LB.level);
-  a.streak=Math.max(a.streak||0,LB.bestStreak);
-  a.waves=Math.max(a.waves||0,LB.waves);
-  a.kills=Math.max(a.kills||0,LB.kills);
-  a.rank=Math.max(a.rank||0,LB.rank);
-  a.time=Math.max(a.time||0,LB.time||0);
+  const exact=!!(ADMINSET&&ADMINSET.v);      // after a hand edit, LB is authoritative (can go down)
+  a.level=exact?LB.level:Math.max(a.level||0,LB.level);
+  a.streak=exact?LB.bestStreak:Math.max(a.streak||0,LB.bestStreak);
+  a.waves=exact?LB.waves:Math.max(a.waves||0,LB.waves);
+  a.kills=exact?LB.kills:Math.max(a.kills||0,LB.kills);
+  a.rank=exact?LB.rank:Math.max(a.rank||0,LB.rank);
+  a.time=exact?(LB.time||0):Math.max(a.time||0,LB.time||0);
   CLOUD.accounts[ME.key]=a; cloudTouch();
 }
 function boardMe(){
