@@ -543,6 +543,53 @@
     background:linear-gradient(rgba(52,36,14,.98),rgba(26,17,6,.98));box-shadow:0 20px 60px rgba(0,0,0,.7)}
   .ovcard h1{margin:0 0 8px;font:900 54px Georgia,serif;color:#f6dd8b;text-shadow:0 4px 0 #000}
   .ovcard p{margin:6px 0;font-size:18px;color:#e9d9ab;line-height:1.4}
+  /* ---- RANK UP celebration (plays over the whole board) ---- */
+  /* solid takeover: the result card behind must NOT show through, or the
+     text collides with the badge */
+  #rankup{position:absolute;inset:0;z-index:14;display:none;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 45%,#4a3510 0%,#241806 45%,#080501 100%);pointer-events:none;
+    backdrop-filter:blur(10px)}
+  #rankup.on{display:flex}
+  #rankup .ruwrap{text-align:center;position:relative;min-width:520px}
+  #rankup .ruheaven{font:900 15px Georgia,serif;letter-spacing:7px;color:#ffd24a;opacity:0;
+    animation:ruFade .5s ease-out .1s forwards}
+  #rankup .rubadge{margin:10px auto 4px;width:150px;height:150px;border-radius:50%;display:flex;
+    align-items:center;justify-content:center;font:900 74px Georgia,serif;color:#2b2418;
+    box-shadow:0 0 0 6px rgba(255,255,255,.14),0 0 60px rgba(255,210,74,.65);
+    transform:scale(.2) rotate(-25deg);opacity:0;animation:ruBadge .62s cubic-bezier(.2,1.6,.4,1) .12s forwards}
+  #rankup .runame{font:900 52px Georgia,serif;color:#fff3cf;text-shadow:0 5px 0 #000,0 0 34px rgba(255,210,74,.6);
+    opacity:0;animation:ruFade .5s ease-out .34s forwards}
+  #rankup .rusub{font:700 16px Georgia,serif;color:#c9a24a;letter-spacing:2px;margin-top:6px;
+    opacity:0;animation:ruFade .5s ease-out .5s forwards}
+  #rankup .rustars{font-size:30px;margin-top:12px;letter-spacing:8px;opacity:0;
+    text-shadow:0 0 22px rgba(255,210,74,.9);animation:ruFade .6s ease-out .62s forwards}
+  #rankup .rspark{position:absolute;width:8px;height:8px;border-radius:50%;background:#ffd24a;
+    box-shadow:0 0 12px #ffd24a;pointer-events:none}
+  @keyframes ruFade{to{opacity:1}}
+  @keyframes ruBadge{to{transform:none;opacity:1}}
+
+  /* ---- mastery inside PLEBPACK ---- */
+  .mast{margin-top:8px;border-top:1px dashed rgba(43,36,24,.35);padding-top:7px}
+  .mast .mrow{display:flex;justify-content:space-between;align-items:baseline;font:700 12px Georgia,serif;color:#4a3d24}
+  .mast .mbar{height:7px;border-radius:6px;background:rgba(43,36,24,.18);overflow:hidden;margin:4px 0 3px}
+  .mast .mfill{height:100%;border-radius:6px;background:linear-gradient(90deg,#b8860b,#ffd24a)}
+  .mast .mbar.max .mfill{background:linear-gradient(90deg,#8a5cf6,#ffd24a)}
+  .mast .mtitle{font:700 11px Georgia,serif;color:#7a5a12;letter-spacing:.6px}
+  .pk-item.eq .mast{border-color:rgba(251,250,243,.3)}
+  .pk-item.eq .mast .mrow,.pk-item.eq .mast .mtitle{color:#e8d6a4}
+  .pk-item.eq .mast .mbar{background:rgba(251,250,243,.18)}
+  .mastcard{border:2.5px solid #2b2418;border-radius:16px;padding:14px 16px;margin-top:14px;background:#fffdf5}
+  .mastcard h4{margin:0 0 4px;font:900 21px Georgia,serif;color:#2b2418}
+  .mastcard .msub{font:14px Georgia,serif;color:#6b5a38;margin-bottom:10px}
+  .mastcard .mbig{display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  .mastcard .mlv{font:900 40px Georgia,serif;color:#8a6a12;line-height:1}
+  .mastcard .mbar{height:14px;border-radius:8px;background:rgba(43,36,24,.15);overflow:hidden;flex:1;min-width:150px}
+  .mastcard .mfill{height:100%;border-radius:8px;background:linear-gradient(90deg,#b8860b,#ffd24a);transition:width .5s}
+  .mastcard .mslist{display:flex;flex-direction:column;gap:6px}
+  .mastcard .ms{display:flex;align-items:center;gap:9px;font:15px Georgia,serif;color:#7a6a48}
+  .mastcard .ms.done{color:#3f8f3a;font-weight:700}
+  .mastcard .ms .d{width:18px;text-align:center}
+  .mastcard .ms .num{margin-left:auto;font:700 13px Georgia,serif;opacity:.75}
   /* ---- ranked ELO pop (end-of-match) ---- */
   .elopop{margin:16px auto 2px;width:430px;max-width:100%;border-radius:16px;border:2px solid #4a3616;
     background:linear-gradient(#2a1d0b,#171007);padding:13px 18px 15px;position:relative;overflow:hidden;
@@ -720,7 +767,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.21 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.22 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -938,6 +985,15 @@
       <div class="mbtn small" id="tutNext" style="width:150px">Next ▶</div>
       <div class="mbtn small" id="tutAuto" style="width:168px">Auto-skip: ON</div>
     </div>
+  </div></div>
+
+  <!-- ============ RANK UP CELEBRATION ============ -->
+  <div id="rankup"><div class="ruwrap">
+    <div class="ruheaven">RANK UP</div>
+    <div class="rubadge" id="ruBadge">3</div>
+    <div class="runame" id="ruName">Silver 1</div>
+    <div class="rusub" id="ruSub">GLOBAL #7</div>
+    <div class="rustars" id="ruStars">⭐</div>
   </div></div>
 
   <!-- ============ OVERLAYS ============ -->
@@ -1180,6 +1236,71 @@ const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm','berse
 const MAXPER=3;                       // build a max of 3 of anything that is capped (see CAP)
 const CAP={farm:3, orchard:2};        // only Farms & Orchards are capped — other units you can place freely
 function capOf(k){ return CAP[k]||Infinity; }
+
+/* =========================================================
+   PLEB MASTERY — every pleb levels up on its own.
+   A pleb earns mastery XP for the foes IT kills (tougher foe = more XP),
+   so if you only ever build poachers, your poachers get scary.
+   Mastery never resets: it is per-account and saved locally.
+   ========================================================= */
+const MAST_KEY='plebania_mastery';
+const MAST_MAX=12;                       // mastery level cap
+let MAST=loadJSON(MAST_KEY,{});          // { plebKey: {xp, kills} }
+function mastOf(k){
+  if(!MAST[k]) MAST[k]={xp:0,kills:0};
+  return MAST[k];
+}
+function mastNeed(lv){ return Math.round(50+40*lv+16*lv*lv); }   // xp to go from lv -> lv+1
+function mastLv(k){                                   // current level + progress inside it
+  const m=mastOf(k); let lv=0, rem=m.xp||0;
+  while(lv<MAST_MAX && rem>=mastNeed(lv)){ rem-=mastNeed(lv); lv++; }
+  return {lv:lv, rem:rem, need:mastNeed(lv), max:lv>=MAST_MAX};
+}
+function mastBonus(k){ return 1+mastLv(k).lv*0.035; }  // +3.5% dmg/level (+42% at max)
+const MAST_STARS=['','⭐','⭐⭐','⭐⭐⭐','🌟','🌟⭐','🌟⭐⭐','🌟⭐⭐⭐','💫','💫⭐','💫⭐⭐','💫⭐⭐⭐','👑'];
+const MAST_TITLES=['Recruit','Farmhand','Brawler','Fighter','Veteran','Sergeant','Captain','Champion','Warlord','Hero','Legend','Mythic','PLEB GOD'];
+function mastTitle(lv){ return MAST_TITLES[Math.min(lv,MAST_TITLES.length-1)]; }
+/* milestones: every 3rd level PLUS kill-count gates, so there is always a next goal */
+function mastMilestones(k){
+  const m=mastOf(k), L=mastLv(k).lv;
+  return [
+    {at:3,  kind:'lv', done:L>=3,  txt:'+10% damage'},
+    {at:6,  kind:'lv', done:L>=6,  txt:'+21% damage'},
+    {at:9,  kind:'lv', done:L>=9,  txt:'+31% damage'},
+    {at:12, kind:'lv', done:L>=12, txt:'+42% damage · PLEB GOD 👑'},
+    {at:25,   kind:'kill', done:(m.kills||0)>=25,   txt:'title Blooded'},
+    {at:100,  kind:'kill', done:(m.kills||0)>=100,  txt:'title Centurion'},
+    {at:500,  kind:'kill', done:(m.kills||0)>=500,  txt:'title Butcher'},
+    {at:2000, kind:'kill', done:(m.kills||0)>=2000, txt:'title Immortal'}
+  ];
+}
+function mastNextGoal(k){
+  const m=mastOf(k), L=mastLv(k).lv;
+  const ms=mastMilestones(k).filter(x=>!x.done);
+  if(!ms.length) return null;
+  // nearest milestone by remaining work
+  let best=null, bestD=1e9;
+  ms.forEach(x=>{
+    const d = x.kind==='lv' ? (x.at-L)*mastNeed(L) - mastLv(k).rem : (x.at-(m.kills||0));
+    if(d<bestD){ bestD=d; best=x; }
+  });
+  return {ms:best, left:Math.max(1,bestD)};
+}
+function mastGain(kind,e){
+  if(!kind||!TOWERS[kind])return;
+  const m=mastOf(kind);
+  const before=mastLv(kind).lv;
+  m.kills=(m.kills||0)+1;
+  m.xp=(m.xp||0) + Math.max(2,(XP_BY_RANK[e&&e.rank]||1)*4);
+  saveJSON(MAST_KEY,MAST);
+  const after=mastLv(kind).lv;
+  if(after>before){
+    const d=TOWERS[kind];
+    showBanner(d.emoji+' '+d.name+' MASTERY '+after+' — '+mastTitle(after)+'!','gold',2100);
+    SFX.up();
+    if(after===3||after===6||after===9||after===12) SFX.win();
+  }
+}
 
 /* ---------------- BUILDINGS (the second bar) ---------------- */
 const BUILDINGS={
@@ -2119,6 +2240,7 @@ function accountStats(){
     ['🌊','WAVES BEATEN', LB.waves],
     ['💀','UNITS KILLED', LB.kills],
     ['🏅','RANK', rankTier(LB.rank)+' · '+LB.rank+' pts'+(rankNextAt(LB.rank)!=null?(' — '+((rankNextAt(LB.rank)-LB.rank))+' to '+rankNextName(LB.rank)):' — MAXED')],
+    ['🌍','GLOBAL RANK', (function(){ const g=globalRank(LB.rank); return g.place?('#'+g.place+' of '+g.total):'Unranked'; })()],
     ['🎫','PLEBASS TIER', BPASS.tiers],
     ['🗺️','WORLDS UNLOCKED', worlds+'/'+WORLDS.length],
     ['🧑‍🌾','PLEBS IN ARMY', armyCount()+'/'+MAX_ARMY],
@@ -2128,6 +2250,25 @@ function accountStats(){
     ['⏱️','TIME PLAYED', fmtTime(LB.time||0)]
   ];
 }
+/* every pleb's mastery on one screen */
+function masteryOverviewHTML(){
+  const rows=ORDER.map(k=>({k:k,m:mastLv(k),mm:mastOf(k)})).sort((a,b)=>b.m.lv-a.m.lv||b.mm.xp-a.mm.xp);
+  const any=rows.some(r=>r.m.lv>0||(r.mm.kills||0)>0);
+  let h='<div class="admpanel" style="margin-top:24px;text-align:left"><h3>🎖️ Pleb Mastery</h3>'+
+    '<div style="font:15px Georgia,serif;color:#d8c48c;margin:-4px 0 14px">'+
+    'Every pleb levels up from the foes <b>it</b> kills — tougher foes give more XP. Mastery never resets and gives <b>+3.5% damage per level</b>.</div>';
+  if(!any) h+='<div style="font:15px Georgia,serif;color:#d8c48c;opacity:.8">No mastery yet — go kill something with your plebs ⚔️</div>';
+  rows.forEach(r=>{
+    const d=TOWERS[r.k], m=r.m, pct=m.max?100:Math.round(m.rem/m.need*100);
+    h+='<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;align-items:baseline;font:700 15px Georgia,serif;color:#f0e0b4">'+
+      '<span>'+d.emoji+' '+d.name+' <span style="color:#c9a24a;font-size:13px">'+MAST_STARS[Math.min(m.lv,MAST_STARS.length-1)]+' '+mastTitle(m.lv)+'</span></span>'+
+      '<span style="font-size:13px;color:#c9a24a">L'+m.lv+' · '+(r.mm.kills||0)+' kills · +'+Math.round((mastBonus(r.k)-1)*100)+'% dmg</span></div>'+
+      '<div class="mast" style="border:0;padding:0;margin-top:4px"><div class="mbar'+(m.max?' max':'')+'" style="background:rgba(255,255,255,.13)">'+
+      '<div class="mfill" style="width:'+pct+'%"></div></div></div></div>';
+  });
+  h+='</div>';
+  return h;
+}
 function renderAccount(){
   const body=$('accountBody'); if(!body)return;
   let h='<div class="bd-big"><div class="acct-tile" style="min-width:300px"><div class="v" style="font:900 30px Georgia,serif;color:#ffd24a">'+(ME?ME.name:'—')+'</div><div class="k" style="font:700 14px Georgia,serif;color:#d8c48c;margin-top:4px">YOUR ACCOUNT</div></div></div>';
@@ -2135,6 +2276,7 @@ function renderAccount(){
   accountStats().forEach(([e,k,v])=>{ h+='<div class="acct-tile"><div class="v" style="font:900 30px Georgia,serif;color:#ffd24a">'+e+' '+v+'</div><div class="k" style="font:700 13px Georgia,serif;color:#d8c48c;margin-top:4px;letter-spacing:.5px">'+k+'</div></div>'; });
   h+='</div>';
   h+=seasonPanelHTML();
+  h+=masteryOverviewHTML();
   body.innerHTML=h;
   const adm=$('acctAdmin'); if(adm) adm.style.display=isAdmin()?'':'none';
   resetDelBtn(); delMsg('');
@@ -2342,15 +2484,65 @@ function boardMe(){
   if(a) return {name, level:a.level||0, streak:a.streak||0, waves:a.waves||0, kills:a.kills||0, rank:a.rank||0, time:a.time||0, isMe:true};
   return {name, level:LB.level, streak:LB.bestStreak, waves:LB.waves, kills:LB.kills, rank:LB.rank, time:LB.time||0, isMe:true};
 }
+/* ---- GLOBAL RANK: where you sit out of every account on the board ---- */
+function globalRank(rankValue){
+  const rows=Object.keys(CLOUD.accounts||{}).map(k=>({k:k,r:(CLOUD.accounts[k].rank||0)}));
+  const myKey=ME?String(ME.key).toLowerCase():null;
+  let idx=rows.findIndex(x=>x.k===myKey);
+  if(idx>=0) rows[idx].r=Math.max(0,rankValue||0);          // use our live number, not a stale echo
+  else if(myKey) rows.push({k:myKey,r:Math.max(0,rankValue||0),me:true});
+  rows.sort((a,b)=>b.r-a.r);
+  const place=rows.findIndex(x=>x.k===myKey)+1;
+  return {place:place||0,total:rows.length};
+}
+/* how many division stars you have: 1 = div 1, 2 = div 2, 3 = div 3 */
+function rankStars(pts){ return (rankPos(pts)%3)+1; }
+
+/* ---- full-screen RANK UP celebration ---- */
+let ruTimer=null;
+function rankUpFX(beforePts,afterPts){
+  const el=$('rankup'); if(!el)return;
+  const bP=rankPos(beforePts), aP=rankPos(afterPts);
+  if(aP<=bP) return;
+  const t=rankTier(afterPts), col=rankColor(afterPts);
+  const g=globalRank(afterPts);
+  $('ruBadge').textContent=rankStars(afterPts);
+  $('ruBadge').style.background='radial-gradient(circle at 35% 30%,#fff8dc,'+col+')';
+  $('ruName').textContent=t;
+  $('ruName').style.color='#fff3cf';
+  $('ruSub').textContent=(aP===RANK_STEPS.length-1?'MAX RANK':('GLOBAL #'+(g.place||'?')+(g.total?(' of '+g.total):'')));
+  $('ruStars').textContent=MAST_STARS[rankStars(afterPts)]||'⭐';
+  // restart the CSS animations
+  el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  // confetti-ish sparks flying outward
+  const wrap=el.querySelector('.ruwrap'), r=wrap.getBoundingClientRect();
+  for(let i=0;i<26;i++){
+    const sp=document.createElement('div'); sp.className='rspark';
+    const ang=Math.random()*Math.PI*2, dist=90+Math.random()*190;
+    sp.style.left=(r.width/2)+'px'; sp.style.top=(r.height/2)+'px';
+    sp.style.background=i%3?'#ffd24a':col;
+    wrap.appendChild(sp);
+    sp.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},
+                {transform:'translate('+Math.cos(ang)*dist+'px,'+Math.sin(ang)*dist+'px) scale(0)',opacity:0}],
+               {duration:900+Math.random()*600,easing:'cubic-bezier(.1,.7,.3,1)'})
+      .onfinish=()=>sp.remove();
+  }
+  clearTimeout(ruTimer);
+  ruTimer=setTimeout(()=>el.classList.remove('on'),2400);
+  [520,660,780,1040,1300].forEach((f,i)=>setTimeout(()=>tone(f,0.24,'triangle',0.08,f*1.4),i*110));
+}
+
 function renderBoard(){
   const body=$('boardBody'); if(!body)return;
   const me=boardMe();
+  const GR=globalRank(me.rank);          // computed once — was being recalculated 3x
   let html='<div class="bd-big">'+
     '<div class="bd-stat"><div class="v">'+me.level+'</div><div class="k">LEVEL</div></div>'+
     '<div class="bd-stat"><div class="v">'+me.streak+'</div><div class="k">WIN STREAK</div></div>'+
     '<div class="bd-stat"><div class="v">'+me.waves+'</div><div class="k">WAVES BEATEN</div></div>'+
     '<div class="bd-stat"><div class="v">'+me.kills+'</div><div class="k">UNITS KILLED</div></div>'+
     '<div class="bd-stat"><div class="v rankbadge" style="background:'+rankColor(me.rank)+';color:#2b2418">'+rankTier(me.rank)+'</div><div class="k">RANK \u00b7 '+me.rank+' pts</div></div>'+
+    '<div class="bd-stat"><div class="v">'+(GR.place?('#'+GR.place):'\u2014')+'</div><div class="k">GLOBAL RANK of '+GR.total+'</div></div>'+
     '<div class="bd-stat"><div class="v">'+fmtTime(me.time)+'</div><div class="k">TIME PLAYED</div></div>'+
     '</div><div class="bd-wrap">';
   const rowsAll=Object.keys(CLOUD.accounts||{}).map(k=>({name:CLOUD.accounts[k].u||'Pleb', level:CLOUD.accounts[k].level||0, streak:CLOUD.accounts[k].streak||0, waves:CLOUD.accounts[k].waves||0, kills:CLOUD.accounts[k].kills||0, rank:CLOUD.accounts[k].rank||0, time:CLOUD.accounts[k].time||0, key:k}));
@@ -2463,7 +2655,10 @@ function battleWin(){
       : 'You held every wave \u2014 <b>'+S.oppName+'</b>\u2019s garrison broke and fled.')+'<br>'+
     (S.ranked ? ('🔥 Win streak: <b>'+LB.streak+'</b><br>') : '')+
     'Foes felled: <b>'+S.slain+'</b>.';
-  if(S.ranked) eloPop(S.eloGain,S.eloBefore,LB.rank);
+  if(S.ranked){
+    eloPop(S.eloGain,S.eloBefore,LB.rank);
+    if(rankPos(LB.rank)>rankPos(S.eloBefore)) setTimeout(()=>rankUpFX(S.eloBefore,LB.rank),1050);
+  }
   $('ovAgain').style.display=''; $('ovAgain').textContent='RAID AGAIN';
   $('ovAgain').onclick=()=>{ hideOv(); newBattle(S.ranked); };
   $('ov').classList.add('on'); SFX.win();
@@ -2521,15 +2716,54 @@ let PACK_EQ=loadJSON('plebania_pack_eq',{});     // {unitKey:{weapon:tier,armour
 let PACKPLEB='farmhand';
 function packTier(k,slot){ const e=PACK_EQ[k]; return (e&&e[slot]!=null)?e[slot]:null; }
 function packEffect(k,slot){ const t=packTier(k,slot); return t==null?0:PACK_ITEMS[slot][t].d; }
+/* compact mastery strip used on the pleb cards */
+function mastStripHTML(k){
+  const m=mastLv(k), pct=m.max?100:Math.round(m.rem/m.need*100);
+  const mm=mastOf(k);
+  return '<div class="mast">'+
+    '<div class="mrow"><span>'+MAST_STARS[Math.min(m.lv,MAST_STARS.length-1)]+' '+(m.lv?('MASTERY '+m.lv):'UNRANKED')+'</span>'+
+      '<span>'+(m.max?'MAX':(m.rem+'/'+m.need))+'</span></div>'+
+    '<div class="mbar'+(m.max?' max':'')+'"><div class="mfill" style="width:'+pct+'%"></div></div>'+
+    '<div class="mtitle">'+mastTitle(m.lv)+' · '+(mm.kills||0)+' kills</div></div>';
+}
+/* the big mastery panel for the selected pleb */
+function masteryCardHTML(k){
+  if(!k||!TOWERS[k])return '';
+  const d=TOWERS[k], m=mastLv(k), mm=mastOf(k);
+  const pct=m.max?100:Math.round(m.rem/m.need*100);
+  const bonus=Math.round((mastBonus(k)-1)*100);
+  let h='<div class="mastcard">'+
+    '<h4>'+d.emoji+' '+d.name+' <span style="font-size:15px;color:#8a6a12">'+MAST_STARS[Math.min(m.lv,MAST_STARS.length-1)]+' '+mastTitle(m.lv)+'</span></h4>'+
+    '<div class="msub">Mastery is earned by the foes this pleb kills — tougher foes give more. Never resets.</div>'+
+    '<div class="mbig"><div class="mlv">L'+m.lv+'<span style="font-size:16px;color:#7a6a48">/'+MAST_MAX+'</span></div>'+
+      '<div class="mbar"><div class="mfill" style="width:'+pct+'%"></div></div>'+
+      '<div style="font:700 15px Georgia,serif;color:#7a5a12">'+(m.max?'MAXED':(m.rem+' / '+m.need+' XP'))+'</div></div>'+
+    '<div style="font:15px Georgia,serif;color:#7a6a48;margin-bottom:10px">'+
+      '💥 Damage bonus: <b style="color:#3f8f3a">+'+bonus+'%</b> · 💀 Kills: <b>'+(mm.kills||0)+'</b> · ✨ Total XP: <b>'+(mm.xp||0)+'</b></div>'+
+    '<div class="mslist">';
+  mastMilestones(k).forEach(x=>{
+    const lab = x.kind==='lv' ? ('Mastery '+x.at) : (x.at+' kills');
+    const prog = x.kind==='lv' ? Math.min(1,m.lv/x.at) : Math.min(1,(mm.kills||0)/x.at);
+    h+='<div class="ms'+(x.done?' done':'')+'"><span class="d">'+(x.done?'✅':'⬜')+'</span>'+
+       '<span>'+lab+' — '+x.txt+'</span>'+
+       '<span class="num">'+(x.done?'done':Math.round(prog*100)+'%')+'</span></div>';
+  });
+  h+='</div></div>';
+  return h;
+}
+
 function renderPack(){
   if($('packGold'))$('packGold').textContent=Math.floor(PGOLD);
   const body=$('packBody'); if(!body)return;
   let h='<div class="pk-plebs">';
-  ORDER.filter(plebInArmy).forEach(k=>{ const d=TOWERS[k]; h+='<div class="pk-pleb'+(PACKPLEB===k?' on':'')+'" data-k="'+k+'">'+d.emoji+' '+d.name+'</div>'; });
+  ORDER.filter(plebInArmy).forEach(k=>{ const d=TOWERS[k]; const L=mastLv(k).lv;
+    h+='<div class="pk-pleb'+(PACKPLEB===k?' on':'')+'" data-k="'+k+'">'+d.emoji+' '+d.name+
+       '<span style="font:700 12px Georgia,serif;opacity:.75;margin-left:6px">'+(L?'L'+L:'')+'</span></div>'; });
   if(!ORDER.filter(plebInArmy).length) h+='<div class="pk-empty">No plebs equipped — buy &amp; equip one below 👇</div>';
   h+='</div>';
   // keep a valid selection
   if(!plebInArmy(PACKPLEB)) PACKPLEB=(ORDER.filter(plebInArmy)[0])||'farmhand';
+  h+=masteryCardHTML(PACKPLEB);
   // ---- equip extra plebs into your army (buy here) ----
   h+='<div class="pk-slot"><div class="hd">🧑🌾 Plebs <span style="font-size:14px;font-weight:400;opacity:.65">buy a pleb to add it to your army, then equip it \u2014 <b style="color:'+(armyCount()>=MAX_ARMY?'#c0392b':'#2b2418')+'">'+armyCount()+'/'+MAX_ARMY+' equipped</b></span></div><div class="pk-items">';
   PACK_EXTRA.forEach(k=>{
@@ -2537,7 +2771,8 @@ function renderPack(){
     const cost=PLEB_GATE[k];
     h+='<div class="pk-item'+(owned?' owned':'')+(equipped?' eq':'')+'" data-pleb="'+k+'">'+
       '<div class="ie">'+d.emoji+'</div><div class="in">'+d.name+'</div>'+
-      '<div class="ic">'+(equipped?'✔ In army':owned?'Equip':'👑 '+cost)+'</div></div>';
+      '<div class="ic">'+(equipped?'✔ In army':owned?'Equip':'👑 '+cost)+'</div>'+
+      mastStripHTML(k)+'</div>';
   });
   h+='</div></div>';
   h+='<div class="pk-slots">';
@@ -2847,7 +3082,7 @@ function effDmg(o){
   const d=TOWERS[o.k];
   let m=1+(o.level-1)*0.35;
   if(S.rally>0)m*=1.25;
-  return d.dmg*m*(1+packEffect(o.k,'weapon'));
+  return d.dmg*m*(1+packEffect(o.k,'weapon'))*mastBonus(o.k);
 }
 
 /* =========================================================
@@ -2947,6 +3182,7 @@ function kill(e,byPlayer){
   if(e.dead)return; e.dead=true;
   const bounty=Math.round(e.gold*(1+(e.rank==='boss'||e.rank==='king'?0:0)));
   S.gold+=e.gold; S.slain++;
+  if(e.by) mastGain(e.by,e);           // mastery XP to the pleb that actually killed it
   addPassXP(e.rank==='boss'||e.rank==='king'?60:8);
   addDmg(e.x,e.y-e.sz*0.7,'+'+e.gold,'#8ef0ff');
   const big=e.rank==='boss'||e.rank==='king';
@@ -3075,12 +3311,12 @@ function impact(p){
   if(p.splash){
     for(const e of S.enemies){
       const dd=Math.hypot(e.x-p.tx,e.y-p.ty);
-      if(dd<=p.splash) damage(e,p.dmg*(dd<p.splash*0.5?1:0.7),null);
+      if(dd<=p.splash) damage(e,p.dmg*(dd<p.splash*0.5?1:0.7),{k:p.kind});
     }
     for(let i=0;i<16;i++)burst(p.tx,p.ty,p.kind==='catapult'?'#b98a4d':'#9be07a');
     S.shake=Math.max(S.shake,p.kind==='catapult'?6:2);
   }else if(p.tgt&&p.tgt.hp>0){
-    damage(p.tgt,p.dmg,null);
+    damage(p.tgt,p.dmg,{k:p.kind});
     for(let i=0;i<5;i++)burst(p.tx,p.ty,'#f0e0a8');
   }
 }
@@ -3089,6 +3325,7 @@ function damage(e,dmg,o){
   const crit=Math.random()<0.12;
   const val=Math.round(dmg*(crit?1.8:1));
   e.hp-=val; e.hitT=0.12;
+  e.by=(o&&o.k)?o.k:null;              // last unit to hit it earns the mastery
   addDmg(e.x,e.y-e.sz*0.6,crit?val+'!':val,crit?'#ffd24a':'#ffffff');
   SFX.hit();
   for(let i=0;i<4;i++)burst(e.x,e.y,'#fff2c0');
