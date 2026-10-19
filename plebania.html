@@ -516,9 +516,9 @@
   .card.locked{opacity:.7}
   .card.locked .ce{filter:grayscale(.3)}
   .card .ce{font-size:21px;line-height:1}
-  .card .cn{font:700 11px Georgia,serif;color:#f5e8bf;margin-top:3px}
+  .card .cn{font:700 11px Georgia,serif;color:#f5e8bf;margin-top:3px;line-height:1.15;min-height:25px;display:flex;align-items:center;justify-content:center}
   .card .cc{font:700 12px Georgia,serif;color:#f2cf62;margin-top:2px}
-  .card .cd{font:9.5px Georgia,serif;color:#c3ae7c;margin-top:2px;min-height:24px;line-height:1.1}
+  .card .cd{font:9.5px Georgia,serif;color:#c3ae7c;margin-top:2px;min-height:26px;line-height:1.15;display:flex;align-items:flex-start;justify-content:center;text-align:center}
   .card.pass{box-shadow:0 0 0 2px #b06ad0,0 3px 0 rgba(0,0,0,.4)}
 
   #banner{position:absolute;left:50%;top:92px;transform:translate(-50%,-8px);z-index:7;opacity:0;
@@ -767,7 +767,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.22 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.23 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1235,7 +1235,7 @@ const TOWERS={
 const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm','berserker','longbow','dragonling','knight','mortar','orchard'];
 const MAXPER=3;                       // build a max of 3 of anything that is capped (see CAP)
 const CAP={farm:3, orchard:2};        // only Farms & Orchards are capped — other units you can place freely
-function capOf(k){ return CAP[k]||Infinity; }
+function capOf(k){ if(String(k||'').indexOf('pk_')===0) return 2; return CAP[k]||Infinity; }
 
 /* =========================================================
    PLEB MASTERY — every pleb levels up on its own.
@@ -1422,6 +1422,7 @@ const UNLOCK={ farmhand:1, poacher:1, farm:1, militia:3, alchemist:5, catapult:7
 function isExtra(k){ return PACK_EXTRA.indexOf(k)>=0; }
 function plebEquipped(k){ return typeof PACK_OWN!=='undefined' && !!PACK_OWN['equipped:'+k]; }
 function unlockedUnit(k){
+  if(plekeyOwnedUnit(k)) return true;         // Plekeys you own are always placeable
   if(isExtra(k)) return plebEquipped(k);      // extra plebs come from PLEB MART + PLEBPACK, never waves
   return S.reached>=(UNLOCK[k]||1); }
 function countOf(k){ return S?S.towers.filter(o=>o.k===k).length:0; }
@@ -1607,7 +1608,9 @@ const SKINS=[
 const RARCOL={Common:'#8a8378',Rare:'#2f7fb0',Epic:'#7a4fc0',Legendary:'#c08a1e'};
 function hasKey(id){ return PLEKEYS.indexOf(id)>=0; }
 function unlockKey(id){ if(hasKey(id))return false; PLEKEYS.push(id); saveJSON('plebania_plekeys',PLEKEYS);
-  const sk=SKINS.find(s=>s.id===id); showBanner('🔑 PLEKEY UNLOCKED: '+sk.name+'!','gold',1900); return true; }
+  const sk=SKINS.find(s=>s.id===id);
+  try{ installPlekeyPlebs(); }catch(e){}              // it is a UNIT now, not just a skin
+  showBanner('🔑 PLEKEY UNIT UNLOCKED: '+(sk?sk.name:'Plekey')+'!','gold',2200); return true; }
 function rollKey(){ const lock=SKINS.filter(s=>!hasKey(s.id)); if(!lock.length)return false;
   const pool=lock.concat(lock); // bias toward rarer by weighting
   return unlockKey(pool[Math.floor(Math.random()*pool.length)].id); }
@@ -1758,7 +1761,7 @@ function renderMart(){
         '</div>'+
         '<div class="pm-right"><div class="pm-grid">'+grid+'</div></div>'+
       '</div>'+
-      '<div class="pm-sub" style="margin-top:8px">Spend \u26a1 Pleb in <b>Pleb boxes</b> to fill your Index. Daily Plebs &amp; the Cyber Deal are bought with \ud83d\udc51 shop gold.</div>';
+      '<div class="pm-sub" style="margin-top:8px">Spend \u26a1 Pleb in <b>Pleb boxes</b> to fill your Index. Every \ud83d\udd11 <b>Plekey is a battle unit</b> \u2014 unlock one and it shows up in your build tray, ready to place. Daily Plebs &amp; the Cyber Deal are bought with \ud83d\udc51 shop gold.</div>';
     body.querySelectorAll('[data-daily]').forEach(el=>el.onclick=()=>buyDaily(el.dataset.daily));
     const cy=body.querySelector('[data-cyber]'); if(cy)cy.onclick=buyCyber;
     return;
@@ -1883,6 +1886,37 @@ function installSeasonPlebs(){
   });
 }
 function seasonIsOwned(sid){ return !!(SEASON&&SEASON.rewards&&SEASON.rewards.indexOf(sid)>=0); }
+
+/* =========================================================
+   PLEKEYS ARE UNITS — every Plekey you own becomes a real,
+   placeable villager (not just a hero skin). They are bought
+   with Blep and never expire; owning one unlocks its unit.
+   ========================================================= */
+const PLEKEY_UNITS={
+  classic:{n:'Plekey Recruit',  cost:60,  dmg:18, rate:0.60, range:105, kind:'melee',  col:'#f2cf62', desc:'Starter key-bearer · cheap & cheerful'},
+  knight :{n:'Plekey Knight',   cost:150, dmg:40, rate:0.80, range:95,  kind:'melee',  col:'#d8b24a', desc:'Armoured key-bearer · tanky'},
+  wolf   :{n:'Plekey Wolf',     cost:140, dmg:30, rate:0.45, range:120, kind:'melee',  col:'#9fd0ff', desc:'Feral key-bearer · lightning fast'},
+  bone   :{n:'Plekey Lord',     cost:200, dmg:55, rate:1.10, range:300, kind:'ranged', col:'#c69bff', desc:'Bone key-bolts · long range'},
+  king   :{n:'Plekey King',     cost:240, dmg:70, rate:0.90, range:180, kind:'splash', splash:72, col:'#ff4d4d', desc:'Royal key-smash · heavy splash'}
+};
+function plekeyUnitKey(id){ return 'pk_'+id; }
+function plekeyOwnedUnit(k){ return String(k||'').indexOf('pk_')===0 && hasKey(String(k).slice(3)); }
+function plekeyDef(id){
+  const t=PLEKEY_UNITS[id]; if(!t)return null;
+  return {name:t.n, emoji:'\ud83d\udd11', cost:t.cost, dmg:t.dmg, rate:t.rate, range:t.range,
+          kind:t.kind, splash:t.splash, color:t.col, desc:t.desc, plekey:id};
+}
+/* register any Plekey we own as a placeable unit */
+function installPlekeyPlebs(){
+  try{
+    PLEKEYS.forEach(id=>{
+      if(!PLEKEY_UNITS[id])return;
+      const k=plekeyUnitKey(id);
+      if(!TOWERS[k]) TOWERS[k]=plekeyDef(id);
+      if(ORDER.indexOf(k)<0) ORDER.push(k);
+    });
+  }catch(e){}
+}
 function seasonStandings(sid){
   const rows=[];
   Object.keys(CLOUD.accounts||{}).forEach(k=>{
@@ -1924,7 +1958,7 @@ function grantSeasonPleb(sid){
   PACK_OWN['pleb:'+k]=true;
   saveJSON('plebania_pack_own',PACK_OWN);
   saveJSON(SEASON_KEY,SEASON);
-  installSeasonPlebs();
+  installSeasonPlebs(); installPlekeyPlebs();
   return true;
 }
 let SEASON_NOTICE=null;
@@ -1938,7 +1972,7 @@ function seasonRoll(){
   SEASON={id:cur,elo:0,best:Math.max(prevBest,prevElo),rewards:(SEASON.rewards||[]).slice()};
   if(res&&res.qualified) grantSeasonPleb(prev);
   saveJSON(SEASON_KEY,SEASON);
-  installSeasonPlebs();
+  installSeasonPlebs(); installPlekeyPlebs();
   if(res) SEASON_NOTICE={prev:prev,place:res.place,total:res.total,qualified:res.qualified};
   return res;
 }
@@ -2190,13 +2224,13 @@ function loadLocalFor(me){
     saveJSON(SEASON_KEY,SEASON);
     if(res) SEASON_NOTICE={prev:old,place:res.place,total:res.total,qualified:res.qualified};
   }
-  seasonRoll(); installSeasonPlebs();
+  seasonRoll(); installSeasonPlebs(); installPlekeyPlebs();
 }
 function refreshUserChip(){ const nm=$('userName'); if(nm)nm.textContent=ME?ME.name:'—';
   const adm=$('acctAdmin'); if(adm) adm.style.display=isAdmin()?'':'none'; }
 /* season card on the account screen */
 function seasonPanelHTML(){
-  seasonRoll(); installSeasonPlebs();
+  seasonRoll(); installSeasonPlebs(); installPlekeyPlebs();
   if(!SEASON)return '';
   const sid=SEASON.id, se=SEASON.elo||0;
   const b=seasonPlebBase(sid), def=seasonPlebDef(sid);
@@ -2573,7 +2607,7 @@ function renderBoard(){
    winding road, villages defend, AI can place, RAID to crush their base.
    ========================================================= */
 function newBattle(ranked){
-  seasonRoll(); installSeasonPlebs();
+  seasonRoll(); installSeasonPlebs(); installPlekeyPlebs();
   newGame(S?S.world:0);
   S.battle=true; S.ranked=!!ranked;
   S.lives=15; S.reached=1;
@@ -3599,6 +3633,26 @@ function drawPleb(x,y,key,d,t,alpha){
   const bob=Math.sin((t||0)*2.6)*1.0;
   drawPlebShape(0,0,1,bob);
 
+  // ---- PLEKEY UNITS wear a big golden key ----
+  if(String(key).indexOf('pk_')===0){
+    const id=String(key).slice(3);
+    const col=(PLEKEY_UNITS[id]&&PLEKEY_UNITS[id].col)||'#ffd24a';
+    const sp=Math.sin((t||0)*1.8)*2;
+    // glow ring
+    ctx.strokeStyle=col; ctx.globalAlpha=.45; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(0,-6,26,0,7); ctx.stroke(); ctx.globalAlpha=1;
+    // key shaft + bow, held upright
+    ctx.save(); ctx.translate(24,-8+sp); ctx.rotate(0.25);
+    ctx.strokeStyle='#7a5a12'; ctx.lineWidth=4; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(0,16); ctx.lineTo(0,-16); ctx.stroke();
+    ctx.fillStyle=col; ctx.strokeStyle=INK; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(0,-22,9,0,7); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,-22,4,0,7); ctx.fillStyle='#2b2418'; ctx.fill();
+    ctx.fillStyle=col; ctx.beginPath(); ctx.rect(0,4,10,4); ctx.fill();
+    ctx.beginPath(); ctx.rect(0,11,7,4); ctx.fill();
+    ctx.restore();
+  }
+
   // ---- weapon + signature accessory per type ----
   ctx.lineCap='round';
   if(key==='farmhand'){ // pitchfork + straw hat
@@ -3960,6 +4014,7 @@ function hideOv(){ $('ov').classList.remove('on');
   document.querySelectorAll('.elopop').forEach(e=>e.remove()); }
 $('ovMenu').onclick=()=>{ hideOv(); show('menu'); };
 populateWorldStrip();
+installPlekeyPlebs();
 /* ---- BOOT: require an account, then sync the shared leaderboard ---- */
 (function boot(){
   setAuthMode('in');
@@ -4025,7 +4080,7 @@ document.addEventListener('keydown',e=>{ if(e.code==='Space'&&$('game').classLis
 
 /* boot: settle any finished season, then install the reward plebs we've earned */
 try{
-  seasonRoll(); installSeasonPlebs();
+  seasonRoll(); installSeasonPlebs(); installPlekeyPlebs();
   if(SEASON_NOTICE){
     const n=SEASON_NOTICE; SEASON_NOTICE=null;
     setTimeout(()=>{
