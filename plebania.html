@@ -2511,7 +2511,7 @@ function rankUpFX(beforePts,afterPts){
   $('ruName').textContent=t;
   $('ruName').style.color='#fff3cf';
   $('ruSub').textContent=(aP===RANK_STEPS.length-1?'MAX RANK':('GLOBAL #'+(g.place||'?')+(g.total?(' of '+g.total):'')));
-  $('ruStars').textContent=MAST_STARS[rankStars(afterPts)]||'⭐';
+  $('ruStars').textContent='\u2605'.repeat(rankStars(afterPts))+'\u2606'.repeat(3-rankStars(afterPts));
   // restart the CSS animations
   el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   // confetti-ish sparks flying outward
