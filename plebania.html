@@ -543,6 +543,28 @@
     background:linear-gradient(rgba(52,36,14,.98),rgba(26,17,6,.98));box-shadow:0 20px 60px rgba(0,0,0,.7)}
   .ovcard h1{margin:0 0 8px;font:900 54px Georgia,serif;color:#f6dd8b;text-shadow:0 4px 0 #000}
   .ovcard p{margin:6px 0;font-size:18px;color:#e9d9ab;line-height:1.4}
+  /* ---- ranked ELO pop (end-of-match) ---- */
+  .elopop{margin:16px auto 2px;width:430px;max-width:100%;border-radius:16px;border:2px solid #4a3616;
+    background:linear-gradient(#2a1d0b,#171007);padding:13px 18px 15px;position:relative;overflow:hidden;
+    animation:eloIn .34s cubic-bezier(.2,1.5,.4,1) both}
+  @keyframes eloIn{from{transform:scale(.8) translateY(12px);opacity:0}to{transform:none;opacity:1}}
+  .elopop .lbl{font:700 11px Georgia,serif;letter-spacing:3px;color:#c9a24a}
+  .elopop .big{font:900 46px Georgia,serif;line-height:1.02;text-shadow:0 3px 0 #000;transition:color .2s}
+  .elopop.win .big{color:#9fe08a}
+  .elopop.lose .big{color:#ff9a86}
+  .elopop .track{margin-top:9px;height:14px;border-radius:10px;background:#0d0903;border:1px solid #3d2c10;overflow:hidden;position:relative}
+  .elopop .fill{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:10px;
+    background:linear-gradient(90deg,#7a5a1e,#ffd24a);box-shadow:0 0 14px rgba(255,210,74,.55)}
+  .elopop .fill.flash{animation:eloFlash .45s ease-out}
+  @keyframes eloFlash{0%{filter:brightness(2.4)}100%{filter:none}}
+  .elopop.lose .fill{background:linear-gradient(90deg,#5a1a10,#ff7a5e);box-shadow:0 0 14px rgba(255,122,94,.5)}
+  .elopop .sub{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:7px;
+    font:700 12px Georgia,serif;color:#b9a578}
+  .elopop .rk{font:900 15px Georgia,serif;color:#f6e3ab}
+  .elopop .msg{margin-top:7px;font:900 15px Georgia,serif;color:#ffd24a;min-height:0;opacity:0;transform:translateY(4px);transition:.25s}
+  .elopop .msg.on{opacity:1;transform:none}
+  .elopop .msg.down{color:#ff9a86}
+  .elopop .msg.flat{color:#c9a24a;font-weight:700;font-size:13px}
   #tut .ovcard{width:600px;text-align:left}
   #tut h1{font-size:40px}
   #tut .tutstep{font:700 14px Georgia,serif;color:#c9a24a;letter-spacing:2px;margin-bottom:6px}
@@ -698,7 +720,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.20 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.21 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1830,6 +1852,65 @@ function eloLose(){
   const tier=rankTierIdx(LB.rank);            // 0..8
   return Math.min(40,10+tier*4);
 }
+/* ---- ELO POP: little end-of-match animation for the ranked swing ----
+   Built out of DOM + one rAF loop (no canvas), so it shows up on the
+   victory/defeat overlay: count-up, rank bar slide, and a rank-up/down shout. */
+function bandInfo(pts){
+  const p=rankPos(pts), floor=RANK_STEPS[p], next=RANK_STEPS[p+1];
+  const r = next===undefined ? 1 : Math.max(0,Math.min(1,(pts-floor)/Math.max(1,next-floor)));
+  return {p:p,next:next,r:r};
+}
+function eloPop(delta,before,after){
+  const host=$('ovP'); if(!host)return;
+  const up=delta>=0;
+  const bP=Math.max(0,Math.round(before||0)), aP=Math.max(0,Math.round(after||0));
+  const n=Math.abs(aP-bP)||Math.abs(Math.round(delta||0));
+  document.querySelectorAll('.elopop').forEach(e=>e.remove());
+  const el=document.createElement('div');
+  el.className='elopop '+(up?'win':'lose');
+  el.innerHTML='<div class="lbl">'+(up?'ELO GAINED':'ELO LOST')+'</div>'+
+    '<div class="big">'+(up?'+':'-')+'0</div>'+
+    '<div class="track"><div class="fill"></div></div>'+
+    '<div class="sub"><span class="rk"></span><span class="pt"></span></div>'+
+    '<div class="msg"></div>';
+  host.appendChild(el);
+  const big=el.querySelector('.big'), fill=el.querySelector('.fill'),
+        rk=el.querySelector('.rk'), pt=el.querySelector('.pt'), msg=el.querySelector('.msg');
+  const DUR=760, t0=performance.now();
+  let ticked=0, lastP=null;
+  (function step(t){
+    if(!el.isConnected)return;
+    const e=Math.min(1,(t-t0)/DUR);
+    const eased=e<1?1-Math.pow(1-e,3):1;                 // easeOutCubic
+    const pts=Math.round(bP+(aP-bP)*eased);
+    const bi=bandInfo(pts);
+    const ladder=(bi.p+bi.r)/(RANK_STEPS.length-1);      // 0..1 up the whole 27-rank ladder (monotonic: wins grow, losses shrink)
+    // count-up number
+    big.textContent=(up?'+':'-')+Math.abs(pts-bP);
+    // bar = progress THROUGH the rank you are currently in (not 0-10000)
+    fill.style.width=Math.max(2,ladder*100).toFixed(2)+'%';
+    rk.textContent=rankTier(pts);
+    rk.style.color=rankColor(pts);
+    pt.textContent=bi.next===undefined?'MAX RANK':Math.max(0,bi.next-pts)+' to '+(RANK_TIERS[Math.floor((bi.p+1)/3)].n+' '+(((bi.p+1)%3)+1));
+    // bar boundary crossed -> flash it
+    if(lastP!==null && bi.p!==lastP){ fill.classList.remove('flash'); void fill.offsetWidth; fill.classList.add('flash'); }
+    lastP=bi.p;
+    if(Math.abs(pts-bP)>ticked){
+      ticked=Math.abs(pts-bP);
+      if(ticked%5===0) tone(up?520+ticked*4:300-ticked*2,0.05,'triangle',0.035);
+    }
+    if(e<1){ requestAnimationFrame(step); return; }
+    const p0=rankPos(bP), p1=rankPos(aP);
+    setTimeout(()=>{
+      if(!el.isConnected)return;
+      msg.classList.add('on');
+      if(p1>p0){ msg.textContent='\u2b06\ufe0f PROMOTED: '+rankTier(bP)+' \u2192 '+rankTier(aP); SFX.up(); }
+      else if(p1<p0){ msg.textContent='\u2b07\ufe0f DEMOTED: '+rankTier(bP)+' \u2192 '+rankTier(aP); msg.classList.add('down'); SFX.lose(); }
+      else { msg.textContent='No rank change'; msg.classList.add('flat'); }
+    },260);
+  })(t0);
+}
+
 /* ---- LIVE leaderboard: real accounts, shared in real time over MQTT (no signup, no rate cap) ---- */
 const MQTT_LIB='https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js';
 const MQTT_BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081/mqtt'];
@@ -2371,7 +2452,7 @@ function battleAI(dt){
 function battleWin(){
   if(S.over)return; S.over=true; S.running=false; hideSel();
   recordStats();
-  if(S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); S.eloGain=eloWin(); LB.rank+=S.eloGain; seasonAddElo(S.eloGain); }
+  if(S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); S.eloGain=eloWin(); S.eloBefore=LB.rank; LB.rank+=S.eloGain; seasonAddElo(S.eloGain); }
   addPassXP(S.ranked?150:100);
   saveLB(); pushScore();
   const smashed=(S.ebHp<=0);
@@ -2380,8 +2461,9 @@ function battleWin(){
   $('ovP').innerHTML=(smashed
       ? 'You smashed <b>'+S.oppName+'</b>\u2019s base with '+S.raid.length+' raiders still standing.'
       : 'You held every wave \u2014 <b>'+S.oppName+'</b>\u2019s garrison broke and fled.')+'<br>'+
-    (S.ranked ? ('<b style="color:#9fe08a">+'+S.eloGain+' ELO</b> \u00b7 Win streak: <b>'+LB.streak+'</b> \u00b7 Rank: <b>'+rankTier(LB.rank)+'</b> ('+LB.rank+' pts)<br>') : '')+
+    (S.ranked ? ('🔥 Win streak: <b>'+LB.streak+'</b><br>') : '')+
     'Foes felled: <b>'+S.slain+'</b>.';
+  if(S.ranked) eloPop(S.eloGain,S.eloBefore,LB.rank);
   $('ovAgain').style.display=''; $('ovAgain').textContent='RAID AGAIN';
   $('ovAgain').onclick=()=>{ hideOv(); newBattle(S.ranked); };
   $('ov').classList.add('on'); SFX.win();
@@ -2390,15 +2472,16 @@ function battleLose(){
   if(S.over)return; S.over=true; S.running=false; hideSel();
   recordStats();
   const hadStreak=LB.streak||0;
-  if(S.ranked){ S.eloLoss=eloLose(); LB.rank=Math.max(0,LB.rank-S.eloLoss); seasonAddElo(-S.eloLoss); }
+  const wasRank=LB.rank;
+  if(S.ranked){ S.eloLoss=eloLose(); LB.rank=Math.max(0,LB.rank-S.eloLoss); S.eloBefore=wasRank; seasonAddElo(-S.eloLoss); }
   LB.streak=0;                       // losing ANY battle mode breaks your win streak
   S.streakLost=hadStreak;
   saveLB(); pushScore();
   $('ovT').style.color='#ff9a86'; $('ovT').textContent='YOUR BASE FELL';
   $('ovP').innerHTML=(S.streakLost?('<b style="color:#ff9a86">🔥 Win streak of '+S.streakLost+' lost</b><br>'):'')+
-    (S.ranked?('<b style="color:#ff9a86">-'+S.eloLoss+' ELO</b><br>'):'')+
     '<b>'+S.oppName+'</b>\u2019s army overran you before you could break their base.<br>'+
     'Their base was at <b>'+Math.max(0,Math.round(S.ebHp/S.ebMax*100))+'%</b> \u2014 so close.';
+  if(S.ranked) eloPop(-S.eloLoss,S.eloBefore,LB.rank);
   $('ovAgain').style.display=''; $('ovAgain').textContent='RETRY BATTLE';
   $('ovAgain').onclick=()=>{ hideOv(); newBattle(S.ranked); };
   $('ov').classList.add('on'); SFX.lose();
@@ -3636,7 +3719,8 @@ function endGame(win){
   $('ov').classList.add('on');
   win?SFX.win():SFX.lose();
 }
-function hideOv(){ $('ov').classList.remove('on'); }
+function hideOv(){ $('ov').classList.remove('on');
+  document.querySelectorAll('.elopop').forEach(e=>e.remove()); }
 $('ovMenu').onclick=()=>{ hideOv(); show('menu'); };
 populateWorldStrip();
 /* ---- BOOT: require an account, then sync the shared leaderboard ---- */
