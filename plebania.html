@@ -19,7 +19,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0;height:100%;background:#0b0a07;overflow:hidden;
+  html,body{margin:0;padding:0;height:100%;background:#0b0a07;overflow:hidden;touch-action:manipulation;
     font-family:Georgia,'Times New Roman',serif;color:#f3e6c8;user-select:none}
   #app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
   #stage{position:relative;width:1280px;height:800px;flex:0 0 auto;transform-origin:center center}
@@ -438,6 +438,37 @@
   .pk-item .in{font-weight:700;font-size:15px;margin-top:5px}
   .pk-item .ic{font-size:14px;margin-top:5px;font-weight:700}
 
+  /* ---------- PLEBPACK gets its own full layout + a REAL scroll container ---------- */
+  #pack{background:#241708;overflow:hidden;padding:12px 18px}
+  #pack.on{display:flex;flex-direction:column}
+  #pack .mchrome{max-width:1180px;width:100%;margin:0 auto 8px;display:flex;gap:12px;align-items:center;
+    justify-content:space-between;flex:0 0 auto}
+  #pack .mchrome .mright{display:flex;gap:12px;align-items:center}
+  #pack .mchrome .c{font:700 15px Georgia,serif;color:#e8d9ac;background:rgba(0,0,0,.3);
+    border:1px solid #5a3f14;border-radius:999px;padding:6px 14px}
+  #pack .mhome{display:flex;align-items:center;gap:8px;cursor:pointer;border:3px solid #2a1c08;border-radius:14px;
+    padding:9px 20px;font:800 19px Georgia,serif;color:#3a2506;letter-spacing:1px;
+    background:linear-gradient(#f2cf62,#c9971f 55%,#8f6a12);box-shadow:0 5px 0 #4a3409;flex:0 0 auto}
+  #pack .mhome:active{transform:translateY(3px);box-shadow:0 2px 0 #4a3409}
+  #pack .mpaper{max-width:1180px;width:100%;height:calc(100% - 54px);margin:0 auto;padding:12px 22px;
+    display:flex;flex-direction:column;overflow:hidden;background:#fbfaf3;border-radius:6px;
+    box-shadow:0 18px 44px rgba(0,0,0,.6);position:relative;
+    background-image:radial-gradient(rgba(0,0,0,.03) 1px,transparent 1px);background-size:5px 5px;
+    font-family:'Chalkboard SE','Comic Sans MS','Segoe Print','Bradley Hand','Marker Felt',cursive,Georgia,serif;
+    color:#2b2418}
+  #pack .mpaper *{font-family:inherit}
+  #pack .pm-head{gap:16px;margin-bottom:8px;flex:0 0 auto}
+  #pack .pm-logo{font-size:40px}
+  #pack .pm-sub{font-size:15px;margin:0;text-align:left}
+  #pack .pm-back{margin-top:6px;flex:0 0 auto}
+  #pack .pm-back .mbtn.small{font-size:15px;padding:7px 0}
+  /* the scrollable bit */
+  #packBody{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;padding-right:8px;padding-bottom:18px;overscroll-behavior:contain}
+  #packBody::-webkit-scrollbar{width:10px}
+  #packBody::-webkit-scrollbar-track{background:rgba(43,36,24,.08);border-radius:6px}
+  #packBody::-webkit-scrollbar-thumb{background:#2b2418;border-radius:6px}
+
   /* ---------- PLEBASS (battle pass) ---------- */
   #pass{background:#1c1206;overflow:hidden;padding:12px 18px}
   #pass.on{display:flex;flex-direction:column}
@@ -767,7 +798,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.23 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.24 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1211,7 +1242,10 @@ const SFX={
   life:()=>{tone(160,0.35,'sawtooth',0.09,60);tone(110,0.4,'triangle',0.07,50);},
   win:()=>{[520,660,780,1040].forEach((f,i)=>setTimeout(()=>tone(f,0.22,'triangle',0.07,f*1.5),i*140));},
   lose:()=>{[400,330,260,180].forEach((f,i)=>setTimeout(()=>tone(f,0.3,'sawtooth',0.08,f*0.7),i*170));},
-  ui:()=>tone(700,0.06,'sine',0.05,900)
+  ui:()=>tone(700,0.06,'sine',0.05,900),
+  /* the Unique Plekey's signature "ding" — a bright bell that rings out */
+  ding:()=>{ tone(1320,0.30,'sine',0.055,1310); setTimeout(()=>tone(1980,0.26,'sine',0.038,1975),18);
+             setTimeout(()=>tone(990,0.22,'sine',0.030,985),36); }
 };
 
 /* =========================================================
@@ -1501,6 +1535,20 @@ function loadJSON(k,d){ try{ const v=JSON.parse(localStorage.getItem(k)); return
 function saveJSON(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 let PLEB=loadJSON('plebania_pleb',0);
 let PLEKEYS=loadJSON('plebania_plekeys',[]);
+let SKINS_OWN=loadJSON('plebania_skins_own',[]);
+function hasSkin(id){ return SKINS_OWN.indexOf(id)>=0; }
+/* migration: old Plekeys WERE hero skins — move them to skins, keep only the Unique key */
+(function migrateKeys(){
+  const OLD=['classic','knight','wolf','bone','king'];
+  let changed=false, keep=[];
+  PLEKEYS.forEach(id=>{
+    if(OLD.indexOf(id)>=0){ if(SKINS_OWN.indexOf(id)<0) SKINS_OWN.push(id); changed=true; }
+    else keep.push(id);
+  });
+  if(keep.join(',')!==PLEKEYS.join(',')){ PLEKEYS=keep; changed=true; }
+  if(SKINS_OWN.indexOf('classic')<0){ SKINS_OWN.push('classic'); changed=true; }
+  if(changed){ saveJSON('plebania_plekeys',PLEKEYS); saveJSON('plebania_skins_own',SKINS_OWN); }
+})();
 let PGOLD=loadJSON('plebania_pgold',600);
 let PAPERS=loadJSON('plebania_papers',0);
 let EQUIPPED=loadJSON('plebania_key','');
@@ -1510,12 +1558,12 @@ let MARTTAB='pledoption';
 const PLEB_CODES={
   'WELCOME': {pleb:3000, gold:200, note:'Welcome, pleb!'},
   'UPRISING':{pleb:1500, gold:150, note:'Power to the plebs!'},
-  'PLEB2026':{pleb:1000, key:true,   note:'Founder\u2019s Plekey!'}
+  'PLEB2026':{pleb:1000, skin:'knight',   note:'Founder\u2019s skin!'}
 };
 const BOXES=[
-  {id:'wood', e:'📦', art:'boxwood', name:'Wooden Pleb Box', cost:150,  pleb:150,  keyChance:0.12, tag:'$2.99'},
-  {id:'iron', e:'🎁', art:'boxiron', name:'Iron Pleb Box',   cost:400,  pleb:500,  keyChance:0.28, tag:'$4.99'},
-  {id:'gold', e:'🏆', art:'boxgold', name:'Golden Pleb Box', cost:900,  pleb:1600, keyChance:0.6,  tag:'$9.99'}
+  {id:'wood', e:'📦', art:'boxwood', name:'Wooden Pleb Box', cost:150,  pleb:150,  keyChance:0, tag:'$2.99'},
+  {id:'iron', e:'🎁', art:'boxiron', name:'Iron Pleb Box',   cost:400,  pleb:500,  keyChance:0, tag:'$4.99'},
+  {id:'gold', e:'🏆', art:'boxgold', name:'Golden Pleb Box', cost:900,  pleb:1600, keyChance:0,  tag:'$9.99'}
 ];
 const BUNDLE={pleb:3000, papers:20, boxes:5, cost:1200, tag:'$14.99'};
 const MEGA=BUNDLE;                 // the big "3,000 Blep" pack in the sketch
@@ -1555,11 +1603,11 @@ function svg(k){ return SHOP_ART[k]||''; }
 
 /* ---------- real-money bundles (TEST checkout) ---------- */
 const BUNDLES=[
-  {key:'wood',  name:'Wooden Pleb Box', art:'boxwood', usd:2.99,  desc:'+150 Pleb \u26a1 \u00b7 12% Plekey', grant:()=>grantBox('wood')},
-  {key:'iron',  name:'Iron Pleb Box',   art:'boxiron', usd:4.99,  desc:'+500 Pleb \u26a1 \u00b7 28% Plekey', grant:()=>grantBox('iron')},
-  {key:'gold',  name:'Golden Pleb Box', art:'boxgold', usd:9.99,  desc:'+1,600 Pleb \u26a1 \u00b7 60% Plekey', grant:()=>grantBox('gold')},
+  {key:'wood',  name:'Wooden Pleb Box', art:'boxwood', usd:2.99,  desc:'+150 Pleb \u26a1', grant:()=>grantBox('wood')},
+  {key:'iron',  name:'Iron Pleb Box',   art:'boxiron', usd:4.99,  desc:'+500 Pleb \u26a1', grant:()=>grantBox('iron')},
+  {key:'gold',  name:'Golden Pleb Box', art:'boxgold', usd:9.99,  desc:'+1,600 Pleb \u26a1', grant:()=>grantBox('gold')},
   {key:'mega',  name:'3,000 Blep Pack', art:'mega',    usd:14.99, desc:'3,000 Blep \u26a1 + 20 papers + 5 boxes', grant:()=>grantMega()},
-  {key:'combo', name:'Plekey Bundle',   art:'key',     usd:19.99, desc:'3,000 Blep + 20 papers + 5 boxes + a Plekey', grant:()=>grantCombo()}
+  {key:'combo', name:'Plekey Bundle',   art:'key',     usd:19.99, desc:'3,000 Blep + 20 papers + 5 boxes + the Unique Plekey', grant:()=>grantCombo()}
 ];
 let CO=null;                     // item currently in the checkout
 function grantBox(id){
@@ -1571,16 +1619,15 @@ function grantBox(id){
 }
 function grantMega(){
   PLEB+=MEGA.pleb; PAPERS+=MEGA.papers; saveJSON('plebania_pleb',PLEB); saveJSON('plebania_papers',PAPERS);
-  for(let i=0;i<MEGA.boxes;i++){ if(Math.random()<0.3)rollKey(); }
   SFX.up(); for(let i=0;i<20;i++)burst(W/2,H/2,'#ffe08a');
   showBanner('\ud83d\udce6 Mega Pack: +'+MEGA.pleb+' Pleb \u26a1 + '+MEGA.papers+' Papers + '+MEGA.boxes+' Boxes','gold',1900); renderMart(); syncHud();
 }
 function grantCombo(){
   PLEB+=COMBO.pleb; PAPERS+=COMBO.papers; saveJSON('plebania_pleb',PLEB); saveJSON('plebania_papers',PAPERS);
-  for(let i=0;i<COMBO.boxes;i++){ if(Math.random()<0.3)rollKey(); }
-  const lock=SKINS.filter(s=>!hasKey(s.id)); if(lock.length)rollKey();
+  const got=unlockKey('unique');                     // THE bundle grants THE Plekey
   SFX.up(); for(let i=0;i<20;i++)burst(W/2,H/2,'#ffe08a');
-  showBanner('\ud83d\udd11 Plekey Bundle: +'+COMBO.pleb+' Pleb \u26a1 + '+COMBO.papers+' papers + '+COMBO.boxes+' boxes + a Plekey!','gold',2000); renderMart(); syncHud();
+  showBanner('\ud83d\udd11 Plekey Bundle: +'+COMBO.pleb+' Pleb \u26a1 + '+COMBO.papers+' papers + '+COMBO.boxes+' boxes'+(got?' + THE UNIQUE PLEKEY!':'')+(got?'':' (you already own it)'),'gold',2400);
+  renderMart(); syncHud();
 }
 function openCheckout(b){
   CO=b; const co=$('checkout'); if(!co)return;
@@ -1607,13 +1654,15 @@ const SKINS=[
 ];
 const RARCOL={Common:'#8a8378',Rare:'#2f7fb0',Epic:'#7a4fc0',Legendary:'#c08a1e'};
 function hasKey(id){ return PLEKEYS.indexOf(id)>=0; }
-function unlockKey(id){ if(hasKey(id))return false; PLEKEYS.push(id); saveJSON('plebania_plekeys',PLEKEYS);
-  const sk=SKINS.find(s=>s.id===id);
-  try{ installPlekeyPlebs(); }catch(e){}              // it is a UNIT now, not just a skin
-  showBanner('🔑 PLEKEY UNIT UNLOCKED: '+(sk?sk.name:'Plekey')+'!','gold',2200); return true; }
-function rollKey(){ const lock=SKINS.filter(s=>!hasKey(s.id)); if(!lock.length)return false;
-  const pool=lock.concat(lock); // bias toward rarer by weighting
-  return unlockKey(pool[Math.floor(Math.random()*pool.length)].id); }
+/* there is exactly ONE Plekey, and the bundle is the only way to get it */
+function unlockKey(id){
+  id=id||'unique';
+  if(hasKey(id)) return false;
+  PLEKEYS.push(id); saveJSON('plebania_plekeys',PLEKEYS);
+  try{ installPlekeyPlebs(); }catch(e){}
+  showBanner('\ud83d\udd11 THE UNIQUE PLEKEY IS YOURS!','gold',2600);
+  return true; }
+function rollKey(){ return unlockKey('unique'); }
 function openBox(id){
   const b=BOXES.find(x=>x.id===id); if(!b)return;
   if(PGOLD<b.cost){ tip('Need \ud83d\udc51'+b.cost+' for the '+b.name,1400); return; }
@@ -1628,27 +1677,22 @@ function buyMega(){
   if(PGOLD<MEGA.cost){ tip('Need \ud83d\udc51'+MEGA.cost+' for the '+MEGA.name,1500); return; }
   PGOLD-=MEGA.cost; saveJSON('plebania_pgold',PGOLD);
   PLEB+=MEGA.pleb; PAPERS+=MEGA.papers; saveJSON('plebania_pleb',PLEB); saveJSON('plebania_papers',PAPERS);
-  for(let i=0;i<MEGA.boxes;i++){ if(Math.random()<0.3)rollKey(); }
   SFX.up(); for(let i=0;i<20;i++)burst(W/2,H/2,'#ffe08a');
   showBanner('\ud83d\udce6 Mega Pack: +'+MEGA.pleb+' Pleb \u26a1 + '+MEGA.papers+' Papers + '+MEGA.boxes+' Pleb Boxes','gold',1900);
   renderMart();
 }
 function buyPlekey(){
-  const lock=SKINS.filter(s=>!hasKey(s.id));
-  if(!lock.length){ tip('You already own every Plekey \ud83d\udd11',1500); return; }
-  if(PGOLD<PLEKEY_COST){ tip('Need \ud83d\udc51'+PLEKEY_COST+' for a Plekey',1500); return; }
-  PGOLD-=PLEKEY_COST; saveJSON('plebania_pgold',PGOLD);
-  rollKey(); SFX.up(); renderMart();
+  /* there is only ONE Plekey and the bundle is the only way in */
+  tip(hasKey('unique')?'You already own the Unique Plekey \ud83d\udd11':'The Unique Plekey comes only from the Plekey Bundle',1900);
 }
 /* the merged bundle card ($19.99): Blep + papers + boxes + a Plekey, all in one */
 function buyCombo(){
   if(PGOLD<COMBO.cost){ tip('Need \ud83d\udc51'+COMBO.cost+' for the Plekey bundle',1500); return; }
   PGOLD-=COMBO.cost; saveJSON('plebania_pgold',PGOLD);
   PLEB+=COMBO.pleb; PAPERS+=COMBO.papers; saveJSON('plebania_pleb',PLEB); saveJSON('plebania_papers',PAPERS);
-  for(let i=0;i<COMBO.boxes;i++){ if(Math.random()<0.3)rollKey(); }
-  const lock=SKINS.filter(s=>!hasKey(s.id)); if(lock.length)rollKey();
+  const got=unlockKey('unique');
   SFX.up(); for(let i=0;i<20;i++)burst(W/2,H/2,'#ffe08a');
-  showBanner('\ud83d\udd11 Plekey bundle: +'+COMBO.pleb+' Pleb \u26a1 + '+COMBO.papers+' papers + '+COMBO.boxes+' boxes + a Plekey!','gold',2000);
+  showBanner('\ud83d\udd11 Plekey bundle: +'+COMBO.pleb+' Pleb \u26a1 + '+COMBO.papers+' papers + '+COMBO.boxes+' boxes'+(got?' + THE UNIQUE PLEKEY!':''),'gold',2200);
   renderMart();
 }
 /* --- Pledoption Center: Daily Plebs + Cyber Pleb Deal (from Nicholas's sketch) --- */
@@ -1671,11 +1715,11 @@ function buyCyber(){
 }
 function buySkin(id){
   const s=SKINS.find(x=>x.id===id); if(!s)return;
-  if(hasKey(id)){ EQUIPPED=(EQUIPPED===id)?'':id; saveJSON('plebania_key',EQUIPPED); SFX.ui(); renderMart();
-    showBanner(EQUIPPED?('🧑‍🌾 Hero is now the '+s.name):'Default hero',1000); return; }
+  if(hasSkin(id)){ EQUIPPED=(EQUIPPED===id)?'':id; saveJSON('plebania_key',EQUIPPED); SFX.ui(); renderMart();
+    showBanner(EQUIPPED?('\ud83e\uddd1\u200d\ud83c\udf3e Hero is now the '+s.name):'Default hero',1000); return; }
   if(PLEB<s.cost){ tip('Need '+s.cost+' Pleb to unlock '+s.name,1500); return; }
-  PLEB-=s.cost; saveJSON('plebania_pleb',PLEB); unlockKey(id); EQUIPPED=id; saveJSON('plebania_key',EQUIPPED);
-  SFX.up(); renderMart();
+  PLEB-=s.cost; saveJSON('plebania_pleb',PLEB); SKINS_OWN.push(id); saveJSON('plebania_skins_own',SKINS_OWN);
+  EQUIPPED=id; saveJSON('plebania_key',EQUIPPED); SFX.up(); renderMart();
 }
 function redeemCode(){
   const inp=$('codeInput'); if(!inp)return; const code=(inp.value||'').trim().toUpperCase();
@@ -1687,6 +1731,7 @@ function redeemCode(){
   if(c.gold){ PGOLD+=c.gold; saveJSON('plebania_pgold',PGOLD); }
   if(c.pleb){ PLEB+=c.pleb; saveJSON('plebania_pleb',PLEB); }
   if(c.key) rollKey();
+  if(c.skin && !hasSkin(c.skin)){ SKINS_OWN.push(c.skin); saveJSON('plebania_skins_own',SKINS_OWN); }
   inp.value=''; SFX.up(); showBanner('✅ Code redeemed: '+c.note,'gold',1800); renderMart(); syncHud();
 }
 function claimGift(){
@@ -1720,8 +1765,8 @@ function renderMart(){
             '<div class="psqs"><div class="psq"><div class="q1">20</div><div class="q2"><span class="arr">\u2190</span>Adoption papers</div></div>'+
             '<div class="psq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
             '<div class="plabel">PLEDOPTION</div></div>'+
-          '<div class="pcol2"><div class="pt">Plekey</div>'+
-            '<div class="pbody">'+svg('key')+'<ul><li>- Custom sfx</li><li>- Unique style</li><li>- Different rarity</li></ul></div></div>'+
+          '<div class="pcol2"><div class="pt">Unique Plekey</div>'+
+            '<div class="pbody">'+svg('key')+'<ul><li>- Ding key sfx</li><li>- Unique style</li><li>- Unique rarity</li><li>- Bundle only</li></ul></div></div>'+
           '<div class="price">$19.99</div>'+
         '</div>'+
       '</div>';
@@ -1737,9 +1782,14 @@ function renderMart(){
   if(MARTTAB==='pledoption'){
     let grid='';
     for(let i=0;i<INDEX_SLOTS;i++){
-      const owned = i< PLEKEYS.length;
-      const sk = owned? SKINS.find(s=>s.id===PLEKEYS[i]) : null;
-      grid+='<div class="pi-slot'+(owned?' have':'')+'">'+(sk?svg(sk.id==='classic'?'plent':'key'):'')+'</div>';
+      if(i===0){                                  // slot 1 = THE Unique Plekey
+        const owned=hasKey('unique');
+        grid+='<div class="pi-slot'+(owned?' have':'')+'" title="Unique Plekey">'+svg('key')+'</div>';
+        continue;
+      }
+      const sk=SKINS[i-1];
+      const owned=!!sk && hasSkin(sk.id);
+      grid+='<div class="pi-slot'+(owned?' have':'')+'">'+(owned?svg(sk.id==='classic'?'plent':'key'):'')+'</div>';
     }
     body.innerHTML=
       '<div class="pbanner">Index of everything</div>'+
@@ -1761,7 +1811,7 @@ function renderMart(){
         '</div>'+
         '<div class="pm-right"><div class="pm-grid">'+grid+'</div></div>'+
       '</div>'+
-      '<div class="pm-sub" style="margin-top:8px">Spend \u26a1 Pleb in <b>Pleb boxes</b> to fill your Index. Every \ud83d\udd11 <b>Plekey is a battle unit</b> \u2014 unlock one and it shows up in your build tray, ready to place. Daily Plebs &amp; the Cyber Deal are bought with \ud83d\udc51 shop gold.</div>';
+      '<div class="pm-sub" style="margin-top:8px">There is only <b>one</b> \ud83d\udd11 <b>Unique Plekey</b> \u2014 it comes from the Plekey Bundle and nowhere else. It is also a <b>battle unit</b>: once you own it, it appears in your build tray ready to place. Daily Plebs &amp; the Cyber Deal are bought with \ud83d\udc51 shop gold.</div>';
     body.querySelectorAll('[data-daily]').forEach(el=>el.onclick=()=>buyDaily(el.dataset.daily));
     const cy=body.querySelector('[data-cyber]'); if(cy)cy.onclick=buyCyber;
     return;
@@ -1784,9 +1834,9 @@ function renderMart(){
         '<li>\ud83d\udd11 PLEB MART \u2014 Pledoption center, Money bundles, Pleb boxes, Codes, Gift &amp; News.</li>'+
         '<li>\u2728 Coming soon \u2014 more Plekeys, hero weapons, boss rush.</li></ul>';
     }else{ // boxes
-      body.innerHTML='<div class="pm-sub" style="margin-top:6px">Spend \u26a1 Pleb on boxes \u2014 each can drop a \ud83d\udd11 Plekey for your hero.</div>'+
+      body.innerHTML='<div class="pm-sub" style="margin-top:6px">Spend \u26a1 Pleb on boxes for Blep. The \ud83d\udd11 Unique Plekey is <b>not</b> in boxes \u2014 it comes from the Plekey Bundle only.</div>'+
         '<div class="pm-sk">'+BOXES.map(b=>'<div class="pm-skin"><div style="height:52px;display:flex;align-items:center;justify-content:center">'+svg(b.art)+'</div><div class="sn">'+b.name+'</div>'+
-          '<div class="sr">'+Math.round(b.keyChance*100)+'% Plekey \u00b7 +'+b.pleb+' \u26a1</div>'+
+          '<div class="sr">+'+b.pleb+' \u26a1 Blep</div>'+
           '<div class="pm-btndisplay'+(PLEB>=b.cost?'':' cant')+'" data-box="'+b.id+'">\u26a1 '+b.cost+'</div></div>').join('')+'</div>';
       body.querySelectorAll('[data-box]').forEach(el=>el.onclick=()=>openBox(el.dataset.box));
     }
@@ -1893,11 +1943,8 @@ function seasonIsOwned(sid){ return !!(SEASON&&SEASON.rewards&&SEASON.rewards.in
    with Blep and never expire; owning one unlocks its unit.
    ========================================================= */
 const PLEKEY_UNITS={
-  classic:{n:'Plekey Recruit',  cost:60,  dmg:18, rate:0.60, range:105, kind:'melee',  col:'#f2cf62', desc:'Starter key-bearer · cheap & cheerful'},
-  knight :{n:'Plekey Knight',   cost:150, dmg:40, rate:0.80, range:95,  kind:'melee',  col:'#d8b24a', desc:'Armoured key-bearer · tanky'},
-  wolf   :{n:'Plekey Wolf',     cost:140, dmg:30, rate:0.45, range:120, kind:'melee',  col:'#9fd0ff', desc:'Feral key-bearer · lightning fast'},
-  bone   :{n:'Plekey Lord',     cost:200, dmg:55, rate:1.10, range:300, kind:'ranged', col:'#c69bff', desc:'Bone key-bolts · long range'},
-  king   :{n:'Plekey King',     cost:240, dmg:70, rate:0.90, range:180, kind:'splash', splash:72, col:'#ff4d4d', desc:'Royal key-smash · heavy splash'}
+  unique:{n:'Unique Plekey', cost:300, dmg:85, rate:0.70, range:250, kind:'splash', splash:60,
+          col:'#c8a2ff', desc:'The only Plekey · pure light, hits hard'}
 };
 function plekeyUnitKey(id){ return 'pk_'+id; }
 function plekeyOwnedUnit(k){ return String(k||'').indexOf('pk_')===0 && hasKey(String(k).slice(3)); }
@@ -2336,8 +2383,10 @@ const STAT_FIELDS=[
   {k:'papers',  e:'📄', n:'Papers',               get:()=>PAPERS,        set:v=>{PAPERS=v; saveJSON('plebania_papers',PAPERS);} },
   {k:'xp',      e:'⭐',     n:'PLEBASS XP',           get:()=>BPASS.xp,      set:v=>{BPASS.xp=v; BPASS.tiers=recomputeTiers(); saveJSON(BPASS_KEY,BPASS);} },
   {k:'worlds',  e:'🗺', n:'Worlds unlocked',      get:()=>unlocked,      set:v=>{unlocked=Math.max(1,Math.min(WORLDS.length,v)); saveWorld();} },
-  {k:'plekeys', e:'🔑', n:'Plekeys owned',        get:()=>PLEKEYS.length,
-      set:v=>{ PLEKEYS=SKINS.slice(0,v).map(sk=>sk.id); saveJSON('plebania_plekeys',PLEKEYS); } }
+  {k:'plekeys', e:'🔑', n:'Unique Plekey (0/1)', get:()=>PLEKEYS.length,
+      set:v=>{ PLEKEYS=v>0?['unique']:[]; saveJSON('plebania_plekeys',PLEKEYS); try{installPlekeyPlebs();}catch(e){} } },
+  {k:'skins',   e:'🧑‍🌾', n:'Hero skins owned',   get:()=>SKINS_OWN.length,
+      set:v=>{ SKINS_OWN=SKINS.slice(0,v).map(sk=>sk.id); saveJSON('plebania_skins_own',SKINS_OWN); } }
 ];
 function isAdmin(){ return !!(ME && ADMIN_NAMES.indexOf(String(ME.key||'').toLowerCase())>=0); }
 let GODMODE=loadJSON('plebania_godmode',false);
@@ -2384,7 +2433,8 @@ function adminAct(a){
   if(!isAdmin())return;
   if(a==='gold'){ PGOLD+=10000; saveJSON('plebania_pgold',PGOLD); showBanner('👑 +10,000 shop gold','gold',1500); }
   else if(a==='blep'){ PLEB+=10000; saveJSON('plebania_pleb',PLEB); showBanner('⚡ +10,000 Blep','gold',1500); }
-  else if(a==='keys'){ SKINS.forEach(sk=>{ if(!hasKey(sk.id)) PLEKEYS.push(sk.id); }); saveJSON('plebania_plekeys',PLEKEYS); showBanner('🔑 Every Plekey unlocked','gold',1600); }
+  else if(a==='keys'){ unlockKey('unique'); PLEKEYS=['unique']; saveJSON('plebania_plekeys',PLEKEYS); installPlekeyPlebs(); showBanner('🔑 The Unique Plekey unlocked','gold',1600); }
+  else if(a==='skins'){ SKINS.forEach(sk=>{ if(!hasSkin(sk.id)) SKINS_OWN.push(sk.id); }); saveJSON('plebania_skins_own',SKINS_OWN); showBanner('🧑‍🌾 Every hero skin unlocked','gold',1600); }
   else if(a==='plebs'){ let eq=armyCount();
       PACK_EXTRA.forEach(k=>{ PACK_OWN['pleb:'+k]=true; if(eq<MAX_ARMY && !PACK_OWN['equipped:'+k]){ PACK_OWN['equipped:'+k]=true; eq++; } });
       saveJSON('plebania_pack_own',PACK_OWN); showBanner('🧑‍🌾 All plebs owned ('+eq+'/'+MAX_ARMY+' equipped)','gold',1900); }
@@ -2874,21 +2924,21 @@ const PASS_TIERS=[
   {t:3,  type:'gift', amount:1, e:'📦', name:'Pleb Box'},
   {t:4,  type:'gold', amount:300, e:'👑', name:'+300 gold'},
   {t:5,  type:'blep', amount:400, e:'⚡', name:'+400 Blep'},
-  {t:6,  type:'skin', amount:'wolf', e:'🔑', name:'Wolf Plekey'},
+  {t:6,  type:'skin', amount:'wolf', e:'🐺', name:'Wolf skin'},
   {t:7,  type:'gift', amount:1, e:'📦', name:'Pleb Box'},
   {t:8,  type:'blep', amount:600, e:'⚡', name:'+600 Blep'},
   {t:9,  type:'gold', amount:500, e:'👑', name:'+500 gold'},
   {t:10, type:'gift', amount:1, e:'📦', name:'Mega Box'},
   {t:11, type:'blep', amount:900, e:'⚡', name:'+900 Blep'},
   {t:12, type:'gold', amount:700, e:'👑', name:'+700 gold'},
-  {t:13, type:'skin', amount:'bone', e:'🔑', name:'Bone Lord Plekey'},
+  {t:13, type:'skin', amount:'bone', e:'💀', name:'Bone Lord skin'},
   {t:14, type:'gift', amount:1, e:'📦', name:'Mega Box'},
   {t:15, type:'blep', amount:1500, e:'⚡', name:'+1,500 Blep'},
   {t:16, type:'gold', amount:1000, e:'👑', name:'+1,000 gold'},
   {t:17, type:'gift', amount:1, e:'📦', name:'Mega Box'},
   {t:18, type:'blep', amount:2000, e:'⚡', name:'+2,000 Blep'},
   {t:19, type:'gold', amount:1500, e:'👑', name:'+1,500 gold'},
-  {t:20, type:'skin', amount:'king', e:'👑', name:'Pleb King Plekey'}
+  {t:20, type:'skin', amount:'king', e:'👑', name:'Pleb King skin'}
 ];
 function passTierXP(){ return PASS_XP_PER; }
 function totalPassXP(){ return (PASS_MAX-1)*PASS_XP_PER; }
@@ -2912,8 +2962,8 @@ function claimPass(t){
   const r=tierOf(t); if(!r)return;
   if(r.type==='gold'){ PGOLD+=r.amount; saveJSON('plebania_pgold',PGOLD); showBanner('👑 +'+r.amount+' shop gold!','gold',1600); }
   else if(r.type==='blep'){ PLEB+=r.amount; saveJSON('plebania_pleb',PLEB); showBanner('⚡ +'+r.amount+' Blep!','gold',1600); }
-  else if(r.type==='gift'){ PLEB+=300; saveJSON('plebania_pleb',PLEB); if(Math.random()<0.35) rollKey(); showBanner('📦 Pleb Box: +300 Blep','gold',1600); }
-  else if(r.type==='skin'){ const id=r.amount; if(!hasKey(id)){ PLEKEYS.push(id); saveJSON('plebania_plekeys',PLEKEYS); } showBanner('🔑 Plekey: '+r.name+'!','gold',1800); }
+  else if(r.type==='gift'){ PLEB+=300; saveJSON('plebania_pleb',PLEB); showBanner('📦 Pleb Box: +300 Blep','gold',1600); }
+  else if(r.type==='skin'){ const id=r.amount; if(!hasSkin(id)){ SKINS_OWN.push(id); saveJSON('plebania_skins_own',SKINS_OWN); } showBanner('🧑‍🌾 Hero skin: '+r.name+'!','gold',1800); }
   BPASS.claimed.push(t); saveBP();
   SFX.up(); for(let i=0;i<16;i++)burst(W/2,H/2,'#ffe08a');
   renderPass();
@@ -3263,11 +3313,11 @@ function towerUpdate(dt){
       S.projs.push({x:px,y:py-6,tx:best.x,ty:best.y,spd:d.kind==='splash'&&o.k==='catapult'?420:520,
         dmg:effDmg(o),splash:d.splash*(1+(o.level-1)*0.12),arc:true,life:0,tot:Math.hypot(best.x-px,best.y-py)/520,
         tgt:best, kind:o.k, sx:px, sy:py-6});
-      SFX[o.k==='catapult'?'boom':'potion']();
+      SFX[plekeyOwnedUnit(o.k)?'ding':(o.k==='catapult'?'boom':'potion')]();
     }else{
       S.projs.push({x:px,y:py-6,tx:best.x,ty:best.y,spd:760,dmg:effDmg(o),splash:0,
         arc:false,life:0,tot:Math.hypot(best.x-px,best.y-py)/760,tgt:best,kind:o.k,sx:px,sy:py-6});
-      SFX.bow();
+      SFX[plekeyOwnedUnit(o.k)?'ding':'bow']();
     }
   }
 }
