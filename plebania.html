@@ -172,6 +172,57 @@
   .bd-row .nm{flex:1;font:800 17px Georgia,serif;color:#f3e2b0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bd-row .nm .you{color:#9fe08a;font-size:13px}
   .bd-row .vl{font:900 20px Georgia,serif;color:#ffe08a}
+  /* presence: online / offline */
+  .bd-dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:8px;vertical-align:middle;
+    position:relative;top:-1px}
+  .bd-dot.on{background:#4ee07a;box-shadow:0 0 9px #4ee07a,0 0 2px #d9ffe6 inset}
+  .bd-dot.off{background:#6b6357;box-shadow:inset 0 0 0 1.5px #8d8478}
+  .bd-pres{font:700 11px Georgia,serif;letter-spacing:.5px;margin-left:10px;padding:2.5px 9px;border-radius:7px;
+    vertical-align:middle;white-space:nowrap;position:relative;top:-1px}
+  .bd-pres.on{color:#0f2a15;background:#4ee07a}
+  .bd-pres.off{color:#f2ece0;background:#2f2820;box-shadow:inset 0 0 0 1.5px #7d7264}
+  /* NB: don't put opacity on .nm — the status pill is inside it and would fade too */
+  .bd-row.offline .nm{color:#d9cbaa}
+  .bd-live{display:flex;align-items:center;gap:9px;justify-content:center;margin:0 0 14px;
+    font:700 15px Georgia,serif;color:#d8c48c}
+  .bd-live .bd-dot{margin-right:0;width:10px;height:10px}
+  /* friends */
+  #friends{background:linear-gradient(#241708,#0f0a03);overflow:auto;padding:40px 60px;text-align:center}
+  #friends.on{display:block}
+  #friends h2{font:900 46px Georgia,serif;color:#f2d375;margin:0 0 6px;text-shadow:0 3px 0 #000}
+  #friends .sub{color:#d8c48c;font:italic 17px Georgia,serif;margin-bottom:22px}
+  .fr-add{display:flex;gap:10px;justify-content:center;align-items:center;margin-bottom:10px}
+  .fr-add input{width:300px;padding:11px 16px;border-radius:12px;border:2.5px solid #4a3616;background:#0d0903;
+    color:#ffe08a;font:700 17px Georgia,serif}
+  .fr-add input:focus{outline:none;border-color:#ffd24a;box-shadow:0 0 10px rgba(255,210,74,.4)}
+  .fr-add input::placeholder{color:#8a7a56}
+  .fr-msg{min-height:22px;font:700 15px Georgia,serif;color:#ff9a86;margin-bottom:12px}
+  .fr-msg.ok{color:#9fe08a}
+  .fr-list{width:min(760px,94vw);margin:0 auto;display:flex;flex-direction:column;gap:10px;text-align:left}
+  .fr-card{display:flex;align-items:center;gap:12px;border:3px solid #2a1c08;border-radius:16px;padding:12px 16px;
+    background:linear-gradient(rgba(64,46,20,.92),rgba(30,20,8,.94));box-shadow:0 5px 0 #2a1c08}
+  .fr-card .fname{flex:1;font:800 19px Georgia,serif;color:#f3e2b0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .fr-card .fstats{font:700 13px Georgia,serif;color:#d8c48c;opacity:.92;margin-top:3px;display:block}
+  .fr-card .frm{border:2px solid #5a2a1a;border-radius:10px;padding:7px 13px;font:800 13px Georgia,serif;
+    color:#ff9a86;background:rgba(90,42,26,.5);cursor:pointer;white-space:nowrap}
+  .fr-card .frm:hover{background:rgba(140,60,36,.7)}
+  .fr-empty{border:3px dashed #4a3616;border-radius:16px;padding:26px;text-align:center;
+    font:italic 16px Georgia,serif;color:#a89572}
+  /* my login / password */
+  .acct-pw{width:min(680px,94vw);margin:18px auto 6px;border:3px solid #2a1c08;border-radius:18px;
+    padding:16px 22px;background:linear-gradient(rgba(64,46,20,.92),rgba(30,20,8,.94));
+    box-shadow:0 6px 0 #2a1c08,0 14px 26px rgba(0,0,0,.45);text-align:left}
+  .acct-pw h3{margin:0 0 10px;font:800 20px Georgia,serif;color:#f3e2b0}
+  .pw-row{display:flex;align-items:center;gap:14px;padding:7px 0;border-bottom:1px dashed rgba(216,196,140,.22)}
+  .pw-row:last-of-type{border-bottom:none}
+  .pw-k{width:110px;font:700 14px Georgia,serif;color:#d8c48c;letter-spacing:.5px}
+  .pw-v{font:800 18px Georgia,serif;color:#ffe08a;letter-spacing:2px}
+  .pw-v.revealed{letter-spacing:.5px;color:#9fe08a}
+  .pw-btns{display:flex;gap:10px;margin-top:12px}
+  .pw-note{margin-top:10px;font:italic 14px Georgia,serif;color:#d8c48c;opacity:.9;line-height:1.45}
+  .bd-livecur{display:block;font:800 11px Georgia,serif;color:#ff9d5c;letter-spacing:.3px;margin-bottom:1px}
+  .bd-livecur.pulse{animation:streakPulse 1.6s ease-in-out infinite}
+  @keyframes streakPulse{0%,100%{opacity:1}50%{opacity:.55}}
   .bd-big{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
   .bd-stat{border:3px solid #2a1c08;border-radius:16px;padding:14px 22px;background:linear-gradient(rgba(64,46,20,.92),rgba(30,20,8,.94));min-width:150px}
   .bd-stat .v{font:900 34px Georgia,serif;color:#ffd24a}
@@ -790,6 +841,7 @@
         <div class="mbtn" id="packBtn"><span class="ic">🎒</span> PLEBPACK</div>
         <div class="mbtn" id="passBtn"><span class="ic">🎫</span> PLEBASS</div>
         <div class="mbtn" id="boardBtn"><span class="ic">🏆</span> LEADERBOARD</div>
+        <div class="mbtn" id="menuFriendsBtn"><span class="ic">👥</span> FRIENDS</div>
       </div>
       <div class="worldstrip" id="worldStrip"></div>
       <div style="margin-top:14px"><span class="linklike" id="howBtn">❔ How to Play</span></div>
@@ -798,7 +850,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.24 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.26 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -821,7 +873,7 @@
         <div class="row"><span class="e">✊</span><span><b>RALLY</b> — hit it when things get hairy: every pleb attacks <b>twice as fast +25% damage</b> for 6 seconds. 30s cooldown.</span></div>
         <div class="row"><span class="e">⏩</span><span><b>Fast-forward</b> — the ×1 button doubles game speed when you've got it under control.</span></div>
         <div class="row"><span class="e">👀</span><span><b>Next</b> — the HUD shows what's marching in on the next wave. Plan ahead!</span></div>
-        <div class="row"><span class="e">🛡️</span><span>Every noble that reaches your village costs a <b>life</b> — and can slay one of your villagers. Lose all lives and it's over.</span></div>
+        <div class="row"><span class="e">🛡️</span><span>Every noble that reaches your village costs a <b>life</b> — your villagers stay standing. Lose all lives and it's over.</span></div>
       </div>
     </div>
     <div class="panel" style="margin-top:22px">
@@ -857,7 +909,9 @@
     <h2>👤 My Account</h2>
     <div class="sub">Your pleb record. Switch accounts any time — everything saves to the cloud.</div>
     <div id="accountBody"></div>
+    <div id="acctPassWrap" class="acct-pw"><h3>🔑 My login</h3><div id="acctPass"></div></div>
     <div class="acct-btns">
+      <div class="mbtn small" id="acctFriends" style="width:240px">👥 My friends</div>
       <div class="mbtn small" id="acctAdmin" style="width:240px;display:none">👑 Admin panel</div>
       <div class="mbtn small" id="acctSwitch" style="width:240px">🔄 Switch account</div>
       <div class="mbtn small" id="acctBack" style="width:200px">⬅ Back to menu</div>
@@ -869,6 +923,19 @@
   </div>
 
   <!-- ============ ADMIN ============ -->
+  <!-- ============ FRIENDS ============ -->
+  <div id="friends" class="screen">
+    <h2>👥 Friends</h2>
+    <div class="sub">Add players by username. See who's online and how they're doing.</div>
+    <div class="fr-add">
+      <input id="frInput" maxlength="16" autocomplete="off" placeholder="Username to add…">
+      <div class="mbtn small" id="frAdd" style="width:150px">➕ Add friend</div>
+    </div>
+    <div id="frMsg" class="fr-msg"></div>
+    <div id="frList" class="fr-list"></div>
+    <div class="acct-btns"><div class="mbtn small" id="frBack" style="width:220px">⬅ Back to menu</div></div>
+  </div>
+
   <div id="admin" class="screen">
     <h2>👑 Admin Panel</h2>
     <div class="sub">Signed in as <b id="admWho">—</b> · full powers unlocked.</div>
@@ -1093,7 +1160,7 @@ cv.width=W; cv.height=H;
 
 /* ---------------- screens ---------------- */
 function show(id){
-  ['menu','how','worlds','game','mart','pack','pass','board','auth','account','admin'].forEach(s=>$(s).classList.toggle('on',s===id));
+  ['menu','how','worlds','game','mart','pack','pass','board','auth','account','admin','friends'].forEach(s=>$(s).classList.toggle('on',s===id));
   if(id==='menu')populateWorldStrip();
   if(id==='worlds')populateWorldSelect();
   if(id==='mart')renderMart();
@@ -1101,6 +1168,7 @@ function show(id){
   if(id==='pass')renderPass();
   if(id==='board')renderBoard();
   if(id==='account')renderAccount();
+  if(id==='friends')renderFriends();
   if(id==='admin')renderAdmin();
 }
 function populateWorldStrip(){
@@ -1137,6 +1205,11 @@ function populateWorldSelect(){
 }
 $('howBtn').onclick=()=>show('how');
 $('boardBtn').onclick=()=>{ SFX.ui(); show('board'); };
+$('menuFriendsBtn').onclick=()=>{ SFX.ui(); frMsg(''); show('friends'); };
+$('frBack').onclick=()=>{ SFX.ui(); show(ME?'menu':'account'); };
+$('frAdd').onclick=addFriend;
+$('frInput').addEventListener('keydown',e=>{ if(e.key==='Enter')addFriend(); });
+$('acctFriends').onclick=()=>{ SFX.ui(); frMsg(''); show('friends'); };
 $('tabSignIn').onclick=()=>setAuthMode('in');
 $('tabCreate').onclick=()=>setAuthMode('up');
 $('auGo').onclick=doAuth;
@@ -1540,11 +1613,14 @@ function hasSkin(id){ return SKINS_OWN.indexOf(id)>=0; }
 /* migration: old Plekeys WERE hero skins — move them to skins, keep only the Unique key */
 (function migrateKeys(){
   const OLD=['classic','knight','wolf','bone','king'];
-  let changed=false, keep=[];
+  let changed=false, keep=[], hadOld=false;
   PLEKEYS.forEach(id=>{
-    if(OLD.indexOf(id)>=0){ if(SKINS_OWN.indexOf(id)<0) SKINS_OWN.push(id); changed=true; }
+    if(OLD.indexOf(id)>=0){ hadOld=true; if(SKINS_OWN.indexOf(id)<0) SKINS_OWN.push(id); changed=true; }
     else keep.push(id);
   });
+  /* Anyone who owned an old Plekey keeps it as a hero skin AND is awarded the
+     one-and-only Unique Plekey. (v2.24 dropped them to zero keys by accident.) */
+  if(hadOld && keep.indexOf('unique')<0){ keep.push('unique'); changed=true; }
   if(keep.join(',')!==PLEKEYS.join(',')){ PLEKEYS=keep; changed=true; }
   if(SKINS_OWN.indexOf('classic')<0){ SKINS_OWN.push('classic'); changed=true; }
   if(changed){ saveJSON('plebania_plekeys',PLEKEYS); saveJSON('plebania_skins_own',SKINS_OWN); }
@@ -1851,6 +1927,23 @@ let LB=loadJSON(LB_KEY,{level:1,streak:0,bestStreak:0,waves:0,kills:0,rank:0,tim
 function fmtTime(s){ s=Math.max(0,Math.round(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
   if(h>0) return h+'h '+m+'m'; if(m>0) return m+'m '+Math.floor(s%60)+'s'; return s+'s'; }
 function fmtStat(k,v){ return k==='time'?fmtTime(v):v; }
+/* ---------- presence ---------- */
+const ONLINE_MS=120000;                       // seen in the last 2 min = online
+function agoTxt(ms){
+  const s=Math.max(0,Math.floor(ms/1000));
+  if(s<60) return s+'s ago';
+  const m=Math.floor(s/60); if(m<60) return m+'m ago';
+  const h=Math.floor(m/60); if(h<24) return h+'h ago';
+  const d=Math.floor(h/24); if(d<7) return d+'d ago';
+  return Math.floor(d/7)+'w ago';
+}
+function presenceOf(rec){
+  const at=(rec&&rec.at)||0;
+  if(!at) return {online:false, txt:'offline'};
+  const dt=Date.now()-at;
+  if(dt<ONLINE_MS) return {online:true, txt:'online'};
+  return {online:false, txt:'offline \u00b7 '+agoTxt(dt)};
+}
 function saveLB(){ saveJSON(LB_KEY,LB); }
 /* Values set by hand in the admin panel. Kept until they're confirmed published,
    so a stale leaderboard record can't overwrite them (that's why rank "didn't work"). */
@@ -2161,6 +2254,7 @@ function upsertAcct(j){
   CLOUD.accounts[k]={ u:j.u||cur.u||k, pw:j.pw||cur.pw||(j.pw||cur.pw), key:k, at:j.at||cur.at,
     sid: own?(j.sid||null):(newerAt?(j.sid!==undefined?j.sid:cur.sid):(cur.sid!==undefined?cur.sid:j.sid)),
     se:  own?(j.se||0):(newerAt?(j.se||0):(cur.se||0)),
+    cur:own?(j.cur||0):(j.cur||cur.cur||0),
     level:own?(j.level||0):Math.max(j.level||0,cur.level||0),
     streak:own?(j.streak||0):Math.max(j.streak||0,cur.streak||0),
     waves:own?(j.waves||0):Math.max(j.waves||0,cur.waves||0),
@@ -2214,6 +2308,20 @@ function cloudPut(){ return new Promise((resolve,reject)=>{
   MQTT_C.publish(myTopic(), JSON.stringify(rec), {retain:true,qos:1}, (err)=>err?reject(err):resolve()); }); }
 async function cloudSync(force){ if(!CLOUD_DIRTY&&!force)return; if(!MQTT_READY){ CLOUD_DIRTY=true; return; } CLOUD_DIRTY=false; try{ await cloudPut(); }catch(e){ CLOUD_DIRTY=true; } }
 function cloudTouch(){ CLOUD_DIRTY=true; clearTimeout(cloudT); cloudT=setTimeout(()=>cloudSync(false),2000); }
+/* presence ping: stamp my own record + publish, so the board shows me online.
+   Runs on a timer while the tab is visible (a backgrounded tab shouldn't claim to be online). */
+let PRESENCE_T=null;
+function presencePing(){
+  if(!ME||!MQTT_C||!MQTT_READY)return;
+  const a=CLOUD.accounts[ME.key]||(CLOUD.accounts[ME.key]={});
+  a.u=ME.name; a.at=Date.now();
+  try{ cloudPut().catch(()=>{}); }catch(e){}
+}
+function startPresence(){
+  clearInterval(PRESENCE_T);
+  PRESENCE_T=setInterval(()=>{ if(!document.hidden) presencePing(); }, 45000);   // < ONLINE_MS
+  if(!document.hidden) presencePing();
+}
 function rivalName(){ const ks=Object.keys(CLOUD.accounts||{}); if(!ks.length)return 'The Baron';
   const a=CLOUD.accounts[ks[(Math.random()*ks.length)|0]]; return a&&a.u?a.u:'The Baron'; }
 
@@ -2238,6 +2346,9 @@ async function doAuth(){
     if(ex.pw!==hashPw(p)){ go.classList.remove('busy'); authMsg('Wrong password \u2014 try again.'); return; }
   }
   ME={key:key, name:ex?ex.u:u}; saveJSON(ACC_KEY,ME);
+  /* remember it on THIS device only so you can check it later. It is never
+     published — the board only ever carries a one-way hash. */
+  try{ saveJSON('plebania_myPass',{key:key, pw:p}); }catch(e){}
   CLOUD_DIRTY=true;
   let saved=false;
   for(let i=0;i<3 && !saved;i++){ try{ await cloudPut(); saved=true; }catch(e){ await new Promise(r=>setTimeout(r,600)); } }
@@ -2360,6 +2471,7 @@ function renderAccount(){
   h+=masteryOverviewHTML();
   body.innerHTML=h;
   const adm=$('acctAdmin'); if(adm) adm.style.display=isAdmin()?'':'none';
+  renderPassCheck();
   resetDelBtn(); delMsg('');
 }
 /* =========================================================
@@ -2494,6 +2606,87 @@ function adminKill(key,el){
   if(ME&&ME.key===key){ signOut(); return; }
   showBanner('🗑️ Account deleted','red',1600); renderAdmin();
 }
+/* =========================================================
+   FRIENDS — a local list of usernames. Their live stats come
+   from the same public board, so no server is needed: adding a
+   friend just remembers their name and looks them up by key.
+   ========================================================= */
+let FRIENDS=loadJSON('plebania_friends',[]);
+function saveFriends(){ saveJSON('plebania_friends',FRIENDS); }
+function friendKey(u){ return String(u||'').trim().toLowerCase(); }
+function isFriend(k){ return FRIENDS.indexOf(friendKey(k))>=0; }
+function frMsg(t,ok){ const el=$('frMsg'); if(!el)return; el.textContent=t||''; el.classList.toggle('ok',!!ok); }
+async function addFriend(){
+  const inp=$('frInput'); if(!inp)return;
+  const raw=(inp.value||'').trim(); const k=friendKey(raw);
+  if(k.length<2){ frMsg('Type a username first.'); return; }
+  if(ME && k===String(ME.key).toLowerCase()){ frMsg('That\u2019s you! \ud83d\ude04'); return; }
+  if(isFriend(k)){ frMsg('You already have '+raw+' as a friend.'); return; }
+  let rec=CLOUD.accounts[k];
+  if(!rec){ try{ const r=await accountLookup(k); if(r&&r.u) rec=r; }catch(e){} }
+  if(!rec){ frMsg('No player called \u201c'+raw+'\u201d. Check the spelling.'); return; }
+  FRIENDS.push(k); saveFriends();
+  inp.value=''; frMsg('\u2705 Added '+(rec.u||raw)+'!',true); SFX.up();
+  renderFriends();
+}
+function removeFriend(k){
+  FRIENDS=FRIENDS.filter(x=>x!==k); saveFriends();
+  SFX.ui(); renderFriends(); frMsg('Removed.',true);
+}
+function renderFriends(){
+  const list=$('frList'); if(!list)return;
+  if(!FRIENDS.length){
+    list.innerHTML='<div class="fr-empty">No friends yet \u2014 add someone by their username above \ud83d\udc4c</div>';
+    return;
+  }
+  let h='';
+  FRIENDS.forEach(k=>{
+    const a=(CLOUD.accounts||{})[k];
+    const nm=a&&a.u?a.u:k;
+    const P=presenceOf(a);
+    const lvl=a?(a.level||0):0, st=a?(a.streak||0):0, rk=a?(a.rank||0):0;
+    h+='<div class="fr-card'+(P.online?'':' offline')+'">'+
+      '<span class="bd-dot '+(P.online?'on':'off')+'"></span>'+
+      '<div class="fname">'+nm+'<span class="bd-pres '+(P.online?'on':'off')+'">'+P.txt+'</span>'+
+        '<span class="fstats">'+(a?('\ud83c\udfaf '+rankTier(rk)+' \u00b7 \ud83e\ude9c Lv '+lvl+' \u00b7 \ud83d\udd25 '+st+' best streak'):'not on the board yet')+'</span></div>'+
+      '<div class="frm" data-rm="'+k+'">Remove</div></div>';
+  });
+  list.innerHTML=h;
+  list.querySelectorAll('[data-rm]').forEach(el=>el.onclick=()=>removeFriend(el.dataset.rm));
+}
+/* ---------- "check my password" (device-local only) ---------- */
+function myPassRec(){ try{ return loadJSON('plebania_myPass',null); }catch(e){ return null; } }
+function myPasswordInfo(){
+  const rec=myPassRec();
+  if(!rec||!ME||String(rec.key)!==String(ME.key)) return {known:false};
+  return {known:true, pw:rec.pw, hash:hashPw(rec.pw)};
+}
+function renderPassCheck(){
+  const box=$('acctPass'); if(!box)return;
+  const info=myPasswordInfo();
+  if(!info.known){
+    box.innerHTML='<div class="pw-note">This device hasn\u2019t saved your password yet (you signed in before this feature existed). '+
+      '<b>Switch account \u2192 sign in again</b> and it\u2019ll be remembered here.</div>';
+    return;
+  }
+  const hidden='\u2022'.repeat(Math.max(4,info.pw.length));
+  box.innerHTML=
+    '<div class="pw-row"><span class="pw-k">Username</span><span class="pw-v">'+(ME?ME.name:'\u2014')+'</span></div>'+
+    '<div class="pw-row"><span class="pw-k">Password</span><span class="pw-v pw-val" id="pwVal" data-shown="0">'+hidden+'</span></div>'+
+    '<div class="pw-btns">'+
+      '<div class="mbtn small" id="pwToggle" style="width:190px">\ud83d\udc41\ufe0f Show password</div>'+
+    '</div>'+
+    '<div class="pw-note">Saved on this device only. Nobody else can see it \u2014 not even the leaderboard, which only ever stores a scrambled hash.</div>';
+  const t=$('pwToggle'), v=$('pwVal');
+  if(t&&v) t.onclick=()=>{
+    const shown=v.dataset.shown==='1';
+    v.textContent=shown?hidden:info.pw;
+    v.dataset.shown=shown?'0':'1';
+    v.classList.toggle('revealed',!shown);
+    t.textContent=shown?'\ud83d\udc41\ufe0f Show password':'\ud83d\ude48 Hide password';
+    SFX.ui();
+  };
+}
 function switchAccount(){ cloudSync(true); ME=null; saveJSON(ACC_KEY,null); refreshUserChip(); show('auth'); setAuthMode('in'); authMsg('Sign in with another account (or create a new one).',true); }
 function enterGame(){ SFX.up(); refreshUserChip(); show('menu'); populateWorldStrip(); }
 function signOut(){ ME=null; saveJSON(ACC_KEY,null); cloudSync(true); refreshUserChip(); show('auth'); setAuthMode('in'); authMsg('Signed out.',true); }
@@ -2551,13 +2744,15 @@ function pushScore(){
   if(!ME||!CLOUD||!CLOUD.accounts)return;
   const a=CLOUD.accounts[ME.key]||(CLOUD.accounts[ME.key]={});
   a.u=ME.name;
-  const exact=!!(ADMINSET&&ADMINSET.v);      // after a hand edit, LB is authoritative (can go down)
-  a.level=exact?LB.level:Math.max(a.level||0,LB.level);
-  a.streak=exact?LB.bestStreak:Math.max(a.streak||0,LB.bestStreak);
-  a.waves=exact?LB.waves:Math.max(a.waves||0,LB.waves);
-  a.kills=exact?LB.kills:Math.max(a.kills||0,LB.kills);
-  a.rank=exact?LB.rank:Math.max(a.rank||0,LB.rank);
-  a.time=exact?(LB.time||0):Math.max(a.time||0,LB.time||0);
+  /* Your own record is published from your own save. Using Math.max() here meant a
+     once-inflated board value (e.g. a 100000 streak) could never come back down. */
+  a.level=Math.max(1,Math.round(LB.level||1));
+  a.streak=Math.max(0,Math.round(LB.bestStreak||0));
+  a.waves=Math.max(0,Math.round(LB.waves||0));
+  a.kills=Math.max(0,Math.round(LB.kills||0));
+  a.rank=Math.max(0,Math.round(LB.rank||0));
+  a.time=Math.max(0,Math.round(LB.time||0));
+  a.cur=Math.max(0,Math.round(LB.streak||0));      // CURRENT streak, for the live column
   a.sid=SEASON?SEASON.id:null;          // season elo resets monthly, so it is
   a.se=SEASON?(SEASON.elo||0):0;        // published alongside its season id
   CLOUD.accounts[ME.key]=a; cloudTouch();
@@ -2629,7 +2824,7 @@ function renderBoard(){
     '<div class="bd-stat"><div class="v">'+(GR.place?('#'+GR.place):'\u2014')+'</div><div class="k">GLOBAL RANK of '+GR.total+'</div></div>'+
     '<div class="bd-stat"><div class="v">'+fmtTime(me.time)+'</div><div class="k">TIME PLAYED</div></div>'+
     '</div><div class="bd-wrap">';
-  const rowsAll=Object.keys(CLOUD.accounts||{}).map(k=>({name:CLOUD.accounts[k].u||'Pleb', level:CLOUD.accounts[k].level||0, streak:CLOUD.accounts[k].streak||0, waves:CLOUD.accounts[k].waves||0, kills:CLOUD.accounts[k].kills||0, rank:CLOUD.accounts[k].rank||0, time:CLOUD.accounts[k].time||0, key:k}));
+  const rowsAll=Object.keys(CLOUD.accounts||{}).map(k=>({name:CLOUD.accounts[k].u||'Pleb', level:CLOUD.accounts[k].level||0, streak:CLOUD.accounts[k].streak||0, waves:CLOUD.accounts[k].waves||0, kills:CLOUD.accounts[k].kills||0, rank:CLOUD.accounts[k].rank||0, time:CLOUD.accounts[k].time||0, at:CLOUD.accounts[k].at||0, cur:CLOUD.accounts[k].cur||0, key:k}));
   const mine=boardMe();
   if(!rowsAll.some(r=>ME&&r.key===ME.key)) rowsAll.push(Object.assign({key:ME?ME.key:'me'},mine));
   rowsAll.forEach(r=>{ if(ME&&r.key===ME.key) r.isMe=true; });
@@ -2640,15 +2835,25 @@ function renderBoard(){
     html+='<div class="bd-card"><h3>'+title+'</h3>';
     rows.slice(0,SHOW).forEach((r,i)=>{
       const medal=i===0?'\ud83e\udd47':i===1?'\ud83e\udd48':i===2?'\ud83e\udd49':'#'+(i+1);
-      html+='<div class="bd-row'+(r.isMe?' me':'')+'"><div class="rk">'+medal+'</div><div class="nm">'+
-        r.name+(ADMIN_NAMES.indexOf(String(r.key||'').toLowerCase())>=0?' <span class="admbadge">👑</span>':'')+(r.isMe?' <span class="you">(you)</span>':'')+'</div><div class="vl">'+fmtStat(k,r[k])+'</div></div>';
+      const P=presenceOf(r);
+      html+='<div class="bd-row'+(r.isMe?' me':'')+(P.online?'':' offline')+'"><div class="rk">'+medal+'</div><div class="nm">'+
+        '<span class="bd-dot '+(P.online?'on':'off')+'" title="'+(P.online?'Online now':'Offline')+'"></span>'+
+        r.name+(ADMIN_NAMES.indexOf(String(r.key||'').toLowerCase())>=0?' <span class="admbadge">👑</span>':'')+(r.isMe?' <span class="you">(you)</span>':'')+
+        '<span class="bd-pres '+(P.online?'on':'off')+'">'+P.txt+'</span></div>'+
+        '<div class="vl">'+(k==='streak'&&r.cur>0?'<span class="bd-livecur pulse">\ud83d\udd25 '+r.cur+' now</span>':'')+fmtStat(k,r[k])+'</div></div>';
     });
     const idx=rows.findIndex(r=>r.isMe);
-    if(idx>=SHOW){ const r=rows[idx]; html+='<div class="bd-row me"><div class="rk">#'+(idx+1)+'</div><div class="nm">'+r.name+' <span class="you">(you)</span></div><div class="vl">'+fmtStat(k,r[k])+'</div></div>'; }
+    if(idx>=SHOW){ const r=rows[idx]; const P=presenceOf(r);
+      html+='<div class="bd-row me"><div class="rk">#'+(idx+1)+'</div><div class="nm">'+
+        '<span class="bd-dot '+(P.online?'on':'off')+'"></span>'+r.name+' <span class="you">(you)</span>'+
+        '<span class="bd-pres '+(P.online?'on':'off')+'">'+P.txt+'</span></div><div class="vl">'+fmtStat(k,r[k])+'</div></div>'; }
     html+='</div>';
   });
   html+='</div>';
-  html='<div class="bd-sub">'+total+' player'+(total===1?'':'s')+' on the board'+(total>SHOW?(' \u00b7 top '+SHOW+' shown'):'')+'</div>'+html;
+  const onlineN=rowsAll.filter(r=>presenceOf(r).online).length;
+  const live='<div class="bd-live"><span class="bd-dot on"></span>'+onlineN+' online now \u00b7 '+
+    (total-onlineN)+' offline</div>';
+  html=live+'<div class="bd-sub">'+total+' player'+(total===1?'':'s')+' on the board'+(total>SHOW?(' \u00b7 top '+SHOW+' shown'):'')+'</div>'+html;
   body.innerHTML=html;
 }
 
@@ -2661,7 +2866,7 @@ function newBattle(ranked){
   newGame(S?S.world:0);
   S.battle=true; S.ranked=!!ranked;
   S.lives=15; S.reached=1;
-  S.ebMax=240+rankTierIdx(LB.rank)*130; S.ebHp=S.ebMax;
+  S.ebMax=Math.round((240+rankTierIdx(LB.rank)*130)*(S.ranked?1.15:1)); S.ebHp=S.ebMax;
   S.raid=[]; S.aiWalls=[]; S.aiT=6; S.raidCd=0; S.nextWaveT=2.5;
   S.oppName = ranked ? rivalName() : 'The Baron';
   S.running=false; S.between=true;
@@ -3172,14 +3377,24 @@ function effDmg(o){
 /* =========================================================
    WAVES
    ========================================================= */
+/* ranked difficulty: scales off your rank tier (0..8). Campaign is untouched. */
+function rankedHeat(){
+  if(!S||!S.ranked) return 0;
+  const t=rankTierIdx(LB.rank);            // 0..8
+  const streak=Math.max(0,LB.streak||0);   // winning streak makes it hotter still
+  return t + Math.min(3,streak*0.35);      // 0 .. ~11
+}
 function waveComp(w){
   const W=WORLDS[S.world]; const q=[];
-  const n=4+Math.round(w*1.7);
+  const heat=rankedHeat();
+  const n=Math.round((4+w*1.7)*(1+heat*0.085));   // more nobles per wave
   for(let i=0;i<n;i++)q.push(W.units.light);
-  if(w>=2){const k=Math.round(w*0.9);for(let i=0;i<k;i++)q.push(W.units.medium);}
-  if(w>=4){const s=Math.round((w-3)*0.75);for(let i=0;i<s;i++)q.push(W.units.heavy);}
-  if(w>=6){const el=Math.round((w-5)*0.7);for(let i=0;i<el;i++)q.push(W.elite);}
-  if(w===5||w===8)q.push(W.boss);
+  if(w>=2){const k=Math.round(w*0.9*(1+heat*0.07));for(let i=0;i<k;i++)q.push(W.units.medium);}
+  if(w>=4){const s=Math.round((w-3)*0.75*(1+heat*0.09));for(let i=0;i<s;i++)q.push(W.units.heavy);}
+  if(w>=6){const el=Math.round((w-5)*0.7*(1+heat*0.11));for(let i=0;i<el;i++)q.push(W.elite);}
+  const extraBoss=Math.floor(heat/3);               // high ranks see bosses more often
+  if(w===5||w===8||(extraBoss>0&&w%5===0))q.push(W.boss);
+  if(extraBoss>1&&w%7===0)q.push(W.boss);
   if(w===10){q.push(W.boss);q.push(W.elite);q.push(W.elite);q.push(W.king);}
   // shuffle a little so it feels organic
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
@@ -3201,9 +3416,11 @@ function startWave(){
    ========================================================= */
 function spawn(type){
   const d=ENEMIES[type];
-  const hpScale=1+(S.wave-1)*0.24;
+  const heat=rankedHeat();
+  const hpScale=(1+(S.wave-1)*0.24)*(1+heat*0.13);     // ranked nobles are beefier
+  const spdScale=1+Math.min(0.35,heat*0.028);          // ...and a bit faster
   S.enemies.push({
-    type, hp:d.hp*hpScale, maxhp:d.hp*hpScale, spd:d.spd, gold:d.gold,
+    type, hp:d.hp*hpScale, maxhp:d.hp*hpScale, spd:d.spd*spdScale, gold:d.gold,
     sz:d.sz, rank:d.rank, emoji:d.emoji, wp:0, x:PATH[0].x, y:PATH[0].y, t:0,
     slow:0, burn:0, burnT:0, hitT:0, facing:1
   });
@@ -3247,17 +3464,11 @@ function leak(e){
   e.hp=0;
   if(GODMODE){ return; }                      // admin god mode: nothing gets through to your lives
   S.lives--; S.hurt=1; S.shake=Math.max(S.shake,14); SFX.life();
-  // a villager may be slain
-  if(S.towers.length>0){
-    const idx=Math.floor(Math.random()*S.towers.length);
-    const dead=S.towers[idx]; S.towers.splice(idx,1);
-    for(let i=0;i<18;i++)burst(cx(dead.c),cy(dead.r),'#c0392b');
-    showBanner('😱 A villager was slain!','red',1500);
-    buildBar();
-  }else{
-    showBanner('🏚️ The nobles reached the village!','red',1400);
-  }
-  if(S.sel&&S.towers.indexOf(S.sel)<0)hideSel();
+  /* Base damage costs a LIFE — it must never delete your villagers.
+     (Before, each leak randomly slew a tower; a wave getting through could
+     wipe the whole board, which read as "my towers disappeared".) */
+  for(let i=0;i<12;i++)burst((e&&e.x)||W*0.9,(e&&e.y)||H*0.5,'#c0392b');
+  showBanner('\ud83c\udfe0 THE NOBLES REACHED YOUR VILLAGE! \u22121 life','red',1500);
   syncHud();
   if(S.lives<=0) endGame(false);
   if(S.battle && S.lives<=0){ /* battleLose handled by endGame */ }
@@ -4080,7 +4291,11 @@ installPlekeyPlebs();
   });
   checkOrient();
   setInterval(()=>cloudSync(false), 60000);   // gentle safety flush (only if dirty)
-  document.addEventListener('visibilitychange',()=>{ if(document.hidden){ saveLB(); pushScore(); cloudSync(false); } });
+  startPresence();                            // keep "online" truthful on the leaderboard
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){ saveLB(); pushScore(); cloudSync(false); }
+    else presencePing();                       // came back -> mark online again right away
+  });
 })();
 $('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
 function toggleBar(force){ const w=$('barwrap'); const hid=(force!=null)?force:!w.classList.contains('hide');
