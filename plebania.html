@@ -603,6 +603,52 @@
   .card .cd{font:9.5px Georgia,serif;color:#c3ae7c;margin-top:2px;min-height:26px;line-height:1.15;display:flex;align-items:flex-start;justify-content:center;text-align:center}
   .card.pass{box-shadow:0 0 0 2px #b06ad0,0 3px 0 rgba(0,0,0,.4)}
 
+  /* ---------- VS INTRO (who am I versing?) ---------- */
+  #vs{position:absolute;inset:0;z-index:15;display:none;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 50%,rgba(24,16,4,.9) 0%,rgba(4,3,1,.97) 70%);
+    backdrop-filter:blur(6px);overflow:hidden}
+  #vs.on{display:flex}
+  #vs .vssweep{position:absolute;top:-10%;bottom:-10%;left:-70%;width:55%;
+    background:linear-gradient(90deg,transparent,rgba(255,210,74,.18),transparent);
+    transform:skewX(-16deg);animation:vsSweep 1.25s ease-in-out .3s both}
+  @keyframes vsSweep{from{left:-70%}to{left:130%}}
+  #vs .vsrow{display:flex;align-items:center;gap:26px;position:relative}
+  #vs .vside{width:330px;padding:16px 20px 18px;border-radius:16px;text-align:center;opacity:0;
+    border:3px solid #4a3616;background:linear-gradient(rgba(52,36,14,.97),rgba(24,16,6,.97));
+    box-shadow:0 16px 40px rgba(0,0,0,.75)}
+  #vs .vside.me{transform:translateX(-150px) rotate(-5deg);animation:vsInL .44s cubic-bezier(.2,1.5,.4,1) .04s forwards}
+  #vs .vside.foe{transform:translateX(150px) rotate(5deg);animation:vsInR .44s cubic-bezier(.2,1.5,.4,1) .04s forwards}
+  @keyframes vsInL{to{opacity:1;transform:none}}
+  @keyframes vsInR{to{opacity:1;transform:none}}
+  #vs .vside .vtag{font:800 12px Georgia,serif;letter-spacing:3px;color:#c9a24a;margin-bottom:6px}
+  #vs .vside.foe .vtag{color:#e08a72}
+  #vs .vside .vring{width:74px;height:74px;margin:0 auto 8px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font:900 34px Georgia,serif;color:#1d1608;box-shadow:0 0 0 4px rgba(255,255,255,.1),0 0 26px rgba(255,210,74,.35)}
+  #vs .vside .vname{font:900 30px Georgia,serif;color:#f6dd8b;line-height:1.05;text-shadow:0 3px 0 #000;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #vs .vside.foe .vname{color:#ffb9a6}
+  #vs .vside .vrank{font:900 18px Georgia,serif;margin-top:6px}
+  #vs .vside .velo{font:700 13px Georgia,serif;color:#cdb885;margin-top:2px}
+  #vs .vside .vchips{display:flex;gap:8px;justify-content:center;margin-top:12px}
+  #vs .vside .vchip{flex:1;min-width:0;border:2px solid #4a3616;border-radius:9px;padding:6px 3px;background:rgba(0,0,0,.42)}
+  #vs .vside .vchip b{display:block;font:900 17px Georgia,serif;color:#ffe6a0;line-height:1.1}
+  #vs .vside .vchip span{display:block;font:700 10.5px Georgia,serif;letter-spacing:.5px;color:#e0cea1;margin-top:3px}
+  #vs .vside .velo{color:#e2cf9f}
+  #vs .vside .von{margin-top:9px;font:800 11px Georgia,serif;letter-spacing:1px}
+  #vs .vside .von.on{color:#9fe08a}
+  #vs .vside .von.off{color:#9a8a72}
+  #vs .vsmid{text-align:center;position:relative;width:152px}
+  #vs .vsvs{font:900 74px Georgia,serif;color:#ffd24a;text-shadow:0 0 24px rgba(255,210,74,.85),0 6px 0 #5a3d08;
+    opacity:0;transform:scale(.2) rotate(-25deg);animation:vsPop .5s cubic-bezier(.2,1.7,.4,1) .42s forwards}
+  @keyframes vsPop{to{opacity:1;transform:none}}
+  #vs .vsodds{margin-top:8px;font:800 12px Georgia,serif;letter-spacing:.5px;line-height:1.3;color:#e2cf9f;
+    opacity:0;animation:vsFadeIn .4s ease-out .95s forwards}
+  @keyframes vsFadeIn{to{opacity:1}}
+  #vs .vsskip{position:absolute;bottom:20px;left:0;right:0;text-align:center;
+    font:700 12px Georgia,serif;color:#8f7f5e;letter-spacing:1px;opacity:0;animation:vsFadeIn .5s ease-out 1.2s forwards}
+  #vs.out{animation:vsOut .3s ease-in forwards}
+  @keyframes vsOut{to{opacity:0}}
+
   #banner{position:absolute;left:50%;top:92px;transform:translate(-50%,-8px);z-index:7;opacity:0;
     padding:10px 24px;border-radius:12px;border:2px solid #2c2008;
     background:linear-gradient(rgba(60,40,12,.96),rgba(30,20,7,.96));
@@ -850,7 +896,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.27 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.28 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -966,6 +1012,7 @@
     </div>
 
     <div id="banner"></div>
+    <div id="vs"></div>
     <div id="tip"></div>
 
     <div id="barwrap">
@@ -1490,8 +1537,9 @@ function newGame(world){
     reached:1, rally:0, speed:1,
     towers:[], buildings:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
     shake:0, hurt:0, slain:0, sel:null, selB:null, build:'farmhand',
-    waveTimer:0, farmAcc:0, mart:{}
+    waveTimer:0, farmAcc:0, mart:{}, vsHold:false, opp:null, battle:false, ranked:false
   };
+  // (battle flags cleared here too — otherwise a stale vsHold would freeze the next campaign run)
   hover=null; locked=null; buildPath(w);
   // THE HERO — a pleb champion you control (drag to move, auto-attacks)
   S.hero={ x:W*0.42, y:H*0.52, tx:null, ty:null, hp:120, maxhp:120, dmg:30, range:80, rate:0.42,
@@ -2323,6 +2371,21 @@ function startPresence(){
 }
 function rivalName(){ const ks=Object.keys(CLOUD.accounts||{}); if(!ks.length)return 'The Baron';
   const a=CLOUD.accounts[ks[(Math.random()*ks.length)|0]]; return a&&a.u?a.u:'The Baron'; }
+/* full opponent record for the VS card — never picks you, prefers players near your elo */
+function rival(){
+  const ks=Object.keys(CLOUD.accounts||{}).filter(k=>!(ME&&k===ME.key));
+  if(!ks.length) return {name:'The Baron', rank:'Baron of the Barrens', elo:null, color:'#b08d57',
+                         level:9, streak:0, best:0, kills:0, online:false, bot:true, key:null};
+  // sort by elo distance, then take one of the closest few at random so it's not always the same guy
+  const me=LB.rank||0;
+  ks.sort((a,b)=>Math.abs((CLOUD.accounts[a].rank||0)-me)-Math.abs((CLOUD.accounts[b].rank||0)-me));
+  const k=ks[(Math.random()*Math.min(3,ks.length))|0];
+  const a=CLOUD.accounts[k]||{};
+  const elo=a.rank||0;
+  return { name:a.u||'Pleb', key:k, rank:rankTier(elo), elo:elo, color:rankColor(elo),
+           level:a.level||1, streak:a.streak||0, best:a.bestStreak||0, kills:a.kills||0,
+           online:presenceOf(a).online, bot:false };
+}
 
 /* ---- accounts: sign up / sign in ---- */
 let AUTHMODE='in';
@@ -2862,17 +2925,84 @@ function renderBoard(){
    ========================================================= */
 function newBattle(ranked){
   seasonRoll(); installSeasonPlebs(); installPlekeyPlebs();
+  const opp = rival();                       // pick BEFORE newGame wipes S
   newGame(S?S.world:0);
   S.battle=true; S.ranked=!!ranked;
   S.lives=15; S.reached=1;
   S.ebMax=Math.round((240+rankTierIdx(LB.rank)*130)*(S.ranked?1.15:1)); S.ebHp=S.ebMax;
   S.raid=[]; S.aiWalls=[]; S.aiT=6; S.raidCd=0; S.nextWaveT=2.5;
-  S.oppName = ranked ? rivalName() : 'The Baron';
+  S.opp = ranked ? opp : {name:'The Baron', rank:'Baron of the Barrens', elo:null, level:9,
+                          streak:0, best:0, kills:0, online:false, bot:true};
+  S.oppName = S.opp.name;
   S.running=false; S.between=true;
   if($('startBtn'))$('startBtn').style.display='none';   // battle waves auto-start
-  showBanner('\ud83c\udff0 BATTLE \u2014 smash '+S.oppName+'\u2019s base!','gold',2200);
-  tip('Placing villagers DEFENDS your base \ud83c\udfe0 \u00b7 hit RAID to attack theirs',4200);
   syncHud(); buildBar(); buildBar2(); updateRaidBtn();
+  openVS();                                              // VS card, then the fight starts
+}
+/* ---- VS INTRO: show MY status vs THEIR status before the first wave ---- */
+let VS_T=null, VS_SKIP=null;
+function vsRivalStats(){
+  // best-effort read of the opponent's board record (ranked only)
+  const k=(S&&S.opp&&S.opp.key)||null;
+  const a=k&&CLOUD&&CLOUD.accounts?CLOUD.accounts[k]:null;
+  return a||null;
+}
+function myVSStats(){
+  return { name:(ME&&ME.name)||'You',
+    rank: rankTier(LB.rank), elo: LB.rank||0, color: rankColor(LB.rank),
+    level: LB.level||1, streak: LB.streak||0, best: LB.bestStreak||0,
+    kills: LB.kills||0, online:true, bot:false };
+}
+function openVS(){
+  const host=$('vs'); if(!host||!S||!S.battle)return;
+  const me=myVSStats();
+  const o=S.opp||{name:S.oppName||'The Baron',rank:'Unranked',elo:0,color:'#b08d57',level:1,
+                   streak:0,best:0,kills:0,online:false,bot:true};
+  const rec=vsRivalStats();
+  if(rec){ o.level=rec.level||o.level; o.streak=rec.streak||0; o.best=rec.bestStreak||rec.best||0;
+           o.kills=rec.kills||0; }
+  const pres = o.bot ? 'A LEGEND OF THE BARROWS'
+            : (presenceOf(rec||{}).online ? '\ud83d\udfe2 ONLINE NOW' : '\u26aa OFFLINE \u00b7 AI PLAYS FOR THEM');
+  const presCls = (!o.bot && presenceOf(rec||{}).online) ? 'on':'off';
+  const sign = s=>s>0?'+'+s:(''+s);
+  const side=(cls,tag,st,isMe)=>
+    '<div class="vside '+cls+'">'+
+      '<div class="vtag">'+tag+'</div>'+
+      '<div class="vring" style="background:linear-gradient('+st.color+',#6b5320)">'+
+        String(st.name||'?').trim().charAt(0).toUpperCase().replace(/[<>&"]/g,'')+'</div>'+
+      '<div class="vname">'+st.name+'</div>'+
+      '<div class="vrank" style="color:'+st.color+'">'+st.rank+'</div>'+
+      '<div class="velo">'+(st.elo==null?'\u2014':'ELO '+st.elo)+'</div>'+
+      '<div class="vchips">'+
+        '<div class="vchip"><b>'+st.level+'</b><span>LEVEL</span></div>'+
+        '<div class="vchip"><b style="color:'+(st.streak>0?'#ffb066':'#ffe6a0')+'">'+(st.streak>0?'\ud83d\udd25'+st.streak:'0')+'</b><span>STREAK</span></div>'+
+        '<div class="vchip"><b>'+st.best+'</b><span>BEST</span></div>'+
+        '<div class="vchip"><b>'+st.kills+'</b><span>KILLS</span></div>'+
+      '</div>'+
+      (isMe?'<div class="von on">\ud83d\udfe2 YOU \u00b7 READY</div>':'<div class="von '+presCls+'">'+pres+'</div>')+
+    '</div>';
+  const gap = (o.elo==null||!S.ranked) ? 'NON-RANKED' :
+    (o.elo>me.elo ? ('THEY LEAD BY '+(o.elo-me.elo)+' ELO') :
+     o.elo<me.elo ? ('YOU LEAD BY '+(me.elo-o.elo)+' ELO') : 'DEAD LEVEL ON ELO');
+  host.innerHTML='<div class="vssweep"></div><div class="vsrow">'+
+      side('me','YOU',me,true)+
+      '<div class="vsmid"><div class="vsvs">VS</div><div class="vsodds">'+gap+'</div></div>'+
+      side('foe', S.ranked?'OPPONENT':'THE BARON', o, false)+
+    '</div><div class="vsskip">tap to skip</div>';
+  host.classList.remove('out'); host.classList.add('on');
+  if(S)S.vsHold=true;
+  host.onclick=()=>closeVS(true);
+  clearTimeout(VS_T); VS_T=setTimeout(()=>closeVS(false),3400);
+  try{ SFX.ui&&SFX.ui(); }catch(e){}
+}
+function closeVS(skipped){
+  const host=$('vs'); if(!host)return;
+  clearTimeout(VS_T);
+  host.onclick=null;
+  host.classList.add('out');
+  const done=()=>{ host.classList.remove('on','out'); host.innerHTML=''; };
+  skipped? done() : setTimeout(done,300);
+  if(S){ S.vsHold=false; S.nextWaveT=1.2; }        // first wave rolls in right after
 }
 function launchRaid(){
   if(!S||!S.battle||S.over||S.paused)return;
@@ -4166,7 +4296,8 @@ let last=performance.now();
 let PLAYFLUSH=0;
 function loop(now){
   let dt=Math.min(0.05,(now-last)/1000); last=now;
-  const active = $('game').classList.contains('on') && !(S&&S.paused);
+  // VS card is up: hold the sim so nothing moves before the fight actually begins
+  const active = $('game').classList.contains('on') && !(S&&S.paused) && !(S&&S.vsHold);
   if(S&&active){
     LB.time=(LB.time||0)+dt;                       // track time played (real seconds)
     PLAYFLUSH+=dt;
@@ -4359,6 +4490,7 @@ try{
 /* debug hooks (verification) */
 window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked(){return unlocked;}, get PATH(){return PATH;},
   spawnE:(t)=>spawn(t), effDmg:(o)=>effDmg(o), packEff:(k,s)=>packEffect(k,s),
+  show:show, battle:newBattle, closeVS:closeVS,
   tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
 
 // interval-driven loop: runs even when the game sits in an unfocused iframe
