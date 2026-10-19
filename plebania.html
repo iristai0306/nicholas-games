@@ -850,7 +850,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.26 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.27 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -2179,11 +2179,10 @@ function eloPop(delta,before,after){
     const eased=e<1?1-Math.pow(1-e,3):1;                 // easeOutCubic
     const pts=Math.round(bP+(aP-bP)*eased);
     const bi=bandInfo(pts);
-    const ladder=(bi.p+bi.r)/(RANK_STEPS.length-1);      // 0..1 up the whole 27-rank ladder (monotonic: wins grow, losses shrink)
     // count-up number
     big.textContent=(up?'+':'-')+Math.abs(pts-bP);
-    // bar = progress THROUGH the rank you are currently in (not 0-10000)
-    fill.style.width=Math.max(2,ladder*100).toFixed(2)+'%';
+    // bar = progress THROUGH the division you are currently in (matches the number above)
+    fill.style.width=Math.max(2,bi.r*100).toFixed(2)+'%';
     rk.textContent=rankTier(pts);
     rk.style.color=rankColor(pts);
     pt.textContent=bi.next===undefined?'MAX RANK':Math.max(0,bi.next-pts)+' to '+(RANK_TIERS[Math.floor((bi.p+1)/3)].n+' '+(((bi.p+1)%3)+1));
