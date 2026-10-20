@@ -971,7 +971,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.36 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.37 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1388,10 +1388,11 @@ $('playBtn').onclick=()=>{ initAudio(); show('worlds'); };
 const TUT=[
   {t:'Welcome to Plebania 🧑‍🌾',p:'You are the villagers — the plebs. The noble army is marching in to crush your village. You get TWO things: a HERO you control, and villagers you place.'},
   {t:'Your HERO is you 🗡️',p:'A pleb champion with a crown and sword stands on the field. DRAG anywhere on the map to run him around — he auto-attacks any noble he touches, and levels up as he fights. He\u2019ll get knocked down if he\u2019s swamped (back up in 5s).'},
-  {t:'Place your villagers',p:'Tap a villager in the bar at the bottom, then tap a grass tile to place them. Tap the SAME tile again to confirm. They defend the line while you fight with your hero. Tap a placed villager to upgrade or sell.'},
+  {t:'Place your villagers',p:'Tap a villager in the bar at the bottom, then tap a grass tile to place them. Tap the SAME tile again to confirm. Tap a placed villager to upgrade or sell.'},
+  {t:'HOW YOU WIN ⚔️',p:'See that enemy base on the LEFT end of the road? THAT is the target. Your melee plebs — Farmhand, Militia, Berserker, Knight — don’t stand around guarding. They MARCH up the road, fight anything in their way, and smash that base. Drop their base to zero and the world is yours.'},
   {t:'Walls & traps 🧱',p:'There is a SECOND bar for BUILDINGS. Wall 🧱 and Barricade 🚧 block the path — nobles have to smash through them. Spikes 📌 and Pike Pit 🕳️ hurt anything that walks over them. Great for funnelling the army. (Farms are capped at 3 — everything else you can place as much as you like.)'},
   {t:'Rally the plebs ✊',p:'Things getting hairy? Hit RALLY — every pleb attacks twice as fast with +25% damage for 6 seconds. Use the \u23e9 button to speed up when you can handle it.'},
-  {t:'Unlock new villagers',p:'You unlock new villagers as you survive: Poacher & Farm now, Militia at wave 3, Alchemist at wave 5, Catapult at wave 7. Earn gold 👑 by slaying nobles. Farms are limited to 3, but you can place as many fighters as you want. Good luck, pleb!'}
+  {t:'Hold the line, push the road',p:'Two jobs at once: RANGED plebs (Poacher, Alchemist, Catapult) hold your village and stop nobles reaching it — every one that gets through costs a life. Meanwhile your MELEE plebs push up the road. Lose all lives and it’s over; smash their base and you win. Unlocks: Militia wave 3, Alchemist wave 5, Catapult wave 7. Earn gold 👑 by slaying nobles. Good luck, pleb!'}
 ];
 let tutI=0;
 const TUTSEEN_KEY='plebania_tutseen';
@@ -1736,11 +1737,15 @@ function buildBar(){
         '<div class="cc" style="color:#e0792b">MAX '+cap+'/'+cap+'</div><div class="cd">You have all '+cap+' '+d.name+'s</div>';
       card.onclick=()=>{ tip('🚫 You can only place '+cap+' '+d.name+'s',1500); };
     }else{
+      const marcher=isMarcher(k);
       const capTxt=isFinite(cap)?(' <span style="color:#c3ae7c">· '+have+'/'+cap+'</span>'):(' <span style="color:#c3ae7c">· '+have+'</span>');
+      const descLine = marcher
+        ? '<span style="color:#59c2e8;font-weight:800">→ Marches to their base</span>'
+        : d.desc;
       card.innerHTML='<div class="ce">'+d.emoji+'</div><div class="cn">'+d.name+'</div>'+
-        '<div class="cc">👑 '+d.cost+capTxt+'</div><div class="cd">'+d.desc+'</div>';
+        '<div class="cc">👑 '+d.cost+capTxt+'</div><div class="cd">'+descLine+'</div>';
       card.onclick=()=>{ if(S.over)return; if(S.build===k){ S.build=null; locked=null; hideSel(); buildBar(); SFX.ui(); tip('Deselected '+d.name,1000); return; } S.build=k; locked=null; hideSel(); buildBar(); SFX.ui();
-        tip('Selected '+d.name+' — tap a grass tile to place',1500); };
+        tip(marcher?('Selected '+d.name+' — marches up the road at THEIR BASE'):('Selected '+d.name+' — tap a grass tile to place'),1700); };
     }
     bar.appendChild(card);
   });
@@ -5162,7 +5167,13 @@ function endWave(){
   addPassXP(45+S.wave*6);
   addDmg(W/2,H/2-40,'WAVE CLEAR  +👑'+bonus,'#8ef0ff');
   SFX.win();
-  if(S.wave>=waveMax()){ endGame(true); return; }
+  if(S.wave>=waveMax()){
+    if(S.crypt){ endGame(true); return; }          // Crypt: surviving all waves is the win
+    // Campaign: surviving is NOT enough any more — go smash their base
+    showBanner('🔥 All waves held — now SMASH THEIR BASE!','gold',2600);
+    tip('⚔️ Melee plebs march the road — send them to break the base',3400);
+    syncHud(); buildBar(); return;
+  }
   if(S.battle){
     S.nextWaveT=3.5;
     showBanner('Wave '+S.wave+'/'+waveMax()+' cleared!  ·  RAID their base \ud83c\udfc7','gold',1900);
@@ -5181,6 +5192,7 @@ function endGame(win){
   $('ovT').style.color = win?'#f6dd8b':'#ff9a86';
   $('ovMenu').textContent='🏠 Menu';
   if(win && !S.crypt){ const nu=Math.min(WORLDS.length,S.world+2); if(nu>unlocked){ unlocked=nu; saveWorld(); } }
+  const byBase = S.ebHp<=0;
   if(S.crypt){
     // ---- THE CRYPT: survive 15 waves -> Tombstone Pleb ----
     if(win){
@@ -5208,8 +5220,10 @@ function endGame(win){
     $('ovP').innerHTML='You held every world — scattered the army, tamed the Deep Forest and doused the Lich.<br>The plebs are legends. <b>'+S.slain+'</b> foes felled across the campaign.';
     $('ovAgain').style.display='none';
   }else if(win){
-    $('ovT').textContent='WORLD CLEARED! 🏆';
-    $('ovP').innerHTML='<b>'+WORLDS[S.world].name+'</b> is safe — '+S.lives+' lives spare, '+S.slain+' foes felled.<br>More lands to liberate…';
+    $('ovT').textContent=byBase?'🛡️ THEIR BASE IS ASH!':'⚔️ WORLD CLEARED!';
+    $('ovP').innerHTML=(byBase
+      ? '<b>'+WORLDS[S.world].name+'</b> is yours — you marched up their road and smashed the base to rubble.<br>'+S.lives+' lives spare, '+S.slain+' foes felled. The plebs are coming for the next land…'
+      : '<b>'+WORLDS[S.world].name+'</b> is safe — '+S.lives+' lives spare, '+S.slain+' foes felled.<br>More lands to liberate…');
     $('ovAgain').style.display=''; $('ovAgain').textContent='▶ NEXT WORLD →';
     $('ovAgain').onclick=()=>{ hideOv(); newGame(S.world+1); };
   }else{
@@ -5312,7 +5326,7 @@ window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked()
   spawnE:(t)=>spawn(t), effDmg:(o)=>effDmg(o), packEff:(k,s)=>packEffect(k,s),
   show:show, battle:newBattle, closeVS:closeVS, get LB(){return LB;}, lose:battleLose, sbreak:streakBreakFX,
   startMatch:startMatch, mmTick:mmTick, finishMatch:finishMatch, mmForce:(ms)=>{MM_START=Date.now()-ms; mmTick();}, get MM(){return {done:MM_DONE,found:MM_FOUND,max:MM_MAX_MS,start:MM_START};}, win:battleWin,
-  get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor, startCrypt:startCrypt, drawPleb:drawPleb, get ctx(){return ctx;}, get ORDER(){return ORDER;}, get PLEB(){return PLEB;}, set PLEB(v){PLEB=v;}, openCoffinBox:openCoffinBox, get coffinOpen(){return coffinOpen();}, endGame:endGame, grantPleb:grantPleb, get BUNDLES(){return BUNDLES;}, openCheckout:openCheckout, renderMart:renderMart, get PACK_OWN(){return PACK_OWN;}, get TOWERS(){return TOWERS;},
+  get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor, startCrypt:startCrypt, spawnMarcher:spawnMarcher, marchUpdate:marchUpdate, tap:(x,y)=>handleTap({x,y}), get cx(){return cx;}, get cy(){return cy;}, isMarcher:isMarcher, get PATH(){return PATH;}, baseDestroyed:baseDestroyed, drawPleb:drawPleb, get ctx(){return ctx;}, get ORDER(){return ORDER;}, get PLEB(){return PLEB;}, set PLEB(v){PLEB=v;}, openCoffinBox:openCoffinBox, get coffinOpen(){return coffinOpen();}, endGame:endGame, grantPleb:grantPleb, get BUNDLES(){return BUNDLES;}, openCheckout:openCheckout, renderMart:renderMart, get PACK_OWN(){return PACK_OWN;}, get TOWERS(){return TOWERS;},
   tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
 
 // interval-driven loop: runs even when the game sits in an unfocused iframe
