@@ -949,6 +949,7 @@
 
     <div class="menu-left">
       <div class="kicker">A Pleb's Tale</div>
+      <div style="display:inline-block;margin:-4px 0 10px;padding:5px 13px;border-radius:999px;background:linear-gradient(#ff9a3c,#c2410c);border:2px solid #2a1c08;box-shadow:0 3px 0 #4a1a06;font:800 12px Georgia,serif;letter-spacing:2px;color:#fff3d6;text-transform:uppercase">🎃 HALLOWEEN EVENT · LIMITED TIME</div>
       <div class="logo">PLEBANIA<span class="tail">TOWER DEFENSE</span></div>
       <div class="tagline">Pitchforks up. The nobles are marching.</div>
       <div class="menu-btns">
@@ -968,7 +969,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.32 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.33 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1311,7 +1312,7 @@ function show(id){
 function populateWorldStrip(){
   const strip=$('worldStrip'); if(!strip)return; strip.innerHTML='';
   WORLDS.forEach((w,i)=>{
-    const locked=i+1>unlocked;
+    const locked=!w.event && (i+1>unlocked);   // event worlds are always open
     const cleared=i+1<unlocked;
     const el=document.createElement('div');
     el.className='wchip'+(locked?' locked':'')+(cleared?' cleared':'');
@@ -1324,12 +1325,13 @@ function populateWorldStrip(){
 const WORLD_DESC=[
   'Green fields, thatched cottages. The King\u2019s army marches on your little village.',
   'Dark pines and howling beasts \u2014 wolves, boars and a raging Forest Troll.',
-  'Undead in the dark \u2014 skeletons, ghouls and the Necromancer\u2019s Lich.'
+  'Undead in the dark \u2014 skeletons, ghouls and the Necromancer\u2019s Lich.',
+  '🎃 HALLOWEEN EVENT — the pumpkins are alive, the witches are loose, and the Grim Reaper wants his town back.'
 ];
 function populateWorldSelect(){
   const g=$('worldGrid'); if(!g)return; g.innerHTML='';
   WORLDS.forEach((w,i)=>{
-    const locked=i+1>unlocked;
+    const locked=!w.event && (i+1>unlocked);   // event worlds are always open
     const cleared=i+1<unlocked;
     const el=document.createElement('div');
     el.className='wbig'+(locked?' locked':'')+(cleared?' cleared':'');
@@ -1577,7 +1579,14 @@ const ENEMIES={
   ghoul   : {name:'Ghoul',   hp:160, spd:64, gold:17, sz:30, rank:'undead', emoji:'🧟‍♂️'},
   necromancer:{name:'Necromancer', hp:460, spd:34, gold:48, sz:46, rank:'boss', emoji:'🧙'},
   vampire : {name:'Vampire', hp:290, spd:62, gold:34, sz:40, rank:'champ', emoji:'🧛'},
-  lich    : {name:'The Lich', hp:1650, spd:30, gold:220, sz:56, rank:'king', emoji:'☠️'}
+  lich    : {name:'The Lich', hp:1650, spd:30, gold:220, sz:56, rank:'king', emoji:'☠️'},
+  /* --- HALLOWEEN EVENT: the Night of the Pumpkin King --- */
+  bat     : {name:'Bat',            hp:42,  spd:78, gold:7,  sz:26, rank:'undead', emoji:'🦇'},
+  pumpkin : {name:'Pumpkin Fiend',  hp:98,  spd:50, gold:12, sz:30, rank:'undead', emoji:'🎃'},
+  witch   : {name:'Witch',          hp:158, spd:54, gold:17, sz:31, rank:'undead', emoji:'🧙'},
+  ghost   : {name:'Ghost',          hp:330, spd:68, gold:34, sz:40, rank:'champ',  emoji:'👻'},
+  frank   : {name:'Frankenstein',   hp:470, spd:34, gold:48, sz:46, rank:'boss',   emoji:'🧟'},
+  reaper  : {name:'The Grim Reaper', hp:1700, spd:32, gold:220, sz:56, rank:'king', emoji:'💀'},
 };
 const MAXWAVE=10;
 function cx(c){return GX+(c+0.5)*TILE;}
@@ -1593,7 +1602,10 @@ const WORLDS=[
    units:{light:'wolf',medium:'boar',heavy:'spider'}, elite:'direelk', boss:'bear', king:'troll'},
   {name:'The Bone Caves', emoji:'💀', theme:'cave',
    wps:[[-1,1],[6,1],[6,6],[2,6],[2,9],[11,9],[11,4],[16,4]],
-   units:{light:'skeleton',medium:'zombie',heavy:'ghoul'}, elite:'vampire', boss:'necromancer', king:'lich'}
+   units:{light:'skeleton',medium:'zombie',heavy:'ghoul'}, elite:'vampire', boss:'necromancer', king:'lich'},
+  {name:'Halloweentown', emoji:'🎃', theme:'halloween', event:true,
+   wps:[[-1,4],[5,4],[5,1],[9,1],[9,8],[13,8],[13,3],[16,3]],
+   units:{light:'bat',medium:'pumpkin',heavy:'witch'}, elite:'ghost', boss:'frank', king:'reaper'}
 ];
 let PATH=[], pathKeys=new Set();
 function buildPath(worldIdx){
@@ -4105,7 +4117,9 @@ const THEMES={
   forest: {bg:'#0c1207', tileA:'#20301a', tileB:'#243619', tuft:'rgba(70,110,60,.5)',
            pathOuter:'#2c2411', pathInner:'#55401f', pathHi:'rgba(120,96,50,.5)', pebble:'rgba(30,22,10,.5)'},
   cave  : {bg:'#0a0810', tileA:'#2a2434', tileB:'#2f2a3a', tuft:'rgba(120,110,160,.35)',
-           pathOuter:'#241f30', pathInner:'#454060', pathHi:'rgba(120,110,170,.45)', pebble:'rgba(20,16,30,.5)'}
+           pathOuter:'#241f30', pathInner:'#454060', pathHi:'rgba(120,110,170,.45)', pebble:'rgba(20,16,30,.5)'},
+  halloween:{bg:'#0d0714', tileA:'#241a2e', tileB:'#2b2038', tuft:'rgba(150,110,190,.38)',
+           pathOuter:'#2a1c14', pathInner:'#6a4520', pathHi:'rgba(190,125,52,.55)', pebble:'rgba(28,16,8,.55)'}
 };
 function curTheme(){ return THEMES[WORLDS[S.world].theme]||THEMES.grass; }
 function hash2(c,r){ const x=Math.sin(c*127.1+r*311.7)*43758.5453; return x-Math.floor(x); }
@@ -4128,6 +4142,7 @@ function drawGround(){
 }
 function drawDeco(){
   const theme=WORLDS[S.world].theme;
+  if(theme==='halloween') return drawDecoHalloween();
   const ol=3;
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
     if(pathKeys.has(c+','+r))continue;
@@ -4184,6 +4199,50 @@ function drawDeco(){
     }
   }
 }
+function drawDecoHalloween(){
+  const ol=3;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    if(pathKeys.has(c+','+r))continue;
+    const h=hash2(c,r); if(h<0.38)continue;
+    const x=cx(c), y=cy(r);
+    ctx.lineWidth=ol; ctx.strokeStyle=INK; ctx.lineJoin='round';
+    if(h>0.86){                       // jack-o-lantern
+      ctx.fillStyle='rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(x+3,y+13,16,5,0,0,7); ctx.fill();
+      ctx.fillStyle='#e8722a'; ctx.beginPath(); ctx.ellipse(x,y,15,13,0,0,7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle='#f59a4a'; ctx.beginPath(); ctx.ellipse(x-4,y-3,8,6,0,0,7); ctx.fill();
+      ctx.fillStyle='#2a1405';
+      ctx.beginPath(); ctx.moveTo(x-8,y-3); ctx.lineTo(x-3,y-3); ctx.lineTo(x-5.5,y-7); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x+8,y-3); ctx.lineTo(x+3,y-3); ctx.lineTo(x+5.5,y-7); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x-8,y+3); ctx.lineTo(x+8,y+3); ctx.lineTo(x+5,y+8); ctx.lineTo(x,y+5);
+      ctx.lineTo(x-5,y+8); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='#3f6b28'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x,y-12); ctx.lineTo(x+2,y-19); ctx.stroke();
+    }else if(h>0.74){                 // dead tree
+      ctx.fillStyle='rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(x+4,y+14,15,5,0,0,7); ctx.fill();
+      ctx.fillStyle='#241a14'; ctx.fillRect(x-4,y-6,8,22); ctx.strokeStyle=INK; ctx.lineWidth=ol; ctx.strokeRect(x-4,y-6,8,22);
+      ctx.strokeStyle='#241a14'; ctx.lineWidth=4; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(x,y-4); ctx.lineTo(x-13,y-16); ctx.moveTo(x,y-4); ctx.lineTo(x+12,y-18);
+      ctx.moveTo(x-8,y-11); ctx.lineTo(x-16,y-9); ctx.moveTo(x+7,y-12); ctx.lineTo(x+16,y-8); ctx.stroke();
+    }else if(h>0.62){                 // gravestone
+      ctx.fillStyle='rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(x+2,y+12,13,4.5,0,0,7); ctx.fill();
+      ctx.fillStyle='#6b6474'; ctx.beginPath();
+      ctx.moveTo(x-10,y+12); ctx.lineTo(x-10,y-4); ctx.arc(x,y-4,10,Math.PI,0); ctx.lineTo(x+10,y+12); ctx.closePath();
+      ctx.fill(); ctx.strokeStyle=INK; ctx.lineWidth=ol; ctx.stroke();
+      ctx.fillStyle='#4a4453'; ctx.fillRect(x-6,y-1,12,3); ctx.fillRect(x-2,y-6,3,13);
+    }else if(h>0.5){                  // candle
+      ctx.fillStyle='#efe4c8'; ctx.fillRect(x-3,y+1,6,11); ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.strokeRect(x-3,y+1,6,11);
+      ctx.globalAlpha=.4; ctx.fillStyle='#ffd24a'; ctx.beginPath(); ctx.arc(x,y-5,12,0,7); ctx.fill(); ctx.globalAlpha=1;
+      ctx.fillStyle='#ffb347'; ctx.beginPath(); ctx.ellipse(x,y-5,3.4,6,0,0,7); ctx.fill();
+    }else{                            // pumpkin patch / candy
+      for(let k=0;k<3;k++){
+        const px=x-8+k*8, py=y+4+((k%2)*4);
+        ctx.fillStyle=(k%2)?'#8b4fbf':'#e8722a';
+        ctx.beginPath(); ctx.arc(px,py,3.4,0,7); ctx.fill();
+        ctx.strokeStyle=INK; ctx.lineWidth=1.5; ctx.stroke();
+      }
+    }
+  }
+}
+
 function drawPath(){
   const TH=curTheme();
   ctx.lineCap='round'; ctx.lineJoin='round';
@@ -4381,7 +4440,7 @@ function drawEnemy(e){
   if(rank==='king'||rank==='boss'||rank==='champ'||rank==='beast'||rank==='undead'){
     // emoji units (beasts / undead / bosses) with glow accents
     ctx.font=(e.sz*1.9)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    if(rank==='king'){ ctx.shadowColor=e.type==='lich'?'#7be0c0':'#ffd24a'; ctx.shadowBlur=24; }
+    if(rank==='king'){ ctx.shadowColor=e.type==='lich'?'#7be0c0':(e.type==='reaper'?'#b06ad0':'#ffd24a'); ctx.shadowBlur=24; }
     else if(rank==='boss'){ ctx.shadowColor='#ff7a3a'; ctx.shadowBlur=12; }
     else if(rank==='champ'){ ctx.shadowColor='#ffd24a'; ctx.shadowBlur=10; }
     if(rank==='undead'||e.type==='zombie'||e.type==='ghoul'){ ctx.globalAlpha=hurt?1:0.94; }
