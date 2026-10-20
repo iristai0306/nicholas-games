@@ -1268,6 +1268,7 @@
 <div id="rotate"><div class="ph">📱</div><h2>Rotate your phone</h2><p>PLEBANIA plays sideways — turn your phone to landscape so the battlefield fills the screen.</p><div class="skip" id="rotateSkip">Play anyway</div></div>
 
 <script>
+
 (function(){
 "use strict";
 /* =========================================================
@@ -1488,6 +1489,31 @@ const TOWERS={
 const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm','berserker','longbow','dragonling','knight','mortar','orchard','shadow','tombstone','coffin'];
 const MAXPER=3;                       // build a max of 3 of anything that is capped (see CAP)
 const CAP={farm:3, orchard:2};        // only Farms & Orchards are capped — other units you can place freely
+/* =========================================================
+   LANE PUSH — how you actually win now.
+   Your melee plebs march up the road at the enemy base.
+   Kill the base = win. Enemies still march at YOUR village.
+   ========================================================= */
+const MARCH_KEYS=['farmhand','militia','berserker','knight'];   // these walk the road
+function isMarcher(k){ return MARCH_KEYS.indexOf(k)>=0; }
+function baseHpFor(){ return S.crypt?320:(260+S.world*70); }
+function nearestPathIdx(x,y){
+  let bi=0,bd=1e9;
+  for(let i=0;i<PATH.length;i++){ const d2=Math.hypot(PATH[i].x-x,PATH[i].y-y); if(d2<bd){bd=d2;bi=i;} }
+  return bi;
+}
+function spawnMarcher(k,c,r){
+  const d=TOWERS[k];
+  const x=c!=null?cx(c):PATH[PATH.length-1].x;
+  const y=r!=null?cy(r):PATH[PATH.length-1].y;
+  S.march.push({
+    k:k, x:x, y:y, wp:Math.max(0,nearestPathIdx(x,y)-1),
+    hp:110+((S.hero&&S.hero.level)||1)*12, maxhp:110+((S.hero&&S.hero.level)||1)*12,
+    dmg:d.dmg*1.5, t:Math.random()*6, hitting:0, atk:0
+  });
+  for(let i=0;i<10;i++)burst(x,y,'#8ef0ff');
+  SFX.up();
+}
 function capOf(k){ if(String(k||'').indexOf('pk_')===0) return 2; return CAP[k]||Infinity; }
 
 /* =========================================================
@@ -1650,10 +1676,12 @@ function newGame(world,opts){
     towers:[], buildings:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
     shake:0, hurt:0, slain:0, sel:null, selB:null, build:'farmhand',
     waveTimer:0, farmAcc:0, mart:{}, vsHold:false, mmHold:false, opp:null, battle:false, ranked:false,
-    crypt:!!opts.crypt
+    crypt:!!opts.crypt,
+    march:[], ebHp:0, ebMax:0, ebT:0
   };
   // (battle flags cleared here too — otherwise a stale vsHold would freeze the next campaign run)
   hover=null; locked=null; buildPath(w);
+  S.ebMax=baseHpFor(); S.ebHp=S.ebMax; S.march=[];
   // THE HERO — a pleb champion you control (drag to move, auto-attacks)
   S.hero={ x:W*0.42, y:H*0.52, tx:null, ty:null, hp:120, maxhp:120, dmg:30, range:80, rate:0.42,
     atkT:0, sword:0, walk:0, level:1, xp:0, xpNeed:5, kills:0, down:false, downT:0 };
@@ -3342,6 +3370,47 @@ function launchRaid(){
   updateRaidBtn();
 }
 function aiWallAt(c,r){ return S.aiWalls.some(w=>w.c===c&&w.r===r&&w.hp>0); }
+/* your melee plebs marching the road toward the enemy base */
+function marchUpdate(dt){
+  if(!S||S.battle||!S.march)return;
+  for(const m of S.march.slice()){
+    m.t+=dt; if(m.hitting>0)m.hitting-=dt; if(m.atk>0)m.atk-=dt;
+    // 1) anything close gets hit
+    let foe=null, fd=34;
+    for(const e of S.enemies){ const dd=Math.hypot(e.x-m.x,e.y-m.y); if(dd<fd){fd=dd;foe=e;} }
+    if(foe){
+      if(m.atk<=0){
+        m.atk=0.75;
+        foe.hp-=m.dmg;
+        addDmg(foe.x,foe.y-foe.sz*0.5,Math.round(m.dmg),'#ffd24a');
+        m.hitting=0.16;
+        if(foe.hp<=0){ foe.dead=true; S.slain++; addPassXP(2); }
+        for(let i=0;i<3;i++)burst(foe.x,foe.y,'#ffd24a');
+      }
+      continue;                       // stand and fight — don't walk past them
+    }
+    // 2) march up the road (wp counts DOWN toward the enemy base at PATH[0])
+    const tgt = m.wp>=0 ? PATH[m.wp] : PATH[0];
+    const dx=tgt.x-m.x, dy=tgt.y-m.y, dd=Math.hypot(dx,dy)||1;
+    const spd=88;
+    if(dd>4){ m.x+=dx/dd*Math.min(spd*dt,dd); m.y+=dy/dd*Math.min(spd*dt,dd); }
+    else if(m.wp>0) m.wp--;
+    // 3) reached their base? chew through it
+    if(Math.hypot(m.x-PATH[0].x, m.y-PATH[0].y) < 58){
+      S.ebHp -= m.dmg*dt*1.5; m.hitting=0.12;
+      if(Math.random()<0.35) burst(PATH[0].x+18,PATH[0].y+(Math.random()-0.5)*30,'#ffb347');
+      if(S.ebHp<=0){ S.ebHp=0; baseDestroyed(); return; }
+      S.shake=Math.max(S.shake,4);
+    }
+  }
+  S.march=S.march.filter(m=>m.hp>0);
+}
+function baseDestroyed(){
+  if(!S||S.over)return;
+  S.over=true; S.running=false;
+  for(let i=0;i<40;i++)burst(PATH[0].x,PATH[0].y,['#ffb347','#ff7a3a','#ffd24a'][i%3]);
+  endGame(true);
+}
 function raidUpdate(dt){
   if(!S||!S.battle||!S.raid)return;
   for(const r of S.raid.slice()){
@@ -3581,7 +3650,10 @@ function packPlebClick(k){
   const d=TOWERS[k]; const owned=plebOwned(k);
   if(!owned){
     const cost=PLEB_GATE[k];
-    if(PGOLD<cost){ tip('Need 👑'+cost+' shop gold to buy the '+d.name,1700); SFX.ui(); return; }
+    // earned-only plebs (shadow / tombstone / coffin) have no price — don't let
+    // PGOLD -= undefined turn shop gold into NaN
+    if(cost==null){ tip('🔒 '+d.name+' is earned, not bought — win it in-game',1900); SFX.ui(); return; }
+    if(!isFinite(PGOLD)||PGOLD<cost){ tip('Need 👑'+cost+' shop gold to buy the '+d.name,1700); SFX.ui(); return; }
     PGOLD-=cost; PACK_OWN['pleb:'+k]=true;
     saveJSON('plebania_pack_own',PACK_OWN); saveJSON('plebania_pgold',PGOLD);
     SFX.up(); for(let i=0;i<14;i++)burst(W/2,H/2,'#ffe08a');
@@ -3766,6 +3838,12 @@ function handleTap(p){
   const d=TOWERS[S.build];
   if(S.gold<d.cost){ tip('Need more gold! ('+d.cost+' 👑)',1400); return; }
   S.gold-=d.cost;
+  // MELEE plebs MARCH the road at the enemy base instead of standing guard
+  if(isMarcher(S.build)){
+    spawnMarcher(S.build,t.c,t.r); locked=null; syncHud(); buildBar();
+    showBanner('\u2694\ufe0f '+d.name+' marches on their base!','',1200);
+    return;
+  }
   S.towers.push({c:t.c,r:t.r,k:S.build,cd:0,level:1,spent:d.cost,angle:-0.4,flash:0,t:Math.random()*6,jab:0});
   SFX.place();
   const px=cx(t.c),py=cy(t.r);
@@ -3928,6 +4006,22 @@ function enemyUpdate(dt){
     if(e.slow>0)e.slow-=dt;
     if(e.burn>0){ e.burn-=dt; e.burnT-=dt;
       if(e.burnT<=0){ e.burnT=0.42; e.hp-= (e.burnDmg||6); addDmg(e.x,e.y-e.sz*0.6,Math.round(e.burnDmg||6),'#ff8a3a'); }
+    }
+    // an enemy in contact with one of your marchers stops and fights it
+    if(S.march&&S.march.length){
+      let mm=null, md=30;
+      for(const m of S.march){ const dd=Math.hypot(m.x-e.x,m.y-e.y); if(dd<md){md=dd;mm=m;} }
+      if(mm){
+        e.attackT=(e.attackT||0)-dt;
+        if(e.attackT<=0){
+          e.attackT=0.7;
+          const hit=(e.rank==='king'?34:e.rank==='boss'?22:e.rank==='champ'?14:8);
+          mm.hp-=hit; mm.hitting=0.16;
+          addDmg(mm.x,mm.y-24,'-'+hit,'#ff8a86');
+          if(mm.hp<=0){ for(let i=0;i<8;i++)burst(mm.x,mm.y,'#8ef0ff'); }
+        }
+        continue;
+      }
     }
     const tgt=PATH[e.wp+1];
     if(!tgt){ leak(e); continue; }
@@ -4205,6 +4299,9 @@ function render(dt){
 
   // village (home) marker
   drawVillage();
+  // the enemy base sits at the start of the road — smash it to win
+  if(!S.battle) drawEnemyBaseLane();
+  drawMarchers();
 
   // BATTLE MODE overlays: enemy base, raiders, AI walls
   if(S.battle) drawBattle();
@@ -4487,6 +4584,250 @@ function drawPleb(x,y,key,d,t,alpha){
     ctx.fillStyle='#5b2f92'; ctx.beginPath(); ctx.moveTo(-15,-22); ctx.lineTo(0,-52); ctx.lineTo(15,-22); ctx.closePath(); ctx.fill();
     ctx.fillStyle='#c9a227'; ctx.fillRect(-16,-23,32,4);
   }
+
+  /* =====================================================================
+     PLEBASS / EVENT plebs — every one gets its own silhouette so you can
+     tell them apart on the board at a glance.
+     ===================================================================== */
+  else if(key==='berserker'){ // dual axes, horned helm, red warpaint
+    const sw=Math.sin((t||0)*7)*0.16;
+    // horned helm
+    ctx.fillStyle='#8a4a2a'; ctx.beginPath(); ctx.arc(0,-16,15,Math.PI,0); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,-16,15,Math.PI,0); ctx.stroke();
+    ctx.fillStyle='#e8dcc0';
+    ctx.beginPath(); ctx.moveTo(-13,-18); ctx.quadraticCurveTo(-26,-30,-16,-34); ctx.quadraticCurveTo(-19,-26,-9,-21); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(13,-18); ctx.quadraticCurveTo(26,-30,16,-34); ctx.quadraticCurveTo(19,-26,9,-21); ctx.closePath(); ctx.fill();
+    // warpaint
+    ctx.strokeStyle='#b0301e'; ctx.lineWidth=3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-11,-9); ctx.lineTo(-4,-7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(11,-9); ctx.lineTo(4,-7); ctx.stroke();
+    // two axes, swinging opposite
+    [-1,1].forEach(sd=>{
+      ctx.save(); ctx.translate(sd*28,-6); ctx.rotate(sd*sw);
+      ctx.strokeStyle='#5a3f22'; ctx.lineWidth=4;
+      ctx.beginPath(); ctx.moveTo(0,10); ctx.lineTo(0,-16); ctx.stroke();
+      ctx.fillStyle='#cfd6dd';
+      ctx.beginPath(); ctx.moveTo(0,-16); ctx.quadraticCurveTo(sd*13,-22,sd*15,-10); ctx.quadraticCurveTo(sd*7,-12,0,-6); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle=INK; ctx.lineWidth=1.8; ctx.stroke();
+      ctx.restore();
+    });
+  }
+  else if(key==='longbow'){ // tall recurve bow, hood, quiver
+    // hood
+    ctx.fillStyle='#2f6b4f'; ctx.beginPath(); ctx.arc(0,-14,18,Math.PI*0.95,Math.PI*2.05); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-18,-12); ctx.quadraticCurveTo(0,-42,18,-12); ctx.quadraticCurveTo(0,-20,-18,-12); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.stroke();
+    // tall recurve bow on the right
+    ctx.strokeStyle='#6b4a26'; ctx.lineWidth=4.5; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(30,-40); ctx.quadraticCurveTo(48,-6,30,28); ctx.stroke();
+    ctx.strokeStyle='#efe6c8'; ctx.lineWidth=1.3;
+    ctx.beginPath(); ctx.moveTo(30,-40); ctx.lineTo(30,28); ctx.stroke();
+    // arrow nocked
+    ctx.strokeStyle='#8a6a3a'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(30,-6); ctx.lineTo(8,-6); ctx.stroke();
+    ctx.fillStyle='#cfd6dd'; ctx.beginPath(); ctx.moveTo(8,-6); ctx.lineTo(14,-10); ctx.lineTo(14,-2); ctx.closePath(); ctx.fill();
+    // quiver over the shoulder
+    ctx.fillStyle='#7a4a24'; ctx.save(); ctx.translate(-20,-6); ctx.rotate(0.45); ctx.fillRect(-5,-18,10,26); ctx.restore();
+    ctx.strokeStyle='#e8dcc0'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(-26,-24); ctx.lineTo(-22,-34); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-20,-25); ctx.lineTo(-16,-35); ctx.stroke();
+  }
+  else if(key==='dragonling'){ // little dragon: wings, snout, tail, fire puff
+    // wings
+    const flap=Math.sin((t||0)*6)*0.35;
+    [-1,1].forEach(sd=>{
+      ctx.save(); ctx.translate(sd*14,-12); ctx.rotate(sd*flap);
+      ctx.fillStyle='#8a2a1c';
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(sd*26,-24,sd*30,-6); ctx.quadraticCurveTo(sd*18,4,0,6); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.stroke();
+      ctx.restore();
+    });
+    // tail
+    ctx.strokeStyle='#c0402a'; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-12,14); ctx.quadraticCurveTo(-28,20,-24,6); ctx.stroke();
+    ctx.fillStyle='#8a2a1c'; ctx.beginPath(); ctx.moveTo(-24,6); ctx.lineTo(-31,9); ctx.lineTo(-25,-1); ctx.closePath(); ctx.fill();
+    // horns
+    ctx.strokeStyle='#e8dcc0'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(-6,-22); ctx.lineTo(-9,-33); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(6,-22); ctx.lineTo(9,-33); ctx.stroke();
+    // fire puff
+    ctx.fillStyle='rgba(255,140,40,.85)';
+    const fx=30+Math.sin((t||0)*5)*3;
+    ctx.beginPath(); ctx.arc(fx,-8,7,0,7); ctx.fill();
+    ctx.fillStyle='rgba(255,220,90,.9)'; ctx.beginPath(); ctx.arc(fx,-8,3.5,0,7); ctx.fill();
+  }
+  else if(key==='knight'){ // horse + rider + lance + crest shield
+    // horse body
+    ctx.fillStyle='#6b4a2a'; ctx.beginPath(); ctx.ellipse(-2,8,20,11,0,0,7); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2.4; ctx.stroke();
+    // legs
+    ctx.strokeStyle='#5a3f22'; ctx.lineWidth=4; ctx.lineCap='round';
+    const gait=Math.sin((t||0)*5)*3;
+    ctx.beginPath(); ctx.moveTo(-14,16); ctx.lineTo(-17+gait,28); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-4,17); ctx.lineTo(-6-gait,28); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(9,16); ctx.lineTo(12-gait,28); ctx.stroke();
+    // neck + head
+    ctx.fillStyle='#6b4a2a'; ctx.beginPath(); ctx.moveTo(12,2); ctx.lineTo(24,-14); ctx.lineTo(30,-8); ctx.lineTo(20,8); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.stroke();
+    // mane
+    ctx.strokeStyle='#2b2418'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(12,-2); ctx.lineTo(20,-18); ctx.stroke();
+    // rider torso + helm
+    ctx.fillStyle='#4a72b0'; ctx.beginPath(); ctx.arc(0,-16,11,0,7); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2.4; ctx.stroke();
+    ctx.fillStyle='#b9c2cc'; ctx.beginPath(); ctx.arc(0,-26,10,Math.PI,0); ctx.fill(); ctx.fillRect(-10,-26,20,6);
+    ctx.strokeStyle=INK; ctx.lineWidth=1.8; ctx.beginPath(); ctx.arc(0,-26,10,Math.PI,0); ctx.stroke();
+    // red plume
+    ctx.fillStyle='#c0392b'; ctx.beginPath(); ctx.moveTo(0,-36); ctx.quadraticCurveTo(9,-40,6,-28); ctx.quadraticCurveTo(3,-33,0,-31); ctx.closePath(); ctx.fill();
+    // lance
+    ctx.strokeStyle='#5a3f22'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(14,-2); ctx.lineTo(26,-44); ctx.stroke();
+    ctx.fillStyle='#cdd4db'; ctx.beginPath(); ctx.moveTo(26,-44); ctx.lineTo(32,-56); ctx.lineTo(22,-50); ctx.closePath(); ctx.fill();
+    // crest shield
+    ctx.fillStyle='#2f4f86'; ctx.beginPath(); ctx.moveTo(-15,-24); ctx.lineTo(-27,-24); ctx.lineTo(-27,-6); ctx.lineTo(-21,3); ctx.lineTo(-15,-6); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#e8c65a'; ctx.beginPath(); ctx.arc(-21,-14,4,0,7); ctx.fill();
+  }
+  else if(key==='mortar'){ // fat short mortar tube on a sandbag mound, crew pleb, shells
+    // sandbag mound
+    ctx.fillStyle='#a8916a';
+    [[-18,20],[-2,22],[14,20]].forEach(([bx,by])=>{
+      ctx.beginPath(); ctx.ellipse(bx,by,12,8,0,0,7); ctx.fill();
+      ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.stroke();
+    });
+    // fat, short, steeply-angled tube (classic mortar shape)
+    ctx.save(); ctx.translate(6,0); ctx.rotate(-0.72);
+    ctx.fillStyle='#3c3c46';
+    ctx.beginPath(); ctx.moveTo(-16,26); ctx.lineTo(-19,4); ctx.lineTo(-14,-14);
+    ctx.lineTo(14,-14); ctx.lineTo(19,4); ctx.lineTo(16,26); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2.6; ctx.stroke();
+    // wide black muzzle
+    ctx.fillStyle='#14141a';
+    ctx.beginPath(); ctx.ellipse(0,-14,14,6,0,0,7); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.stroke();
+    // reinforcing band
+    ctx.strokeStyle='#6e6e7a'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(-15,12); ctx.lineTo(15,12); ctx.stroke();
+    ctx.restore();
+    // muzzle flash
+    if(((t||0)*1.6%1)<0.2){
+      ctx.fillStyle='rgba(255,210,110,.9)';
+      ctx.beginPath(); ctx.arc(26,-30,11,0,7); ctx.fill();
+      ctx.fillStyle='rgba(255,255,200,.95)';
+      ctx.beginPath(); ctx.arc(26,-30,5,0,7); ctx.fill();
+    }
+    // shells
+    ctx.fillStyle='#c9a227';
+    [-26,-18].forEach((sx,si)=>{ ctx.beginPath(); ctx.ellipse(sx,16-si*3,4.5,8,0,0,7); ctx.fill(); ctx.strokeStyle=INK; ctx.lineWidth=1.6; ctx.stroke(); });
+    // crew pleb with helmet
+    drawPlebShape(-22,-2,0.5,Math.sin((t||0)*2.6)*0.8);
+    ctx.fillStyle='#5f6b3a'; ctx.beginPath(); ctx.arc(-22,-14,9,Math.PI,0); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=1.8; ctx.beginPath(); ctx.arc(-22,-14,9,Math.PI,0); ctx.stroke();
+  }
+  else if(key==='orchard'){ // apple tree + baskets of apples
+    // trunk
+    ctx.fillStyle='#5a3f22'; ctx.fillRect(-5,-4,10,26);
+    ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.strokeRect(-5,-4,10,26);
+    // canopy
+    ctx.fillStyle='#3f7d3f';
+    ctx.beginPath(); ctx.arc(-14,-20,15,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(14,-20,15,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(0,-30,16,0,7); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.stroke();
+    // apples
+    ctx.fillStyle='#c0392b';
+    [[-16,-22],[8,-32],[17,-16],[-4,-16],[2,-26]].forEach(([ax,ay])=>{
+      ctx.beginPath(); ctx.arc(ax,ay,3.6,0,7); ctx.fill();
+      ctx.strokeStyle=INK; ctx.lineWidth=1.2; ctx.stroke();
+    });
+    // basket
+    ctx.fillStyle='#a8813f'; ctx.beginPath(); ctx.moveTo(-24,20); ctx.lineTo(24,20); ctx.lineTo(19,30); ctx.lineTo(-19,30); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#c0392b';
+    [-12,0,12].forEach(bx=>{ ctx.beginPath(); ctx.arc(bx,19,3.4,0,7); ctx.fill(); });
+  }
+  else if(key==='shadow'){ // hooded wraith, purple glow, wispy tail
+    const pulse=0.5+0.5*Math.sin((t||0)*2.4);
+    // aura
+    ctx.globalAlpha=0.28+0.22*pulse;
+    ctx.fillStyle='#7a5ac8'; ctx.beginPath(); ctx.arc(0,-8,30,0,7); ctx.fill();
+    ctx.globalAlpha=1;
+    // wispy cloak instead of legs
+    ctx.fillStyle='#3a2a52';
+    ctx.beginPath(); ctx.moveTo(-17,-6);
+    ctx.quadraticCurveTo(-22,14,-13,26);
+    ctx.quadraticCurveTo(-6,20,0,27);
+    ctx.quadraticCurveTo(6,20,13,26);
+    ctx.quadraticCurveTo(22,14,17,-6);
+    ctx.quadraticCurveTo(0,-24,-17,-6); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2.6; ctx.stroke();
+    // hood brim
+    ctx.fillStyle='#2a1e3c';
+    ctx.beginPath(); ctx.moveTo(-15,-8); ctx.quadraticCurveTo(0,-34,15,-8); ctx.quadraticCurveTo(0,-16,-15,-8); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.stroke();
+    // glowing eyes
+    ctx.fillStyle='rgba(190,150,255,'+(0.65+0.35*pulse)+')';
+    ctx.beginPath(); ctx.arc(-6,-6,3.2,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(6,-6,3.2,0,7); ctx.fill();
+    // shadow bolt in hand
+    ctx.strokeStyle='rgba(170,120,255,.9)'; ctx.lineWidth=3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(20,-10); ctx.lineTo(34,-22); ctx.stroke();
+    ctx.fillStyle='rgba(210,180,255,.95)'; ctx.beginPath(); ctx.arc(35,-23,4,0,7); ctx.fill();
+  }
+  else if(key==='tombstone'){ // churchyard headstone + shovel, pleb peeking over it
+    // rounded headstone (no coffin — that's the Coffin Pleb)
+    ctx.fillStyle='#8d8a94';
+    ctx.beginPath();
+    ctx.moveTo(-19,30); ctx.lineTo(-19,-6);
+    ctx.quadraticCurveTo(-19,-26,0,-26);
+    ctx.quadraticCurveTo(19,-26,19,-6);
+    ctx.lineTo(19,30); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2.8; ctx.stroke();
+    // R.I.P. engraving so it never reads as a coffin
+    ctx.fillStyle='#5e5b68'; ctx.textAlign='center';
+    ctx.font='bold 9px Georgia,serif'; ctx.fillText('R.I.P.',0,-6);
+    ctx.font='11px Georgia,serif'; ctx.fillText('\u2020',0,11);
+    // chipped edge
+    ctx.strokeStyle='#6e6b78'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(13,-16); ctx.lineTo(17,-11); ctx.lineTo(13,-6); ctx.stroke();
+    // pleb peeking over the top of the stone
+    drawPlebShape(0,-26,0.62,Math.sin((t||0)*2.8)*0.9);
+    // shovel planted beside it (this is its weapon)
+    ctx.strokeStyle='#5a3f22'; ctx.lineWidth=4; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(27,26); ctx.lineTo(27,-14); ctx.stroke();
+    ctx.fillStyle='#9aa7b4';
+    ctx.beginPath(); ctx.moveTo(27,-14); ctx.lineTo(36,-6); ctx.lineTo(18,-6); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2; ctx.stroke();
+    // grass tufts
+    ctx.strokeStyle='#3f7d3f'; ctx.lineWidth=2.4;
+    [-26,-20,22].forEach(gx=>{ ctx.beginPath(); ctx.moveTo(gx,30); ctx.lineTo(gx+2,23); ctx.stroke(); });
+    // floating wisp
+    ctx.fillStyle='rgba(200,190,230,.55)';
+    ctx.beginPath(); ctx.arc(-26,-28+Math.sin((t||0)*2)*2,4,0,7); ctx.fill();
+  }
+  else if(key==='coffin'){ // coffin on the shoulder + mourner veil
+    // coffin, tilted, carried on the shoulder
+    ctx.save(); ctx.translate(-26,-14); ctx.rotate(-0.22);
+    ctx.fillStyle='#4a3550';
+    ctx.beginPath(); ctx.moveTo(-8,-20); ctx.lineTo(8,-20); ctx.lineTo(11,-6); ctx.lineTo(9,20); ctx.lineTo(-9,20); ctx.lineTo(-11,-6); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2.6; ctx.stroke();
+    ctx.strokeStyle='#c9b8d8'; ctx.lineWidth=2.4; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(0,-12); ctx.lineTo(0,4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-6,-6); ctx.lineTo(6,-6); ctx.stroke();
+    ctx.restore();
+    // veil over the face
+    ctx.fillStyle='rgba(60,48,74,.92)';
+    ctx.beginPath(); ctx.moveTo(-17,-14); ctx.quadraticCurveTo(0,-36,17,-14); ctx.lineTo(14,6); ctx.quadraticCurveTo(0,0,-14,6); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2.2; ctx.stroke();
+    // pale glowing eyes through the veil
+    ctx.fillStyle='rgba(200,180,230,.95)';
+    ctx.beginPath(); ctx.arc(-6,-6,2.6,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(6,-6,2.6,0,7); ctx.fill();
+    // soil dropping from the coffin
+    ctx.fillStyle='#5a5140';
+    const dy=((t||0)*26)%18;
+    ctx.beginPath(); ctx.arc(-30,4+dy,2.4,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(-24,10+((t||0)*20)%16,1.8,0,7); ctx.fill();
+  }
   ctx.restore();
 }
 function drawMiniPleb(x,y,col){ ctx.save(); drawPlebShape(x,0,0.5,0); ctx.restore(); }
@@ -4650,6 +4991,48 @@ function drawVillage(){
   ctx.restore();
 }
 
+/* ---------- LANE PUSH: their base + your marching plebs ---------- */
+function drawEnemyBaseLane(){
+  const eb=PATH[0]; if(!eb)return;
+  const ex=eb.x, ey=eb.y;
+  const hurt=(S.ebT>0)?1:0;
+  ctx.save(); ctx.translate(ex-24,ey);
+  if(hurt){ ctx.shadowColor='#ff7a3a'; ctx.shadowBlur=22; }
+  ctx.fillStyle='#4a2c2c'; ctx.fillRect(-2,-46,52,54);
+  ctx.fillStyle='#5b3434'; ctx.beginPath(); ctx.moveTo(-10,-46); ctx.lineTo(24,-74); ctx.lineTo(58,-46); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#1b1210'; ctx.fillRect(18,-20,18,26);
+  ctx.fillStyle='#ff8a5a'; ctx.fillRect(2,-34,10,10);
+  ctx.fillStyle='#e0b34a';
+  ctx.beginPath(); ctx.moveTo(-2,-52); ctx.lineTo(-2,-82); ctx.lineTo(-22,-74); ctx.lineTo(-2,-66); ctx.closePath(); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#f6d9a8'; ctx.font='700 12px Georgia,serif'; ctx.textAlign='center'; ctx.fillText('THEIR BASE',22,-86);
+  // health bar
+  const bw=128, bx=22-bw/2, by=-108;
+  ctx.fillStyle='rgba(0,0,0,.65)'; ctx.fillRect(bx-2,by-2,bw+4,13);
+  const frac=Math.max(0,Math.min(1,S.ebHp/S.ebMax));
+  ctx.fillStyle=frac>0.5?'#e05a3a':frac>0.25?'#f0c04a':'#7bd45a';
+  ctx.fillRect(bx,by,bw*frac,9);
+  ctx.strokeStyle='rgba(0,0,0,.8)'; ctx.lineWidth=1.5; ctx.strokeRect(bx,by,bw,9);
+  ctx.fillStyle='#ffe0c0'; ctx.font='800 13px Georgia,serif';
+  ctx.strokeStyle='rgba(0,0,0,.85)'; ctx.lineWidth=3;
+  const lbl=Math.max(0,Math.ceil(S.ebHp))+' / '+S.ebMax;
+  ctx.strokeText(lbl,22,by-6); ctx.fillText(lbl,22,by-6);
+  ctx.restore();
+}
+function drawMarchers(){
+  if(!S.march||!S.march.length)return;
+  for(const m of S.march){
+    ctx.save(); ctx.translate(m.x,m.y);
+    if(m.hitting>0){ ctx.shadowColor='#fff2c0'; ctx.shadowBlur=16; }
+    drawPleb(0,0,m.k,TOWERS[m.k],m.t,1);
+    ctx.shadowBlur=0;
+    // little health bar
+    ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(-15,-38,30,4);
+    ctx.fillStyle='#7bd45a'; ctx.fillRect(-15,-38,30*Math.max(0,m.hp/m.maxhp),4);
+    ctx.restore();
+  }
+}
+
 /* ---------- BATTLE MODE overlays (base wars) ---------- */
 function drawBattle(){
   const eb=PATH[0];
@@ -4739,6 +5122,7 @@ function loop(now){
       heroUpdate(dt);
       if(GODMODE&&S.hero){ S.hero.hp=S.hero.maxhp; S.hero.down=false; }
       projUpdate(dt);
+      marchUpdate(dt);
       if(S.battle){
         raidUpdate(dt);
         battleAI(dt);
@@ -4928,12 +5312,13 @@ window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked()
   spawnE:(t)=>spawn(t), effDmg:(o)=>effDmg(o), packEff:(k,s)=>packEffect(k,s),
   show:show, battle:newBattle, closeVS:closeVS, get LB(){return LB;}, lose:battleLose, sbreak:streakBreakFX,
   startMatch:startMatch, mmTick:mmTick, finishMatch:finishMatch, mmForce:(ms)=>{MM_START=Date.now()-ms; mmTick();}, get MM(){return {done:MM_DONE,found:MM_FOUND,max:MM_MAX_MS,start:MM_START};}, win:battleWin,
-  get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor, startCrypt:startCrypt, get PLEB(){return PLEB;}, set PLEB(v){PLEB=v;}, openCoffinBox:openCoffinBox, get coffinOpen(){return coffinOpen();}, endGame:endGame, grantPleb:grantPleb, get BUNDLES(){return BUNDLES;}, openCheckout:openCheckout, renderMart:renderMart, get PACK_OWN(){return PACK_OWN;}, get TOWERS(){return TOWERS;},
+  get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor, startCrypt:startCrypt, drawPleb:drawPleb, get ctx(){return ctx;}, get ORDER(){return ORDER;}, get PLEB(){return PLEB;}, set PLEB(v){PLEB=v;}, openCoffinBox:openCoffinBox, get coffinOpen(){return coffinOpen();}, endGame:endGame, grantPleb:grantPleb, get BUNDLES(){return BUNDLES;}, openCheckout:openCheckout, renderMart:renderMart, get PACK_OWN(){return PACK_OWN;}, get TOWERS(){return TOWERS;},
   tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
 
 // interval-driven loop: runs even when the game sits in an unfocused iframe
 setInterval(()=>loop(performance.now()),1000/60);
 })();
+
 </script>
 </body>
 </html>
