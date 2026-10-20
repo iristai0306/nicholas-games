@@ -968,7 +968,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.31 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.32 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -3031,12 +3031,22 @@ let MM_T=null, MM_START=0, MM_FOUND=null, MM_RANKED=false, MM_DONE=false;
 function realCandidates(){
   const me=(ME&&ME.key)||null;
   const myElo=LB.rank||0;
+  /* ONLY online players. An offline account is somebody's stale record -
+     matching them means fighting a ghost, so they are excluded entirely. */
   return Object.keys(CLOUD.accounts||{})
     .filter(k=>k!==me)
     .map(k=>CLOUD.accounts[k])
-    .filter(a=>a&&a.u&&!a.bot)          // a real account, not a placeholder
-    .map(a=>({a:a, d:Math.abs((a.rank||0)-myElo), online:presenceOf(a).online}))
-    .sort((x,y)=>(y.online?1:0)-(x.online?1:0) || x.d-y.d);
+    .filter(a=>a&&a.u&&!a.bot)
+    .filter(a=>presenceOf(a).online)
+    .map(a=>({a:a, d:Math.abs((a.rank||0)-myElo)}))
+    .sort((x,y)=>x.d-y.d);
+}
+/* real accounts that exist but are offline - only used for the search message */
+function offlineRealCount(){
+  const me=(ME&&ME.key)||null;
+  return Object.keys(CLOUD.accounts||{}).filter(k=>k!==me)
+    .map(k=>CLOUD.accounts[k])
+    .filter(a=>a&&a.u&&!a.bot&&!presenceOf(a).online).length;
 }
 
 function startMatch(ranked){
@@ -3081,10 +3091,11 @@ function mmTick(){
                  online:presenceOf(pick).online, bot:false };
       finishMatch(); return;
     }
-    if($('mmSub')) $('mmSub').textContent='found '+(cands.length===1?'a player':cands.length+' players')+' · locking in…';
+    if($('mmSub')) $('mmSub').textContent='found '+(cands.length===1?'a player online':cands.length+' players online')+' · locking in…';
   }else{
-    if($('mmSub')) $('mmSub').textContent='no real players online · waiting…';
-    if($('mmHint')) $('mmHint').textContent='bot opponent at 1:00';
+    const off=offlineRealCount();
+    if($('mmSub')) $('mmSub').textContent='no players online · waiting…';
+    if($('mmHint')) $('mmHint').textContent=(off?(off+' player'+(off===1?'':'s')+' offline · '):'')+'bot opponent at 1:00';
   }
 
   if(el>=MM_MAX_MS){                    // one full minute -> bots
@@ -3092,7 +3103,7 @@ function mmTick(){
                key:null, rank:rankTier(LB.rank||0), elo:Math.max(0,(LB.rank||0)+((Math.random()*80|0)-40)),
                color:rankColor(LB.rank||0), level:Math.max(1,(LB.level||1)+(Math.random()*3|0)-1),
                streak:0, best:0, kills:0, online:false, bot:true };
-    if($('mmSub')) $('mmSub').textContent='no players found · sending a bot';
+    if($('mmSub')) $('mmSub').textContent='nobody came online · sending a bot';
     setTimeout(finishMatch,700);
   }
 }
