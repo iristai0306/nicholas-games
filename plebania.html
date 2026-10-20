@@ -402,6 +402,7 @@
   .pm-tabs{gap:7px;margin-top:0}
   .pm-tab{padding:5px 14px;font-size:15px}
   #martBody{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+  #martBody.scroll{overflow-y:auto;overflow-x:hidden;padding-right:6px}   /* money tab must scroll: 2 bundles */
   .pm-back{margin-top:6px;flex:0 0 auto}
   .pm-back .mbtn.small{font-size:15px;padding:7px 0}
   .pbanner{font-size:19px;padding:5px 20px;margin:0 auto 8px}
@@ -970,7 +971,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.34 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.35 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1481,9 +1482,10 @@ const TOWERS={
   orchard  :{name:'Orchard',  emoji:'🍎',   cost:120, kind:'econ', income:14, every:2.2, color:'#b03a3a', desc:'+14 gold / 2.2s'},
   // ---- EVENT plebs: never bought with gold — earned from bundles / modes ----
   shadow   :{name:'Shadow Pleb',     emoji:'🌑', cost:150, dmg:34, rate:0.62, range:150, kind:'ranged', color:'#5a3f8a', desc:'Shadow bolt · pierces the dark'},
+  coffin   :{name:'Coffin Pleb',     emoji:'\u26b0\ufe0f', cost:180, dmg:44, rate:0.95, range:135, kind:'splash', splash:64, color:'#4a3550', desc:'Buries the dead \u00b7 TEMPORARY event pleb'},
   tombstone:{name:'Tombstone Pleb',  emoji:'🪦', cost:210, dmg:52, rate:1.25, range:120, kind:'splash', splash:78, color:'#6b6474', desc:'Grave slam · heavy AoE'}
 };
-const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm','berserker','longbow','dragonling','knight','mortar','orchard','shadow','tombstone'];
+const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm','berserker','longbow','dragonling','knight','mortar','orchard','shadow','tombstone','coffin'];
 const MAXPER=3;                       // build a max of 3 of anything that is capped (see CAP)
 const CAP={farm:3, orchard:2};        // only Farms & Orchards are capped — other units you can place freely
 function capOf(k){ if(String(k||'').indexOf('pk_')===0) return 2; return CAP[k]||Infinity; }
@@ -1688,6 +1690,7 @@ const UNLOCK={ farmhand:1, poacher:1, farm:1, militia:3, alchemist:5, catapult:7
 function isExtra(k){ return PACK_EXTRA.indexOf(k)>=0; }
 function plebEquipped(k){ return typeof PACK_OWN!=='undefined' && !!PACK_OWN['equipped:'+k]; }
 function unlockedUnit(k){
+  if(k==='coffin' && !coffinOpen()) return false;   // temporary event pleb expires
   if(plekeyOwnedUnit(k)) return true;         // Plekeys you own are always placeable
   if(isExtra(k)) return plebEquipped(k);      // extra plebs come from PLEB MART + PLEBPACK, never waves
   return S.reached>=(UNLOCK[k]||1); }
@@ -1971,6 +1974,24 @@ function buyCyber(){
   showBanner('\ud83e\udd16 Cyber Pleb Deal! +50 Blep \u26a1 + a mutation','gold',1800); renderMart();
 }
 /* grant a pleb outright (event rewards / bundles) — owns it and equips if there's room */
+/* ---- TEMPORARY EVENT: the Coffin Pleb -------------------------------------
+   Time-boxed on purpose. After COFFIN_UNTIL it can't be claimed any more,
+   the box disappears from PLEB BOXES, and the pleb drops out of the tray. */
+const COFFIN_UNTIL = new Date('2026-11-08T00:00:00Z').getTime();   // event closes
+function coffinOpen(){ return Date.now() < COFFIN_UNTIL; }
+function coffinDaysLeft(){ return Math.max(0, Math.ceil((COFFIN_UNTIL-Date.now())/86400000)); }
+function coffinClaimed(){ return !!loadJSON('plebania_coffin_claimed',false); }
+function claimCoffin(){
+  if(!coffinOpen()){ tip('The Coffin event is over \u26b0\ufe0f',1600); return; }
+  if(coffinClaimed()){ tip('You already dug up the Coffin Pleb',1600); return; }
+  if(PLEB < 600){ tip('Need \u26a1 600 Pleb to break the coffin open',1600); return; }
+  PLEB -= 600; saveJSON('plebania_pleb',PLEB);
+  saveJSON('plebania_coffin_claimed',true);
+  grantPleb('coffin');
+  SFX.up(); for(let i=0;i<24;i++)burst(W/2,H/2,'#b06ad0');
+  showBanner('\u26b0\ufe0f THE COFFIN PLEB RISES! It\u2019s in your army.','gold',2600);
+  renderMart(); syncHud();
+}
 function grantPleb(k){
   if(!TOWERS[k]) return false;
   if(plebOwned(k)) return false;
@@ -2018,6 +2039,7 @@ function renderMart(){
   const body=$('martBody');
 
   // ---- MONEY BUNDLES tab: 1:1 with Nicholas's drawing (empty price boxes + Blep bundle + Plekey) ----
+  body.classList.toggle('scroll', MARTTAB==='money');
   if(MARTTAB==='money'){
     body.innerHTML=
       '<div class="pm-r1">'+
@@ -2117,10 +2139,20 @@ function renderMart(){
         '<li>\ud83d\udd11 PLEB MART \u2014 Pledoption center, Money bundles, Pleb boxes, Codes, Gift &amp; News.</li>'+
         '<li>\u2728 Coming soon \u2014 more Plekeys, hero weapons, boss rush.</li></ul>';
     }else{ // boxes
+      const cfEv = coffinOpen() && !coffinClaimed();
+      const cfBan = cfEv
+        ? '<div class="pm-skin" style="border-color:#7a4fc0;background:rgba(122,79,192,.10)">'+
+            '<div style="height:52px;display:flex;align-items:center;justify-content:center;font-size:40px">\u26b0\ufe0f</div>'+
+            '<div class="sn">Coffin Pleb <span style="font-size:11px;color:#7a4fc0;font-weight:800">TEMPORARY</span></div>'+
+            '<div class="sr">Limited event \u00b7 '+coffinDaysLeft()+' day'+(coffinDaysLeft()===1?'':'s')+' left</div>'+
+            '<div class="pm-btndisplay'+(PLEB>=600?'':' cant')+'" data-coffin="1">\u26a1 600</div></div>'
+        : '';
       body.innerHTML='<div class="pm-sub" style="margin-top:6px">Spend \u26a1 Pleb on boxes for Blep. The \ud83d\udd11 Unique Plekey is <b>not</b> in boxes \u2014 it comes from the Plekey Bundle only.</div>'+
         '<div class="pm-sk">'+BOXES.map(b=>'<div class="pm-skin"><div style="height:52px;display:flex;align-items:center;justify-content:center">'+svg(b.art)+'</div><div class="sn">'+b.name+'</div>'+
           '<div class="sr">+'+b.pleb+' \u26a1 Blep</div>'+
           '<div class="pm-btndisplay'+(PLEB>=b.cost?'':' cant')+'" data-box="'+b.id+'">\u26a1 '+b.cost+'</div></div>').join('')+'</div>';
+      if(cfBan){ body.querySelector('.pm-sk').insertAdjacentHTML('afterbegin', cfBan); }
+      body.querySelectorAll('[data-coffin]').forEach(el=>el.onclick=claimCoffin);
       body.querySelectorAll('[data-box]').forEach(el=>el.onclick=()=>openBox(el.dataset.box));
     }
   }
@@ -3457,7 +3489,7 @@ const PACK_ITEMS={
 const PLEB_GATE={ berserker:250, longbow:320, dragonling:380, knight:340, mortar:520, orchard:220 };  // shadow & tombstone are EARNED, not bought
 function plebOwned(k){ return !!PACK_OWN['pleb:'+k]; }
 const PACK_SLOTS=[['weapon','🗡️ Weapon','more damage'],['armour','🛡️ Armour','more range &amp; farm gold'],['boots','👟 Boots','attack faster']];
-const PACK_EXTRA=['berserker','longbow','dragonling','knight','mortar','orchard','shadow','tombstone'];   // plebs you equip into your army
+const PACK_EXTRA=['berserker','longbow','dragonling','knight','mortar','orchard','shadow','tombstone','coffin'];   // plebs you equip into your army
 const MAX_ARMY=5;                                                                    // max extra plebs equipped at once
 function armyCount(){ return PACK_EXTRA.filter(k=>PACK_OWN['equipped:'+k]).length; }
 function plebInArmy(k){ return !isExtra(k) || !!PACK_OWN['equipped:'+k]; }
@@ -4893,7 +4925,7 @@ window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked()
   spawnE:(t)=>spawn(t), effDmg:(o)=>effDmg(o), packEff:(k,s)=>packEffect(k,s),
   show:show, battle:newBattle, closeVS:closeVS, get LB(){return LB;}, lose:battleLose, sbreak:streakBreakFX,
   startMatch:startMatch, mmTick:mmTick, finishMatch:finishMatch, mmForce:(ms)=>{MM_START=Date.now()-ms; mmTick();}, get MM(){return {done:MM_DONE,found:MM_FOUND,max:MM_MAX_MS,start:MM_START};}, win:battleWin,
-  get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor, startCrypt:startCrypt, endGame:endGame, grantPleb:grantPleb, get BUNDLES(){return BUNDLES;}, openCheckout:openCheckout, renderMart:renderMart, get PACK_OWN(){return PACK_OWN;}, get TOWERS(){return TOWERS;},
+  get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor, startCrypt:startCrypt, get PLEB(){return PLEB;}, set PLEB(v){PLEB=v;}, claimCoffin:claimCoffin, get coffinOpen(){return coffinOpen();}, endGame:endGame, grantPleb:grantPleb, get BUNDLES(){return BUNDLES;}, openCheckout:openCheckout, renderMart:renderMart, get PACK_OWN(){return PACK_OWN;}, get TOWERS(){return TOWERS;},
   tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
 
 // interval-driven loop: runs even when the game sits in an unfocused iframe
