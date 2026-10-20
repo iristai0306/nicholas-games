@@ -603,6 +603,32 @@
   .card .cd{font:9.5px Georgia,serif;color:#c3ae7c;margin-top:2px;min-height:26px;line-height:1.15;display:flex;align-items:flex-start;justify-content:center;text-align:center}
   .card.pass{box-shadow:0 0 0 2px #b06ad0,0 3px 0 rgba(0,0,0,.4)}
 
+  /* ---------- MATCHMAKING ---------- */
+  #mm{position:absolute;inset:0;z-index:16;display:none;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 45%,rgba(22,16,6,.96) 0%,rgba(7,5,2,.985) 70%);
+    backdrop-filter:blur(7px)}
+  #mm.on{display:flex}
+  #mm.out{animation:mmOut .28s ease-in forwards}
+  @keyframes mmOut{to{opacity:0}}
+  #mm .mmwrap{text-align:center;position:relative}
+  #mm .mmring{position:relative;width:132px;height:132px;margin:0 auto 20px;border-radius:50%;
+    background:conic-gradient(from 0deg,rgba(255,210,74,0),rgba(255,210,74,.95),rgba(255,210,74,0) 62%);
+    animation:mmSpin 1.15s linear infinite;
+    -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));
+            mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px))}
+  @keyframes mmSpin{to{transform:rotate(360deg)}}
+  #mm .mmball{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:44px;animation:mmPulse 1.5s ease-in-out infinite}
+  @keyframes mmPulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.14);opacity:1}}
+  #mm .mmlbl{font:900 20px Georgia,serif;letter-spacing:6px;color:#ffd24a;text-shadow:0 3px 0 #000}
+  #mm .mmtimer{font:900 40px Georgia,serif;color:#fff3cf;margin-top:4px;letter-spacing:2px;
+    text-shadow:0 4px 0 #000,0 0 26px rgba(255,210,74,.45)}
+  #mm .mmsub{font:700 15px Georgia,serif;color:#cdb885;margin-top:8px;letter-spacing:.5px}
+  #mm .mmhint{font:700 13px Georgia,serif;color:#9a8a72;margin-top:14px;min-height:18px;letter-spacing:.3px}
+  #mm .mmcancel{margin-top:22px;display:inline-block;cursor:pointer;border:2px solid #4a3616;border-radius:999px;
+    padding:8px 28px;font:800 14px Georgia,serif;color:#d8c48c;background:rgba(0,0,0,.4)}
+  #mm .mmcancel:hover{color:#ffd9a0;border-color:#6a4a12}
+
   /* ---------- VS INTRO (who am I versing?) ---------- */
   #vs{position:absolute;inset:0;z-index:15;display:none;align-items:center;justify-content:center;
     background:radial-gradient(circle at 50% 50%,rgba(24,16,4,.9) 0%,rgba(4,3,1,.97) 70%);
@@ -939,7 +965,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.29 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.30 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1055,6 +1081,14 @@
     </div>
 
     <div id="banner"></div>
+    <div id="mm"><div class="mmwrap">
+      <div class="mmring"><div class="mmball">\u2694\ufe0f</div></div>
+      <div class="mmlbl">FINDING OPPONENT</div>
+      <div class="mmtimer" id="mmTimer">0:00</div>
+      <div class="mmsub" id="mmSub">scanning the board\u2026</div>
+      <div class="mmhint" id="mmHint">real players first \u00b7 bots only after 1:00</div>
+      <div class="mmcancel" id="mmCancel">Cancel</div>
+    </div></div>
     <div id="vs"></div>
     <div id="tip"></div>
 
@@ -1324,8 +1358,8 @@ $('acctSwitch').onclick=()=>switchAccount();
 $('acctDel').onclick=()=>deleteAccount();
 $('rotateSkip').onclick=()=>{ ROTATE_SKIP=true; try{ localStorage.setItem('plebania_rotate_skip','1'); }catch(e){} checkOrient(); };
 $('boardBack').onclick=()=>show('menu');
-$('battleBtn').onclick=()=>{ initAudio(); newBattle(false); show('game'); };
-$('rankedBtn').onclick=()=>{ initAudio(); newBattle(true); show('game'); };
+$('battleBtn').onclick=()=>{ initAudio(); show('game'); startMatch(false); };
+$('rankedBtn').onclick=()=>{ initAudio(); show('game'); startMatch(true); };
 if($('raidBtn'))$('raidBtn').onclick=()=>launchRaid();
 $('martBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('mart'); };
 $('packBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('pack'); SFX.ui(); };
@@ -1590,7 +1624,7 @@ function newGame(world){
     reached:1, rally:0, speed:1,
     towers:[], buildings:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
     shake:0, hurt:0, slain:0, sel:null, selB:null, build:'farmhand',
-    waveTimer:0, farmAcc:0, mart:{}, vsHold:false, opp:null, battle:false, ranked:false
+    waveTimer:0, farmAcc:0, mart:{}, vsHold:false, mmHold:false, opp:null, battle:false, ranked:false
   };
   // (battle flags cleared here too — otherwise a stale vsHold would freeze the next campaign run)
   hover=null; locked=null; buildPath(w);
@@ -2425,9 +2459,12 @@ function startPresence(){
 function rivalName(){ const ks=Object.keys(CLOUD.accounts||{}); if(!ks.length)return 'The Baron';
   const a=CLOUD.accounts[ks[(Math.random()*ks.length)|0]]; return a&&a.u?a.u:'The Baron'; }
 /* full opponent record for the VS card — never picks you, prefers players near your elo */
-function rival(){
+function rival(ranked){
   const ks=Object.keys(CLOUD.accounts||{}).filter(k=>!(ME&&k===ME.key));
-  if(!ks.length) return {name:'The Baron', rank:'Baron of the Barrens', elo:null, color:'#b08d57',
+  if(!ks.length) return {name:ranked?('Bot '+String.fromCharCode(65+(Math.random()*26|0))):'The Baron',
+                         rank:ranked?rankTier(LB.rank||0):'Baron of the Barrens',
+                         elo:ranked?Math.max(0,(LB.rank||0)+((Math.random()*80|0)-40)):null,
+                         color:rankColor(LB.rank||0),
                          level:9, streak:0, best:0, kills:0, online:false, bot:true, key:null};
   // sort by elo distance, then take one of the closest few at random so it's not always the same guy
   const me=LB.rank||0;
@@ -2980,21 +3017,119 @@ function renderBoard(){
    BATTLE MODE (base wars) - from Nicholas's sketch: enemy base vs your base,
    winding road, villages defend, AI can place, RAID to crush their base.
    ========================================================= */
-function newBattle(ranked){
+/* =========================================================
+   MATCHMAKING - find a REAL player first, bots only after 1:00
+   The board is a shared MQTT topic, so every real account on it is a
+   real person we can match against. Nobody real in 60s -> bot.
+   ========================================================= */
+const MM_MAX_MS=60000;                  // 1 minute of real search, then bots
+let MM_T=null, MM_START=0, MM_FOUND=null, MM_RANKED=false, MM_DONE=false;
+
+function realCandidates(){
+  const me=(ME&&ME.key)||null;
+  const myElo=LB.rank||0;
+  return Object.keys(CLOUD.accounts||{})
+    .filter(k=>k!==me)
+    .map(k=>CLOUD.accounts[k])
+    .filter(a=>a&&a.u&&!a.bot)          // a real account, not a placeholder
+    .map(a=>({a:a, d:Math.abs((a.rank||0)-myElo), online:presenceOf(a).online}))
+    .sort((x,y)=>(y.online?1:0)-(x.online?1:0) || x.d-y.d);
+}
+
+function startMatch(ranked){
+  MM_RANKED=!!ranked; MM_DONE=false; MM_FOUND=null; MM_START=Date.now();
   seasonRoll(); installSeasonPlebs(); installPlekeyPlebs();
-  const opp = rival();                       // pick BEFORE newGame wipes S
-  newGame(S?S.world:0);
+  newGame(S?S.world:0);                 // fresh board behind the search
+  S.battle=true; S.ranked=MM_RANKED; S.mmHold=true; S.vsHold=true;
+  S.running=false; S.between=true;
+  if($('startBtn'))$('startBtn').style.display='none';
+  syncHud(); buildBar(); buildBar2(); updateRaidBtn();
+  const mm=$('mm'); if(!mm)return;
+  mm.classList.remove('out'); mm.classList.add('on');
+  $('mmSub').textContent='scanning the board…';
+  const cands=realCandidates();
+  $('mmHint').textContent=cands.length
+    ? (cands.length+' player'+(cands.length===1?'':'s')+' found · matching…')
+    : 'no players on the board right now · bots after 1:00';
+  if($('mmCancel'))$('mmCancel').onclick=()=>cancelMatch();
+  clearInterval(MM_T);
+  MM_T=setInterval(mmTick,100);
+  mmTick();
+}
+
+function mmTick(){
+  if(MM_DONE)return;
+  const el=Math.min(MM_MAX_MS, Date.now()-MM_START);
+  const secs=el/1000;
+  const t=$('mmTimer');
+  if(t) t.textContent=Math.floor(secs/60)+':'+String(Math.floor(secs%60)).padStart(2,'0');
+
+  const cands=realCandidates();
+  /* real players: match after a short, believable search window (2.2-4.5s).
+     Bots: only once the full minute is up. */
+  if(cands.length){
+    const need=2200+Math.min(2300,cands.length*120);
+    if(el>=need){
+      const pick=cands[Math.floor(Math.random()*Math.min(3,cands.length))].a;
+      MM_FOUND={ name:pick.u||'Pleb', key:pick.key||null,
+                 rank:rankTier(pick.rank||0), elo:pick.rank||0, color:rankColor(pick.rank||0),
+                 level:pick.level||1, streak:pick.cur||0,
+                 best:pick.streak||pick.bestStreak||0, kills:pick.kills||0,
+                 online:presenceOf(pick).online, bot:false };
+      finishMatch(); return;
+    }
+    if($('mmSub')) $('mmSub').textContent='found '+(cands.length===1?'a player':cands.length+' players')+' · locking in…';
+  }else{
+    if($('mmSub')) $('mmSub').textContent='no real players online · waiting…';
+    if($('mmHint')) $('mmHint').textContent='bot opponent at 1:00';
+  }
+
+  if(el>=MM_MAX_MS){                    // one full minute -> bots
+    MM_FOUND={ name:MM_RANKED?('Bot '+String.fromCharCode(65+(Math.random()*26|0))):'The Baron',
+               key:null, rank:rankTier(LB.rank||0), elo:Math.max(0,(LB.rank||0)+((Math.random()*80|0)-40)),
+               color:rankColor(LB.rank||0), level:Math.max(1,(LB.level||1)+(Math.random()*3|0)-1),
+               streak:0, best:0, kills:0, online:false, bot:true };
+    if($('mmSub')) $('mmSub').textContent='no players found · sending a bot';
+    setTimeout(finishMatch,700);
+  }
+}
+
+function finishMatch(){
+  if(MM_DONE)return; MM_DONE=true;
+  clearInterval(MM_T);
+  const opp=MM_FOUND||{name:'The Baron',rank:'Baron of the Barrens',elo:null,color:'#b08d57',
+                       level:9,streak:0,best:0,kills:0,online:false,bot:true,key:null};
+  const mm=$('mm');
+  if(mm){ mm.classList.add('out'); setTimeout(()=>mm.classList.remove('on','out'),290); }
+  startBattleWith(MM_RANKED, opp);
+}
+
+function cancelMatch(){
+  if(MM_DONE)return; MM_DONE=true; clearInterval(MM_T);
+  const mm=$('mm'); if(mm){ mm.classList.remove('on','out'); }
+  if(S){ S.mmHold=false; S.vsHold=false; S.battle=false; S.over=true; }
+  show('menu'); SFX.ui();
+}
+
+function startBattleWith(ranked, opp){
   S.battle=true; S.ranked=!!ranked;
+  S.mmHold=false;
   S.lives=15; S.reached=1;
   S.ebMax=Math.round((240+rankTierIdx(LB.rank)*130)*(S.ranked?1.15:1)); S.ebHp=S.ebMax;
   S.raid=[]; S.aiWalls=[]; S.aiT=6; S.raidCd=0; S.nextWaveT=2.5;
-  S.opp = ranked ? opp : {name:'The Baron', rank:'Baron of the Barrens', elo:null, level:9,
-                          streak:0, best:0, kills:0, online:false, bot:true};
-  S.oppName = S.opp.name;
-  S.running=false; S.between=true;
-  if($('startBtn'))$('startBtn').style.display='none';   // battle waves auto-start
+  S.opp=opp; S.oppName=opp.name;
+  S.running=false; S.between=true; S.over=false;
+  if($('startBtn'))$('startBtn').style.display='none';
   syncHud(); buildBar(); buildBar2(); updateRaidBtn();
-  openVS();                                              // VS card, then the fight starts
+  openVS();
+}
+
+/* kept for Play-Again / retry paths: skip the search, rematch instantly */
+function newBattle(ranked, opp){
+  seasonRoll(); installSeasonPlebs(); installPlekeyPlebs();
+  const pick=opp||rival(ranked);
+  newGame(S?S.world:0);
+  startBattleWith(ranked, pick);
 }
 /* ---- VS INTRO: show MY status vs THEIR status before the first wave ---- */
 let VS_T=null, VS_SKIP=null;
@@ -3119,7 +3254,9 @@ function battleAI(dt){
 function battleWin(){
   if(S.over)return; S.over=true; S.running=false; hideSel();
   recordStats();
-  if(S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); S.eloGain=eloWin(); S.eloBefore=LB.rank; LB.rank+=S.eloGain; seasonAddElo(S.eloGain); }
+  /* streak is a CHALLENGE thing now (that's the mode Nicholas wants it on) */
+  if(!S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); }
+  if(S.ranked){ S.eloGain=eloWin(); S.eloBefore=LB.rank; LB.rank+=S.eloGain; seasonAddElo(S.eloGain); }
   addPassXP(S.ranked?150:100);
   saveLB(); pushScore();
   const smashed=(S.ebHp<=0);
@@ -3128,7 +3265,7 @@ function battleWin(){
   $('ovP').innerHTML=(smashed
       ? 'You smashed <b>'+S.oppName+'</b>\u2019s base with '+S.raid.length+' raiders still standing.'
       : 'You held every wave \u2014 <b>'+S.oppName+'</b>\u2019s garrison broke and fled.')+'<br>'+
-    (S.ranked ? ('🔥 Win streak: <b>'+LB.streak+'</b><br>') : '')+
+    (!S.ranked ? ('\ud83d\udd25 Win streak: <b>'+LB.streak+'</b><br>') : '')+
     'Foes felled: <b>'+S.slain+'</b>.';
   if(S.ranked){
     eloPop(S.eloGain,S.eloBefore,LB.rank);
@@ -3144,10 +3281,11 @@ function battleLose(){
   const hadStreak=LB.streak||0;
   const wasRank=LB.rank;
   if(S.ranked){ S.eloLoss=eloLose(); LB.rank=Math.max(0,LB.rank-S.eloLoss); S.eloBefore=wasRank; seasonAddElo(-S.eloLoss); }
-  LB.streak=0;                       // losing ANY battle mode breaks your win streak
+  /* only CHALLENGE breaks the streak now */
+  if(!S.ranked) LB.streak=0;
   S.streakLost=hadStreak;
   saveLB(); pushScore();
-  if(hadStreak>10) setTimeout(()=>streakBreakFX(hadStreak),260);   // only big streaks get the show
+  if(!S.ranked && hadStreak>10) setTimeout(()=>streakBreakFX(hadStreak),260);   // only big streaks get the show
   $('ovT').style.color='#ff9a86'; $('ovT').textContent='YOUR BASE FELL';
   $('ovP').innerHTML=(S.streakLost?('<b style="color:#ff9a86">🔥 Win streak of '+S.streakLost+' lost</b><br>'):'')+
     '<b>'+S.oppName+'</b>\u2019s army overran you before you could break their base.<br>'+
@@ -4394,7 +4532,7 @@ let PLAYFLUSH=0;
 function loop(now){
   let dt=Math.min(0.05,(now-last)/1000); last=now;
   // VS card is up: hold the sim so nothing moves before the fight actually begins
-  const active = $('game').classList.contains('on') && !(S&&S.paused) && !(S&&S.vsHold);
+  const active = $('game').classList.contains('on') && !(S&&S.paused) && !(S&&S.vsHold) && !(S&&S.mmHold);
   if(S&&active){
     LB.time=(LB.time||0)+dt;                       // track time played (real seconds)
     PLAYFLUSH+=dt;
@@ -4588,6 +4726,7 @@ try{
 window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked(){return unlocked;}, get PATH(){return PATH;},
   spawnE:(t)=>spawn(t), effDmg:(o)=>effDmg(o), packEff:(k,s)=>packEffect(k,s),
   show:show, battle:newBattle, closeVS:closeVS, get LB(){return LB;}, lose:battleLose, sbreak:streakBreakFX,
+  startMatch:startMatch, mmTick:mmTick, finishMatch:finishMatch, mmForce:(ms)=>{MM_START=Date.now()-ms; mmTick();}, get MM(){return {done:MM_DONE,found:MM_FOUND,max:MM_MAX_MS,start:MM_START};}, win:battleWin,
   get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor,
   tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
 
