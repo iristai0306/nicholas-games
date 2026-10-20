@@ -261,9 +261,12 @@
   /* ---------- GAME ---------- */
   #game{background:#0e1207}
   #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
-  .hud{position:absolute;left:0;right:0;top:0;height:74px;display:flex;align-items:center;gap:14px;
-    padding:0 20px;z-index:6;pointer-events:none}
-  .chip{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:12px;
+  .hud{position:absolute;left:0;right:0;top:0;height:74px;display:flex;align-items:center;gap:9px;
+    padding:0 14px;z-index:6;pointer-events:none}
+  /* the action buttons must NEVER be squeezed out of existence - the chips give way instead */
+  .hud > .chip{min-width:0;overflow:hidden;flex:0 1 auto}
+  #raidBtn,#rallyBtn,#autoBtn,#speedBtn,#upsBtn,#homeBtn,#startBtn{flex:0 0 auto}
+  .chip{display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:12px;
     border:2px solid #2c2008;background:linear-gradient(rgba(50,36,14,.94),rgba(28,19,7,.94));
     font:700 19px Georgia,serif;color:#f4e6bd;box-shadow:0 4px 12px rgba(0,0,0,.5)}
   .chip .ci{font-size:21px}
@@ -292,10 +295,10 @@
     background:linear-gradient(#f2cf62,#c9971f 55%,#8f6a12);box-shadow:0 5px 0 #4a3409}
   #startBtn:active{transform:translateY(3px);box-shadow:0 2px 0 #4a3409}
   #startBtn.off{filter:grayscale(.7) brightness(.75);cursor:default}
-  #homeBtn{pointer-events:auto;cursor:pointer;border:2px solid #2a1c08;border-radius:12px;
+  #homeBtn,#upsBtn{pointer-events:auto;cursor:pointer;border:2px solid #2a1c08;border-radius:12px;
     width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-size:22px;
     background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);box-shadow:0 4px 0 #4a3409}
-  #homeBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
+  #homeBtn:active,#upsBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3409}
   #martBtn{pointer-events:auto;cursor:pointer;border:2px solid #2a1c08;border-radius:12px;
     width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-size:22px;
     background:linear-gradient(#e9d9a8,#c9ac63 60%,#8f7530);box-shadow:0 4px 0 #4a3409}
@@ -965,7 +968,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.30 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.31 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
