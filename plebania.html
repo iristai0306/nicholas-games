@@ -971,7 +971,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.35 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.36 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1834,6 +1834,7 @@ const SHOP_ART={
   boxwood:'<svg class="art" viewBox="0 0 64 64"><path d="M10 24 h44 v25 a3 3 0 0 1 -3 3 H13 a3 3 0 0 1 -3 -3 z"/><path d="M8 16 h48 v10 H8 z"/><path d="M32 16 v36"/><path d="M26 16 c0 -6 3 -9 6 -9 c3 0 6 3 6 9"/></svg>',
   boxiron:'<svg class="art" viewBox="0 0 64 64"><rect x="9" y="24" width="46" height="30" rx="3"/><path d="M9 24 h46"/><path d="M32 24 v30"/><path d="M32 24 c-6 -14 -22 -10 -14 0"/><path d="M32 24 c6 -14 22 -10 14 0"/></svg>',
   boxgold:'<svg class="art" viewBox="0 0 64 64"><path d="M14 15 h36 v7 H14 z"/><path d="M18 22 h28 v8 a14 16 0 0 1 -28 0 z"/><path d="M28 50 h8 v8 h-8 z"/><path d="M20 58 h24"/></svg>',
+  boxcoffin:'<svg class="art" viewBox="0 0 64 64"><path d="M23 6 h18 l7 16 l-5 7 l3 29 h-28 l3 -29 l-5 -7 z"/><path d="M32 17 v16"/><path d="M25 24 h14"/></svg>',
   mega:'<svg class="art" viewBox="0 0 64 64"><path d="M22 20 c-6 2 -10 8 -10 16 c0 12 9 20 20 20 s20 -8 20 -20 c0 -8 -4 -14 -10 -16"/><path d="M24 20 h16 l-2 -8 h-12 z"/><path d="M20 30 a12 10 0 0 0 24 0"/><circle cx="32" cy="44" r="3.4"/></svg>',
   key:PLEKEY_SVG,
   shadow:'<svg class="art" viewBox="0 0 132 112"><g fill="none" stroke="#2b2418" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">'+
@@ -1980,16 +1981,15 @@ function buyCyber(){
 const COFFIN_UNTIL = new Date('2026-11-08T00:00:00Z').getTime();   // event closes
 function coffinOpen(){ return Date.now() < COFFIN_UNTIL; }
 function coffinDaysLeft(){ return Math.max(0, Math.ceil((COFFIN_UNTIL-Date.now())/86400000)); }
-function coffinClaimed(){ return !!loadJSON('plebania_coffin_claimed',false); }
-function claimCoffin(){
+const COFFIN_COST = 600;                       // Pleb price of the Coffin Pleb Box
+function openCoffinBox(){
   if(!coffinOpen()){ tip('The Coffin event is over \u26b0\ufe0f',1600); return; }
-  if(coffinClaimed()){ tip('You already dug up the Coffin Pleb',1600); return; }
-  if(PLEB < 600){ tip('Need \u26a1 600 Pleb to break the coffin open',1600); return; }
-  PLEB -= 600; saveJSON('plebania_pleb',PLEB);
-  saveJSON('plebania_coffin_claimed',true);
+  if(PACK_OWN['pleb:coffin']){ tip('You already opened the Coffin Pleb Box',1700); return; }
+  if(PLEB < COFFIN_COST){ tip('Need \u26a1 '+COFFIN_COST+' Pleb to open it',1600); return; }
+  PLEB -= COFFIN_COST; saveJSON('plebania_pleb',PLEB);
   grantPleb('coffin');
-  SFX.up(); for(let i=0;i<24;i++)burst(W/2,H/2,'#b06ad0');
-  showBanner('\u26b0\ufe0f THE COFFIN PLEB RISES! It\u2019s in your army.','gold',2600);
+  SFX.up(); for(let i=0;i<26;i++)burst(W/2,H/2,'#b06ad0');
+  showBanner('\u26b0\ufe0f COFFIN PLEB BOX OPENED \u2014 the Coffin Pleb joins your army!','gold',2600);
   renderMart(); syncHud();
 }
 function grantPleb(k){
@@ -2139,20 +2139,23 @@ function renderMart(){
         '<li>\ud83d\udd11 PLEB MART \u2014 Pledoption center, Money bundles, Pleb boxes, Codes, Gift &amp; News.</li>'+
         '<li>\u2728 Coming soon \u2014 more Plekeys, hero weapons, boss rush.</li></ul>';
     }else{ // boxes
-      const cfEv = coffinOpen() && !coffinClaimed();
-      const cfBan = cfEv
+      const cfOwn = !!PACK_OWN['pleb:coffin'];
+      const cfBan = coffinOpen()
         ? '<div class="pm-skin" style="border-color:#7a4fc0;background:rgba(122,79,192,.10)">'+
-            '<div style="height:52px;display:flex;align-items:center;justify-content:center;font-size:40px">\u26b0\ufe0f</div>'+
-            '<div class="sn">Coffin Pleb <span style="font-size:11px;color:#7a4fc0;font-weight:800">TEMPORARY</span></div>'+
-            '<div class="sr">Limited event \u00b7 '+coffinDaysLeft()+' day'+(coffinDaysLeft()===1?'':'s')+' left</div>'+
-            '<div class="pm-btndisplay'+(PLEB>=600?'':' cant')+'" data-coffin="1">\u26a1 600</div></div>'
+            '<div style="height:52px;display:flex;align-items:center;justify-content:center">'+svg('boxcoffin')+'</div>'+
+            '<div class="sn">Coffin Pleb Box<br><span style="font-size:10px;color:#7a4fc0;font-weight:800;letter-spacing:.5px">TEMPORARY</span></div>'+
+            '<div class="sr">Unlocks the Coffin Pleb<br>'+coffinDaysLeft()+' day'+(coffinDaysLeft()===1?'':'s')+' left</div>'+
+            (cfOwn
+              ? '<div class="pm-btndisplay cant">\u2714 Opened</div>'
+              : '<div class="pm-btndisplay'+(PLEB>=COFFIN_COST?'':' cant')+'" data-coffin="1">\u26a1 '+COFFIN_COST+'</div>')+
+           '</div>'
         : '';
       body.innerHTML='<div class="pm-sub" style="margin-top:6px">Spend \u26a1 Pleb on boxes for Blep. The \ud83d\udd11 Unique Plekey is <b>not</b> in boxes \u2014 it comes from the Plekey Bundle only.</div>'+
         '<div class="pm-sk">'+BOXES.map(b=>'<div class="pm-skin"><div style="height:52px;display:flex;align-items:center;justify-content:center">'+svg(b.art)+'</div><div class="sn">'+b.name+'</div>'+
           '<div class="sr">+'+b.pleb+' \u26a1 Blep</div>'+
           '<div class="pm-btndisplay'+(PLEB>=b.cost?'':' cant')+'" data-box="'+b.id+'">\u26a1 '+b.cost+'</div></div>').join('')+'</div>';
       if(cfBan){ body.querySelector('.pm-sk').insertAdjacentHTML('afterbegin', cfBan); }
-      body.querySelectorAll('[data-coffin]').forEach(el=>el.onclick=claimCoffin);
+      body.querySelectorAll('[data-coffin]').forEach(el=>el.onclick=openCoffinBox);
       body.querySelectorAll('[data-box]').forEach(el=>el.onclick=()=>openBox(el.dataset.box));
     }
   }
@@ -4925,7 +4928,7 @@ window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked()
   spawnE:(t)=>spawn(t), effDmg:(o)=>effDmg(o), packEff:(k,s)=>packEffect(k,s),
   show:show, battle:newBattle, closeVS:closeVS, get LB(){return LB;}, lose:battleLose, sbreak:streakBreakFX,
   startMatch:startMatch, mmTick:mmTick, finishMatch:finishMatch, mmForce:(ms)=>{MM_START=Date.now()-ms; mmTick();}, get MM(){return {done:MM_DONE,found:MM_FOUND,max:MM_MAX_MS,start:MM_START};}, win:battleWin,
-  get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor, startCrypt:startCrypt, get PLEB(){return PLEB;}, set PLEB(v){PLEB=v;}, claimCoffin:claimCoffin, get coffinOpen(){return coffinOpen();}, endGame:endGame, grantPleb:grantPleb, get BUNDLES(){return BUNDLES;}, openCheckout:openCheckout, renderMart:renderMart, get PACK_OWN(){return PACK_OWN;}, get TOWERS(){return TOWERS;},
+  get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor, startCrypt:startCrypt, get PLEB(){return PLEB;}, set PLEB(v){PLEB=v;}, openCoffinBox:openCoffinBox, get coffinOpen(){return coffinOpen();}, endGame:endGame, grantPleb:grantPleb, get BUNDLES(){return BUNDLES;}, openCheckout:openCheckout, renderMart:renderMart, get PACK_OWN(){return PACK_OWN;}, get TOWERS(){return TOWERS;},
   tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
 
 // interval-driven loop: runs even when the game sits in an unfocused iframe
