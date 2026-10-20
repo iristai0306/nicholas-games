@@ -956,6 +956,7 @@
         <div class="mbtn" id="playBtn"><span class="ic">⚔️</span> PLAY</div>
         <div class="mbtn" id="battleBtn"><span class="ic">🏰</span> BATTLE (base wars)</div>
         <div class="mbtn" id="rankedBtn"><span class="ic">⚔️</span> RANKED BATTLE</div>
+        <div class="mbtn" id="cryptBtn"><span class="ic">🪦</span> THE CRYPT <span style="font-size:12px;opacity:.7;letter-spacing:1px">· HALLOWEEN</span></div>
         <div class="mbtn" id="martBtn"><span class="ic">🔑</span> PLEB MART</div>
         <div class="mbtn" id="packBtn"><span class="ic">🎒</span> PLEBPACK</div>
         <div class="mbtn" id="passBtn"><span class="ic">🎫</span> PLEBASS</div>
@@ -969,7 +970,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.33 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.34 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1365,6 +1366,7 @@ $('rotateSkip').onclick=()=>{ ROTATE_SKIP=true; try{ localStorage.setItem('pleba
 $('boardBack').onclick=()=>show('menu');
 $('battleBtn').onclick=()=>{ initAudio(); show('game'); startMatch(false); };
 $('rankedBtn').onclick=()=>{ initAudio(); show('game'); startMatch(true); };
+if($('cryptBtn'))$('cryptBtn').onclick=()=>{ initAudio(); startCrypt(); };
 if($('raidBtn'))$('raidBtn').onclick=()=>launchRaid();
 $('martBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('mart'); };
 $('packBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('pack'); SFX.ui(); };
@@ -1476,9 +1478,12 @@ const TOWERS={
   dragonling:{name:'Dragonling',emoji:'🐉',cost:190, dmg:30, rate:1.2,  range:210, kind:'splash', splash:72, color:'#c0402a', desc:'Fire breath · AoE'},
   knight   :{name:'Turned Knight',emoji:'🐴',cost:170,dmg:45, rate:0.9, range:94,  kind:'melee',  color:'#4a72b0', desc:'Defected noble — tanky bruiser'},
   mortar   :{name:'Mortar',   emoji:'💣',   cost:240, dmg:70, rate:2.4,  range:380, kind:'splash', splash:104, color:'#7a6a3a', desc:'Siege range · heavy splash'},
-  orchard  :{name:'Orchard',  emoji:'🍎',   cost:120, kind:'econ', income:14, every:2.2, color:'#b03a3a', desc:'+14 gold / 2.2s'}
+  orchard  :{name:'Orchard',  emoji:'🍎',   cost:120, kind:'econ', income:14, every:2.2, color:'#b03a3a', desc:'+14 gold / 2.2s'},
+  // ---- EVENT plebs: never bought with gold — earned from bundles / modes ----
+  shadow   :{name:'Shadow Pleb',     emoji:'🌑', cost:150, dmg:34, rate:0.62, range:150, kind:'ranged', color:'#5a3f8a', desc:'Shadow bolt · pierces the dark'},
+  tombstone:{name:'Tombstone Pleb',  emoji:'🪦', cost:210, dmg:52, rate:1.25, range:120, kind:'splash', splash:78, color:'#6b6474', desc:'Grave slam · heavy AoE'}
 };
-const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm','berserker','longbow','dragonling','knight','mortar','orchard'];
+const ORDER=['farmhand','poacher','militia','alchemist','catapult','farm','berserker','longbow','dragonling','knight','mortar','orchard','shadow','tombstone'];
 const MAXPER=3;                       // build a max of 3 of anything that is capped (see CAP)
 const CAP={farm:3, orchard:2};        // only Farms & Orchards are capped — other units you can place freely
 function capOf(k){ if(String(k||'').indexOf('pk_')===0) return 2; return CAP[k]||Infinity; }
@@ -1589,6 +1594,8 @@ const ENEMIES={
   reaper  : {name:'The Grim Reaper', hp:1700, spd:32, gold:220, sz:56, rank:'king', emoji:'💀'},
 };
 const MAXWAVE=10;
+const CRYPT_MAX=15;                       // CRYPT mode runs longer than the campaign
+function waveMax(){ return (typeof S!=='undefined'&&S&&S.crypt)?CRYPT_MAX:MAXWAVE; }
 function cx(c){return GX+(c+0.5)*TILE;}
 function cy(r){return GY+(r+0.5)*TILE;}
 
@@ -1632,14 +1639,16 @@ const SAVE_KEY='plebania_world';
 function loadUnlocked(){ try{ return Math.max(1,Math.min(WORLDS.length,parseInt(localStorage.getItem(SAVE_KEY))||1)); }catch(e){ return 1; } }
 function saveWorld(){ try{ localStorage.setItem(SAVE_KEY,String(unlocked)); }catch(e){} }
 let unlocked=loadUnlocked();
-function newGame(world){
+function newGame(world,opts){
+  opts=opts||{};
   const w=Math.max(0,Math.min(WORLDS.length-1,world||0));
   S={
     world:w, gold:140, lives:20, wave:0, running:false, between:true, over:false, paused:false,
     reached:1, rally:0, speed:1,
     towers:[], buildings:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
     shake:0, hurt:0, slain:0, sel:null, selB:null, build:'farmhand',
-    waveTimer:0, farmAcc:0, mart:{}, vsHold:false, mmHold:false, opp:null, battle:false, ranked:false
+    waveTimer:0, farmAcc:0, mart:{}, vsHold:false, mmHold:false, opp:null, battle:false, ranked:false,
+    crypt:!!opts.crypt
   };
   // (battle flags cleared here too — otherwise a stale vsHold would freeze the next campaign run)
   hover=null; locked=null; buildPath(w);
@@ -1655,7 +1664,7 @@ buildPath(0);
 function syncHud(){
   $('hGold').textContent=Math.floor(S.gold);
   $('hLives').textContent=S.lives;
-  $('hWave').textContent=S.wave+'/'+MAXWAVE;
+  $('hWave').textContent=S.wave+'/'+waveMax();
   $('hWorldIc').textContent=WORLDS[S.world].emoji;
   $('hWorld').textContent=WORLDS[S.world].name;
   if($('hHero')&&S.hero)$('hHero').textContent=Math.max(0,Math.ceil(S.hero.hp));
@@ -1668,7 +1677,7 @@ function previewWave(w){
   const order=[W.king,W.boss,W.elite,W.units.heavy,W.units.medium,W.units.light];
   return order.filter(t=>seen[t]).map(t=>ENEMIES[t].emoji+seen[t]).join(' ');
 }
-function sUpdateNext(){ const w=Math.min(S.wave+1,MAXWAVE); const t=$('hNext'); if(t)t.textContent=S.wave>=MAXWAVE?'👑 final':previewWave(w); }
+function sUpdateNext(){ const w=Math.min(S.wave+1,waveMax()); const t=$('hNext'); if(t)t.textContent=S.wave>=waveMax()?'👑 final':previewWave(w); }
 let tipT=0;
 function tip(txt,ms){ const t=$('tip'); t.textContent=txt; t.classList.add('on'); tipT=Date.now()+(ms||1800); }
 let bnrT=0;
@@ -1823,7 +1832,21 @@ const SHOP_ART={
   boxiron:'<svg class="art" viewBox="0 0 64 64"><rect x="9" y="24" width="46" height="30" rx="3"/><path d="M9 24 h46"/><path d="M32 24 v30"/><path d="M32 24 c-6 -14 -22 -10 -14 0"/><path d="M32 24 c6 -14 22 -10 14 0"/></svg>',
   boxgold:'<svg class="art" viewBox="0 0 64 64"><path d="M14 15 h36 v7 H14 z"/><path d="M18 22 h28 v8 a14 16 0 0 1 -28 0 z"/><path d="M28 50 h8 v8 h-8 z"/><path d="M20 58 h24"/></svg>',
   mega:'<svg class="art" viewBox="0 0 64 64"><path d="M22 20 c-6 2 -10 8 -10 16 c0 12 9 20 20 20 s20 -8 20 -20 c0 -8 -4 -14 -10 -16"/><path d="M24 20 h16 l-2 -8 h-12 z"/><path d="M20 30 a12 10 0 0 0 24 0"/><circle cx="32" cy="44" r="3.4"/></svg>',
-  key:PLEKEY_SVG
+  key:PLEKEY_SVG,
+  shadow:'<svg class="art" viewBox="0 0 132 112"><g fill="none" stroke="#2b2418" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">'+
+    '<circle cx="66" cy="44" r="26" fill="#3a2a52"/>'+
+    '<path d="M40 44 c0 -18 12 -30 26 -30 c14 0 26 12 26 30"/>'+
+    '<path d="M44 70 c0 12 6 22 6 22 l10 -8 l6 10 l6 -10 l10 8 c0 0 6 -10 6 -22"/>'+
+    '</g><circle cx="57" cy="42" r="3.4" fill="#e8d9ff"/><circle cx="75" cy="42" r="3.4" fill="#e8d9ff"/>'+
+    '<path d="M60 54 q6 5 12 0" stroke="#e8d9ff" stroke-width="2.6" fill="none" stroke-linecap="round"/>'+
+    '<path d="M28 30 l-10 -8 M104 30 l10 -8 M24 56 l-12 2 M108 56 l12 2" stroke="#6a4fa0" stroke-width="3" stroke-linecap="round"/></svg>',
+  tomb:'<svg class="art" viewBox="0 0 132 112"><g fill="none" stroke="#2b2418" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">'+
+    '<path d="M46 100 V46 a20 20 0 0 1 40 0 V100 Z" fill="#8a8394"/>'+
+    '<path d="M60 62 h12 M66 56 v18"/>'+
+    '<path d="M40 100 h52"/>'+
+    '</g><circle cx="57" cy="42" r="3" fill="#2b2418"/><circle cx="75" cy="42" r="3" fill="#2b2418"/>'+
+    '<path d="M60 50 q6 4 12 0" stroke="#2b2418" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+    '<circle cx="66" cy="20" r="4" fill="#c9b8ff"/></svg>'
 };
 function svg(k){ return SHOP_ART[k]||''; }
 
@@ -1833,7 +1856,8 @@ const BUNDLES=[
   {key:'iron',  name:'Iron Pleb Box',   art:'boxiron', usd:4.99,  desc:'+500 Pleb \u26a1', grant:()=>grantBox('iron')},
   {key:'gold',  name:'Golden Pleb Box', art:'boxgold', usd:9.99,  desc:'+1,600 Pleb \u26a1', grant:()=>grantBox('gold')},
   {key:'mega',  name:'3,000 Blep Pack', art:'mega',    usd:14.99, desc:'3,000 Blep \u26a1 + 20 papers + 5 boxes', grant:()=>grantMega()},
-  {key:'combo', name:'Plekey Bundle',   art:'key',     usd:19.99, desc:'3,000 Blep + 20 papers + 5 boxes + the Unique Plekey', grant:()=>grantCombo()}
+  {key:'combo', name:'Plekey Bundle',   art:'key',     usd:19.99, desc:'3,000 Blep + 20 papers + 5 boxes + the Unique Plekey', grant:()=>grantCombo()},
+  {key:'shadow', name:'Shadow Pleb Bundle', art:'shadow', usd:19.99, desc:'3,000 Blep + 20 papers + 5 boxes + the Shadow Pleb', grant:()=>grantShadow()}
 ];
 let CO=null;                     // item currently in the checkout
 function grantBox(id){
@@ -1853,6 +1877,13 @@ function grantCombo(){
   const got=unlockKey('unique');                     // THE bundle grants THE Plekey
   SFX.up(); for(let i=0;i<20;i++)burst(W/2,H/2,'#ffe08a');
   showBanner('\ud83d\udd11 Plekey Bundle: +'+COMBO.pleb+' Pleb \u26a1 + '+COMBO.papers+' papers + '+COMBO.boxes+' boxes'+(got?' + THE UNIQUE PLEKEY!':'')+(got?'':' (you already own it)'),'gold',2400);
+  renderMart(); syncHud();
+}
+function grantShadow(){
+  PLEB+=COMBO.pleb; PAPERS+=COMBO.papers; saveJSON('plebania_pleb',PLEB); saveJSON('plebania_papers',PAPERS);
+  grantPleb('shadow');                              // the Shadow Pleb is the whole point of this bundle
+  SFX.up(); for(let i=0;i<20;i++)burst(W/2,H/2,'#b06ad0');
+  showBanner('\ud83c\udf11 Shadow Pleb Bundle: +'+COMBO.pleb+' Pleb \u26a1 + '+COMBO.papers+' papers + '+COMBO.boxes+' boxes + THE SHADOW PLEB!','gold',2600);
   renderMart(); syncHud();
 }
 function openCheckout(b){
@@ -1939,6 +1970,16 @@ function buyCyber(){
   SFX.up(); for(let i=0;i<18;i++)burst(W/2,H/2,'#77e0ff');
   showBanner('\ud83e\udd16 Cyber Pleb Deal! +50 Blep \u26a1 + a mutation','gold',1800); renderMart();
 }
+/* grant a pleb outright (event rewards / bundles) — owns it and equips if there's room */
+function grantPleb(k){
+  if(!TOWERS[k]) return false;
+  if(plebOwned(k)) return false;
+  PACK_OWN['pleb:'+k]=true;
+  if(armyCount()<MAX_ARMY) PACK_OWN['equipped:'+k]=true;
+  saveJSON('plebania_pack_own',PACK_OWN);
+  try{ installPlekeyPlebs(); }catch(e){}
+  return true;
+}
 function buySkin(id){
   const s=SKINS.find(x=>x.id===id); if(!s)return;
   if(hasSkin(id)){ EQUIPPED=(EQUIPPED===id)?'':id; saveJSON('plebania_key',EQUIPPED); SFX.ui(); renderMart();
@@ -2001,6 +2042,22 @@ function renderMart(){
     body.querySelector('#bx2').onclick=()=>openCheckout(BUNDLES[2]);
     body.querySelector('#mega').onclick=()=>openCheckout(BUNDLES[3]);
     body.querySelector('#combo').onclick=()=>openCheckout(BUNDLES[4]);
+    // ---- SHADOW PLEB bundle: same card as the Plekey bundle, Shadow Pleb instead ----
+    const sr=document.createElement('div');
+    sr.className='pm-r2';
+    sr.style.gridTemplateColumns='1fr';        // full-width card, no empty price box
+    sr.innerHTML=
+      '<div class="pcomb" id="scombo">'+
+        '<div class="pcol"><div class="ppill">3,000 Blep</div>'+
+          '<div class="psqs"><div class="psq"><div class="q1">20</div><div class="q2"><span class="arr">\u2190</span>Adoption papers</div></div>'+
+          '<div class="psq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
+          '<div class="plabel">PLEDOPTION</div></div>'+
+        '<div class="pcol2"><div class="pt">Shadow Pleb</div>'+
+          '<div class="pbody">'+svg('shadow')+'<ul><li>- Shadow bolt sfx</li><li>- Unique style</li><li>- Unique rarity</li><li>- Bundle only</li></ul></div></div>'+
+        '<div class="price">$19.99</div>'+
+      '</div>';
+    body.appendChild(sr);
+    sr.querySelector('#scombo').onclick=()=>openCheckout(BUNDLES[5]);
     return;
   }
 
@@ -3130,6 +3187,20 @@ function finishMatch(){
   startBattleWith(MM_RANKED, opp);
 }
 
+/* =========================================================
+   THE CRYPT — Halloween event mode.
+   15 waves of the dead, no ELO, no streak. Survive it and the
+   TOMBSTONE PLEB is yours (once).
+   ========================================================= */
+function startCrypt(){
+  seasonRoll(); installSeasonPlebs(); installPlekeyPlebs();
+  newGame(3,{crypt:true});                 // world 3 = Halloweentown
+  S.crypt=true; S.battle=false; S.ranked=false;
+  show('game'); initAudio();
+  showBanner('\ud83e\udea6 THE CRYPT \u2014 survive 15 waves', 'gold', 2400);
+  tip('\ud83e\udea6 Beat all 15 waves to claim the Tombstone Pleb', 3600);
+  syncHud();
+}
 function cancelMatch(){
   if(MM_DONE)return; MM_DONE=true; clearInterval(MM_T);
   const mm=$('mm'); if(mm){ mm.classList.remove('on','out'); }
@@ -3383,10 +3454,10 @@ const PACK_ITEMS={
 };
 /* unlocked extra plebs you can EQUIP into your army (bought here in the pack).
    'extra' plebs are PLEBPACK-only + locked until equipped. */
-const PLEB_GATE={ berserker:250, longbow:320, dragonling:380, knight:340, mortar:520, orchard:220 };
+const PLEB_GATE={ berserker:250, longbow:320, dragonling:380, knight:340, mortar:520, orchard:220 };  // shadow & tombstone are EARNED, not bought
 function plebOwned(k){ return !!PACK_OWN['pleb:'+k]; }
 const PACK_SLOTS=[['weapon','🗡️ Weapon','more damage'],['armour','🛡️ Armour','more range &amp; farm gold'],['boots','👟 Boots','attack faster']];
-const PACK_EXTRA=['berserker','longbow','dragonling','knight','mortar','orchard'];   // plebs you equip into your army
+const PACK_EXTRA=['berserker','longbow','dragonling','knight','mortar','orchard','shadow','tombstone'];   // plebs you equip into your army
 const MAX_ARMY=5;                                                                    // max extra plebs equipped at once
 function armyCount(){ return PACK_EXTRA.filter(k=>PACK_OWN['equipped:'+k]).length; }
 function plebInArmy(k){ return !isExtra(k) || !!PACK_OWN['equipped:'+k]; }
@@ -3450,7 +3521,7 @@ function renderPack(){
     const cost=PLEB_GATE[k];
     h+='<div class="pk-item'+(owned?' owned':'')+(equipped?' eq':'')+'" data-pleb="'+k+'">'+
       '<div class="ie">'+d.emoji+'</div><div class="in">'+d.name+'</div>'+
-      '<div class="ic">'+(equipped?'✔ In army':owned?'Equip':'👑 '+cost)+'</div>'+
+      '<div class="ic">'+(equipped?'✔ In army':owned?'Equip':(cost!=null?'👑 '+cost:'🔒 Earn it'))+'</div>'+
       mastStripHTML(k)+'</div>';
   });
   h+='</div></div>';
@@ -3792,13 +3863,13 @@ function waveComp(w){
 }
 function startWave(){
   if(S.over||S.running)return;
-  if(S.wave>=MAXWAVE)return;
+  if(S.wave>=waveMax())return;
   S.wave++; S.running=true; S.between=false; S.autoT=0;
   S.spawnQ=waveComp(S.wave); S.spawnT=0; S.spawnGap=0.68;
   $('startBtn').classList.add('off');
   syncHud();
   showBanner('WAVE '+S.wave+' — they advance!','red',1500);
-  if(S.wave===MAXWAVE)showBanner('👑 '+ENEMIES[WORLDS[S.world].king].name.toUpperCase()+' ARRIVES!','gold',2300);
+  if(S.wave===waveMax())showBanner('👑 '+ENEMIES[WORLDS[S.world].king].name.toUpperCase()+' ARRIVES!','gold',2300);
 }
 
 /* =========================================================
@@ -4624,7 +4695,7 @@ function loop(now){
         if(S.spawnQ.length===0&&S.enemies.length===0) endWave();
       }
       // AUTO: campaign waves roll in on their own after a short build window
-      if(!S.battle && AUTOWAVE && !S.running && !S.over && S.wave<MAXWAVE){
+      if(!S.battle && AUTOWAVE && !S.running && !S.over && S.wave<waveMax()){
         S.autoT=(S.autoT||0)+dt;
         if(S.autoT>=AUTO_WAVE_DELAY){ S.autoT=0; startWave(); }
       }else if(S.autoT){ S.autoT=0; }
@@ -4641,7 +4712,7 @@ function loop(now){
         // battle waves end and the next one rolls in on its own
         if(!S.running&&!S.over){
           S.nextWaveT=(S.nextWaveT||0)-dt;
-          if(S.nextWaveT<=0&&S.wave<MAXWAVE) startWave();
+          if(S.nextWaveT<=0&&S.wave<waveMax()) startWave();
         }
       }
       // decay fx
@@ -4672,14 +4743,14 @@ function endWave(){
   addPassXP(45+S.wave*6);
   addDmg(W/2,H/2-40,'WAVE CLEAR  +👑'+bonus,'#8ef0ff');
   SFX.win();
-  if(S.wave>=MAXWAVE){ endGame(true); return; }
+  if(S.wave>=waveMax()){ endGame(true); return; }
   if(S.battle){
     S.nextWaveT=3.5;
-    showBanner('Wave '+S.wave+'/'+MAXWAVE+' cleared!  ·  RAID their base \ud83c\udfc7','gold',1900);
+    showBanner('Wave '+S.wave+'/'+waveMax()+' cleared!  ·  RAID their base \ud83c\udfc7','gold',1900);
     syncHud(); buildBar(); return;
   }
   $('startBtn').classList.remove('off');
-  showBanner('Wave '+S.wave+'/'+MAXWAVE+' cleared! +👑'+bonus+'  ·  build up','gold',2000);
+  showBanner('Wave '+S.wave+'/'+waveMax()+' cleared! +👑'+bonus+'  ·  build up','gold',2000);
   syncHud(); buildBar();
 }
 function endGame(win){
@@ -4690,7 +4761,29 @@ function endGame(win){
   const last = S.world>=WORLDS.length-1;
   $('ovT').style.color = win?'#f6dd8b':'#ff9a86';
   $('ovMenu').textContent='🏠 Menu';
-  if(win){ const nu=Math.min(WORLDS.length,S.world+2); if(nu>unlocked){ unlocked=nu; saveWorld(); } }
+  if(win && !S.crypt){ const nu=Math.min(WORLDS.length,S.world+2); if(nu>unlocked){ unlocked=nu; saveWorld(); } }
+  if(S.crypt){
+    // ---- THE CRYPT: survive 15 waves -> Tombstone Pleb ----
+    if(win){
+      const got=grantPleb('tombstone');
+      $('ovT').textContent='\ud83e\udea6 THE CRYPT IS CLEARED!';
+      $('ovP').innerHTML='Fifteen waves of the dead, and you\u2019re still standing. <b>'+S.slain+'</b> of them felled.'+
+        (got?'<br><br>\ud83e\udea6 <b>THE TOMBSTONE PLEB IS YOURS!</b><br>It\u2019s equipped and waiting in your build tray.'
+              :'<br><br>You already own the Tombstone Pleb \u2014 still a hell of a run.');
+      $('ovAgain').style.display=''; $('ovAgain').textContent='\ud83d\udd01 RUN IT AGAIN';
+      $('ovAgain').onclick=()=>{ hideOv(); startCrypt(); };
+      if(got){ SFX.up(); for(let i=0;i<26;i++)burst(W/2,H/2,'#c9b8ff'); }
+    }else{
+      $('ovT').textContent='BURIED \ud83e\udea6';
+      $('ovP').innerHTML='The Crypt got you on wave <b>'+S.wave+'</b> of <b>'+CRYPT_MAX+'</b>.<br>You felled <b>'+S.slain+'</b> of them \u2014 the Tombstone Pleb is still down there.';
+      $('ovAgain').style.display=''; $('ovAgain').textContent='\ud83d\udd01 BACK INTO THE CRYPT';
+      $('ovAgain').onclick=()=>{ hideOv(); startCrypt(); };
+    }
+    $('ovMenu').textContent='\ud83c\udfe0 Menu';
+    $('ov').classList.add('on');
+    win?SFX.win():SFX.lose();
+    return;
+  }
   if(win && last){
     $('ovT').textContent='PLEBANIA IS FREE! 👑';
     $('ovP').innerHTML='You held every world — scattered the army, tamed the Deep Forest and doused the Lich.<br>The plebs are legends. <b>'+S.slain+'</b> foes felled across the campaign.';
@@ -4735,7 +4828,7 @@ installPlekeyPlebs();
     else presencePing();                       // came back -> mark online again right away
   });
 })();
-$('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.running||S.wave>=MAXWAVE)return; startWave(); };
+$('startBtn').onclick=()=>{ if(!S||S.over||S.paused)return; initAudio(); if(S.running||S.wave>=waveMax())return; startWave(); };
 function toggleBar(force){ const w=$('barwrap'); const hid=(force!=null)?force:!w.classList.contains('hide');
   w.classList.toggle('hide',hid);
   if($('barToggle'))$('barToggle').textContent=hid?'📋 Show tray':'📋 Hide tray';
@@ -4800,7 +4893,7 @@ window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked()
   spawnE:(t)=>spawn(t), effDmg:(o)=>effDmg(o), packEff:(k,s)=>packEffect(k,s),
   show:show, battle:newBattle, closeVS:closeVS, get LB(){return LB;}, lose:battleLose, sbreak:streakBreakFX,
   startMatch:startMatch, mmTick:mmTick, finishMatch:finishMatch, mmForce:(ms)=>{MM_START=Date.now()-ms; mmTick();}, get MM(){return {done:MM_DONE,found:MM_FOUND,max:MM_MAX_MS,start:MM_START};}, win:battleWin,
-  get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor,
+  get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor, startCrypt:startCrypt, endGame:endGame, grantPleb:grantPleb, get BUNDLES(){return BUNDLES;}, openCheckout:openCheckout, renderMart:renderMart, get PACK_OWN(){return PACK_OWN;}, get TOWERS(){return TOWERS;},
   tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
 
 // interval-driven loop: runs even when the game sits in an unfocused iframe
