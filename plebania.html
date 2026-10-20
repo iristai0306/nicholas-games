@@ -696,6 +696,49 @@
   @keyframes ruFade{to{opacity:1}}
   @keyframes ruBadge{to{transform:none;opacity:1}}
 
+  /* ---- WIN STREAK BREAK (breaks a >10 streak) ---- */
+  #sbreak{position:absolute;inset:0;z-index:13;display:none;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 45%,rgba(70,18,8,.96) 0%,rgba(26,6,4,.97) 50%,rgba(5,2,1,.99) 100%);
+    pointer-events:none;overflow:hidden}
+  #sbreak.on{display:flex}
+  #sbreak.out{animation:sbOut .35s ease-in forwards}
+  @keyframes sbOut{to{opacity:0}}
+  #sbreak .sbwrap{text-align:center;position:relative;min-width:520px}
+  #sbreak .sbtop{font:900 14px Georgia,serif;letter-spacing:8px;color:#ff8a6a;opacity:0;
+    animation:sbFade .45s ease-out .1s forwards}
+  #sbreak .sbfire{font-size:56px;line-height:1;margin-top:12px;opacity:0;filter:grayscale(.2);
+    animation:sbFireOut .8s cubic-bezier(.3,1.4,.5,1) .2s forwards}
+  @keyframes sbFireOut{
+    0%{opacity:0;transform:scale(.3)}
+    35%{opacity:1;transform:scale(1.25) rotate(-8deg)}
+    70%{opacity:1;transform:scale(1) rotate(6deg)}
+    100%{opacity:0;transform:scale(1.7) rotate(20deg);filter:grayscale(1) blur(4px)}
+  }
+  #sbreak .sbnum{font:900 96px Georgia,serif;color:#ff5c3c;line-height:1;margin-top:-6px;
+    text-shadow:0 0 40px rgba(255,80,40,.85),0 6px 0 #4a0f06;
+    opacity:0;animation:sbNum .7s cubic-bezier(.2,1.5,.4,1) .25s forwards}
+  @keyframes sbNum{
+    0%{opacity:0;transform:scale(2.4)}
+    45%{opacity:1;transform:scale(1)}
+    62%{transform:translateX(-7px) rotate(-2deg)}
+    74%{transform:translateX(7px) rotate(2deg)}
+    86%{transform:translateX(-4px)}
+    100%{opacity:1;transform:none}
+  }
+  #sbreak .sbcrack{position:absolute;left:50%;top:52%;width:0;height:5px;transform:translate(-50%,-50%);
+    background:linear-gradient(90deg,transparent,#fff2d0,#fff,#ffb08a,transparent);border-radius:3px;
+    box-shadow:0 0 30px 8px rgba(255,180,120,.8);animation:sbCrack .55s ease-out .55s forwards}
+  @keyframes sbCrack{0%{width:0;opacity:0}30%{opacity:1}100%{width:620px;opacity:0}}
+  #sbreak .sbline{font:900 46px Georgia,serif;letter-spacing:3px;color:#ffd0b8;margin-top:14px;
+    text-shadow:0 4px 0 #3a0a03,0 0 30px rgba(255,90,50,.5);opacity:0;
+    animation:sbLine .6s cubic-bezier(.2,1.6,.4,1) .78s forwards}
+  @keyframes sbLine{0%{opacity:0;transform:scale(1.5) translateY(-8px)}100%{opacity:1;transform:none}}
+  #sbreak .sbsub{font:700 17px Georgia,serif;color:#c9a24a;letter-spacing:1px;margin-top:10px;opacity:0;
+    animation:sbFade .5s ease-out 1.02s forwards}
+  #sbreak .sbshard{position:absolute;width:10px;height:14px;background:#ffb08a;pointer-events:none;
+    box-shadow:0 0 14px rgba(255,140,90,.9);border-radius:2px}
+  @keyframes sbFade{to{opacity:1}}
+
   /* ---- mastery inside PLEBPACK ---- */
   .mast{margin-top:8px;border-top:1px dashed rgba(43,36,24,.35);padding-top:7px}
   .mast .mrow{display:flex;justify-content:space-between;align-items:baseline;font:700 12px Georgia,serif;color:#4a3d24}
@@ -896,7 +939,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.28 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.29 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1139,6 +1182,16 @@
     <div class="runame" id="ruName">Silver 1</div>
     <div class="rusub" id="ruSub">GLOBAL #7</div>
     <div class="rustars" id="ruStars">⭐</div>
+  </div></div>
+
+  <!-- ============ WIN STREAK BREAK (only for streaks above 10) ============ -->
+  <div id="sbreak"><div class="sbwrap">
+    <div class="sbtop">WIN STREAK</div>
+    <div class="sbfire" id="sbFire">\ud83d\udd25</div>
+    <div class="sbnum" id="sbNum">0</div>
+    <div class="sbcrack"></div>
+    <div class="sbline" id="sbLine">STREAK BROKEN</div>
+    <div class="sbsub" id="sbSub"></div>
   </div></div>
 
   <!-- ============ OVERLAYS ============ -->
@@ -2383,7 +2436,7 @@ function rival(){
   const a=CLOUD.accounts[k]||{};
   const elo=a.rank||0;
   return { name:a.u||'Pleb', key:k, rank:rankTier(elo), elo:elo, color:rankColor(elo),
-           level:a.level||1, streak:a.streak||0, best:a.bestStreak||0, kills:a.kills||0,
+           level:a.level||1, streak:a.cur||0, best:a.streak||a.bestStreak||0, kills:a.kills||0,
            online:presenceOf(a).online, bot:false };
 }
 
@@ -2433,7 +2486,8 @@ function loadLocalFor(me){
     LB.level=Math.max(1,a.level||1); LB.bestStreak=a.streak||0;
     LB.waves=a.waves||0; LB.kills=a.kills||0; LB.rank=a.rank||0; LB.time=a.time||0;
   }
-  LB.streak=0; saveLB(); pushScore(); refreshUserChip();
+  LB.streak=Math.max(0,a.cur||0);   // current streak survives a reload; only a LOSS kills it
+  saveLB(); pushScore(); refreshUserChip();
   // if the board already knows about a LATER season than us, we skipped a month:
   // settle the one we were in and move forward.
   if(a&&a.sid && SEASON && String(a.sid)>String(SEASON.id)){
@@ -2822,8 +2876,9 @@ function pushScore(){
 function boardMe(){
   const name=ME?ME.name:'You';
   const a=ME&&CLOUD.accounts?CLOUD.accounts[ME.key]:null;
-  if(a) return {name, level:a.level||0, streak:a.streak||0, waves:a.waves||0, kills:a.kills||0, rank:a.rank||0, time:a.time||0, isMe:true};
-  return {name, level:LB.level, streak:LB.bestStreak, waves:LB.waves, kills:LB.kills, rank:LB.rank, time:LB.time||0, isMe:true};
+  /* streak = BEST (all-time, leaderboard column) · cur = CURRENT (dies when you lose) */
+  if(a) return {name, level:a.level||0, streak:a.streak||0, cur:a.cur||0, waves:a.waves||0, kills:a.kills||0, rank:a.rank||0, time:a.time||0, isMe:true};
+  return {name, level:LB.level, streak:LB.bestStreak, cur:LB.streak||0, waves:LB.waves, kills:LB.kills, rank:LB.rank, time:LB.time||0, isMe:true};
 }
 /* ---- GLOBAL RANK: where you sit out of every account on the board ---- */
 function globalRank(rankValue){
@@ -2879,7 +2934,9 @@ function renderBoard(){
   const GR=globalRank(me.rank);          // computed once — was being recalculated 3x
   let html='<div class="bd-big">'+
     '<div class="bd-stat"><div class="v">'+me.level+'</div><div class="k">LEVEL</div></div>'+
-    '<div class="bd-stat"><div class="v">'+me.streak+'</div><div class="k">WIN STREAK</div></div>'+
+    '<div class="bd-stat"><div class="v" style="color:'+(me.cur>0?'#ff9a56':'#ffd24a')+'">'+(me.cur>0?'\ud83d\udd25':'')+(me.cur||0)+'</div>'+
+      '<div class="k">WIN STREAK'+(me.cur>0?'':' \u00b7 none')+'</div>'+
+      '<div class="k" style="font-size:11px;opacity:.75;margin-top:2px">BEST '+me.streak+'</div></div>'+
     '<div class="bd-stat"><div class="v">'+me.waves+'</div><div class="k">WAVES BEATEN</div></div>'+
     '<div class="bd-stat"><div class="v">'+me.kills+'</div><div class="k">UNITS KILLED</div></div>'+
     '<div class="bd-stat"><div class="v rankbadge" style="background:'+rankColor(me.rank)+';color:#2b2418">'+rankTier(me.rank)+'</div><div class="k">RANK \u00b7 '+me.rank+' pts</div></div>'+
@@ -2959,7 +3016,7 @@ function openVS(){
   const o=S.opp||{name:S.oppName||'The Baron',rank:'Unranked',elo:0,color:'#b08d57',level:1,
                    streak:0,best:0,kills:0,online:false,bot:true};
   const rec=vsRivalStats();
-  if(rec){ o.level=rec.level||o.level; o.streak=rec.streak||0; o.best=rec.bestStreak||rec.best||0;
+  if(rec){ o.level=rec.level||o.level; o.streak=rec.cur||0; o.best=rec.streak||rec.bestStreak||o.best||0;
            o.kills=rec.kills||0; }
   const pres = o.bot ? 'A LEGEND OF THE BARROWS'
             : (presenceOf(rec||{}).online ? '\ud83d\udfe2 ONLINE NOW' : '\u26aa OFFLINE \u00b7 AI PLAYS FOR THEM');
@@ -3090,6 +3147,7 @@ function battleLose(){
   LB.streak=0;                       // losing ANY battle mode breaks your win streak
   S.streakLost=hadStreak;
   saveLB(); pushScore();
+  if(hadStreak>10) setTimeout(()=>streakBreakFX(hadStreak),260);   // only big streaks get the show
   $('ovT').style.color='#ff9a86'; $('ovT').textContent='YOUR BASE FELL';
   $('ovP').innerHTML=(S.streakLost?('<b style="color:#ff9a86">🔥 Win streak of '+S.streakLost+' lost</b><br>'):'')+
     '<b>'+S.oppName+'</b>\u2019s army overran you before you could break their base.<br>'+
@@ -3098,6 +3156,45 @@ function battleLose(){
   $('ovAgain').style.display=''; $('ovAgain').textContent='RETRY BATTLE';
   $('ovAgain').onclick=()=>{ hideOv(); newBattle(S.ranked); };
   $('ov').classList.add('on'); SFX.lose();
+}
+/* ---- WIN STREAK BREAK: only fires for streaks ABOVE 10 ---- */
+let sbTimer=null;
+function streakBreakFX(n){
+  const el=$('sbreak'); if(!el||!n)return;
+  $('sbNum').textContent=n;
+  $('sbFire').textContent='\ud83d\udd25';
+  const best=(LB.bestStreak||0)>=n;
+  $('sbLine').textContent='STREAK BROKEN';
+  $('sbSub').textContent=best?('that was your BEST ever \u00b7 '+n+' wins in a row')
+                             :('you had '+n+' in a row \u00b7 best is '+(LB.bestStreak||0));
+  // re-run the CSS animations
+  el.classList.remove('on','out');
+  void el.offsetWidth;
+  el.classList.add('on');
+  // shards flying out of the crack
+  const wrap=el.querySelector('.sbwrap');
+  wrap.querySelectorAll('.sbshard').forEach(x=>x.remove());
+  const r=wrap.getBoundingClientRect();
+  for(let i=0;i<18;i++){
+    const sh=document.createElement('div'); sh.className='sbshard';
+    sh.style.left=(r.width/2)+'px'; sh.style.top=(r.height*0.52)+'px';
+    sh.style.width=(5+Math.random()*7)+'px';
+    sh.style.height=(8+Math.random()*12)+'px';
+    sh.style.background=i%3?'#ffb08a':'#ff7a52';
+    wrap.appendChild(sh);
+    const ang=(Math.random()-0.5)*Math.PI*1.25, dist=140+Math.random()*260;
+    sh.animate([{transform:'translate(-50%,-50%) rotate(0) scale(1)',opacity:1},
+                {transform:'translate('+Math.cos(ang)*dist+'px,'+(Math.sin(ang)*dist+120)+'px) rotate('+(Math.random()*720-360)+'deg) scale(.5)',opacity:0}],
+               {duration:800+Math.random()*600,easing:'cubic-bezier(.15,.7,.3,1)'})
+      .onfinish=()=>sh.remove();
+  }
+  // low, ugly descending tone + a crack
+  try{ tone(200,0.5,'sawtooth',0.12); setTimeout(()=>tone(140,0.6,'sawtooth',0.10),140);
+       setTimeout(()=>tone(90,0.7,'triangle',0.09),320); }catch(e){}
+  clearTimeout(sbTimer);
+  sbTimer=setTimeout(()=>{ el.classList.add('out');
+    setTimeout(()=>{ el.classList.remove('on','out'); wrap.querySelectorAll('.sbshard').forEach(x=>x.remove()); },340);
+  },2300);
 }
 function updateRaidBtn(){ if(!S||!$('raidBtn'))return;
   const cd=Math.ceil(S.raidCd||0);
@@ -4490,7 +4587,8 @@ try{
 /* debug hooks (verification) */
 window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked(){return unlocked;}, get PATH(){return PATH;},
   spawnE:(t)=>spawn(t), effDmg:(o)=>effDmg(o), packEff:(k,s)=>packEffect(k,s),
-  show:show, battle:newBattle, closeVS:closeVS,
+  show:show, battle:newBattle, closeVS:closeVS, get LB(){return LB;}, lose:battleLose, sbreak:streakBreakFX,
+  get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor,
   tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
 
 // interval-driven loop: runs even when the game sits in an unfocused iframe
