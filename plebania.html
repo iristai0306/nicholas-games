@@ -198,6 +198,12 @@
   .fr-add input::placeholder{color:#8a7a56}
   .fr-msg{min-height:22px;font:700 15px Georgia,serif;color:#ff9a86;margin-bottom:12px}
   .fr-msg.ok{color:#9fe08a}
+  .fr-board{width:min(760px,94vw);margin:20px auto 0;text-align:left}
+  .fr-head{font:800 14px Georgia,serif;color:#c9a961;letter-spacing:1.5px;margin:0 0 9px}
+  .fr-chips{display:flex;flex-wrap:wrap;gap:8px}
+  .fr-chip{font:800 15px Georgia,serif;color:#ffe08a;background:#100b04;border:2.5px solid #4a3616;border-radius:12px;padding:7px 13px;cursor:pointer}
+  .fr-chip:hover{border-color:#ffd24a}
+  .fr-chip.own{color:#9fe08a;cursor:default;opacity:.7}
   .fr-list{width:min(760px,94vw);margin:0 auto;display:flex;flex-direction:column;gap:10px;text-align:left}
   .fr-card{display:flex;align-items:center;gap:12px;border:3px solid #2a1c08;border-radius:16px;padding:12px 16px;
     background:linear-gradient(rgba(64,46,20,.92),rgba(30,20,8,.94));box-shadow:0 5px 0 #2a1c08}
@@ -971,7 +977,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.37 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.38 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1054,6 +1060,7 @@
     </div>
     <div id="frMsg" class="fr-msg"></div>
     <div id="frList" class="fr-list"></div>
+    <div id="frBoard" class="fr-board"></div>
     <div class="acct-btns"><div class="mbtn small" id="frBack" style="width:220px">⬅ Back to menu</div></div>
   </div>
 
@@ -2917,7 +2924,14 @@ async function addFriend(){
   if(isFriend(k)){ frMsg('You already have '+raw+' as a friend.'); return; }
   let rec=CLOUD.accounts[k];
   if(!rec){ try{ const r=await accountLookup(k); if(r&&r.u) rec=r; }catch(e){} }
-  if(!rec){ frMsg('No player called \u201c'+raw+'\u201d. Check the spelling.'); return; }
+  if(!rec){
+    if(!MQTT_READY||!MQTT_C||!MQTT_C.connected)
+      frMsg('Couldn\u2019t reach the player board \u2014 check your internet and try again.');
+    else
+      frMsg('Nobody called \u201c'+raw+'\u201d on the player board. The full list is just below \u2014 if they\u2019re not on it, their account never got made.');
+    renderBoardList();
+    return;
+  }
   FRIENDS.push(k); saveFriends();
   inp.value=''; frMsg('\u2705 Added '+(rec.u||raw)+'!',true); SFX.up();
   renderFriends();
@@ -2929,6 +2943,7 @@ function removeFriend(k){
 function renderFriends(){
   const list=$('frList'); if(!list)return;
   if(!FRIENDS.length){
+    renderBoardList();
     list.innerHTML='<div class="fr-empty">No friends yet \u2014 add someone by their username above \ud83d\udc4c</div>';
     return;
   }
@@ -2946,6 +2961,24 @@ function renderFriends(){
   });
   list.innerHTML=h;
   list.querySelectorAll('[data-rm]').forEach(el=>el.onclick=()=>removeFriend(el.dataset.rm));
+  renderBoardList();
+}
+/* every account that actually exists on the board -- tap one to add it */
+function renderBoardList(){
+  const box=$('frBoard'); if(!box)return;
+  const ks=Object.keys(CLOUD.accounts||{});
+  if(!ks.length){ box.innerHTML='<div class="fr-head">\ud83c\udf10 PLAYERS ON THE BOARD (0)</div>'+
+      '<div class="fr-empty">Nobody on the board yet \u2014 or the board is out of reach.</div>'; return; }
+  ks.sort((a,b)=>((CLOUD.accounts[b].at||0)-(CLOUD.accounts[a].at||0)));
+  let h='<div class="fr-head">\ud83c\udf10 PLAYERS ON THE BOARD ('+ks.length+')</div><div class="fr-chips">';
+  ks.forEach(k=>{
+    const a=CLOUD.accounts[k]||{}; const mine=!!(ME&&k===ME.key);
+    if(mine||isFriend(k)) h+='<span class="fr-chip own">'+(a.u||k)+(mine?' (you)':'')+'</span>';
+    else h+='<span class="fr-chip" data-add="'+k+'">+ '+(a.u||k)+'</span>';
+  });
+  h+='</div>';
+  box.innerHTML=h;
+  box.querySelectorAll('[data-add]').forEach(el=>el.onclick=()=>{ const i=$('frInput'); if(i)i.value=el.dataset.add; addFriend(); });
 }
 /* ---------- "check my password" (device-local only) ---------- */
 function myPassRec(){ try{ return loadJSON('plebania_myPass',null); }catch(e){ return null; } }
