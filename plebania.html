@@ -977,7 +977,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.39 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.40 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1314,7 +1314,7 @@ function show(id){
   if(id==='mart')renderMart();
   if(id==='pack')renderPack();
   if(id==='pass')renderPass();
-  if(id==='board')renderBoard();
+  if(id==='board'){ boardLiveSync(); renderBoard(); }
   if(id==='account')renderAccount();
   if(id==='friends')renderFriends();
   if(id==='admin')renderAdmin();
@@ -3212,6 +3212,20 @@ function rankUpFX(beforePts,afterPts){
   [520,660,780,1040,1300].forEach((f,i)=>setTimeout(()=>tone(f,0.24,'triangle',0.08,f*1.4),i*110));
 }
 
+/* the board is filled by messages that trickle in from three brokers at once, so a
+   freshly-opened board can look half-empty for a second. Keep re-drawing for a few
+   seconds and say we're still syncing, so it never shows a wrong player count. */
+let BOARD_POLL=null, BOARD_OPEN_T=0;
+function boardLiveSync(){
+  BOARD_OPEN_T=Date.now();
+  clearInterval(BOARD_POLL);
+  let n=0;
+  BOARD_POLL=setInterval(()=>{
+    const bd=$('board');
+    if(!bd||!bd.classList.contains('on')||++n>24){ clearInterval(BOARD_POLL); BOARD_POLL=null; return; }
+    renderBoard();
+  },500);
+}
 function renderBoard(){
   const body=$('boardBody'); if(!body)return;
   const me=boardMe();
@@ -3254,8 +3268,9 @@ function renderBoard(){
   });
   html+='</div>';
   const onlineN=rowsAll.filter(r=>presenceOf(r).online).length;
+  const syncing=(Date.now()-BOARD_OPEN_T)<2600;
   const live='<div class="bd-live"><span class="bd-dot on"></span>'+onlineN+' online now \u00b7 '+
-    (total-onlineN)+' offline</div>';
+    (total-onlineN)+' offline'+(syncing?' \u00b7 \u23f3 still syncing\u2026':'')+'</div>';
   html=live+'<div class="bd-sub">'+total+' player'+(total===1?'':'s')+' on the board'+(total>SHOW?(' \u00b7 top '+SHOW+' shown'):'')+'</div>'+html;
   body.innerHTML=html;
 }
@@ -5362,7 +5377,7 @@ installPlekeyPlebs();
     checkOrient();
   });
   checkOrient();
-  setInterval(()=>cloudSync(false), 60000);   // gentle safety flush (only if dirty)
+  setInterval(()=>{ cloudSync(false); if(poolLive().length<MQTT_BROKERS.length) fillPool(); }, 60000);   // safety flush + re-attach any dead broker
   startPresence();                            // keep "online" truthful on the leaderboard
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden){ saveLB(); pushScore(); cloudSync(false); }
