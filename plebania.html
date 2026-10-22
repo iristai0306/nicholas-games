@@ -357,6 +357,8 @@
   .pplekey ul{list-style:none;margin:0;padding:0;font-size:19px;color:#2b2418}
   .pplekey li{margin:7px 0}
   .pkey-svg{width:126px;height:106px;flex:0 0 auto}
+  .pk-art{width:118px;height:118px;flex:0 0 auto;filter:drop-shadow(0 3px 0 rgba(0,0,0,.22))}
+  .pi-slot .pthumb{width:44px;height:44px}
   .pm-sub{text-align:center;font-size:19px;margin:0 0 16px;color:#2b2418}
   .pm-sk{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
   .pm-skin{border:2.5px solid #2b2418;border-radius:16px;padding:10px 6px;text-align:center}
@@ -496,6 +498,9 @@
   .pk-item.owned{border-color:#3f8f3a}
   .pk-item.eq{background:#2b2418;color:#fbfaf3}
   .pk-item .ie{font-size:30px;line-height:1}
+  .pk-item .ie{display:flex;align-items:center;justify-content:center;height:58px}
+  .pthumb{image-rendering:auto;display:block;filter:drop-shadow(0 2px 0 rgba(0,0,0,.18))}
+  .pk-item.eq .pthumb{filter:drop-shadow(0 0 6px rgba(255,224,138,.9))}
   .pk-item .in{font-weight:700;font-size:15px;margin-top:5px}
   .pk-item .ic{font-size:14px;margin-top:5px;font-weight:700}
 
@@ -977,7 +982,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.40 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.41 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1303,7 +1308,11 @@ addEventListener('resize',checkOrient);
 addEventListener('orientationchange',()=>setTimeout(checkOrient,120));
 
 const $=id=>document.getElementById(id);
-const cv=$('cv'), ctx=cv.getContext('2d');
+const cv=$('cv');
+/* `let` so the shop can paint a pleb into an offscreen canvas with the EXACT
+   same drawing code the game uses — shop art and battle art can never drift. */
+let ctx=cv.getContext('2d');
+const PLEB_THUMB_CACHE={};
 cv.width=W; cv.height=H;
 
 /* ---------------- screens ---------------- */
@@ -1490,7 +1499,7 @@ const TOWERS={
   mortar   :{name:'Mortar',   emoji:'💣',   cost:240, dmg:70, rate:2.4,  range:380, kind:'splash', splash:104, color:'#7a6a3a', desc:'Siege range · heavy splash'},
   orchard  :{name:'Orchard',  emoji:'🍎',   cost:120, kind:'econ', income:14, every:2.2, color:'#b03a3a', desc:'+14 gold / 2.2s'},
   // ---- EVENT plebs: never bought with gold — earned from bundles / modes ----
-  shadow   :{name:'Shadow Pleb',     emoji:'🌑', cost:150, dmg:34, rate:0.62, range:150, kind:'ranged', color:'#5a3f8a', desc:'Shadow bolt · pierces the dark'},
+  shadow   :{name:'Shadow Pleb',     emoji:'🌑', cost:150, dmg:34, rate:0.62, range:150, kind:'ranged', color:'#5a3f8a', fx:'shadow', desc:'Shadow bolt · pierces the dark'},
   coffin   :{name:'Coffin Pleb',     emoji:'\u26b0\ufe0f', cost:180, dmg:44, rate:0.95, range:135, kind:'splash', splash:64, color:'#4a3550', desc:'Buries the dead \u00b7 TEMPORARY event pleb'},
   tombstone:{name:'Tombstone Pleb',  emoji:'🪦', cost:210, dmg:52, rate:1.25, range:120, kind:'splash', splash:78, color:'#6b6474', desc:'Grave slam · heavy AoE'}
 };
@@ -1894,6 +1903,42 @@ const SHOP_ART={
 };
 function svg(k){ return SHOP_ART[k]||''; }
 
+/* ---- SHOP ART = BATTLE ART ----
+   Every pleb in the shop is painted by `drawPleb()` itself — the very same
+   function that draws him on the battlefield — into a throwaway canvas, then
+   handed to the page as an <img>. There is only one drawing of each pleb, so
+   the shop and the fight can never drift apart again. */
+function plebThumb(key,size){
+  size=size||96;
+  const ck=key+'@'+size;
+  if(PLEB_THUMB_CACHE[ck]) return PLEB_THUMB_CACHE[ck];
+  if(typeof drawPleb!=='function') return '';
+  const c=document.createElement('canvas');
+  c.width=size; c.height=size;
+  const g=c.getContext('2d');
+  const prev=ctx;                       // swap the global draw context for ours
+  let url='';
+  try{
+    ctx=g;
+    g.clearRect(0,0,size,size);
+    g.save();
+    g.translate(size/2,size*0.60);      // feet a bit below centre
+    const sc=size/96;                   // plebs are drawn in a ~64px box
+    g.scale(sc,sc);
+    drawPleb(0,0,key,TOWERS[key],0,1);  // t=0 → the exact pose the shop should show
+    g.restore();
+    url=c.toDataURL('image/png');
+  }catch(e){ url=''; }
+  ctx=prev;                             // ALWAYS put the game context back
+  PLEB_THUMB_CACHE[ck]=url;
+  return url;
+}
+function plebThumbHTML(key,size,cls){
+  const u=plebThumb(key,size);
+  if(!u) return TOWERS[key]?TOWERS[key].emoji:'';
+  return '<img class="pthumb '+(cls||'')+'" src="'+u+'" width="'+size+'" height="'+size+'" alt="">';
+}
+
 /* ---------- real-money bundles (TEST checkout) ---------- */
 const BUNDLES=[
   {key:'wood',  name:'Wooden Pleb Box', art:'boxwood', usd:2.99,  desc:'+150 Pleb \u26a1', grant:()=>grantBox('wood')},
@@ -2095,7 +2140,7 @@ function renderMart(){
             '<div class="psq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
             '<div class="plabel">PLEDOPTION</div></div>'+
           '<div class="pcol2"><div class="pt">Unique Plekey</div>'+
-            '<div class="pbody">'+svg('key')+'<ul><li>- Ding key sfx</li><li>- Unique style</li><li>- Unique rarity</li><li>- Bundle only</li></ul></div></div>'+
+            '<div class="pbody">'+plebThumbHTML('pk_unique',118,'pk-art')+'<ul><li>- Ding key sfx</li><li>- Unique style</li><li>- Unique rarity</li><li>- Bundle only</li></ul></div></div>'+
           '<div class="price">$19.99</div>'+
         '</div>'+
       '</div>';
@@ -2115,7 +2160,7 @@ function renderMart(){
           '<div class="psq"><div class="q1">5X</div><div class="q2">Pleb Box</div></div></div>'+
           '<div class="plabel">PLEDOPTION</div></div>'+
         '<div class="pcol2"><div class="pt">Shadow Pleb</div>'+
-          '<div class="pbody">'+svg('shadow')+'<ul><li>- Shadow bolt sfx</li><li>- Unique style</li><li>- Unique rarity</li><li>- Bundle only</li></ul></div></div>'+
+          '<div class="pbody">'+plebThumbHTML('shadow',118,'pk-art')+'<ul><li>- Shadow bolt sfx</li><li>- Unique style</li><li>- Unique rarity</li><li>- Bundle only</li></ul></div></div>'+
         '<div class="price">$19.99</div>'+
       '</div>';
     body.appendChild(sr);
@@ -2129,7 +2174,7 @@ function renderMart(){
     for(let i=0;i<INDEX_SLOTS;i++){
       if(i===0){                                  // slot 1 = THE Unique Plekey
         const owned=hasKey('unique');
-        grid+='<div class="pi-slot'+(owned?' have':'')+'" title="Unique Plekey">'+svg('key')+'</div>';
+        grid+='<div class="pi-slot'+(owned?' have':'')+'" title="Unique Plekey">'+(owned?plebThumbHTML('pk_unique',44):'')+'</div>';
         continue;
       }
       const sk=SKINS[i-1];
@@ -2326,7 +2371,7 @@ function plekeyOwnedUnit(k){ return String(k||'').indexOf('pk_')===0 && hasKey(S
 function plekeyDef(id){
   const t=PLEKEY_UNITS[id]; if(!t)return null;
   return {name:t.n, emoji:'\ud83d\udd11', cost:t.cost, dmg:t.dmg, rate:t.rate, range:t.range,
-          kind:t.kind, splash:t.splash, color:t.col, desc:t.desc, plekey:id};
+          kind:t.kind, splash:t.splash, color:t.col, fx:'plek', desc:t.desc, plekey:id};
 }
 /* register any Plekey we own as a placeable unit */
 function installPlekeyPlebs(){
@@ -3689,6 +3734,15 @@ const PLEB_GATE={ berserker:250, longbow:320, dragonling:380, knight:340, mortar
 function plebOwned(k){ return !!PACK_OWN['pleb:'+k]; }
 const PACK_SLOTS=[['weapon','🗡️ Weapon','more damage'],['armour','🛡️ Armour','more range &amp; farm gold'],['boots','👟 Boots','attack faster']];
 const PACK_EXTRA=['berserker','longbow','dragonling','knight','mortar','orchard','shadow','tombstone','coffin'];   // plebs you equip into your army
+/* everything that belongs in PLEBPACK as a "pleb": the equippable set above,
+   plus every Plekey you own and every season reward you earned. That way a
+   Plekey can never be missing from its own pack again. */
+function packExtraList(){
+  const a=PACK_EXTRA.slice();
+  try{ PLEKEYS.forEach(id=>{ if(PLEKEY_UNITS[id]){ const k=plekeyUnitKey(id); if(a.indexOf(k)<0)a.push(k); } }); }catch(e){}
+  try{ if(SEASON&&SEASON.rewards) SEASON.rewards.forEach(sid=>{ const k=seasonPlebKey(sid); if(k&&TOWERS[k]&&a.indexOf(k)<0)a.push(k); }); }catch(e){}
+  return a;
+}
 const MAX_ARMY=5;                                                                    // max extra plebs equipped at once
 function armyCount(){ return PACK_EXTRA.filter(k=>PACK_OWN['equipped:'+k]).length; }
 function plebInArmy(k){ return !isExtra(k) || !!PACK_OWN['equipped:'+k]; }
@@ -3747,11 +3801,16 @@ function renderPack(){
   h+=masteryCardHTML(PACKPLEB);
   // ---- equip extra plebs into your army (buy here) ----
   h+='<div class="pk-slot"><div class="hd">🧑🌾 Plebs <span style="font-size:14px;font-weight:400;opacity:.65">buy a pleb to add it to your army, then equip it \u2014 <b style="color:'+(armyCount()>=MAX_ARMY?'#c0392b':'#2b2418')+'">'+armyCount()+'/'+MAX_ARMY+' equipped</b></span></div><div class="pk-items">';
-  PACK_EXTRA.forEach(k=>{
-    const d=TOWERS[k]; const owned=plebOwned(k); const equipped=!!PACK_OWN['equipped:'+k];
+  packExtraList().forEach(k=>{
+    const d=TOWERS[k]; if(!d)return;
+    /* Plekeys and season rewards are OWNED BY DEFINITION — you can't own the
+       Unique Plekey and be told to buy it, and you can't be shown a 🔒 on a
+       pleb you already won. */
+    const gifted = plekeyOwnedUnit(k) || String(k).indexOf('season_')===0;
+    const owned=plebOwned(k)||gifted; const equipped=!!PACK_OWN['equipped:'+k];
     const cost=PLEB_GATE[k];
     h+='<div class="pk-item'+(owned?' owned':'')+(equipped?' eq':'')+'" data-pleb="'+k+'">'+
-      '<div class="ie">'+d.emoji+'</div><div class="in">'+d.name+'</div>'+
+      '<div class="ie">'+plebThumbHTML(k,64)+'</div><div class="in">'+d.name+'</div>'+
       '<div class="ic">'+(equipped?'✔ In army':owned?'Equip':(cost!=null?'👑 '+cost:'🔒 Earn it'))+'</div>'+
       mastStripHTML(k)+'</div>';
   });
@@ -3774,7 +3833,11 @@ function renderPack(){
   body.querySelectorAll('.pk-item[data-pleb]').forEach(el=>el.onclick=()=>packPlebClick(el.dataset.pleb));
 }
 function packPlebClick(k){
-  const d=TOWERS[k]; const owned=plebOwned(k);
+  const d=TOWERS[k];
+  /* Plekeys + season rewards are already yours — never sell them back to you,
+     just equip/unequip. */
+  const gifted = plekeyOwnedUnit(k) || String(k).indexOf('season_')===0;
+  const owned=plebOwned(k)||gifted;
   if(!owned){
     const cost=PLEB_GATE[k];
     // earned-only plebs (shadow / tombstone / coffin) have no price — don't let
@@ -4240,13 +4303,16 @@ function towerUpdate(dt){
     }else if(d.kind==='splash'){
       S.projs.push({x:px,y:py-6,tx:best.x,ty:best.y,spd:d.kind==='splash'&&o.k==='catapult'?420:520,
         dmg:effDmg(o),splash:d.splash*(1+(o.level-1)*0.12),arc:true,life:0,tot:Math.hypot(best.x-px,best.y-py)/520,
-        tgt:best, kind:o.k, sx:px, sy:py-6});
+        tgt:best, kind:o.k, fx:(d.fx||o.k), sx:px, sy:py-6});
       SFX[plekeyOwnedUnit(o.k)?'ding':(o.k==='catapult'?'boom':'potion')]();
     }else{
       S.projs.push({x:px,y:py-6,tx:best.x,ty:best.y,spd:760,dmg:effDmg(o),splash:0,
-        arc:false,life:0,tot:Math.hypot(best.x-px,best.y-py)/760,tgt:best,kind:o.k,sx:px,sy:py-6});
+        arc:false,life:0,tot:Math.hypot(best.x-px,best.y-py)/760,tgt:best,kind:o.k,fx:(d.fx||o.k),sx:px,sy:py-6});
       SFX[plekeyOwnedUnit(o.k)?'ding':'bow']();
     }
+    // signature muzzle flash so you can see WHO fired, not just what flew
+    if(d.fx==='plek'){ for(let i=0;i<7;i++)burst(px+14,py-10,i%2?'#fff3c4':'#c8a2ff'); }
+    else if(d.fx==='shadow'){ for(let i=0;i<6;i++)burst(px+16,py-12,i%2?'#b98cff':'#2a1e3c'); }
   }
 }
 /* ---- the HERO: you drag him around; he auto-attacks and levels up ---- */
@@ -4329,7 +4395,20 @@ function impact(p){
     S.shake=Math.max(S.shake,p.kind==='catapult'?6:2);
   }else if(p.tgt&&p.tgt.hp>0){
     damage(p.tgt,p.dmg,{k:p.kind});
-    for(let i=0;i<5;i++)burst(p.tx,p.ty,'#f0e0a8');
+    const fx=p.fx||p.kind;
+    if(fx==='plek'){                       // key-crack: golden shards + ringing ring
+      for(let i=0;i<12;i++)burst(p.tx,p.ty,i%3?'#ffe08a':'#fff6ce');
+      ctx.save(); ctx.strokeStyle='rgba(255,238,170,.9)'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(p.tx,p.ty,16,0,7); ctx.stroke(); ctx.restore();
+      S.shake=Math.max(S.shake,2.5);
+    }else if(fx==='shadow'){               // void implosion: dark burst + violet ring
+      for(let i=0;i<10;i++)burst(p.tx,p.ty,i%2?'#2a1e3c':'#a97bff');
+      ctx.save(); ctx.strokeStyle='rgba(178,140,255,.85)'; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.arc(p.tx,p.ty,13,0,7); ctx.stroke(); ctx.restore();
+      S.shake=Math.max(S.shake,2);
+    }else{
+      for(let i=0;i<5;i++)burst(p.tx,p.ty,'#f0e0a8');
+    }
   }
 }
 function damage(e,dmg,o){
@@ -4661,24 +4740,51 @@ function drawPleb(x,y,key,d,t,alpha){
   const bob=Math.sin((t||0)*2.6)*1.0;
   drawPlebShape(0,0,1,bob);
 
-  // ---- PLEKEY UNITS wear a big golden key ----
+  // ---- PLEKEY UNITS: gilded key-bearers (redesigned v2.41) ----
   if(String(key).indexOf('pk_')===0){
     const id=String(key).slice(3);
-    const col=(PLEKEY_UNITS[id]&&PLEKEY_UNITS[id].col)||'#ffd24a';
-    const sp=Math.sin((t||0)*1.8)*2;
-    // glow ring
-    ctx.strokeStyle=col; ctx.globalAlpha=.45; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.arc(0,-6,26,0,7); ctx.stroke(); ctx.globalAlpha=1;
-    // key shaft + bow, held upright
-    ctx.save(); ctx.translate(24,-8+sp); ctx.rotate(0.25);
-    ctx.strokeStyle='#7a5a12'; ctx.lineWidth=4; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(0,16); ctx.lineTo(0,-16); ctx.stroke();
-    ctx.fillStyle=col; ctx.strokeStyle=INK; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.arc(0,-22,9,0,7); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.arc(0,-22,4,0,7); ctx.fillStyle='#2b2418'; ctx.fill();
-    ctx.fillStyle=col; ctx.beginPath(); ctx.rect(0,4,10,4); ctx.fill();
-    ctx.beginPath(); ctx.rect(0,11,7,4); ctx.fill();
+    const U=PLEKEY_UNITS[id]||{col:'#ffd24a'};
+    const col=U.col, tt=t||0, pulse=0.5+0.5*Math.sin(tt*2.2);
+    // radiant aura behind him
+    const gl=ctx.createRadialGradient(0,-8,2,0,-8,46);
+    gl.addColorStop(0,'rgba(255,242,196,'+(0.40+0.22*pulse).toFixed(3)+')');
+    gl.addColorStop(1,'rgba(255,242,196,0)');
+    ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(0,-8,46,0,7); ctx.fill();
+    // slow turning halo
+    ctx.save(); ctx.translate(0,-8); ctx.rotate(tt*0.45);
+    ctx.strokeStyle=col; ctx.globalAlpha=.55; ctx.lineWidth=2.2;
+    ctx.setLineDash([7,9]); ctx.beginPath(); ctx.arc(0,0,33,0,7); ctx.stroke();
+    ctx.setLineDash([]); ctx.restore(); ctx.globalAlpha=1;
+    // crown of little keys
+    for(let i=-1;i<2;i++){
+      ctx.save(); ctx.translate(i*11,-27); ctx.rotate(i*0.3);
+      ctx.fillStyle=col; ctx.strokeStyle=INK; ctx.lineWidth=1.8;
+      ctx.beginPath(); ctx.arc(0,0,3.6,0,7); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,3.6); ctx.lineTo(0,8); ctx.stroke();
+      ctx.restore();
+    }
+    // THE KEY — big, ornate, held in both hands
+    const sp=Math.sin(tt*1.8)*2.2;
+    ctx.save(); ctx.translate(25,-8+sp); ctx.rotate(0.22);
+    ctx.strokeStyle='#8a6a12'; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(0,18); ctx.lineTo(0,-18); ctx.stroke();
+    ctx.shadowColor=col; ctx.shadowBlur=9;
+    ctx.fillStyle=col; ctx.strokeStyle=INK; ctx.lineWidth=2.2;
+    ctx.beginPath(); ctx.arc(0,-25,10.5,0,7); ctx.fill(); ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#2b2418'; ctx.beginPath(); ctx.arc(0,-25,4.6,0,7); ctx.fill();
+    ctx.fillStyle=col; ctx.strokeStyle=INK; ctx.lineWidth=1.8;
+    ctx.beginPath(); ctx.rect(0,6,11,4.5); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.rect(0,13,7.5,4.5); ctx.fill(); ctx.stroke();
     ctx.restore();
+    // orbiting sparks
+    for(let i=0;i<3;i++){
+      const a=tt*1.1+i*2.094, r=30+Math.sin(tt*2+i)*3;
+      ctx.globalAlpha=0.55+0.45*Math.sin(tt*3+i);
+      ctx.fillStyle='#fff3c4';
+      ctx.beginPath(); ctx.arc(Math.cos(a)*r,-8+Math.sin(a)*r*0.55,2.4,0,7); ctx.fill();
+    }
+    ctx.globalAlpha=1;
   }
 
   // ---- weapon + signature accessory per type ----
@@ -5094,10 +5200,62 @@ function drawHero(){
   ctx.restore();
 }
 function drawProj(p){
+  const fx=p.fx||p.kind;
   if(p.kind==='catapult'){ ctx.fillStyle='#8a6a3a'; ctx.beginPath(); ctx.arc(p.x,p.y,7,0,7); ctx.fill();
     ctx.fillStyle='#b98a4d'; ctx.beginPath(); ctx.arc(p.x-2,p.y-2,3,0,7); ctx.fill(); }
   else if(p.kind==='alchemist'){ ctx.fillStyle='#9be07a'; ctx.beginPath(); ctx.arc(p.x,p.y,6,0,7); ctx.fill();
     ctx.fillStyle='rgba(155,224,122,.4)'; ctx.beginPath(); ctx.arc(p.x,p.y,10,0,7); ctx.fill(); }
+  /* ---- UNIQUE PLEKEY: a gilded key spinning down the lane, trailing light ---- */
+  else if(fx==='plek'){
+    const ang=(p.life||0)*11;
+    // trail
+    ctx.strokeStyle='rgba(255,236,168,.55)'; ctx.lineWidth=6; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.sx,p.sy); ctx.stroke();
+    ctx.strokeStyle='rgba(200,162,255,.35)'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.sx,p.sy); ctx.stroke();
+    // glow head
+    const g=ctx.createRadialGradient(p.x,p.y,1,p.x,p.y,15);
+    g.addColorStop(0,'rgba(255,247,214,.95)'); g.addColorStop(1,'rgba(255,214,90,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,15,0,7); ctx.fill();
+    // the spinning key itself
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(ang);
+    ctx.strokeStyle='#8a6a12'; ctx.lineWidth=2.6; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-7,0); ctx.lineTo(6,0); ctx.stroke();
+    ctx.fillStyle='#ffe08a'; ctx.strokeStyle='#2b2418'; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.arc(-8,0,3.6,0,7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#ffe08a';
+    ctx.beginPath(); ctx.rect(5,-1,4,2.4); ctx.fill();
+    ctx.beginPath(); ctx.rect(5,1.6,2.6,2.4); ctx.fill();
+    ctx.restore();
+    // sparkle flakes along the path
+    ctx.fillStyle='rgba(255,246,206,.8)';
+    for(let i=1;i<=3;i++){ const a=(i*p.life*6)%1;
+      ctx.beginPath(); ctx.arc(p.sx+(p.x-p.sx)*a,p.sy+(p.y-p.sy)*a,1.4+Math.sin(a*6)*1.2,0,7); ctx.fill(); }
+  }
+  /* ---- SHADOW PLEB: a screaming void bolt with a torn purple wake ---- */
+  else if(fx==='shadow'){
+    // torn wake
+    ctx.strokeStyle='rgba(42,30,60,.55)'; ctx.lineWidth=9;
+    ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.sx,p.sy); ctx.stroke();
+    ctx.strokeStyle='rgba(150,105,255,.5)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.sx,p.sy); ctx.stroke();
+    // dark core with violet rim
+    const g2=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,13);
+    g2.addColorStop(0,'rgba(20,12,34,.98)');
+    g2.addColorStop(0.55,'rgba(74,48,120,.9)');
+    g2.addColorStop(1,'rgba(170,120,255,0)');
+    ctx.fillStyle=g2; ctx.beginPath(); ctx.arc(p.x,p.y,13,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(198,166,255,.9)'; ctx.lineWidth=1.8;
+    ctx.beginPath(); ctx.arc(p.x,p.y,6.2,0,7); ctx.stroke();
+    // flickering wisps
+    const ph=(p.life||0)*24;
+    ctx.strokeStyle='rgba(178,140,255,.75)'; ctx.lineWidth=2; ctx.lineCap='round';
+    for(let i=0;i<3;i++){
+      const a=ph+i*2.1, r=9+Math.sin(ph*1.7+i)*3.5;
+      ctx.beginPath(); ctx.moveTo(p.x+Math.cos(a)*r,p.y+Math.sin(a)*r);
+      ctx.lineTo(p.x+Math.cos(a)*r*1.9,p.y+Math.sin(a)*r*1.9); ctx.stroke();
+    }
+  }
   else { ctx.strokeStyle='#e8dcc0'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.sx,p.sy); ctx.stroke();
     ctx.fillStyle='#e8dcc0'; ctx.beginPath(); ctx.arc(p.x,p.y,3,0,7); ctx.fill(); }
 }
