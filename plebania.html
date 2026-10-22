@@ -982,7 +982,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.47 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.49 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -2265,10 +2265,24 @@ LB.lossStreak=Math.max(0,Math.round(LB.lossStreak||0));
 function gamesPlayed(){ return (LB.wins||0)+(LB.losses||0); }
 function winRate(){ const g=gamesPlayed(); return g? Math.round((LB.wins||0)/g*100) : 0; }
 function winRateTxt(){ return winRate()+'%'; }   // never a dash - he wants to SEE it
-/* ---- WINS <-> XP <-> LEVEL (v2.45) ----
-   A win is worth XP_PER_WIN of levelling XP, so wins and level are two views
-   of the same thing: set one in the admin panel and the other follows. */
-const XP_PER_WIN=10;
+/* ---- WINS <-> LEVEL (v2.45, rescaled v2.48) ----
+   Wins and level are two views of the same thing: set one in the admin panel
+   and the other follows. Scale is anchored on 220 wins = level 105. */
+/* ---- WINS <-> LEVEL SCALE (v2.48) ----
+   Nicholas's spec, 2026-10-22: **220 wins = level 105**.
+   Anchored directly on that one point instead of routing through the XP curve,
+   because at this scale a win is worth more XP than a low level costs, which
+   made the XP round-trip ambiguous (1 win could jump you several levels).
+   A straight anchor keeps both admin boxes in perfect agreement at EVERY level. */
+const WINS_ANCHOR={wins:220, level:105};
+function levelFromWins(W){           // wins -> level
+  const n=Math.max(0,Math.round(W));
+  return Math.max(1, 1+Math.floor(n*(WINS_ANCHOR.level-1)/WINS_ANCHOR.wins));
+}
+function winsForLevel(L){            // level -> the wins it's worth
+  const l=Math.max(1,Math.round(L));
+  return Math.max(0, Math.ceil((l-1)*WINS_ANCHOR.wins/(WINS_ANCHOR.level-1)));
+}
 function xpToReachLevel(L){          // total XP needed to BE level L (level 1 = 0)
   let sum=0, n=Math.max(0,Math.round(L)-1);
   for(let i=1;i<=n;i++) sum+=levelXPNeed(i);
@@ -2276,13 +2290,8 @@ function xpToReachLevel(L){          // total XP needed to BE level L (level 1 =
 }
 function levelFromTotalXP(xp){       // highest level that XP total can buy
   let L=1;
-  while(L<200 && xp>=xpToReachLevel(L+1)) L++;
+  while(L<300 && xp>=xpToReachLevel(L+1)) L++;
   return L;
-}
-function winsForLevel(L){            // how many wins that level is "worth"
-  /* CEIL, not round: round() made the two-way edit wobble (level 5 -> 4 wins ->
-     level 4). Ceiling guarantees wins -> level -> wins returns the same level. */
-  return Math.max(0, Math.ceil(xpToReachLevel(Math.max(1,Math.round(L)))/XP_PER_WIN));
 }
 function fmtTime(s){ s=Math.max(0,Math.round(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
   if(h>0) return h+'h '+m+'m'; if(m>0) return m+'m '+Math.floor(s%60)+'s'; return s+'s'; }
@@ -3036,18 +3045,18 @@ function adminSetStats(){
     f.set(v); changed++;
   });
   /* ---- LEVEL <-> WINS (v2.45) ----
-     They're the same quantity seen two ways: a win is XP_PER_WIN of levelling XP.
+     They're the same quantity seen two ways, anchored at 220 wins = level 105.
      Whichever box he edited drives the other. If he edited BOTH, level wins,
      because that's the more explicit instruction. */
   const levelEdited = (wantLevel!=null && wantLevel!==prevLevel);
   const winsEdited  = (wantWins!=null  && wantWins!==prevWins);
   if(levelEdited){
     LB.level=Math.max(1,LB.level);
-    LB.wins=winsForLevel(LB.level);        // level -> the wins it's worth
+    LB.wins=winsForLevel(LB.level);        // level -> the wins it's worth (220w = lvl 105)
     LB.lossStreak=0;
   }else if(winsEdited){
     LB.wins=Math.max(0,LB.wins);
-    LB.level=levelFromTotalXP(LB.wins*XP_PER_WIN);   // wins -> XP -> level
+    LB.level=levelFromWins(LB.wins);                 // wins -> level (220w = lvl 105)
   }
   LB.level=Math.max(1,Math.round(LB.level||1));
   LB.wins=Math.max(0,Math.round(LB.wins||0));
@@ -3783,7 +3792,8 @@ function battleWin(){
   /* streak is a CHALLENGE thing now (that's the mode Nicholas wants it on) */
   if(!S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); }
   if(S.ranked){ S.eloGain=eloWin(); S.eloBefore=LB.rank; LB.rank+=S.eloGain; seasonAddElo(S.eloGain); }
-  addPassXP(S.ranked?150:100);
+  addPassXP(S.ranked?150:100);   // PLEBASS XP for the win (unchanged)
+  addHeroXP(S.hero, battleHeroXP());   // and LEVEL XP — a win is worth real levels
   saveLB(); pushScore();
   const smashed=(S.ebHp<=0);
   $('ovT').style.color='#f6dd8b';
@@ -3801,9 +3811,16 @@ function battleWin(){
   $('ovAgain').onclick=()=>{ hideOv(); newBattle(S.ranked); };
   $('ov').classList.add('on'); SFX.win();
 }
+/* LEVEL XP for finishing a battle.
+   Nicholas (2026-10-22): a WIN pays level XP, and a LOSS still pays 1/5 of it,
+   so a beating isn't a total write-off. Scales mildly with how deep you got. */
+function battleHeroXP(){ return Math.round(30 + (S?(S.wave||0):0)*6); }
+function battleLoseHeroXP(){ return Math.max(1, Math.round(battleHeroXP()/5)); }
 function battleLose(){
   if(S.over)return; S.over=true; S.running=false; hideSel();
   recordStats();
+  const earnedXP=battleLoseHeroXP();
+  addHeroXP(S.hero, earnedXP);              // a loss still moves your level bar, just 1/5 as far
   const hadStreak=LB.streak||0;
   const wasRank=LB.rank;
   if(S.ranked){ S.eloLoss=eloLose(); LB.rank=Math.max(0,LB.rank-S.eloLoss); S.eloBefore=wasRank; seasonAddElo(-S.eloLoss); }
@@ -3816,7 +3833,8 @@ function battleLose(){
   $('ovT').style.color='#ff9a86'; $('ovT').textContent='YOUR BASE FELL';
   $('ovP').innerHTML=(S.streakLost?('<b style="color:#ff9a86">🔥 Win streak of '+S.streakLost+' lost</b><br>'):'')+
     '<b>'+S.oppName+'</b>\u2019s army overran you before you could break their base.<br>'+
-    'Their base was at <b>'+Math.max(0,Math.round(S.ebHp/S.ebMax*100))+'%</b> \u2014 so close.';
+    'Their base was at <b>'+Math.max(0,Math.round(S.ebHp/S.ebMax*100))+'%</b> \u2014 so close.<br>'+
+    '\u2b50 Still earned <b>+'+earnedXP+' XP</b> towards your next level.';
   if(S.ranked) eloPop(-S.eloLoss,S.eloBefore,LB.rank);
   $('ovAgain').style.display=''; $('ovAgain').textContent='RETRY BATTLE';
   $('ovAgain').onclick=()=>{ hideOv(); newBattle(S.ranked); };
