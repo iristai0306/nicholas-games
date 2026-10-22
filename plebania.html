@@ -982,7 +982,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.42 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.43 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1694,7 +1694,12 @@ function newGame(world,opts){
     shake:0, hurt:0, slain:0, sel:null, selB:null, build:'farmhand',
     waveTimer:0, farmAcc:0, mart:{}, vsHold:false, mmHold:false, opp:null, battle:false, ranked:false,
     crypt:!!opts.crypt,
-    march:[], ebHp:0, ebMax:0, ebT:0
+    march:[], ebHp:0, ebMax:0, ebT:0,
+    /* battle-state arrays must exist from the very first frame: the board can
+       flip to battle=true (matchmaking/US) a beat BEFORE startBattleWith()
+       fills these in, and drawBattle()/raidUpdate() iterate them. Missing
+       arrays crashed with "S.aiWalls is not iterable". */
+    raid:[], aiWalls:[], aiT:6, raidCd:0, nextWaveT:0
   };
   // (battle flags cleared here too — otherwise a stale vsHold would freeze the next campaign run)
   hover=null; locked=null; buildPath(w);
@@ -3330,7 +3335,34 @@ function renderBoard(){
    real person we can match against. Nobody real in 60s -> bot.
    ========================================================= */
 const MM_MAX_MS=60000;                  // 1 minute of real search, then bots
+/* NOT MANY REAL PLAYERS YET (Nicholas, 2026-10-22): Challenge + Ranked now
+   go straight to bot opponents instead of waiting a minute to find nobody.
+   Flip this to false once the board has enough people online — the real
+   matchmaking code below is untouched and still works. */
+const BOTS_ONLY=true;
 let MM_T=null, MM_START=0, MM_FOUND=null, MM_RANKED=false, MM_DONE=false;
+
+/* ---- BOT OPPONENTS ----
+   Built to feel like a person on the board: a name, a rank near yours, a
+   plausible level. The fight itself is the normal battle mode. */
+const BOT_NAMES=['Bot A','Bot B','Bot C','Bot D','Bot E','Bot F','Bot G','Bot H'];
+function makeBot(ranked){
+  const myElo=LB.rank||0;
+  const spread=()=>Math.max(0,myElo+((Math.random()*80|0)-40));
+  const elo=spread();
+  return {
+    name: ranked
+      ? BOT_NAMES[(Math.random()*BOT_NAMES.length)|0]
+      : 'The Baron',
+    key:null,
+    rank: ranked ? rankTier(elo) : 'Baron of the Barrens',
+    elo: ranked ? elo : null,
+    color: rankColor(ranked?elo:0),
+    level: Math.max(1,(LB.level||1)+((Math.random()*3|0)-1)),
+    streak:0, best:0, kills:0,
+    online:false, bot:true
+  };
+}
 
 function realCandidates(){
   const me=(ME&&ME.key)||null;
@@ -3363,12 +3395,21 @@ function startMatch(ranked){
   syncHud(); buildBar(); buildBar2(); updateRaidBtn();
   const mm=$('mm'); if(!mm)return;
   mm.classList.remove('out'); mm.classList.add('on');
+  if($('mmCancel'))$('mmCancel').onclick=()=>cancelMatch();
+  /* BOTS ONLY: no search screen, no wait — drop straight into the match. */
+  if(BOTS_ONLY){
+    $('mmSub').textContent='finding an opponent…';
+    if($('mmHint')) $('mmHint').textContent='quick match';
+    MM_FOUND=makeBot(MM_RANKED);
+    mm.classList.add('out'); setTimeout(()=>mm.classList.remove('on','out'),180);
+    setTimeout(finishMatch,420);        // short beat so it doesn't feel instant
+    return;
+  }
   $('mmSub').textContent='scanning the board…';
   const cands=realCandidates();
   $('mmHint').textContent=cands.length
     ? (cands.length+' player'+(cands.length===1?'':'s')+' found · matching…')
     : 'no players on the board right now · bots after 1:00';
-  if($('mmCancel'))$('mmCancel').onclick=()=>cancelMatch();
   clearInterval(MM_T);
   MM_T=setInterval(mmTick,100);
   mmTick();
