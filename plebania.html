@@ -1024,7 +1024,7 @@
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
       <div class="scrollcue" id="scrollCue"><span class="arw">▼</span> scroll for more <span class="arw">▼</span></div>
     </div>
-    <div class="menu-foot">v2.55 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.56 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -2338,8 +2338,18 @@ LB.wins=Math.max(0,Math.round(LB.wins||0));
 LB.losses=Math.max(0,Math.round(LB.losses||0));
 LB.lossStreak=Math.max(0,Math.round(LB.lossStreak||0));
 function gamesPlayed(){ return (LB.wins||0)+(LB.losses||0); }
-function winRate(){ const g=gamesPlayed(); return g? Math.round((LB.wins||0)/g*100) : 0; }
-function winRateTxt(){ return winRate()+'%'; }   // never a dash - he wants to SEE it
+/* v2.56 (Nicholas, 2026-10-23): "impossible to be 100%".
+   38,277W / 164L = 99.57%, but Math.round() displayed it as a flat 100%.
+   Fix: keep one decimal, and never show 100% while any loss exists (cap 99.9%).
+   A genuine perfect record (losses = 0) still shows 100%. */
+function winRate(){ const g=gamesPlayed(); if(!g) return 0; return Math.min(100,(LB.wins||0)/g*100); }
+function winRateTxt(){
+  const g=gamesPlayed(); if(!g) return '0%';
+  let p=winRate();
+  if((LB.losses||0)>0 && p>99.9) p=99.9;
+  let s=(Math.round(p*10)/10).toFixed(1).replace(/\.0$/,'');
+  return s+'%';
+}
 /* ---- WINS <-> LEVEL (v2.45, rescaled v2.48) ----
    Wins and level are two views of the same thing: set one in the admin panel
    and the other follows. Scale is anchored on 220 wins = level 105. */
@@ -3343,6 +3353,10 @@ function pendingHTML(){
 /* ---- UPDATE LOG ---------------------------------------------------------
    Newest first. Add a new entry at the TOP of the array when you ship. */
 const UPDATES=[
+  {v:'2.56', d:'23 Oct 2026', e:'📊', t:'Win rate can never say 100% again',
+   b:['38,277W / 164L was being rounded up to a flat <b>100%</b>.',
+      'Win rate now shows one decimal — that record reads <b>99.6%</b>.',
+      'If you have any losses at all, it caps at 99.9%. A perfect record still shows 100%.']},
   {v:'2.55', d:'22 Oct 2026', e:'📐', t:'Wins-to-level was wildly over-leveling you',
    b:['Bug: the XP curve went quadratic but wins→level was still on the old straight line.',
       'That’s why 3,000 wins showed as <b>level 1,829</b> instead of <b>level 485</b>.',
