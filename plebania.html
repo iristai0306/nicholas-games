@@ -982,7 +982,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.50 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.51 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -5773,6 +5773,11 @@ function endWave(){
 function endGame(win){
   if(S.battle){ return win?battleWin():battleLose(); }
   S.over=true; S.running=false;
+  /* WIN RATE FIX (v2.51): campaign and Crypt games ended here and were never
+     counted at all, so the win rate only ever saw Challenge/Ranked battles and
+     read as wrong. Every finished game counts now. */
+  if(win){ LB.wins=(LB.wins||0)+1; LB.lossStreak=0; }
+  else   { LB.losses=(LB.losses||0)+1; LB.lossStreak=(LB.lossStreak||0)+1; }
   recordStats();
   hideSel(); $('startBtn').classList.add('off');
   const last = S.world>=WORLDS.length-1;
