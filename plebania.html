@@ -982,7 +982,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.43 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.44 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -2256,6 +2256,15 @@ function renderMart(){
    ========================================================= */
 const LB_KEY='plebania_lb';
 let LB=loadJSON(LB_KEY,{level:1,streak:0,bestStreak:0,waves:0,kills:0,rank:0,time:0});
+/* WIN RATE + COMEBACK TRACKING (v2.44)
+   wins/losses are lifetime battle results (ranked + challenge).
+   lossStreak powers the "keep losing -> easier bots" easing. */
+LB.wins=Math.max(0,Math.round(LB.wins||0));
+LB.losses=Math.max(0,Math.round(LB.losses||0));
+LB.lossStreak=Math.max(0,Math.round(LB.lossStreak||0));
+function gamesPlayed(){ return (LB.wins||0)+(LB.losses||0); }
+function winRate(){ const g=gamesPlayed(); return g? Math.round((LB.wins||0)/g*100) : 0; }
+function winRateTxt(){ const g=gamesPlayed(); return g? (winRate()+'%') : '\u2014'; }
 function fmtTime(s){ s=Math.max(0,Math.round(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
   if(h>0) return h+'h '+m+'m'; if(m>0) return m+'m '+Math.floor(s%60)+'s'; return s+'s'; }
 function fmtStat(k,v){ return k==='time'?fmtTime(v):v; }
@@ -2613,7 +2622,9 @@ function upsertAcct(j){
     waves:own?(j.waves||0):Math.max(j.waves||0,cur.waves||0),
     kills:own?(j.kills||0):Math.max(j.kills||0,cur.kills||0),
     rank:own?(j.rank||0):Math.max(j.rank||0,cur.rank||0),
-    time:own?(j.time||0):Math.max(j.time||0,cur.time||0) };
+    time:own?(j.time||0):Math.max(j.time||0,cur.time||0),
+    wins:own?(j.wins||0):Math.max(j.wins||0,cur.wins||0),
+    losses:own?(j.losses||0):Math.max(j.losses||0,cur.losses||0) };
   return true;
 }
 function subscribeBoard(){ poolLive().forEach(c=>{ try{ c.subscribe(MQTT_WILD,{qos:1},()=>{}); c.subscribe(MQTT_TOPIC,{qos:1},()=>{}); }catch(e){} }); }
@@ -3203,6 +3214,8 @@ function pushScore(){
   a.rank=Math.max(0,Math.round(LB.rank||0));
   a.time=Math.max(0,Math.round(LB.time||0));
   a.cur=Math.max(0,Math.round(LB.streak||0));      // CURRENT streak, for the live column
+  a.wins=Math.max(0,Math.round(LB.wins||0));       // lifetime battle results
+  a.losses=Math.max(0,Math.round(LB.losses||0));
   a.sid=SEASON?SEASON.id:null;          // season elo resets monthly, so it is
   a.se=SEASON?(SEASON.elo||0):0;        // published alongside its season id
   CLOUD.accounts[ME.key]=a; cloudTouch();
@@ -3285,6 +3298,9 @@ function renderBoard(){
     '<div class="bd-stat"><div class="v" style="color:'+(me.cur>0?'#ff9a56':'#ffd24a')+'">'+(me.cur>0?'\ud83d\udd25':'')+(me.cur||0)+'</div>'+
       '<div class="k">WIN STREAK'+(me.cur>0?'':' \u00b7 none')+'</div>'+
       '<div class="k" style="font-size:11px;opacity:.75;margin-top:2px">BEST '+me.streak+'</div></div>'+
+    '<div class="bd-stat"><div class="v" style="color:'+(winRate()>=50?'#7bd45a':'#ff9a56')+'">'+winRateTxt()+'</div>'+
+      '<div class="k">WIN RATE</div>'+
+      '<div class="k" style="font-size:11px;opacity:.75;margin-top:2px">'+LB.wins+'W \u00b7 '+LB.losses+'L</div></div>'+
     '<div class="bd-stat"><div class="v">'+me.waves+'</div><div class="k">WAVES BEATEN</div></div>'+
     '<div class="bd-stat"><div class="v">'+me.kills+'</div><div class="k">UNITS KILLED</div></div>'+
     '<div class="bd-stat"><div class="v rankbadge" style="background:'+rankColor(me.rank)+';color:#2b2418">'+rankTier(me.rank)+'</div><div class="k">RANK \u00b7 '+me.rank+' pts</div></div>'+
@@ -3346,21 +3362,32 @@ let MM_T=null, MM_START=0, MM_FOUND=null, MM_RANKED=false, MM_DONE=false;
    Built to feel like a person on the board: a name, a rank near yours, a
    plausible level. The fight itself is the normal battle mode. */
 const BOT_NAMES=['Bot A','Bot B','Bot C','Bot D','Bot E','Bot F','Bot G','Bot H'];
+const BOT_TITLES=['The Baron','The Bailiff','The Warden','The Marshal','The Castellan','The Duke'];
+/* The bot's CARD now matches the fight you're actually about to get.
+   `heat` is the real difficulty dial from battleHeat() — so a losing run
+   visibly hands you a weaker opponent, and a hot streak hands you a monster. */
 function makeBot(ranked){
+  const heat = (typeof battleHeat==='function') ? battleHeat(ranked) : 0;   // 0..~11
   const myElo=LB.rank||0;
-  const spread=()=>Math.max(0,myElo+((Math.random()*80|0)-40));
-  const elo=spread();
+  const mercy = mercyLevel();                                        // 0..5
+  // ranked: sit the bot NEAR your elo, nudged by difficulty, pulled down by mercy
+  const tilt = Math.round((heat-3)*18) - Math.round(mercy*26);
+  const elo = Math.max(0, myElo + tilt + ((Math.random()*60|0)-30));
+  // challenge: the Baron scales with your level instead
+  const lvTilt = Math.round((heat-3)*1.6) - Math.round(mercy*1.2);
+  const tier = Math.max(0, Math.min(BOT_TITLES.length-1, Math.round(heat/2)));
   return {
     name: ranked
       ? BOT_NAMES[(Math.random()*BOT_NAMES.length)|0]
-      : 'The Baron',
+      : BOT_TITLES[tier],
     key:null,
     rank: ranked ? rankTier(elo) : 'Baron of the Barrens',
     elo: ranked ? elo : null,
     color: rankColor(ranked?elo:0),
-    level: Math.max(1,(LB.level||1)+((Math.random()*3|0)-1)),
+    level: Math.max(1, (LB.level||1) + lvTilt + ((Math.random()*3|0)-1)),
     streak:0, best:0, kills:0,
-    online:false, bot:true
+    online:false, bot:true,
+    heat:heat
   };
 }
 
@@ -3700,6 +3727,8 @@ function battleAI(dt){
 function battleWin(){
   if(S.over)return; S.over=true; S.running=false; hideSel();
   recordStats();
+  /* WIN RATE: every battle result counts, ranked and challenge alike */
+  LB.wins=(LB.wins||0)+1; LB.lossStreak=0;
   /* streak is a CHALLENGE thing now (that's the mode Nicholas wants it on) */
   if(!S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); }
   if(S.ranked){ S.eloGain=eloWin(); S.eloBefore=LB.rank; LB.rank+=S.eloGain; seasonAddElo(S.eloGain); }
@@ -3727,6 +3756,7 @@ function battleLose(){
   const hadStreak=LB.streak||0;
   const wasRank=LB.rank;
   if(S.ranked){ S.eloLoss=eloLose(); LB.rank=Math.max(0,LB.rank-S.eloLoss); S.eloBefore=wasRank; seasonAddElo(-S.eloLoss); }
+  LB.losses=(LB.losses||0)+1; LB.lossStreak=(LB.lossStreak||0)+1;
   /* only CHALLENGE breaks the streak now */
   if(!S.ranked) LB.streak=0;
   S.streakLost=hadStreak;
@@ -4214,13 +4244,32 @@ function effDmg(o){
 /* =========================================================
    WAVES
    ========================================================= */
-/* ranked difficulty: scales off your rank tier (0..8). Campaign is untouched. */
-function rankedHeat(){
-  if(!S||!S.ranked) return 0;
-  const t=rankTierIdx(LB.rank);            // 0..8
-  const streak=Math.max(0,LB.streak||0);   // winning streak makes it hotter still
-  return t + Math.min(3,streak*0.35);      // 0 .. ~11
+/* =========================================================
+   DIFFICULTY (v2.44) — ONE dial for Challenge and Ranked.
+     RANKED    : gets harder as your ELO climbs.
+     CHALLENGE : gets harder as your level climbs.
+     BOTH      : a losing run cools it back down, so you can
+                 get your feet under you again. A win streak
+                 turns it back up.
+   Campaign is untouched — it has its own fixed curve.
+   ========================================================= */
+function battleHeat(rankedOverride){
+  let base;
+  const ranked = (rankedOverride===undefined) ? !!(S&&S.ranked) : !!rankedOverride;
+  if(ranked){
+    base = rankTierIdx(LB.rank||0);                    // 0..8
+  }else{
+    base = Math.min(8, Math.floor(((LB.level||1)-1)/2)); // lvl 1->0, 17+->8
+  }
+  const winStreak=Math.max(0,LB.streak||0);
+  base += Math.min(3, winStreak*0.35);                 // hot streak
+  base -= Math.min(5, (LB.lossStreak||0)*1.1);         // losing run = mercy
+  return Math.max(0, base);                            // 0 .. ~11
 }
+/* how far the mercy dial is currently pulled (0..5) */
+function mercyLevel(){ return Math.min(5,(LB.lossStreak||0)*1.1); }
+/* kept so nothing that still calls the old name breaks */
+function rankedHeat(){ return battleHeat(); }
 function waveComp(w){
   const W=WORLDS[S.world]; const q=[];
   const heat=rankedHeat();
