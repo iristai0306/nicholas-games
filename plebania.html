@@ -982,7 +982,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.45 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.46 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -3232,6 +3232,7 @@ function deleteAccount(){
 }
 
 const LB_CATS=[
+  ['wins','🏆 Most Wins',0],
   ['level','🪜 Highest Level',0],
   ['streak','\ud83d\udd25 Longest Win Streak',0],
   ['waves','\ud83c\udf0a Most Waves Beaten',0],
@@ -3271,8 +3272,10 @@ function boardMe(){
   const name=ME?ME.name:'You';
   const a=ME&&CLOUD.accounts?CLOUD.accounts[ME.key]:null;
   /* streak = BEST (all-time, leaderboard column) · cur = CURRENT (dies when you lose) */
-  if(a) return {name, level:a.level||0, streak:a.streak||0, cur:a.cur||0, waves:a.waves||0, kills:a.kills||0, rank:a.rank||0, time:a.time||0, isMe:true};
-  return {name, level:LB.level, streak:LB.bestStreak, cur:LB.streak||0, waves:LB.waves, kills:LB.kills, rank:LB.rank, time:LB.time||0, isMe:true};
+  if(a) return {name, level:a.level||0, streak:a.streak||0, cur:a.cur||0, waves:a.waves||0, kills:a.kills||0, rank:a.rank||0, time:a.time||0,
+                wins:a.wins||0, losses:a.losses||0, isMe:true};
+  return {name, level:LB.level, streak:LB.bestStreak, cur:LB.streak||0, waves:LB.waves, kills:LB.kills, rank:LB.rank, time:LB.time||0,
+          wins:LB.wins||0, losses:LB.losses||0, isMe:true};
 }
 /* ---- GLOBAL RANK: where you sit out of every account on the board ---- */
 function globalRank(rankValue){
@@ -3354,7 +3357,8 @@ function renderBoard(){
     '<div class="bd-stat"><div class="v">'+(GR.place?('#'+GR.place):'\u2014')+'</div><div class="k">GLOBAL RANK of '+GR.total+'</div></div>'+
     '<div class="bd-stat"><div class="v">'+fmtTime(me.time)+'</div><div class="k">TIME PLAYED</div></div>'+
     '</div><div class="bd-wrap">';
-  const rowsAll=Object.keys(CLOUD.accounts||{}).map(k=>({name:CLOUD.accounts[k].u||'Pleb', level:CLOUD.accounts[k].level||0, streak:CLOUD.accounts[k].streak||0, waves:CLOUD.accounts[k].waves||0, kills:CLOUD.accounts[k].kills||0, rank:CLOUD.accounts[k].rank||0, time:CLOUD.accounts[k].time||0, at:CLOUD.accounts[k].at||0, cur:CLOUD.accounts[k].cur||0, key:k}));
+  const rowsAll=Object.keys(CLOUD.accounts||{}).map(k=>({name:CLOUD.accounts[k].u||'Pleb', level:CLOUD.accounts[k].level||0, streak:CLOUD.accounts[k].streak||0, waves:CLOUD.accounts[k].waves||0, kills:CLOUD.accounts[k].kills||0, rank:CLOUD.accounts[k].rank||0, time:CLOUD.accounts[k].time||0, at:CLOUD.accounts[k].at||0, cur:CLOUD.accounts[k].cur||0,
+    wins:CLOUD.accounts[k].wins||0, losses:CLOUD.accounts[k].losses||0, key:k}));
   const mine=boardMe();
   if(!rowsAll.some(r=>ME&&r.key===ME.key)) rowsAll.push(Object.assign({key:ME?ME.key:'me'},mine));
   rowsAll.forEach(r=>{ if(ME&&r.key===ME.key) r.isMe=true; });
