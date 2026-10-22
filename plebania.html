@@ -982,7 +982,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.44 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.45 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -2264,7 +2264,26 @@ LB.losses=Math.max(0,Math.round(LB.losses||0));
 LB.lossStreak=Math.max(0,Math.round(LB.lossStreak||0));
 function gamesPlayed(){ return (LB.wins||0)+(LB.losses||0); }
 function winRate(){ const g=gamesPlayed(); return g? Math.round((LB.wins||0)/g*100) : 0; }
-function winRateTxt(){ const g=gamesPlayed(); return g? (winRate()+'%') : '\u2014'; }
+function winRateTxt(){ return winRate()+'%'; }   // never a dash - he wants to SEE it
+/* ---- WINS <-> XP <-> LEVEL (v2.45) ----
+   A win is worth XP_PER_WIN of levelling XP, so wins and level are two views
+   of the same thing: set one in the admin panel and the other follows. */
+const XP_PER_WIN=10;
+function xpToReachLevel(L){          // total XP needed to BE level L (level 1 = 0)
+  let sum=0, n=Math.max(0,Math.round(L)-1);
+  for(let i=1;i<=n;i++) sum+=levelXPNeed(i);
+  return sum;
+}
+function levelFromTotalXP(xp){       // highest level that XP total can buy
+  let L=1;
+  while(L<200 && xp>=xpToReachLevel(L+1)) L++;
+  return L;
+}
+function winsForLevel(L){            // how many wins that level is "worth"
+  /* CEIL, not round: round() made the two-way edit wobble (level 5 -> 4 wins ->
+     level 4). Ceiling guarantees wins -> level -> wins returns the same level. */
+  return Math.max(0, Math.ceil(xpToReachLevel(Math.max(1,Math.round(L)))/XP_PER_WIN));
+}
 function fmtTime(s){ s=Math.max(0,Math.round(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
   if(h>0) return h+'h '+m+'m'; if(m>0) return m+'m '+Math.floor(s%60)+'s'; return s+'s'; }
 function fmtStat(k,v){ return k==='time'?fmtTime(v):v; }
@@ -2804,6 +2823,8 @@ function loadLocalFor(me){
     LB.level=Math.max(1,a.level||1); LB.bestStreak=a.streak||0;
     LB.waves=a.waves||0; LB.kills=a.kills||0; LB.rank=a.rank||0; LB.time=a.time||0;
   }
+  LB.wins=Math.max(0,a.wins||LB.wins||0);
+  LB.losses=Math.max(0,a.losses||LB.losses||0);
   LB.streak=Math.max(0,a.cur||0);   // current streak survives a reload; only a LOSS kills it
   saveLB(); pushScore(); refreshUserChip();
   // if the board already knows about a LATER season than us, we skipped a month:
@@ -2862,6 +2883,7 @@ function accountStats(){
   const worlds=(typeof unlocked!=='undefined')?Math.min(unlocked,WORLDS.length):1;
   return [
     ['🪜','LEVEL', LB.level],
+    ['📊','WIN RATE', winRateTxt()+'  ('+(LB.wins||0)+'W · '+(LB.losses||0)+'L)'],
     ['🔥','BEST WIN STREAK', LB.bestStreak],
     ['🌊','WAVES BEATEN', LB.waves],
     ['💀','UNITS KILLED', LB.kills],
@@ -2919,6 +2941,8 @@ const ADMIN_NAMES=['plebo'];                 // add more usernames here for co-a
    of real things, not stats.) */
 const STAT_FIELDS=[
   {k:'level',   e:'🪜', n:'Level',                get:()=>LB.level,      set:v=>{LB.level=v;} },
+  {k:'wins',    e:'✅', n:'Wins \u2192 level',   get:()=>LB.wins||0,    set:v=>{LB.wins=v;} },
+  {k:'losses',  e:'❌', n:'Losses \u2192 win %', get:()=>LB.losses||0,  set:v=>{LB.losses=v;} },
   {k:'streak',  e:'🔥', n:'Best win streak',      get:()=>LB.bestStreak, set:v=>{LB.bestStreak=v;} },
   {k:'waves',   e:'🌊', n:'Waves beaten',         get:()=>LB.waves,      set:v=>{LB.waves=v;} },
   {k:'kills',   e:'💀', n:'Units killed',         get:()=>LB.kills,      set:v=>{LB.kills=v;} },
@@ -2998,6 +3022,11 @@ function adminAct(a){
 function adminSetStats(){
   if(!isAdmin())return 0;
   let changed=0;
+  /* capture BEFORE the loop so we can tell which box he actually edited */
+  const prevLevel=LB.level, prevWins=LB.wins||0;
+  const num=(id)=>{ const el=$(id); if(!el)return null;
+    const v=parseFloat(String(el.value).replace(/[^0-9.\-]/g,'')); return isNaN(v)?null:Math.max(0,Math.round(v)); };
+  const wantLevel=num('st_level'), wantWins=num('st_wins');
   STAT_FIELDS.forEach(f=>{
     const el=$('st_'+f.k); if(!el)return;
     let v=parseFloat(String(el.value).replace(/[^0-9.\-]/g,''));
@@ -3006,6 +3035,23 @@ function adminSetStats(){
     if(v<0)v=0;
     f.set(v); changed++;
   });
+  /* ---- LEVEL <-> WINS (v2.45) ----
+     They're the same quantity seen two ways: a win is XP_PER_WIN of levelling XP.
+     Whichever box he edited drives the other. If he edited BOTH, level wins,
+     because that's the more explicit instruction. */
+  const levelEdited = (wantLevel!=null && wantLevel!==prevLevel);
+  const winsEdited  = (wantWins!=null  && wantWins!==prevWins);
+  if(levelEdited){
+    LB.level=Math.max(1,LB.level);
+    LB.wins=winsForLevel(LB.level);        // level -> the wins it's worth
+    LB.lossStreak=0;
+  }else if(winsEdited){
+    LB.wins=Math.max(0,LB.wins);
+    LB.level=levelFromTotalXP(LB.wins*XP_PER_WIN);   // wins -> XP -> level
+  }
+  LB.level=Math.max(1,Math.round(LB.level||1));
+  LB.wins=Math.max(0,Math.round(LB.wins||0));
+  LB.losses=Math.max(0,Math.round(LB.losses||0));
   saveLB(); saveWorld();
   // remember these exact values until they're safely on the board
   ADMINSET={ at:Date.now(), v:{level:LB.level,streak:LB.bestStreak,waves:LB.waves,
@@ -3016,6 +3062,7 @@ function adminSetStats(){
     a.u=ME.name; a.key=ME.key;
     a.level=LB.level; a.streak=LB.bestStreak; a.waves=LB.waves;
     a.kills=LB.kills; a.rank=LB.rank; a.time=LB.time||0;
+    a.wins=LB.wins||0; a.losses=LB.losses||0;
     CLOUD.accounts[ME.key]=a;
   }
   // publish verbatim (cloudPut sends the record as-is — no max() merge). If the broker
