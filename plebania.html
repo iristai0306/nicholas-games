@@ -982,7 +982,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.49 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.50 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -3812,9 +3812,13 @@ function battleWin(){
   $('ov').classList.add('on'); SFX.win();
 }
 /* LEVEL XP for finishing a battle.
-   Nicholas (2026-10-22): a WIN pays level XP, and a LOSS still pays 1/5 of it,
-   so a beating isn't a total write-off. Scales mildly with how deep you got. */
-function battleHeroXP(){ return Math.round(30 + (S?(S.wave||0):0)*6); }
+   Nicholas (2026-10-22): ~220 wins should land you around LEVEL 105.
+   Level 105 costs 71,758 XP total, so a win has to be worth ~326 XP.
+   A typical win is ~9 waves deep -> 300 + 9*3 = 327. On target.
+   Wage-scaling (+3/wave) keeps a deep run worth slightly more than a quick smash.
+   A LOSS still pays 1/5 of the same amount, so a beating isn't a write-off. */
+const WIN_XP_BASE=300, WIN_XP_PER_WAVE=3;
+function battleHeroXP(){ return Math.round(WIN_XP_BASE + (S?(S.wave||0):0)*WIN_XP_PER_WAVE); }
 function battleLoseHeroXP(){ return Math.max(1, Math.round(battleHeroXP()/5)); }
 function battleLose(){
   if(S.over)return; S.over=true; S.running=false; hideSel();
