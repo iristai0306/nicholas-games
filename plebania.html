@@ -1000,7 +1000,7 @@
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
       <div class="scrollcue" id="scrollCue"><span class="arw">▼</span> scroll for more <span class="arw">▼</span></div>
     </div>
-    <div class="menu-foot">v2.52 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.53 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -2863,17 +2863,34 @@ async function doAuth(){
 function loadLocalFor(me){
   // account's cloud stats are the source of truth — reset local bests to that account
   const a=CLOUD.accounts[me.key]||{};
+  if(ADMINSET && ADMINSET.v && a.at && (a.at||0)>(ADMINSET.at||0)
+     && a.level===ADMINSET.v.level && (a.kills||0)===(ADMINSET.v.kills||0)){
+    ADMINSET=null; saveJSON('plebania_adminset',null);   // board echoes it - override no longer needed
+  }
   const pend=ADMINSET&&ADMINSET.v;
-  if(pend && (ADMINSET.at||0)>=(a.at||0)){
-    // an admin set these by hand and hasn't published yet — the cloud copy is stale, trust the edit
+  /* ADMIN STATS KEPT GETTING WIPED (Nicholas, 2026-10-22).
+     Old behaviour: boot -> loadLocalFor -> take cloud values -> saveLB -> pushScore,
+     which PUBLISHED over whatever the admin panel had just set. If the retained
+     record hadn't arrived yet the cloud copy looked like "level 1", so the admin
+     edit was clobbered and never reached other devices.
+     Fixes: (1) keep trusting the admin edit until the cloud actually echoes it
+     back, (2) never let an EMPTY cloud read overwrite good local stats. */
+  const adminFresh = pend && (ADMINSET.at||0) >= (a.at||0);
+  const noRecord   = !a || !a.at;                  // board hasn't given us our record yet
+  if(adminFresh){
     LB.level=Math.max(1,pend.level); LB.bestStreak=pend.streak||0;
     LB.waves=pend.waves||0; LB.kills=pend.kills||0; LB.rank=pend.rank||0; LB.time=pend.time||0;
+    LB.wins=Math.max(0,pend.wins||0); LB.losses=Math.max(0,pend.losses||0);
+  }else if(noRecord){
+    /* no cloud record: keep whatever this device already knows. Publishing now
+       would overwrite the board with defaults. */
+    LB.level=Math.max(1,LB.level||1);
   }else{
     LB.level=Math.max(1,a.level||1); LB.bestStreak=a.streak||0;
     LB.waves=a.waves||0; LB.kills=a.kills||0; LB.rank=a.rank||0; LB.time=a.time||0;
+    LB.wins=Math.max(0,a.wins||LB.wins||0);
+    LB.losses=Math.max(0,a.losses||LB.losses||0);
   }
-  LB.wins=Math.max(0,a.wins||LB.wins||0);
-  LB.losses=Math.max(0,a.losses||LB.losses||0);
   LB.streak=Math.max(0,a.cur||0);   // current streak survives a reload; only a LOSS kills it
   saveLB(); pushScore(); refreshUserChip();
   // if the board already knows about a LATER season than us, we skipped a month:
@@ -3104,7 +3121,7 @@ function adminSetStats(){
   saveLB(); saveWorld();
   // remember these exact values until they're safely on the board
   ADMINSET={ at:Date.now(), v:{level:LB.level,streak:LB.bestStreak,waves:LB.waves,
-    kills:LB.kills,rank:LB.rank,time:LB.time||0} };
+    kills:LB.kills,rank:LB.rank,time:LB.time||0,wins:LB.wins||0,losses:LB.losses||0} };
   saveJSON('plebania_adminset',ADMINSET);
   if(ME&&CLOUD&&CLOUD.accounts){
     const a=CLOUD.accounts[ME.key]||(CLOUD.accounts[ME.key]={});
@@ -3117,7 +3134,10 @@ function adminSetStats(){
   // publish verbatim (cloudPut sends the record as-is — no max() merge). If the broker
   // isn't up yet this queues and retries on connect instead of silently dying.
   CLOUD_DIRTY=true;
-  const done=()=>{ ADMINSET=null; saveJSON('plebania_adminset',null); CLOUD_DIRTY=false; };
+  /* Do NOT drop the override the moment the publish resolves - the board may not
+     have accepted it yet, and a reload in between used to wipe it. Keep it; it is
+     cleared automatically once the cloud record echoes the same values back. */
+  const done=()=>{ CLOUD_DIRTY=false; };
   try{
     const pr=cloudPut();
     if(pr&&pr.then) pr.then(done).catch(()=>{ cloudTouch(); });
@@ -4366,18 +4386,24 @@ function effDmg(o){
                  turns it back up.
    Campaign is untouched — it has its own fixed curve.
    ========================================================= */
+const HEAT_MAX=24;
 function battleHeat(rankedOverride){
   let base;
   const ranked = (rankedOverride===undefined) ? !!(S&&S.ranked) : !!rankedOverride;
   if(ranked){
-    base = rankTierIdx(LB.rank||0);                    // 0..8
+    /* ELO: keeps climbing well past the old 0..8 cap - a 8000-ELO monster
+       faces a genuinely brutal board. */
+    base = Math.min(HEAT_MAX, (LB.rank||0)/350);
   }else{
-    base = Math.min(8, Math.floor(((LB.level||1)-1)/2)); // lvl 1->0, 17+->8
+    /* LEVEL: matched to the old feel at level 17 (heat 8) but keeps scaling to
+       the new level-1000 ceiling (heat 24) instead of flat-lining at 17. */
+    const lv=Math.max(1,LB.level||1);
+    base = Math.min(HEAT_MAX, Math.pow(lv-1, 0.266)/0.261);
   }
   const winStreak=Math.max(0,LB.streak||0);
   base += Math.min(3, winStreak*0.35);                 // hot streak
   base -= Math.min(5, (LB.lossStreak||0)*1.1);         // losing run = mercy
-  return Math.max(0, base);                            // 0 .. ~11
+  return Math.max(0, base);                            // 0 .. HEAT_MAX+3
 }
 /* how far the mercy dial is currently pulled (0..5) */
 function mercyLevel(){ return Math.min(5,(LB.lossStreak||0)*1.1); }
@@ -4589,11 +4615,14 @@ function heroUpdate(dt){
    XP per kill depends on how tough the enemy was. */
 function levelXPNeed(level){
   const n=Math.max(0,(level||1)-1);
-  /* EASIER CURVE (v2.47, Nicholas's ask): the old one was 6 + 1.2n + 0.35n^2,
-     which made the level 20 target cost 1,215 XP. This is roughly a 40% cut at
-     every level (level 20 now 696) while keeping the "each level costs a bit
-     more than the last" feel. Still quadratic, just a gentler one. */
-  return Math.max(3, Math.round(4 + 0.9*n + 0.18*n*n));
+  /* CURVE v2.53 (Nicholas, 2026-10-22): "XP should get way harder the higher
+     level you are, so level 1000 is at least 10,000 wins."
+     Linear per-level cost -> quadratic total, tuned to hit BOTH his anchors:
+       level 105  = 220 wins   (71,812 XP / 327 per win)
+       level 1000 = 11,679 wins (>= his 10,000 floor)
+     One win is now worth roughly one early level instead of twenty, and each
+     level costs ~7 XP more than the last - so a level at 1000 is ~22 wins. */
+  return Math.max(3, Math.round(330 + 7*n));
 }
 const XP_BY_RANK={silver:1,undead:1,beast:1,gold:2,red:3,champ:5,boss:10,king:25};
 function xpForKill(e){ return XP_BY_RANK[e&&e.rank]||1; }
@@ -5818,6 +5847,9 @@ function endGame(win){
      read as wrong. Every finished game counts now. */
   if(win){ LB.wins=(LB.wins||0)+1; LB.lossStreak=0; }
   else   { LB.losses=(LB.losses||0)+1; LB.lossStreak=(LB.lossStreak||0)+1; }
+  /* campaign/crypt now pay level XP the same way a battle does, so PLAY mode
+     isn't dead XP-wise now that levels cost real amounts */
+  try{ addHeroXP(S.hero, win?battleHeroXP():battleLoseHeroXP()); }catch(e){}
   recordStats();
   hideSel(); $('startBtn').classList.add('off');
   const last = S.world>=WORLDS.length-1;
