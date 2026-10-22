@@ -977,7 +977,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.38 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.39 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -2498,21 +2498,43 @@ const ACC_KEY='plebania_account';
 let CLOUD={accounts:{}};          // cache of the shared board
 let ME=loadJSON(ACC_KEY,null);    // {key, name} of the signed-in player
 let CLOUD_DIRTY=false, cloudT=null, cloudOk=true, MQTT_C=null, MQTT_READY=false, MQTT_GOT=false;
+let MQTT_POOL=[];                 // one live connection per broker — the board is mirrored on all of them
+const ACCT_BK_KEY='plebania_acct_backup';   // this device's own copy of your record (survives a board wipe)
+function backupGet(key){ try{ const b=loadJSON(ACCT_BK_KEY,{})||{}; return b[key]||null; }catch(e){ return null; } }
+function backupPut(rec){
+  if(!rec||!rec.key) return;
+  try{ const b=loadJSON(ACCT_BK_KEY,{})||{}; b[rec.key]=Object.assign({},rec); saveJSON(ACCT_BK_KEY,b); }catch(e){}
+}
 function hashPw(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h)^s.charCodeAt(i); } return ('v1_'+(h>>>0).toString(36)+'_'+s.length); }
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('load')); document.head.appendChild(s); }); }
-function connectMQTT(){
+/* ONE BROKER AT A TIME (used for the initial connect attempt, kept for fallback) */
+function brokerConnect(url){
   return new Promise((resolve,reject)=>{
-    let i=0;
-    const tryNext=()=>{ if(i>=MQTT_BROKERS.length){ reject(new Error('no broker')); return; }
-      const url=MQTT_BROKERS[i++]; let settled=false, c;
-      try{ c=(window.mqtt.connect)(url,{connectTimeout:8000,reconnectPeriod:4000,clientId:'pleb_'+Math.random().toString(36).slice(2,10)}); }
-      catch(e){ tryNext(); return; }
-      const fail=()=>{ if(settled)return; settled=true; try{c.end(true);}catch(e){} tryNext(); };
-      c.on('connect',()=>{ if(settled)return; settled=true; resolve(c); });
-      c.on('error',()=>{});
-      setTimeout(fail,9000);
-    };
-    tryNext();
+    let settled=false, c;
+    try{ c=(window.mqtt.connect)(url,{connectTimeout:8000,reconnectPeriod:4000,clientId:'pleb_'+Math.random().toString(36).slice(2,10)}); }
+    catch(e){ reject(e); return; }
+    const ok=()=>{ if(settled)return; settled=true; resolve(c); };
+    const bad=()=>{ if(settled)return; settled=true; try{c.end(true);}catch(e){} reject(new Error('timeout')); };
+    c.on('connect',ok);
+    c.on('error',()=>{});
+    setTimeout(bad,9000);
+  });
+}
+/* the live broker connections we currently hold (usually all three) */
+function poolLive(){ return (MQTT_POOL||[]).filter(c=>c&&c.connected); }
+/* publish the same message to EVERY broker we're attached to, so a wipe on one
+   broker can't take the board down with it. Resolves if at least one accepted. */
+function mqttPub(topic,payload,opts){
+  const live=poolLive();
+  if(!live.length) return Promise.reject(new Error('offline'));
+  return new Promise((resolve,reject)=>{
+    let left=live.length, ok=0;
+    live.forEach(c=>{
+      let done=false;
+      const fin=(good)=>{ if(done)return; done=true; if(good)ok++; if(--left<=0){ ok?resolve(ok):reject(new Error('publish failed')); } };
+      try{ c.publish(topic,payload,opts||{retain:true,qos:1},(err)=>fin(!err)); }catch(e){ fin(false); }
+      setTimeout(()=>fin(false),4000);
+    });
   });
 }
 function mergeBoards(a,b){
@@ -2544,23 +2566,52 @@ function upsertAcct(j){
     time:own?(j.time||0):Math.max(j.time||0,cur.time||0) };
   return true;
 }
-function subscribeBoard(){ if(!MQTT_C)return; try{ MQTT_C.subscribe(MQTT_WILD,{qos:1},()=>{}); MQTT_C.subscribe(MQTT_TOPIC,{qos:1},()=>{}); }catch(e){} }
+function subscribeBoard(){ poolLive().forEach(c=>{ try{ c.subscribe(MQTT_WILD,{qos:1},()=>{}); c.subscribe(MQTT_TOPIC,{qos:1},()=>{}); }catch(e){} }); }
+/* attach one broker connection to the board. Every broker we hold is a full mirror:
+   we read player records from all of them and write to all of them. */
 function attachMQTT(c){
-  c.on('connect',()=>{ MQTT_READY=true; cloudOk=true; subscribeBoard();       // re-subscribe on reconnect
+  if(!c||MQTT_POOL.indexOf(c)>=0) return;
+  MQTT_POOL.push(c);
+  c.on('connect',()=>{ MQTT_READY=true; cloudOk=true; MQTT_C=c;
+    try{ c.subscribe(MQTT_WILD,{qos:1},()=>{}); c.subscribe(MQTT_TOPIC,{qos:1},()=>{}); }catch(e){}   // re-subscribe on reconnect
     if(CLOUD_DIRTY) setTimeout(()=>cloudSync(false),400); });                 // flush anything that couldn't publish earlier
+  c.on('close',()=>{ if(!poolLive().length) MQTT_READY=false; });
   c.on('message',(t,m)=>{
-    try{ const j=JSON.parse(m.toString());
+    try{ const raw=m.toString();
+      if(raw===''){                       // somebody cleared a record (delete) — drop it locally too
+        if(t.indexOf(MQTT_BASE)===0){ const k=t.slice(MQTT_BASE.length); if(k&&CLOUD.accounts[k]){ delete CLOUD.accounts[k]; const bd0=$('board'); if(bd0&&bd0.classList.contains('on')) renderBoard(); } }
+        return;
+      }
+      const j=JSON.parse(raw);
       if(t===MQTT_TOPIC){ if(j&&j.accounts){ CLOUD=mergeBoards(CLOUD,j); MQTT_GOT=true; } }   // legacy board (migration)
       else if(upsertAcct(j)){ MQTT_GOT=true; }                                                // one player's own record
       const bd=$('board'); if(bd&&bd.classList.contains('on')) renderBoard();                  // live-update an open board
     }catch(e){}
   });
 }
+/* hold a live connection to EVERY broker. First one that answers becomes MQTT_C
+   (so the rest of the game keeps working); the others join the pool moments later. */
 async function ensureMQTT(){
-  if(MQTT_C&&MQTT_READY) return MQTT_C;
+  if(MQTT_C&&MQTT_READY) { if(!MQTT_POOL.length) attachMQTT(MQTT_C); fillPool(); return MQTT_C; }
   if(!window.mqtt) await loadScript(MQTT_LIB);
-  const c=await connectMQTT(); MQTT_C=c; MQTT_READY=true; cloudOk=true; attachMQTT(c); subscribeBoard();
-  return c;
+  let first=null, lastErr=null;
+  let firstUrl=null;
+  for(let i=0;i<MQTT_BROKERS.length && !first;i++){
+    try{ first=await brokerConnect(MQTT_BROKERS[i]); firstUrl=MQTT_BROKERS[i]; }catch(e){ lastErr=e; }
+  }
+  if(!first) throw (lastErr||new Error('no broker'));
+  try{ first._url=firstUrl; }catch(e){}
+  MQTT_C=first; MQTT_READY=true; cloudOk=true; attachMQTT(first);
+  fillPool();                        // quietly bring the other brokers up in the background
+  return first;
+}
+/* connect the remaining brokers without blocking the game */
+function fillPool(){
+  MQTT_BROKERS.forEach(url=>{
+    if(MQTT_POOL.some(c=>c&&c._url===url)) return;
+    brokerConnect(url).then(c=>{ try{ c._url=url; }catch(e){} attachMQTT(c); })
+      .catch(()=>{});
+  });
 }
 async function cloudGet(){                       // read the whole board (all players' retained records)
   MQTT_GOT=false;
@@ -2568,32 +2619,51 @@ async function cloudGet(){                       // read the whole board (all pl
   subscribeBoard();                              // ask brokers to resend retained records
   const t0=Date.now();
   while(!MQTT_GOT && Date.now()-t0<4000) await new Promise(r=>setTimeout(r,120));
+  restoreMyAccount();                            // board wiped? put MY account back from this device
   return CLOUD;
 }
-function accountLookup(key){                     // authoritative existence check on the account's own topic
+/* If the board no longer knows about me (public broker wipes its retained store)
+   but this device still has my record, re-create it instead of showing an empty board. */
+let BOARD_RESTORED=false;
+function restoreMyAccount(){
+  if(!ME) return false;
+  const k=String(ME.key).toLowerCase();
+  if(CLOUD.accounts[k]) return false;
+  const bk=backupGet(k);
+  if(!bk||!bk.u) return false;
+  CLOUD.accounts[k]=Object.assign({},bk);
+  BOARD_RESTORED=true; CLOUD_DIRTY=true;
+  setTimeout(()=>{ try{ cloudSync(true); }catch(e){} },600);   // republish to every broker
+  return true;
+}
+function accountLookup(key){                     // authoritative existence check on the account's own topic (asks every broker)
   return new Promise(async(resolve)=>{
     try{ await ensureMQTT(); }catch(e){ resolve(undefined); return; }
-    const topic=MQTT_BASE+key; let done=false;
-    const h=(t,m)=>{ if(t!==topic||done)return; done=true; let j=null; try{j=JSON.parse(m.toString());}catch(e){}
-      try{ MQTT_C.removeListener('message',h); }catch(e){} resolve(j||undefined); };
-    MQTT_C.on('message',h);
-    try{ MQTT_C.subscribe(topic,{qos:1},()=>{}); }catch(e){}
-    setTimeout(()=>{ if(!done){ done=true; try{ MQTT_C.removeListener('message',h); }catch(e){} resolve(undefined); } },3500);
+    const topic=MQTT_BASE+key; let done=false, conns=poolLive();
+    if(!conns.length){ resolve(undefined); return; }
+    const h=(t,m)=>{ if(t!==topic||done)return; const raw=m.toString();
+      if(raw==='')return;                        // empty = deleted, keep waiting for a real copy
+      done=true; let j=null; try{j=JSON.parse(raw);}catch(e){}
+      conns.forEach(c=>{ try{ c.removeListener('message',h); }catch(e){} });
+      resolve(j||undefined); };
+    conns.forEach(c=>{ try{ c.on('message',h); c.subscribe(topic,{qos:1},()=>{}); }catch(e){} });
+    setTimeout(()=>{ if(!done){ done=true; conns.forEach(c=>{ try{ c.removeListener('message',h); }catch(e){} }); resolve(undefined); } },3500);
   });
 }
 function cloudPut(){ return new Promise((resolve,reject)=>{
-  if(!MQTT_C||!MQTT_C.connected){ reject(new Error('offline')); return; }
+  if(!poolLive().length){ reject(new Error('offline')); return; }
   if(!ME){ resolve(); return; }
   const rec=Object.assign({at:Date.now()}, CLOUD.accounts[ME.key]||{});
   rec.key=ME.key; rec.u=rec.u||ME.name;
-  MQTT_C.publish(myTopic(), JSON.stringify(rec), {retain:true,qos:1}, (err)=>err?reject(err):resolve()); }); }
+  backupPut(rec);                                   // keep this device's own copy, always
+  mqttPub(myTopic(), JSON.stringify(rec), {retain:true,qos:1}).then(resolve,reject); }); }
 async function cloudSync(force){ if(!CLOUD_DIRTY&&!force)return; if(!MQTT_READY){ CLOUD_DIRTY=true; return; } CLOUD_DIRTY=false; try{ await cloudPut(); }catch(e){ CLOUD_DIRTY=true; } }
 function cloudTouch(){ CLOUD_DIRTY=true; clearTimeout(cloudT); cloudT=setTimeout(()=>cloudSync(false),2000); }
 /* presence ping: stamp my own record + publish, so the board shows me online.
    Runs on a timer while the tab is visible (a backgrounded tab shouldn't claim to be online). */
 let PRESENCE_T=null;
 function presencePing(){
-  if(!ME||!MQTT_C||!MQTT_READY)return;
+  if(!ME||!poolLive().length)return;
   const a=CLOUD.accounts[ME.key]||(CLOUD.accounts[ME.key]={});
   a.u=ME.name; a.at=Date.now();
   try{ cloudPut().catch(()=>{}); }catch(e){}
@@ -2637,8 +2707,11 @@ async function doAuth(){
   try{ await cloudGet(); }catch(e){ /* offline: allow local play, board syncs later */ }
   let ex=CLOUD.accounts[key];
   try{ const rec=await accountLookup(key); if(rec&&rec.u) ex=rec; }catch(e){}   // authoritative check on the account's own topic
+  /* the public board sometimes wipes itself, but this device keeps its own copy —
+     so a wiped board never locks somebody out of their own account here */
+  if(!ex){ const bk=backupGet(key); if(bk&&bk.u){ ex=bk; CLOUD.accounts[key]=Object.assign({},bk); CLOUD_DIRTY=true; } }
   if(AUTHMODE==='up'){
-    if(ex){ go.classList.remove('busy'); authMsg('That username is taken \u2014 try another.'); return; }
+    if(ex&&ex.pw&&ex.pw!==hashPw(p)){ go.classList.remove('busy'); authMsg('That username is taken \u2014 try another.'); return; }
     CLOUD.accounts[key]={u:u, pw:hashPw(p), level:0, streak:0, waves:0, kills:0, rank:0, time:0, key:key};
   }else{
     if(!ex){ go.classList.remove('busy'); authMsg('No account called \u201ct'+u+'\u201d. Create one first.'); return; }
@@ -2901,7 +2974,8 @@ function adminKill(key,el){
     setTimeout(()=>{ if(admKillKey===key){ admKillKey=null; if(el.isConnected){ el.textContent='🗑️ delete'; el.style.color='#ff9a86'; } } },4000);
     return; }
   admKillKey=null;
-  try{ if(MQTT_C) MQTT_C.publish(MQTT_BASE+key,'',{retain:true,qos:1}); }catch(e){}
+  mqttPub(MQTT_BASE+key,'',{retain:true,qos:1}).catch(()=>{});   // clear on every broker
+  try{ const b=loadJSON(ACCT_BK_KEY,{})||{}; delete b[key]; saveJSON(ACCT_BK_KEY,b); }catch(e){}
   delete CLOUD.accounts[key];
   if(ME&&ME.key===key){ signOut(); return; }
   showBanner('🗑️ Account deleted','red',1600); renderAdmin();
@@ -2925,7 +2999,7 @@ async function addFriend(){
   let rec=CLOUD.accounts[k];
   if(!rec){ try{ const r=await accountLookup(k); if(r&&r.u) rec=r; }catch(e){} }
   if(!rec){
-    if(!MQTT_READY||!MQTT_C||!MQTT_C.connected)
+    if(!poolLive().length)
       frMsg('Couldn\u2019t reach the player board \u2014 check your internet and try again.');
     else
       frMsg('Nobody called \u201c'+raw+'\u201d on the player board. The full list is just below \u2014 if they\u2019re not on it, their account never got made.');
@@ -3031,7 +3105,8 @@ function deleteAccount(){
   const key=ME.key, name=ME.name;
   cloudSync(true);                                // flush any last stats first
   const finish=()=>{
-    try{ MQTT_C.publish(myTopic(), '', {retain:true,qos:1}); }catch(e){}   // empty retained payload = record gone
+    mqttPub(myTopic(), '', {retain:true,qos:1}).catch(()=>{});            // empty retained payload = record gone (every broker)
+    try{ const b=loadJSON(ACCT_BK_KEY,{})||{}; delete b[key]; saveJSON(ACCT_BK_KEY,b); }catch(e){}   // and this device's copy
     if(CLOUD&&CLOUD.accounts) delete CLOUD.accounts[key];
     // wipe this account's local stats so nothing lingers on the device
     ['plebania_lb','plebania_pgold','plebania_pleb','plebania_plekeys','plebania_key',
@@ -3040,9 +3115,8 @@ function deleteAccount(){
     show('auth'); setAuthMode('in');
     authMsg('\ud83d\uddd1\ufe0f \u201c'+name+'\u201d has been deleted. Create a new account any time.',true);
   };
-  const c=MQTT_C;
-  if(c&&c.connected){
-    c.publish(myTopic(), '', {retain:true,qos:1}, ()=>{ setTimeout(finish,400); });   // give the broker a beat to clear it
+  if(poolLive().length){
+    mqttPub(myTopic(), '', {retain:true,qos:1}).then(()=>setTimeout(finish,400)).catch(()=>finish);   // give the brokers a beat to clear it
   } else {
     delMsg('\u26a0\ufe0f You\u2019re offline \u2014 the cloud copy can\u2019t be removed right now.');
     b.classList.remove('off'); resetDelBtn();
@@ -5277,7 +5351,8 @@ installPlekeyPlebs();
 (function boot(){
   setAuthMode('in');
   cloudGet().then(()=>{
-    if(ME){ pushScore(); refreshUserChip(); show('menu'); }
+    if(ME){ pushScore(); refreshUserChip(); show('menu');
+      if(BOARD_RESTORED) setTimeout(()=>{ try{ showBanner('\u267b\ufe0f The player board got wiped \u2014 your account was restored from this device','gold',3000); }catch(e){} },700); }
     else show('auth');
     checkOrient();
   }).catch(()=>{
