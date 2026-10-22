@@ -982,7 +982,7 @@
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
     </div>
-    <div class="menu-foot">v2.46 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.47 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -4527,7 +4527,11 @@ function heroUpdate(dt){
    XP per kill depends on how tough the enemy was. */
 function levelXPNeed(level){
   const n=Math.max(0,(level||1)-1);
-  return Math.max(3, Math.round(6 + 1.2*n + 0.35*n*n));   // quadratic: every level costs more than the last
+  /* EASIER CURVE (v2.47, Nicholas's ask): the old one was 6 + 1.2n + 0.35n^2,
+     which made the level 20 target cost 1,215 XP. This is roughly a 40% cut at
+     every level (level 20 now 696) while keeping the "each level costs a bit
+     more than the last" feel. Still quadratic, just a gentler one. */
+  return Math.max(3, Math.round(4 + 0.9*n + 0.18*n*n));
 }
 const XP_BY_RANK={silver:1,undead:1,beast:1,gold:2,red:3,champ:5,boss:10,king:25};
 function xpForKill(e){ return XP_BY_RANK[e&&e.rank]||1; }
