@@ -1024,7 +1024,7 @@
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
       <div class="scrollcue" id="scrollCue"><span class="arw">▼</span> scroll for more <span class="arw">▼</span></div>
     </div>
-    <div class="menu-foot">v2.54 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.55 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -2349,24 +2349,32 @@ function winRateTxt(){ return winRate()+'%'; }   // never a dash - he wants to S
    because at this scale a win is worth more XP than a low level costs, which
    made the XP round-trip ambiguous (1 win could jump you several levels).
    A straight anchor keeps both admin boxes in perfect agreement at EVERY level. */
-const WINS_ANCHOR={wins:220, level:105};
-function levelFromWins(W){           // wins -> level
-  const n=Math.max(0,Math.round(W));
-  return Math.max(1, 1+Math.floor(n*(WINS_ANCHOR.level-1)/WINS_ANCHOR.wins));
+/* v2.55 (Nicholas, 2026-10-22): "XP is still inaccurate - ~3000 wins is level 1829".
+   He was right. v2.53 made the XP curve QUADRATIC but left this conversion on the
+   old v2.48 STRAIGHT-LINE anchor (220 wins = lvl 105). Extrapolating a straight
+   line from one early point wildly over-levels big win counts: 3,000 wins came out
+   at level ~1,419 instead of ~486.
+   Fix: wins <-> level now derive from the SAME curve the hero actually levels on,
+   so the two can never disagree again. A win is worth XP_PER_WIN level-XP. */
+const XP_PER_WIN=327;                // 300 base + 9 waves * 3 (see battleHeroXP)
+function xpToReachLevel(L){          // total XP needed to BE level L (level 1 = 0)
+  const n=Math.max(0,Math.round(L)-1);
+  /* closed form of sum(330 + 7i, i=0..n-1) = 330n + 3.5n(n-1) */
+  return Math.round(330*n + 3.5*n*(n-1));
+}
+function levelFromTotalXP(xp){       // highest level that XP total can buy
+  const x=Math.max(0,xp||0);
+  /* invert 3.5n^2 + 326.5n - x = 0 */
+  const b=326.5;
+  const n=Math.floor((-b + Math.sqrt(b*b + 14*x))/7);
+  return Math.max(1, n+1);
+}
+function levelFromWins(W){           // wins -> level (true curve, not a straight line)
+  return levelFromTotalXP(Math.max(0,Math.round(W))*XP_PER_WIN);
 }
 function winsForLevel(L){            // level -> the wins it's worth
   const l=Math.max(1,Math.round(L));
-  return Math.max(0, Math.ceil((l-1)*WINS_ANCHOR.wins/(WINS_ANCHOR.level-1)));
-}
-function xpToReachLevel(L){          // total XP needed to BE level L (level 1 = 0)
-  let sum=0, n=Math.max(0,Math.round(L)-1);
-  for(let i=1;i<=n;i++) sum+=levelXPNeed(i);
-  return sum;
-}
-function levelFromTotalXP(xp){       // highest level that XP total can buy
-  let L=1;
-  while(L<300 && xp>=xpToReachLevel(L+1)) L++;
-  return L;
+  return Math.max(0, Math.ceil(xpToReachLevel(l)/XP_PER_WIN));
 }
 function fmtTime(s){ s=Math.max(0,Math.round(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
   if(h>0) return h+'h '+m+'m'; if(m>0) return m+'m '+Math.floor(s%60)+'s'; return s+'s'; }
@@ -3335,6 +3343,11 @@ function pendingHTML(){
 /* ---- UPDATE LOG ---------------------------------------------------------
    Newest first. Add a new entry at the TOP of the array when you ship. */
 const UPDATES=[
+  {v:'2.55', d:'22 Oct 2026', e:'📐', t:'Wins-to-level was wildly over-leveling you',
+   b:['Bug: the XP curve went quadratic but wins→level was still on the old straight line.',
+      'That’s why 3,000 wins showed as <b>level 1,829</b> instead of <b>level 485</b>.',
+      'Both now come from the exact same curve, so they can never disagree again.',
+      'Real numbers: 220 wins = L105 · 1,000 = L263 · 3,000 = L485 · 11,680 = L1000.']},
   {v:'2.54', d:'22 Oct 2026', e:'👥', t:'Friends need to accept now',
    b:['Sending a friend request asks them — they have to <b>Accept</b> or <b>Decline</b>.',
       'You see your incoming requests at the top of the Friends screen.',
