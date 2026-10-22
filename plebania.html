@@ -206,7 +206,30 @@
   /* friends */
   #friends{background:linear-gradient(#241708,#0f0a03);overflow:auto;padding:40px 60px;text-align:center}
   #friends.on{display:block}
+  /* ---- UPDATE LOG ---- */
+  #log{background:linear-gradient(#241708,#0f0a03);overflow:auto;padding:40px 60px 30px;text-align:left}
+  #log.on{display:block}
+  #log h2{font:900 46px Georgia,serif;color:#f2d375;margin:0 0 6px;text-shadow:0 3px 0 #000;text-align:center}
+  #log .sub{color:#d8c48c;font:italic 17px Georgia,serif;margin-bottom:26px;text-align:center}
+  #logBody{max-width:900px;margin:0 auto}
+  .logcard{border:2px solid #4a3409;border-radius:14px;background:rgba(0,0,0,.32);
+    padding:18px 22px;margin-bottom:16px;text-align:left}
+  .logcard.new{border-color:#c9a24a;box-shadow:0 0 22px rgba(255,210,74,.18)}
+  .loghead{display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+  .logver{font:900 17px Georgia,serif;color:#3a2506;background:linear-gradient(#f2cf62,#c9971f);
+    padding:3px 12px;border-radius:999px;border:2px solid #2a1c08}
+  .logdate{font:italic 14px Georgia,serif;color:#b09a63}
+  .lognew{font:800 12px Georgia,serif;letter-spacing:2px;color:#0f0a03;
+    background:#7bd45a;padding:3px 10px;border-radius:999px}
+  .logtitle{font:800 22px Georgia,serif;color:#ffe6a0;margin-bottom:10px}
+  .loglist{margin:0;padding-left:22px;color:#e2d3a8;font:15px/1.65 Georgia,serif}
+  .loglist li{margin-bottom:5px}
   #friends h2{font:900 46px Georgia,serif;color:#f2d375;margin:0 0 6px;text-shadow:0 3px 0 #000}
+  .fr-sec{font:800 14px Georgia,serif;letter-spacing:2px;text-transform:uppercase;color:#ffd24a;
+    text-align:left;margin:20px 0 10px;opacity:.95}
+  .fr-card.req{border-color:#c9a24a;box-shadow:0 0 16px rgba(255,210,74,.25)}
+  .fr-actions{display:flex;gap:8px;flex-shrink:0}
+  .frm.ok{color:#0f0a03;background:linear-gradient(#a8e06a,#5f9a2a);border-color:#2b3d0f}
   #friends .sub{color:#d8c48c;font:italic 17px Georgia,serif;margin-bottom:22px}
   .fr-add{display:flex;gap:10px;justify-content:center;align-items:center;margin-bottom:10px}
   .fr-add input{width:300px;padding:11px 16px;border-radius:12px;border:2.5px solid #4a3616;background:#0d0903;
@@ -993,14 +1016,15 @@
         <div class="mbtn" id="menuFriendsBtn"><span class="ic">👥</span> FRIENDS</div>
       </div>
       <div class="worldstrip" id="worldStrip"></div>
-      <div style="margin-top:14px"><span class="linklike" id="howBtn">❔ How to Play</span></div>
+      <div style="margin-top:14px"><span class="linklike" id="howBtn">❔ How to Play</span>
+        <span class="linklike" id="logBtn" style="margin-left:18px">📜 Update Log</span></div>
       <div class="menu-toggles">
         <span class="tg" id="tgTut">📖 Tutorial auto-skip: ON</span>
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
       <div class="scrollcue" id="scrollCue"><span class="arw">▼</span> scroll for more <span class="arw">▼</span></div>
     </div>
-    <div class="menu-foot">v2.53 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.54 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1039,6 +1063,14 @@
   </div>
 
   <!-- ============ WORLD SELECT ============ -->
+  <!-- ============ UPDATE LOG ============ -->
+  <div id="log" class="screen">
+    <h2>📜 Update Log</h2>
+    <div class="sub">What's new in Plebania — newest first.</div>
+    <div id="logBody"></div>
+    <div class="back"><div class="mbtn small" id="logBack" style="width:220px">⬅ Back to Menu</div></div>
+  </div>
+
   <div id="worlds" class="screen">
     <h2>Choose Your World</h2>
     <div class="sub">Every world is a different land with its own beasts to survive. Free one to unlock the next.</div>
@@ -1357,7 +1389,7 @@ function updateScrollCue(){
   window.addEventListener('orientationchange', ()=>setTimeout(updateScrollCue,120));
 })();
 function show(id){
-  ['menu','how','worlds','game','mart','pack','pass','board','auth','account','admin','friends'].forEach(s=>$(s).classList.toggle('on',s===id));
+  ['menu','how','log','worlds','game','mart','pack','pass','board','auth','account','admin','friends'].forEach(s=>$(s).classList.toggle('on',s===id));
   if(id==='menu'){ populateWorldStrip(); updateScrollCue(); }
   if(id==='worlds')populateWorldSelect();
   if(id==='mart')renderMart();
@@ -1366,6 +1398,7 @@ function show(id){
   if(id==='board'){ boardLiveSync(); renderBoard(); }
   if(id==='account')renderAccount();
   if(id==='friends')renderFriends();
+  if(id==='log')renderLog();
   if(id==='admin')renderAdmin();
 }
 function populateWorldStrip(){
@@ -1402,6 +1435,8 @@ function populateWorldSelect(){
   });
 }
 $('howBtn').onclick=()=>show('how');
+if($('logBtn'))$('logBtn').onclick=()=>{ SFX.ui(); show('log'); };
+if($('logBack'))$('logBack').onclick=()=>{ SFX.ui(); show('menu'); };
 $('boardBtn').onclick=()=>{ SFX.ui(); show('board'); };
 $('menuFriendsBtn').onclick=()=>{ SFX.ui(); frMsg(''); show('friends'); };
 $('frBack').onclick=()=>{ SFX.ui(); show(ME?'menu':'account'); };
@@ -2620,6 +2655,10 @@ const MQTT_BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:88
 const MQTT_TOPIC='plebania/leaderboard/v1';                  // legacy merged board (read once, for migration)
 const MQTT_BASE='plebania/accounts/v2/';                     // one retained topic per player (never clobbers others)
 const MQTT_WILD=MQTT_BASE+'+';
+/* FRIEND REQUESTS (v2.54, Nicholas): nobody becomes a friend without accepting.
+   <base><toKey>/<fromKey>  retained, so a request survives until answered. */
+const FREQ_BASE='plebania/friendreq/v1/';
+const FACC_BASE='plebania/friendacc/v1/';
 function myTopic(){ return MQTT_BASE+(ME?ME.key:''); }
 const ACC_KEY='plebania_account';
 let CLOUD={accounts:{}};          // cache of the shared board
@@ -2695,7 +2734,8 @@ function upsertAcct(j){
     losses:own?(j.losses||0):Math.max(j.losses||0,cur.losses||0) };
   return true;
 }
-function subscribeBoard(){ poolLive().forEach(c=>{ try{ c.subscribe(MQTT_WILD,{qos:1},()=>{}); c.subscribe(MQTT_TOPIC,{qos:1},()=>{}); }catch(e){} }); }
+function subscribeBoard(){ poolLive().forEach(c=>{ try{ c.subscribe(MQTT_WILD,{qos:1},()=>{}); c.subscribe(MQTT_TOPIC,{qos:1},()=>{}); }catch(e){}
+  try{ if(ME&&ME.key){ c.subscribe(FREQ_BASE+ME.key+'/+',{qos:1},()=>{}); c.subscribe(FACC_BASE+ME.key+'/+',{qos:1},()=>{}); } }catch(e){} }); }
 /* attach one broker connection to the board. Every broker we hold is a full mirror:
    we read player records from all of them and write to all of them. */
 function attachMQTT(c){
@@ -2703,6 +2743,7 @@ function attachMQTT(c){
   MQTT_POOL.push(c);
   c.on('connect',()=>{ MQTT_READY=true; cloudOk=true; MQTT_C=c;
     try{ c.subscribe(MQTT_WILD,{qos:1},()=>{}); c.subscribe(MQTT_TOPIC,{qos:1},()=>{}); }catch(e){}   // re-subscribe on reconnect
+    try{ if(ME&&ME.key){ c.subscribe(FREQ_BASE+ME.key+'/+',{qos:1},()=>{}); c.subscribe(FACC_BASE+ME.key+'/+',{qos:1},()=>{}); } }catch(e){}
     if(CLOUD_DIRTY) setTimeout(()=>cloudSync(false),400); });                 // flush anything that couldn't publish earlier
   c.on('close',()=>{ if(!poolLive().length) MQTT_READY=false; });
   c.on('message',(t,m)=>{
@@ -2713,6 +2754,7 @@ function attachMQTT(c){
       }
       const j=JSON.parse(raw);
       if(t===MQTT_TOPIC){ if(j&&j.accounts){ CLOUD=mergeBoards(CLOUD,j); MQTT_GOT=true; } }   // legacy board (migration)
+      else if(t.indexOf(FREQ_BASE)===0 || t.indexOf(FACC_BASE)===0){ onFriendMsg(t,j); }        // friend request / accept
       else if(upsertAcct(j)){ MQTT_GOT=true; }                                                // one player's own record
       const bd=$('board'); if(bd&&bd.classList.contains('on')) renderBoard();                  // live-update an open board
     }catch(e){}
@@ -2892,6 +2934,7 @@ function loadLocalFor(me){
     LB.losses=Math.max(0,a.losses||LB.losses||0);
   }
   LB.streak=Math.max(0,a.cur||0);   // current streak survives a reload; only a LOSS kills it
+  if(typeof subscribeFriends==='function') subscribeFriends();
   saveLB(); pushScore(); refreshUserChip();
   // if the board already knows about a LATER season than us, we skipped a month:
   // settle the one we were in and move forward.
@@ -3167,12 +3210,23 @@ function saveFriends(){ saveJSON('plebania_friends',FRIENDS); }
 function friendKey(u){ return String(u||'').trim().toLowerCase(); }
 function isFriend(k){ return FRIENDS.indexOf(friendKey(k))>=0; }
 function frMsg(t,ok){ const el=$('frMsg'); if(!el)return; el.textContent=t||''; el.classList.toggle('ok',!!ok); }
+/* ---- friend REQUESTS (they must accept) ---- */
+let FREQ_IN=loadJSON('plebania_freq_in',{});      // {fromKey:{u,at}} waiting on me
+let FREQ_OUT=loadJSON('plebania_freq_out',{});    // {toKey:{u,at}} I'm waiting on
+function saveFreqIn(){ saveJSON('plebania_freq_in',FREQ_IN); }
+function saveFreqOut(){ saveJSON('plebania_freq_out',FREQ_OUT); }
+function friendPub(topic,payload){
+  if(!poolLive().length) return false;
+  try{ mqttPub(topic, JSON.stringify(payload), {retain:true,qos:1}).catch(()=>{}); }catch(e){ return false; }
+  return true;
+}
 async function addFriend(){
   const inp=$('frInput'); if(!inp)return;
   const raw=(inp.value||'').trim(); const k=friendKey(raw);
   if(k.length<2){ frMsg('Type a username first.'); return; }
   if(ME && k===String(ME.key).toLowerCase()){ frMsg('That\u2019s you! \ud83d\ude04'); return; }
   if(isFriend(k)){ frMsg('You already have '+raw+' as a friend.'); return; }
+  if(FREQ_OUT[k]){ frMsg('You already asked '+raw+' \u2014 still waiting for them to accept.'); return; }
   let rec=CLOUD.accounts[k];
   if(!rec){ try{ const r=await accountLookup(k); if(r&&r.u) rec=r; }catch(e){} }
   if(!rec){
@@ -3183,19 +3237,165 @@ async function addFriend(){
     renderBoardList();
     return;
   }
-  FRIENDS.push(k); saveFriends();
-  inp.value=''; frMsg('\u2705 Added '+(rec.u||raw)+'!',true); SFX.up();
+  /* if THEY already asked ME, treat this as an instant accept */
+  if(FREQ_IN[k]){ acceptFriend(k); inp.value=''; return; }
+  const ok=friendPub(FREQ_BASE+k+'/'+ME.key, {u:ME.name, fromKey:ME.key, at:Date.now()});
+  if(!ok){ frMsg('Couldn\u2019t send the request \u2014 you look offline.'); return; }
+  FREQ_OUT[k]={u:rec.u||raw,at:Date.now()}; saveFreqOut();
+  inp.value=''; frMsg('\ud83d\udce8 Request sent to '+(rec.u||raw)+' \u2014 they need to accept it.',true); SFX.ui();
   renderFriends();
+}
+function acceptFriend(k){
+  k=friendKey(k);
+  const nm=(FREQ_IN[k]&&FREQ_IN[k].u)||(CLOUD.accounts[k]&&CLOUD.accounts[k].u)||k;
+  if(!isFriend(k)){ FRIENDS.push(k); saveFriends(); }
+  delete FREQ_IN[k]; saveFreqIn();
+  delete FREQ_OUT[k]; saveFreqOut();
+  /* tell them it's mutual, and clear the retained request */
+  friendPub(FACC_BASE+k+'/'+ME.key, {u:ME.name, at:Date.now()});
+  friendPub(FREQ_BASE+ME.key+'/'+k, {});
+  SFX.up(); frMsg('\u2705 You and '+nm+' are friends now!',true);
+  renderFriends();
+}
+function declineFriend(k){
+  k=friendKey(k);
+  delete FREQ_IN[k]; saveFreqIn();
+  friendPub(FREQ_BASE+ME.key+'/'+k, {});      // clear retained request so it doesn't come back
+  SFX.ui(); frMsg('Request declined.',true);
+  renderFriends();
+}
+function cancelRequest(k){
+  k=friendKey(k);
+  delete FREQ_OUT[k]; saveFreqOut();
+  friendPub(FREQ_BASE+k+'/'+ME.key, {});
+  SFX.ui(); frMsg('Request cancelled.',true);
+  renderFriends();
+}
+/* incoming friend messages from the board */
+function onFriendMsg(t,j){
+  if(!ME) return;
+  const rest=t.slice(t.indexOf('/v1/')+4);
+  const parts=rest.split('/'); const mine=String(ME.key).toLowerCase();
+  const toKey=parts[0], fromKey=parts[1];
+  const isReq = t.indexOf(FREQ_BASE)===0;
+  if(isReq && toKey!==mine) return;
+  if(!isReq && toKey!==mine) return;
+  if(isReq){
+    if(!fromKey||fromKey===mine) return;
+    if(!j||!j.u){  // someone cleared it
+      if(FREQ_IN[fromKey]){ delete FREQ_IN[fromKey]; saveFreqIn(); if($('friends').classList.contains('on')) renderFriends(); }
+      return;
+    }
+    if(isFriend(fromKey)) return;                    // already friends, nothing to do
+    FREQ_IN[fromKey]={u:j.u,at:j.at||Date.now()}; saveFreqIn();
+    const fr=$('friends');
+    if(fr&&fr.classList.contains('on')) renderFriends();
+    try{ showBanner('\ud83d\udce8 '+j.u+' sent you a friend request','gold',2600); }catch(e){}
+    SFX.up();
+    return;
+  }
+  /* acceptance: add them + drop my pending request */
+  if(!fromKey||fromKey===mine) return;
+  if(!j||!j.u) return;
+  if(!isFriend(fromKey)){ FRIENDS.push(fromKey); saveFriends(); }
+  delete FREQ_OUT[fromKey]; saveFreqOut();
+  delete FREQ_IN[fromKey]; saveFreqIn();
+  try{ showBanner('\u2705 '+(j.u||fromKey)+' accepted your friend request','gold',2600); }catch(e){}
+  SFX.up();
+  const fr=$('friends');
+  if(fr&&fr.classList.contains('on')) renderFriends();
 }
 function removeFriend(k){
   FRIENDS=FRIENDS.filter(x=>x!==k); saveFriends();
   SFX.ui(); renderFriends(); frMsg('Removed.',true);
 }
+function pendingHTML(){
+  const inK=Object.keys(FREQ_IN||{}), outK=Object.keys(FREQ_OUT||{});
+  if(!inK.length && !outK.length) return '';
+  let h='';
+  if(inK.length){
+    h+='<div class="fr-sec">\ud83d\udce8 Friend requests ('+inK.length+')</div>';
+    inK.forEach(k=>{ const nm=(FREQ_IN[k]&&FREQ_IN[k].u)||k;
+      h+='<div class="fr-card req"><div class="fname">'+nm+
+         '<span class="fstats">wants to be friends</span></div>'+
+         '<div class="fr-actions">'+
+           '<div class="frm ok" data-acc="'+k+'">\u2713 Accept</div>'+
+           '<div class="frm" data-dec="'+k+'">\u2715 Decline</div>'+
+         '</div></div>'; });
+  }
+  if(outK.length){
+    h+='<div class="fr-sec">\u23f3 Waiting for them to accept</div>';
+    outK.forEach(k=>{ const nm=(FREQ_OUT[k]&&FREQ_OUT[k].u)||k;
+      h+='<div class="fr-card"><div class="fname">'+nm+
+         '<span class="fstats">sent \u2014 not accepted yet</span></div>'+
+         '<div class="fr-actions"><div class="frm" data-cancel="'+k+'">Cancel</div></div></div>'; });
+  }
+  return h;
+}
+/* ---- UPDATE LOG ---------------------------------------------------------
+   Newest first. Add a new entry at the TOP of the array when you ship. */
+const UPDATES=[
+  {v:'2.54', d:'22 Oct 2026', e:'👥', t:'Friends need to accept now',
+   b:['Sending a friend request asks them — they have to <b>Accept</b> or <b>Decline</b>.',
+      'You see your incoming requests at the top of the Friends screen.',
+      'When someone accepts you, you both get a notification.',
+      'Old “instant” friends are untouched — nobody got removed.']},
+  {v:'2.53', d:'22 Oct 2026', e:'📈', t:'Levels get much harder, elite bots get brutal',
+   b:['Each level now costs about 7 XP more than the last — a real grind.',
+      'Level 105 still takes ~220 wins, and <b>level 1000 takes about 11,679 wins</b>.',
+      'Challenge bots scale all the way to level 1000 instead of stopping at level 17.',
+      'Ranked bots keep getting harder past 2,800 ELO (used to flat-line).',
+      'Campaign and Crypt now pay level XP too, so every mode levels you up.',
+      'Fixed: admin stats getting wiped when you reloaded before the board caught up.']},
+  {v:'2.52', d:'22 Oct 2026', e:'📜', t:'You can now tell the menu scrolls',
+   b:['Added a gold scrollbar so it’s obvious there’s more below.',
+      'A “scroll for more” button appears while there’s stuff further down, and hides at the end.',
+      'Tap it to jump down a screen. (Jaden never knew the menu scrolled!)']},
+  {v:'2.51', d:'22 Oct 2026', e:'📊', t:'Win rate actually counts everything',
+   b:['Campaign and Crypt games were never counted at all — only Challenge and Ranked were.',
+      'Every finished game counts toward your win rate now.']},
+  {v:'2.50', d:'22 Oct 2026', e:'⭐', t:'Wins pay real level XP',
+   b:['A win is worth ~327 XP (was 30–90), a loss pays 1/5 of that.',
+      'So ~220 wins really does reach level 105.']},
+  {v:'2.49', d:'22 Oct 2026', e:'🏆', t:'Most Wins leaderboard + level↔wins',
+   b:['New leaderboard card: Most Wins.',
+      'Admin panel can set wins or level — change one and the other follows.']},
+  {v:'2.46', d:'22 Oct 2026', e:'🥇', t:'Most Wins on the board',
+   b:['Added a Most Wins leaderboard category.']},
+  {v:'2.44', d:'22 Oct 2026', e:'🤖', t:'Bots that match your skill',
+   b:['Challenge and Ranked now find a bot instantly instead of waiting a minute.',
+      'Bots get harder with your ELO (Ranked) or level (Challenge).',
+      'Keep losing and the bots ease off so you can find your feet again.']},
+  {v:'2.42', d:'22 Oct 2026', e:'🧙', t:'Shadow Pleb walks, Plekey redesigned',
+   b:['Shadow Pleb is a real marching unit — it holds the line and fires shadow bolts.',
+      'Plekey is a whole new design: gilded body, jewelled crown, glowing key.',
+      'Fixed: marchers did nothing in battle mode, and smashing the enemy base didn’t count as a win.']},
+  {v:'2.41', d:'22 Oct 2026', e:'🎨', t:'Shop art = battle art',
+   b:['Plebs now look <b>exactly</b> the same in the shop, PLEBPACK and on the battlefield.',
+      'Plekeys and season plebs finally show up in PLEBPACK.']},
+  {v:'2.40', d:'22 Oct 2026', e:'🔄', t:'Leaderboard syncs instead of looking broken',
+   b:['The board shows “still syncing…” and keeps refreshing so it never shows half a list.']},
+  {v:'2.39', d:'22 Oct 2026', e:'🩹', t:'Accounts survive board wipes',
+   b:['The game mirrors your account to 3 servers instead of 1.',
+      'Your device keeps its own backup — if the public board wipes, you get restored automatically.']}
+];
+function renderLog(){
+  const box=$('logBody'); if(!box)return;
+  box.innerHTML=UPDATES.map((u,ix)=>
+    '<div class="logcard'+(ix===0?' new':'')+'">'+
+      '<div class="loghead"><span class="logver">v'+u.v+'</span>'+
+        '<span class="logdate">'+u.d+'</span>'+(ix===0?'<span class="lognew">NEW</span>':'')+'</div>'+
+      '<div class="logtitle">'+u.e+' '+u.t+'</div>'+
+      '<ul class="loglist">'+u.b.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+
+    '</div>').join('');
+}
 function renderFriends(){
   const list=$('frList'); if(!list)return;
+  const pend=pendingHTML();
   if(!FRIENDS.length){
     renderBoardList();
-    list.innerHTML='<div class="fr-empty">No friends yet \u2014 add someone by their username above \ud83d\udc4c</div>';
+    list.innerHTML=pend+'<div class="fr-empty">No friends yet \u2014 add someone by their username above \ud83d\udc4c</div>';
+    wirePending(list);
     return;
   }
   let h='';
@@ -3210,9 +3410,16 @@ function renderFriends(){
         '<span class="fstats">'+(a?('\ud83c\udfaf '+rankTier(rk)+' \u00b7 \ud83e\ude9c Lv '+lvl+' \u00b7 \ud83d\udd25 '+st+' best streak'):'not on the board yet')+'</span></div>'+
       '<div class="frm" data-rm="'+k+'">Remove</div></div>';
   });
-  list.innerHTML=h;
+  list.innerHTML=pend+h;
+  wirePending(list);
   list.querySelectorAll('[data-rm]').forEach(el=>el.onclick=()=>removeFriend(el.dataset.rm));
   renderBoardList();
+}
+/* wire Accept / Decline / Cancel buttons */
+function wirePending(root){
+  (root||document).querySelectorAll('[data-acc]').forEach(el=>el.onclick=()=>acceptFriend(el.dataset.acc));
+  (root||document).querySelectorAll('[data-dec]').forEach(el=>el.onclick=()=>declineFriend(el.dataset.dec));
+  (root||document).querySelectorAll('[data-cancel]').forEach(el=>el.onclick=()=>cancelRequest(el.dataset.cancel));
 }
 /* every account that actually exists on the board -- tap one to add it */
 function renderBoardList(){
@@ -3265,7 +3472,17 @@ function renderPassCheck(){
   };
 }
 function switchAccount(){ cloudSync(true); ME=null; saveJSON(ACC_KEY,null); refreshUserChip(); show('auth'); setAuthMode('in'); authMsg('Sign in with another account (or create a new one).',true); }
-function enterGame(){ SFX.up(); refreshUserChip(); show('menu'); populateWorldStrip(); }
+/* Broker connections are made BEFORE login, so the per-account friend channels
+   were never subscribed - that's why friend requests silently never arrived.
+   Subscribe the moment we actually have an account, and on every reconnect. */
+function subscribeFriends(){
+  if(!ME||!ME.key) return;
+  poolLive().forEach(c=>{
+    try{ c.subscribe(FREQ_BASE+ME.key+'/+',{qos:1},()=>{});
+         c.subscribe(FACC_BASE+ME.key+'/+',{qos:1},()=>{}); }catch(e){}
+  });
+}
+function enterGame(){ SFX.up(); subscribeFriends(); refreshUserChip(); show('menu'); populateWorldStrip(); }
 function signOut(){ ME=null; saveJSON(ACC_KEY,null); cloudSync(true); refreshUserChip(); show('auth'); setAuthMode('in'); authMsg('Signed out.',true); }
 /* ---- delete my own account: two-tap confirm, wipes the cloud record + local data ---- */
 function delMsg(t){ const el=$('acctDelMsg'); if(el)el.textContent=t||''; }
