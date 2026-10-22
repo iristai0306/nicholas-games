@@ -34,8 +34,25 @@
   .mlayer{position:absolute;inset:0}
   .vign{position:absolute;inset:0;pointer-events:none;
     background:radial-gradient(120% 80% at 50% 30%,transparent 40%,rgba(0,0,0,.55) 100%)}
-  .menu-left{position:absolute;left:70px;top:70px;z-index:5;max-width:560px;max-height:calc(100% - 92px);overflow-y:auto;overflow-x:hidden;padding-right:8px;scrollbar-width:none}
-  .menu-left::-webkit-scrollbar{width:0;height:0}
+  .menu-left{position:absolute;left:70px;top:70px;z-index:5;max-width:560px;max-height:calc(100% - 92px);overflow-y:auto;overflow-x:hidden;padding-right:14px;scrollbar-width:thin;scrollbar-color:#c9a24a rgba(0,0,0,.4)}
+  /* SCROLL CUE (Nicholas, 2026-10-22): Jaden didn't realise the menu scrolled.
+     The old CSS hid the scrollbar completely, so there was no hint at all.
+     Now: a visible gold scrollbar + a "scroll for more" bar that sticks to the
+     bottom of the list and disappears once you reach the end. */
+  .menu-left::-webkit-scrollbar{width:12px}
+  .menu-left::-webkit-scrollbar-track{background:rgba(0,0,0,.4);border-radius:8px}
+  .menu-left::-webkit-scrollbar-thumb{background:linear-gradient(#f2cf62,#c9971f);border:2px solid rgba(0,0,0,.45);border-radius:8px}
+  .menu-left::-webkit-scrollbar-thumb:hover{background:linear-gradient(#ffe08a,#d8a52a)}
+  /* compact floating pill - a full-width bar covered the buttons underneath */
+  .scrollcue{position:sticky;bottom:4px;z-index:7;display:none;align-items:center;justify-content:center;gap:8px;
+    width:fit-content;margin:10px auto 4px;padding:9px 18px;cursor:pointer;border-radius:999px;
+    border:2px solid #c9a24a;background:rgba(18,12,3,.93);
+    box-shadow:0 4px 14px rgba(0,0,0,.7),0 0 18px rgba(255,210,74,.22);
+    font:800 13px Georgia,serif;letter-spacing:2px;text-transform:uppercase;color:#ffe6a0;
+    text-shadow:0 2px 6px #000;animation:cuebob 1.7s ease-in-out infinite}
+  .scrollcue.on{display:flex}
+  .scrollcue .arw{font-size:15px;color:#ffd24a}
+  @keyframes cuebob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
   .kicker{font:600 15px/1 Georgia,serif;letter-spacing:7px;color:#d9b44a;text-transform:uppercase;
     text-shadow:0 2px 0 #000;margin-bottom:10px;opacity:.9}
   .logo{font:900 84px/0.86 Georgia,'Times New Roman',serif;letter-spacing:2px;
@@ -981,8 +998,9 @@
         <span class="tg" id="tgTut">📖 Tutorial auto-skip: ON</span>
       </div>
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
+      <div class="scrollcue" id="scrollCue"><span class="arw">▼</span> scroll for more <span class="arw">▼</span></div>
     </div>
-    <div class="menu-foot">v2.51 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.52 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1316,9 +1334,31 @@ const PLEB_THUMB_CACHE={};
 cv.width=W; cv.height=H;
 
 /* ---------------- screens ---------------- */
+/* show/hide the "scroll for more" bar depending on whether the menu column
+   actually has more content below the fold. */
+function updateScrollCue(){
+  const ml=document.querySelector('#menu .menu-left'), cue=$('scrollCue');
+  if(!ml||!cue) return;
+  const left = ml.scrollHeight - ml.scrollTop - ml.clientHeight;
+  cue.classList.toggle('on', left > 24);      // 24px slack: don't flicker near the end
+}
+/* keep the cue honest while scrolling, and re-check on resize/orientation change */
+(function watchMenuScroll(){
+  const wire=()=>{
+    const ml=document.querySelector('#menu .menu-left');
+    if(!ml) return false;
+    ml.addEventListener('scroll', updateScrollCue, {passive:true});
+    const cue=$('scrollCue');
+    if(cue) cue.onclick=()=>{ ml.scrollBy({top:Math.round(ml.clientHeight*0.8),behavior:'smooth'}); };
+    return true;
+  };
+  if(!wire()) document.addEventListener('DOMContentLoaded', wire);
+  window.addEventListener('resize', updateScrollCue);
+  window.addEventListener('orientationchange', ()=>setTimeout(updateScrollCue,120));
+})();
 function show(id){
   ['menu','how','worlds','game','mart','pack','pass','board','auth','account','admin','friends'].forEach(s=>$(s).classList.toggle('on',s===id));
-  if(id==='menu')populateWorldStrip();
+  if(id==='menu'){ populateWorldStrip(); updateScrollCue(); }
   if(id==='worlds')populateWorldSelect();
   if(id==='mart')renderMart();
   if(id==='pack')renderPack();
