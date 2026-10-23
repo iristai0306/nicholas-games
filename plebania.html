@@ -203,6 +203,32 @@
   .bd-live{display:flex;align-items:center;gap:9px;justify-content:center;margin:0 0 14px;
     font:700 15px Georgia,serif;color:#d8c48c}
   .bd-live .bd-dot{margin-right:0;width:10px;height:10px}
+  /* ---- PLAYER CARD (v2.57: tap anyone on the board to see their stats) ---- */
+  .bd-row[data-pk]{cursor:pointer;transition:transform .12s,border-color .12s}
+  .bd-row[data-pk]:hover{transform:translateX(4px);box-shadow:inset 0 0 0 2px #c9a24a}
+  .fr-card[data-pk]{cursor:pointer}
+  .fr-card[data-pk]:hover{border-color:#c9a24a}
+  #pcard{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
+    background:rgba(6,4,1,.78);backdrop-filter:blur(3px);padding:20px}
+  #pcard.on{display:flex}
+  /* NB: #pcard lives inside the 1280x800 #stage, which is CSS-scaled to fit the
+     screen — so use stage-relative sizes (%, px) here, NOT vw/vh. */
+  #pcard .pc-box{width:min(820px,88%);max-height:94%;overflow:auto;border-radius:20px;padding:22px 26px 24px;
+    background:linear-gradient(#3a2a10,#1a1206);border:4px solid #c9a24a;box-shadow:0 18px 50px rgba(0,0,0,.75);
+    text-align:center;animation:pcIn .22s ease-out}
+  @keyframes pcIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+  #pcard .pc-head{display:flex;align-items:center;gap:16px;text-align:left;margin-bottom:16px}
+  #pcard .pc-ring{width:66px;height:66px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;
+    justify-content:center;font:900 30px Georgia,serif;color:#2b2418;text-shadow:0 2px 0 rgba(255,255,255,.25)}
+  #pcard .pc-nm{font:900 34px Georgia,serif;color:#f6dd8b;line-height:1.05;text-shadow:0 3px 0 #000;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:520px}
+  #pcard .pc-sub{font:700 13px Georgia,serif;color:#bda876;letter-spacing:1.5px;margin-top:5px}
+  #pcard .pc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:6px 0 16px}
+  #pcard .pc-t{background:rgba(0,0,0,.34);border:2px solid #4a3616;border-radius:12px;padding:10px 8px}
+  #pcard .pc-t .v{font:900 24px Georgia,serif;color:#ffe08a;line-height:1.1}
+  #pcard .pc-t .k{font:700 10.5px Georgia,serif;color:#a9996f;letter-spacing:1px;margin-top:5px}
+  #pcard .pc-t.wide{grid-column:span 3}
+  #pcard .pc-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
   /* friends */
   #friends{background:linear-gradient(#241708,#0f0a03);overflow:auto;padding:40px 60px;text-align:center}
   #friends.on{display:block}
@@ -1024,7 +1050,7 @@
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
       <div class="scrollcue" id="scrollCue"><span class="arw">▼</span> scroll for more <span class="arw">▼</span></div>
     </div>
-    <div class="menu-foot">v2.56 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.57 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1081,10 +1107,13 @@
   <!-- ============ LEADERBOARD ============ -->
   <div id="board" class="screen">
     <h2>🏆 Leaderboard</h2>
-    <div class="sub">Your bests, and how you stack up. Fight in Ranked to build a win streak.</div>
+    <div class="sub">Your bests, and how you stack up. <b>Tap any player to see their full stats.</b></div>
     <div id="boardBody"></div>
     <div class="back"><div class="mbtn small" id="boardBack" style="width:220px">⬅ Back to Menu</div></div>
   </div>
+
+  <!-- ============ PLAYER CARD (v2.57) — tap a name on the board ============ -->
+  <div id="pcard"><div class="pc-box" id="pcardBox"></div></div>
 
   <!-- ============ MY ACCOUNT ============ -->
   <div id="account" class="screen">
@@ -2341,15 +2370,18 @@ function gamesPlayed(){ return (LB.wins||0)+(LB.losses||0); }
 /* v2.56 (Nicholas, 2026-10-23): "impossible to be 100%".
    38,277W / 164L = 99.57%, but Math.round() displayed it as a flat 100%.
    Fix: keep one decimal, and never show 100% while any loss exists (cap 99.9%).
-   A genuine perfect record (losses = 0) still shows 100%. */
-function winRate(){ const g=gamesPlayed(); if(!g) return 0; return Math.min(100,(LB.wins||0)/g*100); }
-function winRateTxt(){
-  const g=gamesPlayed(); if(!g) return '0%';
-  let p=winRate();
-  if((LB.losses||0)>0 && p>99.9) p=99.9;
-  let s=(Math.round(p*10)/10).toFixed(1).replace(/\.0$/,'');
-  return s+'%';
+   A genuine perfect record (losses = 0) still shows 100%.
+   v2.57: the maths is now reusable so OTHER players' cards show their real
+   win rate too (same rule), instead of re-deriving it in three places. */
+function winRatePct(w,l){ const g=(w||0)+(l||0); if(!g) return 0; return Math.min(100,(w||0)/g*100); }
+function winRateFmt(w,l){
+  const g=(w||0)+(l||0); if(!g) return '0%';
+  let p=winRatePct(w,l);
+  if((l||0)>0 && p>99.9) p=99.9;
+  return (Math.round(p*10)/10).toFixed(1).replace(/\.0$/,'')+'%';
 }
+function winRate(){ return winRatePct(LB.wins||0,LB.losses||0); }
+function winRateTxt(){ return winRateFmt(LB.wins||0,LB.losses||0); }
 /* ---- WINS <-> LEVEL (v2.45, rescaled v2.48) ----
    Wins and level are two views of the same thing: set one in the admin panel
    and the other follows. Scale is anchored on 220 wins = level 105. */
@@ -2389,6 +2421,9 @@ function winsForLevel(L){            // level -> the wins it's worth
 function fmtTime(s){ s=Math.max(0,Math.round(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
   if(h>0) return h+'h '+m+'m'; if(m>0) return m+'m '+Math.floor(s%60)+'s'; return s+'s'; }
 function fmtStat(k,v){ return k==='time'?fmtTime(v):v; }
+/* tiny attribute/text escaper — usernames come from a public topic, so never
+   trust them straight into innerHTML (v2.57, player cards) */
+function escAttr(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 /* ---------- presence ---------- */
 const ONLINE_MS=120000;                       // seen in the last 2 min = online
 function agoTxt(ms){
@@ -3353,6 +3388,11 @@ function pendingHTML(){
 /* ---- UPDATE LOG ---------------------------------------------------------
    Newest first. Add a new entry at the TOP of the array when you ship. */
 const UPDATES=[
+  {v:'2.57', d:'23 Oct 2026', e:'👆', t:'Tap a player · win streak fixed',
+   b:['<b>Tap anyone on the leaderboard</b> (or a friend) to see their full card: level, win rate, wins, losses, streak, rank, kills, time played.',
+      'Win streak bug fixed: Ranked wins now <b>extend</b> your streak and Ranked losses now <b>break</b> it.',
+      'PLAY and The Crypt count toward the streak too — every finished game, win or lose.',
+      'Before this, the streak only moved in plain Battle mode, so it could never end anywhere else.']},
   {v:'2.56', d:'23 Oct 2026', e:'📊', t:'Win rate can never say 100% again',
    b:['38,277W / 164L was being rounded up to a flat <b>100%</b>.',
       'Win rate now shows one decimal — that record reads <b>99.6%</b>.',
@@ -3431,7 +3471,7 @@ function renderFriends(){
     const nm=a&&a.u?a.u:k;
     const P=presenceOf(a);
     const lvl=a?(a.level||0):0, st=a?(a.streak||0):0, rk=a?(a.rank||0):0;
-    h+='<div class="fr-card'+(P.online?'':' offline')+'">'+
+    h+='<div class="fr-card'+(P.online?'':' offline')+'" data-pk="'+escAttr(k)+'">'+
       '<span class="bd-dot '+(P.online?'on':'off')+'"></span>'+
       '<div class="fname">'+nm+'<span class="bd-pres '+(P.online?'on':'off')+'">'+P.txt+'</span>'+
         '<span class="fstats">'+(a?('\ud83c\udfaf '+rankTier(rk)+' \u00b7 \ud83e\ude9c Lv '+lvl+' \u00b7 \ud83d\udd25 '+st+' best streak'):'not on the board yet')+'</span></div>'+
@@ -3439,7 +3479,8 @@ function renderFriends(){
   });
   list.innerHTML=pend+h;
   wirePending(list);
-  list.querySelectorAll('[data-rm]').forEach(el=>el.onclick=()=>removeFriend(el.dataset.rm));
+  list.querySelectorAll('[data-rm]').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); removeFriend(el.dataset.rm); });
+  wirePlayerCards(list);          // v2.57: tap a friend to see their stats
   renderBoardList();
 }
 /* wire Accept / Decline / Cancel buttons */
@@ -3458,12 +3499,13 @@ function renderBoardList(){
   let h='<div class="fr-head">\ud83c\udf10 PLAYERS ON THE BOARD ('+ks.length+')</div><div class="fr-chips">';
   ks.forEach(k=>{
     const a=CLOUD.accounts[k]||{}; const mine=!!(ME&&k===ME.key);
-    if(mine||isFriend(k)) h+='<span class="fr-chip own">'+(a.u||k)+(mine?' (you)':'')+'</span>';
+    if(mine||isFriend(k)) h+='<span class="fr-chip own" data-pk="'+escAttr(k)+'">'+(a.u||k)+(mine?' (you)':'')+'</span>';
     else h+='<span class="fr-chip" data-add="'+k+'">+ '+(a.u||k)+'</span>';
   });
   h+='</div>';
   box.innerHTML=h;
   box.querySelectorAll('[data-add]').forEach(el=>el.onclick=()=>{ const i=$('frInput'); if(i)i.value=el.dataset.add; addFriend(); });
+  wirePlayerCards(box);
 }
 /* ---------- "check my password" (device-local only) ---------- */
 function myPassRec(){ try{ return loadJSON('plebania_myPass',null); }catch(e){ return null; } }
@@ -3604,6 +3646,87 @@ function globalRank(rankValue){
 /* how many division stars you have: 1 = div 1, 2 = div 2, 3 = div 3 */
 function rankStars(pts){ return (rankPos(pts)%3)+1; }
 
+/* =========================================================
+   PLAYER CARD (v2.57) — "if you click on someone's acc you can
+   see their stats" (Nicholas, 2026-10-23).
+   Read-only view of one account straight off the board. Nothing
+   here writes: it only reads the record that player publishes.
+   ========================================================= */
+function globalRankFor(key){
+  const k=String(key||'').toLowerCase();
+  const rows=Object.keys(CLOUD.accounts||{}).map(x=>({k:x,r:(CLOUD.accounts[x].rank||0)}));
+  if(!rows.length) return {place:0,total:0};
+  rows.sort((a,b)=>b.r-a.r);
+  const place=rows.findIndex(x=>x.k===k)+1;
+  return {place:place||0,total:rows.length};
+}
+function closePlayerCard(){ const el=$('pcard'); if(el) el.classList.remove('on'); }
+function openPlayerCard(key){
+  const box=$('pcardBox'); if(!box) return;
+  const k=String(key||'').toLowerCase();
+  /* "me" is the placeholder row the board adds for your own local stats when your
+     record hasn't arrived from the topic yet — never call that "not found". */
+  const mine=!!(ME&&k===ME.key)||(!ME&&k==='me');
+  const a=(CLOUD.accounts||{})[k]||(mine?{u:(ME?ME.name:'You'),level:LB.level,streak:LB.bestStreak,cur:LB.streak,waves:LB.waves,kills:LB.kills,rank:LB.rank,time:LB.time,wins:LB.wins,losses:LB.losses,at:Date.now()}:null);
+  if(!a&&!mine){ box.innerHTML='<div class="pc-head"><div class="pc-nm">Player not found</div></div>'; $('pcard').classList.add('on'); return; }
+  const name=(a&&a.u)||(mine&&ME?ME.name:'Pleb');
+  const level=mine?LB.level:(a.level||1);
+  const wins=mine?(LB.wins||0):(a.wins||0);
+  const losses=mine?(LB.losses||0):(a.losses||0);
+  const cur=mine?(LB.streak||0):(a.cur||0);
+  const best=mine?(LB.bestStreak||0):(a.streak||0);
+  const waves=mine?LB.waves:(a.waves||0);
+  const kills=mine?LB.kills:(a.kills||0);
+  const rank=mine?LB.rank:(a.rank||0);
+  const time=mine?(LB.time||0):(a.time||0);
+  const P=presenceOf(a||{});
+  const gr=globalRankFor(k);
+  const col=rankColor(rank);
+  const tile=(v,lab,colour)=>'<div class="pc-t"><div class="v"'+(colour?' style="color:'+colour+'"':'')+'>'+v+'</div><div class="k">'+lab+'</div></div>';
+  let h='<div class="pc-head">'+
+      '<div class="pc-ring" style="background:linear-gradient('+col+',#6b5320)">'+escAttr(String(name).trim().charAt(0).toUpperCase())+'</div>'+
+      '<div style="flex:1;min-width:0"><div class="pc-nm">'+escAttr(name)+(mine?' <span style="font-size:15px;color:#9fe08a">(you)</span>':'')+'</div>'+
+        '<div class="pc-sub"><span class="bd-dot '+(P.online?'on':'off')+'"></span>'+escAttr(P.online?'ONLINE NOW':P.txt.toUpperCase())+
+        ' · '+escAttr(rankTier(rank))+'</div></div></div>';
+  h+='<div class="pc-grid">'+
+      tile(level,'LEVEL')+
+      tile(winRateFmt(wins,losses),'WIN RATE',winRatePct(wins,losses)>=50?'#7bd45a':'#ff9a56')+
+      tile(gr.place?('#'+gr.place):'—','GLOBAL RANK'+(gr.total?' of '+gr.total:''))+
+      tile(wins,'WINS')+
+      tile(losses,'LOSSES')+
+      tile(cur>0?('🔥 '+cur):'0','WIN STREAK')+
+      tile(best,'BEST STREAK')+
+      tile(waves,'WAVES BEATEN')+
+      tile(kills,'UNITS KILLED')+
+      tile(rank+' pts','RANK POINTS')+
+      tile(fmtTime(time),'TIME PLAYED')+
+      tile(a&&a.at?agoTxt(Date.now()-a.at):'—','LAST SEEN')+
+    '</div>';
+  h+='<div class="pc-btns">';
+  if(!mine){
+    if(isFriend(k)) h+='<div class="mbtn small" data-pcrm="'+escAttr(k)+'" style="width:200px">✅ Friend · remove</div>';
+    else h+='<div class="mbtn small" data-pcadd="'+escAttr(k)+'" style="width:200px">➕ Add friend</div>';
+  }
+  h+='<div class="mbtn small" data-pcclose="1" style="width:160px">✖ Close</div></div>';
+  box.innerHTML=h;
+  box.querySelectorAll('[data-pcclose]').forEach(el=>el.onclick=closePlayerCard);
+  box.querySelectorAll('[data-pcadd]').forEach(el=>el.onclick=()=>{ closePlayerCard(); const i=$('frInput'); if(i)i.value=el.dataset.pcadd; addFriend(); });
+  box.querySelectorAll('[data-pcrm]').forEach(el=>el.onclick=()=>{ closePlayerCard(); removeFriend(el.dataset.pcrm); });
+  $('pcard').classList.add('on');
+}
+/* tap the dark backdrop or press Escape to dismiss the card */
+(function wirePcardDismiss(){
+  document.addEventListener('click',e=>{ const el=$('pcard'); if(el&&el.classList.contains('on')&&e.target===el) closePlayerCard(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closePlayerCard(); });
+})();
+/* one tap handler for everything that carries data-pk */
+function wirePlayerCards(root){
+  (root||document).querySelectorAll('[data-pk]').forEach(el=>{
+    if(el.__pcw) return; el.__pcw=1;
+    el.onclick=()=>openPlayerCard(el.dataset.pk);
+  });
+}
+
 /* ---- full-screen RANK UP celebration ---- */
 let ruTimer=null;
 function rankUpFX(beforePts,afterPts){
@@ -3683,7 +3806,7 @@ function renderBoard(){
     rows.slice(0,SHOW).forEach((r,i)=>{
       const medal=i===0?'\ud83e\udd47':i===1?'\ud83e\udd48':i===2?'\ud83e\udd49':'#'+(i+1);
       const P=presenceOf(r);
-      html+='<div class="bd-row'+(r.isMe?' me':'')+(P.online?'':' offline')+'"><div class="rk">'+medal+'</div><div class="nm">'+
+      html+='<div class="bd-row'+(r.isMe?' me':'')+(P.online?'':' offline')+'" data-pk="'+escAttr(r.key)+'"><div class="rk">'+medal+'</div><div class="nm">'+
         '<span class="bd-dot '+(P.online?'on':'off')+'" title="'+(P.online?'Online now':'Offline')+'"></span>'+
         r.name+(ADMIN_NAMES.indexOf(String(r.key||'').toLowerCase())>=0?' <span class="admbadge">👑</span>':'')+(r.isMe?' <span class="you">(you)</span>':'')+
         '<span class="bd-pres '+(P.online?'on':'off')+'">'+P.txt+'</span></div>'+
@@ -3691,7 +3814,7 @@ function renderBoard(){
     });
     const idx=rows.findIndex(r=>r.isMe);
     if(idx>=SHOW){ const r=rows[idx]; const P=presenceOf(r);
-      html+='<div class="bd-row me"><div class="rk">#'+(idx+1)+'</div><div class="nm">'+
+      html+='<div class="bd-row me" data-pk="'+escAttr(r.key)+'"><div class="rk">#'+(idx+1)+'</div><div class="nm">'+
         '<span class="bd-dot '+(P.online?'on':'off')+'"></span>'+r.name+' <span class="you">(you)</span>'+
         '<span class="bd-pres '+(P.online?'on':'off')+'">'+P.txt+'</span></div><div class="vl">'+fmtStat(k,r[k])+'</div></div>'; }
     html+='</div>';
@@ -3703,6 +3826,7 @@ function renderBoard(){
     (total-onlineN)+' offline'+(syncing?' \u00b7 \u23f3 still syncing\u2026':'')+'</div>';
   html=live+'<div class="bd-sub">'+total+' player'+(total===1?'':'s')+' on the board'+(total>SHOW?(' \u00b7 top '+SHOW+' shown'):'')+'</div>'+html;
   body.innerHTML=html;
+  wirePlayerCards(body);          // v2.57: tap any row for that player's stats
 }
 
 /* =========================================================
@@ -4093,8 +4217,13 @@ function battleWin(){
   recordStats();
   /* WIN RATE: every battle result counts, ranked and challenge alike */
   LB.wins=(LB.wins||0)+1; LB.lossStreak=0;
-  /* streak is a CHALLENGE thing now (that's the mode Nicholas wants it on) */
-  if(!S.ranked){ LB.streak++; LB.bestStreak=Math.max(LB.bestStreak,LB.streak); }
+  /* WIN STREAK (v2.57, Nicholas 2026-10-23): "my win streak doesn't end and only
+     in battle can I lose and gain win streak". He was right — the old code only
+     moved the streak on NON-ranked battles, so ranked wins never extended it and
+     ranked losses never broke it, and PLAY/Crypt touched it not at all.
+     Now: every finished game counts. Win = +1, loss = back to 0. No mode exempt. */
+  LB.streak=(LB.streak||0)+1;
+  LB.bestStreak=Math.max(LB.bestStreak||0,LB.streak);
   if(S.ranked){ S.eloGain=eloWin(); S.eloBefore=LB.rank; LB.rank+=S.eloGain; seasonAddElo(S.eloGain); }
   addPassXP(S.ranked?150:100);   // PLEBASS XP for the win (unchanged)
   addHeroXP(S.hero, battleHeroXP());   // and LEVEL XP — a win is worth real levels
@@ -4105,7 +4234,7 @@ function battleWin(){
   $('ovP').innerHTML=(smashed
       ? 'You smashed <b>'+S.oppName+'</b>\u2019s base with '+S.raid.length+' raiders still standing.'
       : 'You held every wave \u2014 <b>'+S.oppName+'</b>\u2019s garrison broke and fled.')+'<br>'+
-    (!S.ranked ? ('\ud83d\udd25 Win streak: <b>'+LB.streak+'</b><br>') : '')+
+    ('\ud83d\udd25 Win streak: <b>'+LB.streak+'</b><br>')+
     'Foes felled: <b>'+S.slain+'</b>.';
   if(S.ranked){
     eloPop(S.eloGain,S.eloBefore,LB.rank);
@@ -4133,11 +4262,11 @@ function battleLose(){
   const wasRank=LB.rank;
   if(S.ranked){ S.eloLoss=eloLose(); LB.rank=Math.max(0,LB.rank-S.eloLoss); S.eloBefore=wasRank; seasonAddElo(-S.eloLoss); }
   LB.losses=(LB.losses||0)+1; LB.lossStreak=(LB.lossStreak||0)+1;
-  /* only CHALLENGE breaks the streak now */
-  if(!S.ranked) LB.streak=0;
+  /* v2.57: ANY loss ends the streak — ranked, challenge, whatever. */
+  LB.streak=0;
   S.streakLost=hadStreak;
   saveLB(); pushScore();
-  if(!S.ranked && hadStreak>10) setTimeout(()=>streakBreakFX(hadStreak),260);   // only big streaks get the show
+  if(hadStreak>10) setTimeout(()=>streakBreakFX(hadStreak),260);   // only big streaks get the show
   $('ovT').style.color='#ff9a86'; $('ovT').textContent='YOUR BASE FELL';
   $('ovP').innerHTML=(S.streakLost?('<b style="color:#ff9a86">🔥 Win streak of '+S.streakLost+' lost</b><br>'):'')+
     '<b>'+S.oppName+'</b>\u2019s army overran you before you could break their base.<br>'+
@@ -6091,6 +6220,12 @@ function endGame(win){
      read as wrong. Every finished game counts now. */
   if(win){ LB.wins=(LB.wins||0)+1; LB.lossStreak=0; }
   else   { LB.losses=(LB.losses||0)+1; LB.lossStreak=(LB.lossStreak||0)+1; }
+  /* WIN STREAK v2.57: PLAY and Crypt moved the win rate but never the streak,
+     so a streak could only ever grow in one mode. Every game now counts. */
+  const hadStreak=LB.streak||0;
+  if(win){ LB.streak=hadStreak+1; LB.bestStreak=Math.max(LB.bestStreak||0,LB.streak); }
+  else   { LB.streak=0; }
+  if(!win && hadStreak>10) setTimeout(()=>streakBreakFX(hadStreak),260);
   /* campaign/crypt now pay level XP the same way a battle does, so PLAY mode
      isn't dead XP-wise now that levels cost real amounts */
   try{ addHeroXP(S.hero, win?battleHeroXP():battleLoseHeroXP()); }catch(e){}
