@@ -1050,7 +1050,7 @@
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
       <div class="scrollcue" id="scrollCue"><span class="arw">▼</span> scroll for more <span class="arw">▼</span></div>
     </div>
-    <div class="menu-foot">v2.57 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.58 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -2191,7 +2191,7 @@ function grantPleb(k){
   if(plebOwned(k)) return false;
   PACK_OWN['pleb:'+k]=true;
   if(armyCount()<MAX_ARMY) PACK_OWN['equipped:'+k]=true;
-  saveJSON('plebania_pack_own',PACK_OWN);
+  savePack();
   try{ installPlekeyPlebs(); }catch(e){}
   return true;
 }
@@ -2593,7 +2593,7 @@ function grantSeasonPleb(sid){
   if(!SEASON.rewards)SEASON.rewards=[];
   if(SEASON.rewards.indexOf(sid)<0)SEASON.rewards.push(sid);
   PACK_OWN['pleb:'+k]=true;
-  saveJSON('plebania_pack_own',PACK_OWN);
+  savePack();
   saveJSON(SEASON_KEY,SEASON);
   installSeasonPlebs(); installPlekeyPlebs();
   return true;
@@ -2784,7 +2784,14 @@ function upsertAcct(j){
     rank:own?(j.rank||0):Math.max(j.rank||0,cur.rank||0),
     time:own?(j.time||0):Math.max(j.time||0,cur.time||0),
     wins:own?(j.wins||0):Math.max(j.wins||0,cur.wins||0),
-    losses:own?(j.losses||0):Math.max(j.losses||0,cur.losses||0) };
+    losses:own?(j.losses||0):Math.max(j.losses||0,cur.losses||0),
+    /* v2.58: the loadout rides with the record. Whoever wrote the NEWER snapshot
+       wins, so a slow retained echo can't push a stale army over a fresh edit. */
+    pack:(function(){
+      const jp=j.pack||null, cp=cur.pack||null;
+      if(!jp) return cp; if(!cp) return jp;
+      return ((jp.at||0)>=(cp.at||0))?jp:cp;
+    })() };
   return true;
 }
 function subscribeBoard(){ poolLive().forEach(c=>{ try{ c.subscribe(MQTT_WILD,{qos:1},()=>{}); c.subscribe(MQTT_TOPIC,{qos:1},()=>{}); }catch(e){}
@@ -2987,6 +2994,9 @@ function loadLocalFor(me){
     LB.losses=Math.max(0,a.losses||LB.losses||0);
   }
   LB.streak=Math.max(0,a.cur||0);   // current streak survives a reload; only a LOSS kills it
+  /* v2.58: adopt the loadout saved with this account (army + gear). This is what
+     makes the same account show the same plebs on the iPad and the phone. */
+  try{ if(a&&a.pack) applyPack(a.pack); }catch(e){}
   if(typeof subscribeFriends==='function') subscribeFriends();
   saveLB(); pushScore(); refreshUserChip();
   // if the board already knows about a LATER season than us, we skipped a month:
@@ -3169,9 +3179,9 @@ function adminAct(a){
   else if(a==='skins'){ SKINS.forEach(sk=>{ if(!hasSkin(sk.id)) SKINS_OWN.push(sk.id); }); saveJSON('plebania_skins_own',SKINS_OWN); showBanner('🧑‍🌾 Every hero skin unlocked','gold',1600); }
   else if(a==='plebs'){ let eq=armyCount();
       PACK_EXTRA.forEach(k=>{ PACK_OWN['pleb:'+k]=true; if(eq<MAX_ARMY && !PACK_OWN['equipped:'+k]){ PACK_OWN['equipped:'+k]=true; eq++; } });
-      saveJSON('plebania_pack_own',PACK_OWN); showBanner('🧑‍🌾 All plebs owned ('+eq+'/'+MAX_ARMY+' equipped)','gold',1900); }
+      savePack(); showBanner('🧑‍🌾 All plebs owned ('+eq+'/'+MAX_ARMY+' equipped)','gold',1900); }
   else if(a==='gear'){ Object.keys(PACK_ITEMS).forEach(slot=>PACK_ITEMS[slot].forEach((it,ti)=>{ PACK_OWN[slot+':'+ti]=true; }));
-      saveJSON('plebania_pack_own',PACK_OWN); showBanner('🗡️ All pack gear owned','gold',1600); }
+      savePack(); showBanner('🗡️ All pack gear owned','gold',1600); }
   else if(a==='worlds'){ unlocked=WORLDS.length; saveWorld(); populateWorldStrip(); showBanner('🗺️ Every world unlocked','gold',1600); }
   else if(a==='pass'){ BPASS.xp=totalPassXP(); BPASS.tiers=recomputeTiers(); saveJSON(BPASS_KEY,BPASS); showBanner('🎫 PLEBASS maxed — tier '+BPASS.tiers,'gold',1800); }
   else if(a==='god'){ GODMODE=!GODMODE; saveJSON('plebania_godmode',GODMODE); showBanner(GODMODE?'🛡️ God mode ON — you cannot die':'🛡️ God mode OFF',GODMODE?'gold':'red',1700); }
@@ -3388,6 +3398,12 @@ function pendingHTML(){
 /* ---- UPDATE LOG ---------------------------------------------------------
    Newest first. Add a new entry at the TOP of the array when you ship. */
 const UPDATES=[
+  {v:'2.58', d:'23 Oct 2026', e:'🔄', t:'Your loadout now follows your account',
+   b:['Bug: your army (which plebs are equipped) and your gear were saved <b>only on the device you played on</b>.',
+      'That’s why the iPad had different equipped plebs to the phone on the same account.',
+      'The loadout now travels with your account record, so every device shows the same army and gear.',
+      'Anything you bought on either device is kept — nothing gets wiped by syncing.',
+      'Your 5-pleb army limit is still enforced when it syncs.']},
   {v:'2.57', d:'23 Oct 2026', e:'👆', t:'Tap a player · win streak fixed',
    b:['<b>Tap anyone on the leaderboard</b> (or a friend) to see their full card: level, win rate, wins, losses, streak, rank, kills, time played.',
       'Win streak bug fixed: Ranked wins now <b>extend</b> your streak and Ranked losses now <b>break</b> it.',
@@ -4358,6 +4374,58 @@ function plebInArmy(k){ return !isExtra(k) || !!PACK_OWN['equipped:'+k]; }
 let PACK_OWN=loadJSON('plebania_pack_own',{});   // keyed 'slot:tier' → true (bought)
 let PACK_EQ=loadJSON('plebania_pack_eq',{});     // {unitKey:{weapon:tier,armour:tier,boots:tier}}
 let PACKPLEB='farmhand';
+/* =========================================================
+   LOADOUT SYNC (v2.58, Nicholas 2026-10-23)
+   "On my iPad it had other equipped pleb but on my phone on the same acc it
+    didn't save my load out."
+   Cause: PACK_OWN / PACK_EQ were only ever written to localStorage, so the
+   loadout lived on ONE device. The account record on the board carried
+   level/rank/etc. but never the army.
+   Fix: the snapshot rides along with the account record (`pack`), so every
+   device on the same account sees the same army and gear.
+   - owned items are UNIONed   (buying something on either device keeps it)
+   - equipped set + gear are TAKEN FROM THE BOARD (so it can actually change)
+   - `at` guards against a slow retained echo clobbering a newer local edit
+   ========================================================= */
+let PACK_AT=loadJSON('plebania_pack_at',0);
+function packSnapshot(){
+  const own={};
+  Object.keys(PACK_OWN).forEach(k=>{ if(PACK_OWN[k]) own[k]=1; });
+  let eq={};
+  try{ eq=JSON.parse(JSON.stringify(PACK_EQ||{})); }catch(e){ eq={}; }
+  return {own:own, eq:eq, at:Date.now()};
+}
+function savePack(){
+  saveJSON('plebania_pack_own',PACK_OWN);
+  saveJSON('plebania_pack_eq',PACK_EQ);
+  PACK_AT=Date.now(); saveJSON('plebania_pack_at',PACK_AT);
+  if(ME&&CLOUD&&CLOUD.accounts){                 // publish with the account
+    const a=CLOUD.accounts[ME.key]||(CLOUD.accounts[ME.key]={});
+    a.pack=packSnapshot(); cloudTouch();
+  }
+}
+function applyPack(lot){
+  if(!lot||!lot.own) return false;
+  const at=lot.at||0;
+  if(at && at<PACK_AT) return false;             // our edit is newer — don't clobber it
+  /* owned: union so nothing bought on either device is ever lost */
+  Object.keys(lot.own).forEach(k=>{ if(lot.own[k]&&k.indexOf('equipped:')!==0) PACK_OWN[k]=1; });
+  /* equipped: the board wins, otherwise the army could never change */
+  const keep={};
+  Object.keys(PACK_OWN).forEach(k=>{ if(k.indexOf('equipped:')===0) keep[k]=PACK_OWN[k]; });
+  Object.keys(keep).forEach(k=>{ delete PACK_OWN[k]; });
+  let n=0;
+  Object.keys(lot.own).forEach(k=>{
+    if(k.indexOf('equipped:')!==0) return;
+    const u=k.slice('equipped:'.length);
+    if(!TOWERS[u]||n>=MAX_ARMY) return;
+    PACK_OWN['equipped:'+u]=1; n++;
+  });
+  if(lot.eq&&typeof lot.eq==='object'){ PACK_EQ=lot.eq; saveJSON('plebania_pack_eq',PACK_EQ); }
+  saveJSON('plebania_pack_own',PACK_OWN);
+  PACK_AT=Math.max(PACK_AT,at); saveJSON('plebania_pack_at',PACK_AT);
+  return true;
+}
 function packTier(k,slot){ const e=PACK_EQ[k]; return (e&&e[slot]!=null)?e[slot]:null; }
 function packEffect(k,slot){ const t=packTier(k,slot); return t==null?0:PACK_ITEMS[slot][t].d; }
 /* compact mastery strip used on the pleb cards */
@@ -4454,15 +4522,15 @@ function packPlebClick(k){
     if(cost==null){ tip('🔒 '+d.name+' is earned, not bought — win it in-game',1900); SFX.ui(); return; }
     if(!isFinite(PGOLD)||PGOLD<cost){ tip('Need 👑'+cost+' shop gold to buy the '+d.name,1700); SFX.ui(); return; }
     PGOLD-=cost; PACK_OWN['pleb:'+k]=true;
-    saveJSON('plebania_pack_own',PACK_OWN); saveJSON('plebania_pgold',PGOLD);
+    savePack(); saveJSON('plebania_pgold',PGOLD);
     SFX.up(); for(let i=0;i<14;i++)burst(W/2,H/2,'#ffe08a');
-    if(armyCount()<MAX_ARMY){ PACK_OWN['equipped:'+k]=true; saveJSON('plebania_pack_own',PACK_OWN); showBanner('🧑🌾 Bought the '+d.name+'! Equipped to your army.','gold',1600); }
+    if(armyCount()<MAX_ARMY){ PACK_OWN['equipped:'+k]=true; savePack(); showBanner('🧑🌾 Bought the '+d.name+'! Equipped to your army.','gold',1600); }
     else { showBanner('🧑🌾 Bought the '+d.name+'! Army full ('+armyCount()+'/'+MAX_ARMY+') \u2014 unequip one to use it.','gold',2200); }
   }else{
     const eq=!!PACK_OWN['equipped:'+k];
     if(!eq && armyCount()>=MAX_ARMY){ tip('🚫 You can only equip '+MAX_ARMY+' plebs \u2014 unequip one first',1900); SFX.ui(); return; }
     PACK_OWN['equipped:'+k]=!eq;
-    saveJSON('plebania_pack_own',PACK_OWN);
+    savePack();
     showBanner(PACK_OWN['equipped:'+k]?('✔ '+d.name+' equipped'):('Unequipped '+d.name),'gold',1200);
   }
   SFX.ui(); renderPack();
@@ -4472,11 +4540,11 @@ function packClick(slot,ti){
   if(!PACK_EQ[k])PACK_EQ[k]={};
   if(!PACK_OWN[key]){
     if(PGOLD<it.cost){ tip('Need 👑'+it.cost+' shop gold for the '+it.n,1700); SFX.ui(); return; }
-    PGOLD-=it.cost; PACK_OWN[key]=true; saveJSON('plebania_pack_own',PACK_OWN); saveJSON('plebania_pgold',PGOLD);
+    PGOLD-=it.cost; PACK_OWN[key]=true; savePack(); saveJSON('plebania_pgold',PGOLD);
     SFX.up(); showBanner('Bought '+it.e+' '+it.n+' for '+TOWERS[k].name+'!','gold',1500);
   }
   PACK_EQ[k][slot]=(packTier(k,slot)===ti)?null:ti;
-  saveJSON('plebania_pack_eq',PACK_EQ);
+  savePack();
   SFX.ui(); renderPack();
 }
 
@@ -6369,8 +6437,11 @@ try{
 window.__p={ get S(){return S;}, start:startWave, newGame, spawn, get unlocked(){return unlocked;}, get PATH(){return PATH;},
   spawnE:(t)=>spawn(t), effDmg:(o)=>effDmg(o), packEff:(k,s)=>packEffect(k,s),
   show:show, battle:newBattle, closeVS:closeVS, get LB(){return LB;}, lose:battleLose, sbreak:streakBreakFX,
+  savePack:savePack, applyPack:applyPack, get PACK_OWN(){return PACK_OWN;}, get PACK_EQ(){return PACK_EQ;},
+  get ME(){return ME;}, set ME(v){ME=v;}, cloudPut:cloudPut, upsertAcct:upsertAcct,
+  army:armyCount, maxArmy:MAX_ARMY, openCard:openPlayerCard,
   startMatch:startMatch, mmTick:mmTick, finishMatch:finishMatch, mmForce:(ms)=>{MM_START=Date.now()-ms; mmTick();}, get MM(){return {done:MM_DONE,found:MM_FOUND,max:MM_MAX_MS,start:MM_START};}, win:battleWin,
-  get CLOUD(){return CLOUD;}, loadLocal:loadLocalFor, startCrypt:startCrypt, spawnMarcher:spawnMarcher, marchUpdate:marchUpdate, tap:(x,y)=>handleTap({x,y}), get cx(){return cx;}, get cy(){return cy;}, isMarcher:isMarcher, get PATH(){return PATH;}, baseDestroyed:baseDestroyed, drawPleb:drawPleb, get ctx(){return ctx;}, get ORDER(){return ORDER;}, get PLEB(){return PLEB;}, set PLEB(v){PLEB=v;}, openCoffinBox:openCoffinBox, get coffinOpen(){return coffinOpen();}, endGame:endGame, grantPleb:grantPleb, get BUNDLES(){return BUNDLES;}, openCheckout:openCheckout, renderMart:renderMart, get PACK_OWN(){return PACK_OWN;}, get TOWERS(){return TOWERS;},
+  get CLOUD(){return CLOUD;}, startCrypt:startCrypt, spawnMarcher:spawnMarcher, marchUpdate:marchUpdate, tap:(x,y)=>handleTap({x,y}), get cx(){return cx;}, get cy(){return cy;}, isMarcher:isMarcher, get PATH(){return PATH;}, baseDestroyed:baseDestroyed, drawPleb:drawPleb, get ctx(){return ctx;}, get ORDER(){return ORDER;}, get PLEB(){return PLEB;}, set PLEB(v){PLEB=v;}, openCoffinBox:openCoffinBox, get coffinOpen(){return coffinOpen();}, endGame:endGame, grantPleb:grantPleb, get BUNDLES(){return BUNDLES;}, openCheckout:openCheckout, renderMart:renderMart, get PACK_OWN(){return PACK_OWN;}, get TOWERS(){return TOWERS;},
   tick:(dt)=>{ if(S){ enemyUpdate(dt); towerUpdate(dt); heroUpdate(dt); projUpdate(dt); for(const b of S.buildings) if(b.flash>0)b.flash-=dt; } } };
 
 // interval-driven loop: runs even when the game sits in an unfocused iframe
