@@ -270,6 +270,7 @@
   .fr-chip{font:800 15px Georgia,serif;color:#ffe08a;background:#100b04;border:2.5px solid #4a3616;border-radius:12px;padding:7px 13px;cursor:pointer}
   .fr-chip:hover{border-color:#ffd24a}
   .fr-chip.own{color:#9fe08a;cursor:default;opacity:.7}
+  .fr-chip.selchip{border-color:#ffd24a;background:#2a1c08;color:#fff3cf;box-shadow:0 0 12px rgba(255,210,74,.55)}
   .fr-list{width:min(760px,94vw);margin:0 auto;display:flex;flex-direction:column;gap:10px;text-align:left}
   .fr-card{display:flex;align-items:center;gap:12px;border:3px solid #2a1c08;border-radius:16px;padding:12px 16px;
     background:linear-gradient(rgba(64,46,20,.92),rgba(30,20,8,.94));box-shadow:0 5px 0 #2a1c08}
@@ -1040,6 +1041,7 @@
         <div class="mbtn" id="passBtn"><span class="ic">🎫</span> PLEBASS</div>
         <div class="mbtn" id="boardBtn"><span class="ic">🏆</span> LEADERBOARD</div>
         <div class="mbtn" id="menuFriendsBtn"><span class="ic">👥</span> FRIENDS</div>
+        <div class="mbtn" id="friendlyBtn"><span class="ic">🤝</span> FRIENDLY BATTLE</div>
       </div>
       <div class="worldstrip" id="worldStrip"></div>
       <div style="margin-top:14px"><span class="linklike" id="howBtn">❔ How to Play</span>
@@ -1050,7 +1052,7 @@
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
       <div class="scrollcue" id="scrollCue"><span class="arw">▼</span> scroll for more <span class="arw">▼</span></div>
     </div>
-    <div class="menu-foot">v2.58 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.59 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1146,6 +1148,21 @@
     <div id="frList" class="fr-list"></div>
     <div id="frBoard" class="fr-board"></div>
     <div class="acct-btns"><div class="mbtn small" id="frBack" style="width:220px">⬅ Back to menu</div></div>
+  </div>
+
+  <!-- ============ FRIENDLY BATTLE ============ -->
+  <div id="friendly" class="screen">
+    <h2>🤝 Friendly Battle</h2>
+    <div class="sub">Pick a mate, pick an army size. No rank points, no streak — bragging rights only.</div>
+    <div class="fr-sec" style="width:min(760px,94vw);margin:16px auto 8px">⚔️ ARMY SIZE</div>
+    <div class="fr-chips" id="frSizeRow" style="justify-content:center"></div>
+    <div class="fr-sec" style="width:min(760px,94vw);margin:18px auto 8px">🎯 CHOOSE YOUR OPPONENT</div>
+    <div class="fr-chips" id="frOppRow" style="justify-content:center;min-height:44px"></div>
+    <div id="frSelMsg" class="fr-msg" style="margin-top:14px"></div>
+    <div class="acct-btns" style="margin-top:18px">
+      <div class="mbtn small" id="frFight" style="width:250px">⚔️ FIGHT</div>
+      <div class="mbtn small" id="frBack2" style="width:220px">⬅ Back to menu</div>
+    </div>
   </div>
 
   <div id="admin" class="screen">
@@ -1418,7 +1435,7 @@ function updateScrollCue(){
   window.addEventListener('orientationchange', ()=>setTimeout(updateScrollCue,120));
 })();
 function show(id){
-  ['menu','how','log','worlds','game','mart','pack','pass','board','auth','account','admin','friends'].forEach(s=>$(s).classList.toggle('on',s===id));
+  ['menu','how','log','worlds','game','mart','pack','pass','board','auth','account','admin','friends','friendly'].forEach(s=>$(s).classList.toggle('on',s===id));
   if(id==='menu'){ populateWorldStrip(); updateScrollCue(); }
   if(id==='worlds')populateWorldSelect();
   if(id==='mart')renderMart();
@@ -1427,6 +1444,7 @@ function show(id){
   if(id==='board'){ boardLiveSync(); renderBoard(); }
   if(id==='account')renderAccount();
   if(id==='friends')renderFriends();
+  if(id==='friendly')renderFriendly();
   if(id==='log')renderLog();
   if(id==='admin')renderAdmin();
 }
@@ -1468,6 +1486,9 @@ if($('logBtn'))$('logBtn').onclick=()=>{ SFX.ui(); show('log'); };
 if($('logBack'))$('logBack').onclick=()=>{ SFX.ui(); show('menu'); };
 $('boardBtn').onclick=()=>{ SFX.ui(); show('board'); };
 $('menuFriendsBtn').onclick=()=>{ SFX.ui(); frMsg(''); show('friends'); };
+$('friendlyBtn').onclick=()=>{ SFX.ui(); frSelMsg(''); show('friendly'); };
+$('frBack2').onclick=()=>{ SFX.ui(); show('menu'); };
+$('frFight').onclick=()=>startFriendly();
 $('frBack').onclick=()=>{ SFX.ui(); show(ME?'menu':'account'); };
 $('frAdd').onclick=addFriend;
 $('frInput').addEventListener('keydown',e=>{ if(e.key==='Enter')addFriend(); });
@@ -1744,7 +1765,7 @@ const ENEMIES={
 };
 const MAXWAVE=10;
 const CRYPT_MAX=15;                       // CRYPT mode runs longer than the campaign
-function waveMax(){ return (typeof S!=='undefined'&&S&&S.crypt)?CRYPT_MAX:MAXWAVE; }
+function waveMax(){ return (typeof S!=='undefined'&&S&&S.crypt)?CRYPT_MAX:((S&&S.friendly)?Math.max(1,(S.frSize||1)):MAXWAVE); }
 function cx(c){return GX+(c+0.5)*TILE;}
 function cy(r){return GY+(r+0.5)*TILE;}
 
@@ -1797,7 +1818,7 @@ function newGame(world,opts){
     towers:[], buildings:[], enemies:[], parts:[], dmg:[], projs:[], spawnQ:[], spawnT:0,
     shake:0, hurt:0, slain:0, sel:null, selB:null, build:'farmhand',
     waveTimer:0, farmAcc:0, mart:{}, vsHold:false, mmHold:false, opp:null, battle:false, ranked:false,
-    crypt:!!opts.crypt,
+    crypt:!!opts.crypt, friendly:false,
     march:[], ebHp:0, ebMax:0, ebT:0,
     /* battle-state arrays must exist from the very first frame: the board can
        flip to battle=true (matchmaking/US) a beat BEFORE startBattleWith()
@@ -1828,6 +1849,11 @@ function syncHud(){
   sUpdateNext();
 }
 function previewWave(w){
+  /* FRIENDLY (v2.59): the wave IS the opponent's pleb — show them by name. */
+  if(S&&S.friendly){
+    const champ=(S.frTheirs&&S.frTheirs[w-1])||'farmhand'; ensureFrEnemy(champ);
+    return '\ud83e\udd1d '+TOWERS[champ].emoji+' '+TOWERS[champ].name+' +'+w+' escort'+(w===1?'':'s');
+  }
   const W=WORLDS[S.world];
   const q=waveComp(w); const seen={}; q.forEach(t=>seen[t]=(seen[t]||0)+1);
   const order=[W.king,W.boss,W.elite,W.units.heavy,W.units.medium,W.units.light];
@@ -2773,10 +2799,24 @@ function upsertAcct(j){
   const k=String(j.key).toLowerCase(); const cur=CLOUD.accounts[k]||{};
   const own=!!(typeof ME!=='undefined'&&ME&&k===String(ME.key).toLowerCase());
   const newerAt=(j.at||0)>=(cur.at||0);
+  /* v2.59 — WHY THE STREAK KEPT COMING BACK (Nicholas, 2026-10-24):
+     "my win streak still doesn't get broken".
+     We hold THREE broker connections and every one of them replays its own
+     retained copy of my record. So right after a loss the fresh copy (cur:0)
+     and an older copy (cur:12) both arrive, in either order.`own?` took
+     `j.cur` with no age check, so whichever arrived LAST won — and the stale
+     one put the streak straight back. Same for every other own-field.
+     Fix: my own record is only accepted when it is not older than what we
+     already hold. An out-of-date echo is dropped on the floor. */
+  const ownStale = own && cur.at && j.at && (j.at < cur.at);
+  if(ownStale) return true;
   CLOUD.accounts[k]={ u:j.u||cur.u||k, pw:j.pw||cur.pw||(j.pw||cur.pw), key:k, at:j.at||cur.at,
     sid: own?(j.sid||null):(newerAt?(j.sid!==undefined?j.sid:cur.sid):(cur.sid!==undefined?cur.sid:j.sid)),
     se:  own?(j.se||0):(newerAt?(j.se||0):(cur.se||0)),
-    cur:own?(j.cur||0):(j.cur||cur.cur||0),
+    /* current streak follows the NEWEST record only — never max(), or a broken
+       streak could never come back down. */
+    curAt: own?(j.curAt||0):(newerAt?(j.curAt||cur.curAt||0):(cur.curAt||j.curAt||0)),
+    cur:own?(j.cur||0):(newerAt?(j.cur||0):(cur.cur||0)),
     level:own?(j.level||0):Math.max(j.level||0,cur.level||0),
     streak:own?(j.streak||0):Math.max(j.streak||0,cur.streak||0),
     waves:own?(j.waves||0):Math.max(j.waves||0,cur.waves||0),
@@ -2993,7 +3033,10 @@ function loadLocalFor(me){
     LB.wins=Math.max(0,a.wins||LB.wins||0);
     LB.losses=Math.max(0,a.losses||LB.losses||0);
   }
-  LB.streak=Math.max(0,a.cur||0);   // current streak survives a reload; only a LOSS kills it
+  /* v2.59: the current streak is versioned by WHEN it last changed, so a device
+     that never saw your loss can't push the old number back on you after a reload. */
+  if((a.curAt||0)>=(LB.streakAt||0)){ LB.streak=Math.max(0,a.cur||0); LB.streakAt=a.curAt||0; }
+  else if(!a){ LB.streak=Math.max(0,LB.streak||0); }
   /* v2.58: adopt the loadout saved with this account (army + gear). This is what
      makes the same account show the same plebs on the iPad and the phone. */
   try{ if(a&&a.pack) applyPack(a.pack); }catch(e){}
@@ -3186,7 +3229,7 @@ function adminAct(a){
   else if(a==='pass'){ BPASS.xp=totalPassXP(); BPASS.tiers=recomputeTiers(); saveJSON(BPASS_KEY,BPASS); showBanner('🎫 PLEBASS maxed — tier '+BPASS.tiers,'gold',1800); }
   else if(a==='god'){ GODMODE=!GODMODE; saveJSON('plebania_godmode',GODMODE); showBanner(GODMODE?'🛡️ God mode ON — you cannot die':'🛡️ God mode OFF',GODMODE?'gold':'red',1700); }
   else if(a==='setstats'){ const n=adminSetStats(); showBanner('🎯 '+n+' stats set','gold',1600); }
-  else if(a==='reset'){ LB.level=1; LB.bestStreak=0; LB.waves=0; LB.kills=0; LB.rank=0; LB.time=0; LB.streak=0; saveLB(); pushScore(); showBanner('♻️ Your stats were reset','red',1600); }
+  else if(a==='reset'){ LB.level=1; LB.bestStreak=0; LB.waves=0; LB.kills=0; LB.rank=0; LB.time=0; LB.streak=0; LB.streakAt=Date.now(); saveLB(); pushScore(); showBanner('♻️ Your stats were reset','red',1600); }
   SFX.up(); renderAdmin();
 }
 /* write the exact numbers typed into the stat editor. Bypasses the Math.max()
@@ -3398,6 +3441,13 @@ function pendingHTML(){
 /* ---- UPDATE LOG ---------------------------------------------------------
    Newest first. Add a new entry at the TOP of the array when you ship. */
 const UPDATES=[
+  {v:'2.59', d:'24 Oct 2026', e:'🤝', t:'Friendly battle · 1v1 to 5v5 · streak bug actually killed',
+   b:['<b>The win streak bug was still there — here’s why.</b> The game holds <b>three</b> server connections at once, and every one of them replays its own saved copy of your record. So right after a loss, the fresh copy (streak 0) and an <i>older</i> copy (streak 12) both arrived — and whichever landed last won. The old one put your streak straight back.',
+      'Fixed: your own record is now only accepted if it is <b>not older</b> than what you already have, and the current streak is stamped with the exact time it changed — so an out-of-date copy can never undo a loss again.',
+      '<b>🤝 FRIENDLY BATTLE is in</b> — new button on the menu.',
+      'Pick a friend (or anyone on the board), then pick <b>1v1 up to 5v5</b> and fight.',
+      'Their <b>equipped plebs</b> are your opponents — one of theirs leads each wave, with escorts. 1v1 = 1 wave, 5v5 = 5 waves.',
+      'A friendly costs you nothing: <b>no rank points, no win rate, no streak</b>. Bragging rights only. You still earn a bit of level + PLEBASS XP.']},
   {v:'2.58', d:'23 Oct 2026', e:'🔄', t:'Your loadout now follows your account',
    b:['Bug: your army (which plebs are equipped) and your gear were saved <b>only on the device you played on</b>.',
       'That’s why the iPad had different equipped plebs to the phone on the same account.',
@@ -3523,6 +3573,133 @@ function renderBoardList(){
   box.querySelectorAll('[data-add]').forEach(el=>el.onclick=()=>{ const i=$('frInput'); if(i)i.value=el.dataset.add; addFriend(); });
   wirePlayerCards(box);
 }
+/* =========================================================
+   FRIENDLY BATTLE (v2.59, Nicholas 2026-10-24)
+   "where's the friendly battle and 1 to 5v5"
+   Pick a mate off your friend list (or the board), pick 1v1 up to 5v5.
+   THEIR equipped plebs field as your opponents — one champion per wave.
+   No ELO, no streak, no win/loss — a friendly costs you nothing.
+   ========================================================= */
+let FR_SIZE=1, FR_OPP=null;
+const FR_SIZES=[1,2,3,4,5];
+function frSelMsg(t,ok){ const el=$('frSelMsg'); if(!el)return; el.textContent=t||''; el.classList.toggle('ok',!!ok); }
+/* their equipped army, straight off their account record; fall back to a
+   sensible barracks if they've never equipped anything */
+function frArmyOf(key){
+  const a=(CLOUD.accounts||{})[key]||{};
+  const own=(a.pack&&a.pack.own)||{};
+  const list=[];
+  Object.keys(own).forEach(k=>{
+    if(k.indexOf('equipped:')!==0) return;
+    const u=k.slice('equipped:'.length);
+    if(TOWERS[u]&&list.indexOf(u)<0) list.push(u);
+  });
+  if(!list.length)['farmhand','poacher','militia','berserker','knight'].forEach(k=>list.push(k));
+  return list;
+}
+function myArmyList(){
+  const list=[];
+  Object.keys(PACK_OWN||{}).forEach(k=>{
+    if(k.indexOf('equipped:')!==0) return;
+    const u=k.slice('equipped:'.length);
+    if(TOWERS[u]&&list.indexOf(u)<0) list.push(u);
+  });
+  if(!list.length)['farmhand','poacher','militia'].forEach(k=>list.push(k));
+  return list;
+}
+function frCandidates(){
+  const out=[];
+  (FRIENDS||[]).forEach(k=>{ const a=(CLOUD.accounts||{})[k]; if(a&&a.u&&!(ME&&k===ME.key)) out.push({key:k,u:a.u,friend:true,a:a}); });
+  Object.keys(CLOUD.accounts||{}).forEach(k=>{
+    if(ME&&k===ME.key) return;
+    if(out.some(x=>x.key===k)) return;
+    const a=CLOUD.accounts[k]; if(!a||!a.u||a.bot) return;
+    out.push({key:k,u:a.u,friend:false,a:a});
+  });
+  return out;
+}
+function renderFriendly(){
+  const sizeRow=$('frSizeRow'), oppRow=$('frOppRow');
+  if(!sizeRow||!oppRow) return;
+  sizeRow.innerHTML=FR_SIZES.map(n=>
+    '<span class="fr-chip'+(n===FR_SIZE?' selchip':'')+'" data-frsize="'+n+'">'+n+'v'+n+'</span>').join('');
+  const cands=frCandidates();
+  if(!cands.length){
+    oppRow.innerHTML='<div class="fr-empty" style="width:100%">Nobody else on the board yet \u2014 get a mate to make an account (or add one in FRIENDS).</div>';
+  }else{
+    if(!FR_OPP||!cands.some(c=>c.key===FR_OPP)) FR_OPP=null;
+    oppRow.innerHTML=cands.map(c=>{
+      const P=presenceOf(c.a);
+      return '<span class="fr-chip'+(c.key===FR_OPP?' selchip':'')+'" data-fropp="'+escAttr(c.key)+'">'+
+        (c.friend?'\u2705 ':'')+escAttr(c.u)+(P.online?' \ud83d\udfe2':'')+'</span>';
+    }).join('');
+  }
+  oppRow.querySelectorAll('[data-fropp]').forEach(el=>el.onclick=()=>{ FR_OPP=el.dataset.fropp; SFX.ui(); frSelMsg(''); renderFriendly(); });
+  sizeRow.querySelectorAll('[data-frsize]').forEach(el=>el.onclick=()=>{ FR_SIZE=parseInt(el.dataset.frsize)||1; SFX.ui(); renderFriendly(); });
+}
+/* an opponent champion is just a beefed-up copy of that pleb, registered as an
+   enemy type on demand so the normal spawner can field it */
+function ensureFrEnemy(k){
+  const id='fr_'+k;
+  if(ENEMIES[id]) return id;
+  const d=TOWERS[k]||TOWERS.farmhand;
+  const might=(d.dmg||10)*(d.kind==='splash'?1.15:1);
+  ENEMIES[id]={ name:d.name, hp:Math.round(120+might*9), spd:d.range>200?46:58,
+    gold:Math.round((d.cost||40)*0.5), sz:d.range>200?30:34, rank:'champ', emoji:d.emoji, frKey:k };
+  return id;
+}
+function startFriendly(){
+  const cands=frCandidates();
+  if(!cands.length){ frSelMsg('Nobody to fight yet \u2014 add a friend first.'); return; }
+  if(!FR_OPP){ frSelMsg('Pick an opponent first.'); return; }
+  const c=cands.find(x=>x.key===FR_OPP);
+  if(!c){ frSelMsg('That player isn\u2019t on the board any more.'); return; }
+  const theirs=frArmyOf(c.key);
+  const mine=myArmyList();
+  seasonRoll(); installSeasonPlebs(); installPlekeyPlebs();
+  newGame(S?S.world:0);
+  S.friendly=true; S.battle=true; S.ranked=false;
+  S.frSize=Math.max(1,Math.min(5,FR_SIZE));
+  S.frTheirs=theirs.slice();
+  S.frMine=mine.slice();
+  S.lives=15; S.reached=1;
+  S.ebMax=Math.round(260+S.frSize*40); S.ebHp=S.ebMax;
+  S.raid=[]; S.aiWalls=[]; S.aiT=6; S.raidCd=0; S.nextWaveT=2.5;
+  S.opp={ name:c.u, key:c.key, rank:rankTier((c.a||{}).rank||0), elo:(c.a||{}).rank||0,
+          color:rankColor((c.a||{}).rank||0), level:(c.a||{}).level||1, streak:(c.a||{}).cur||0,
+          best:(c.a||{}).streak||0, kills:(c.a||{}).kills||0, online:presenceOf(c.a||{}).online, bot:false };
+  S.oppName=c.u; S.over=false; S.running=false; S.between=true;
+  initAudio(); show('game');
+  showBanner('\ud83e\udd1d FRIENDLY \u00b7 '+S.frSize+'v'+S.frSize+' vs '+c.u,'gold',2200);
+  tip('\ud83e\udd1d No rank points, no streak \u2014 just bragging rights',3200);
+  syncHud(); buildBar(); buildBar2(); updateRaidBtn();
+  openVS();
+}
+/* friendly results: no ELO, no win rate, no streak. Nothing at stake. */
+function friendlyWin(){
+  if(S.over)return; S.over=true; S.running=false; hideSel();
+  addPassXP(80);
+  try{ addHeroXP(S.hero,Math.round(battleHeroXP()*0.5)); }catch(e){}
+  $('ovT').style.color='#f6dd8b';
+  $('ovT').textContent='\ud83e\udd1d YOU WIN THE FRIENDLY!';
+  $('ovP').innerHTML='You took down <b>'+(S.oppName||'them')+'</b>\u2019s '+S.frSize+'-pleb army, '+S.slain+' of them felled.<br>'+
+    '<span style="opacity:.8">No rank points or streak changed \u2014 it\u2019s a friendly.</span>';
+  $('ovAgain').style.display=''; $('ovAgain').textContent='\u2694\ufe0f REMATCH';
+  $('ovAgain').onclick=()=>{ hideOv(); startFriendly(); };
+  $('ov').classList.add('on'); SFX.win();
+}
+function friendlyLose(){
+  if(S.over)return; S.over=true; S.running=false; hideSel();
+  try{ addHeroXP(S.hero,Math.max(1,Math.round(battleLoseHeroXP()*0.5))); }catch(e){}
+  $('ovT').style.color='#ff9a86';
+  $('ovT').textContent='\ud83e\udd1d THEY TOOK IT';
+  $('ovP').innerHTML='<b>'+(S.oppName||'They')+'</b> broke through on wave <b>'+S.wave+'</b> of <b>'+S.frSize+'</b>.<br>'+
+    '<span style="opacity:.8">No rank points or streak lost \u2014 it\u2019s a friendly.</span>';
+  $('ovAgain').style.display=''; $('ovAgain').textContent='\ud83d\udd01 TRY AGAIN';
+  $('ovAgain').onclick=()=>{ hideOv(); startFriendly(); };
+  $('ov').classList.add('on'); SFX.lose();
+}
+
 /* ---------- "check my password" (device-local only) ---------- */
 function myPassRec(){ try{ return loadJSON('plebania_myPass',null); }catch(e){ return null; } }
 function myPasswordInfo(){
@@ -3633,6 +3810,7 @@ function pushScore(){
   a.rank=Math.max(0,Math.round(LB.rank||0));
   a.time=Math.max(0,Math.round(LB.time||0));
   a.cur=Math.max(0,Math.round(LB.streak||0));      // CURRENT streak, for the live column
+  a.curAt=Math.max(0,Math.round(LB.streakAt||0));  // WHEN that streak last changed (v2.59)
   a.wins=Math.max(0,Math.round(LB.wins||0));       // lifetime battle results
   a.losses=Math.max(0,Math.round(LB.losses||0));
   a.sid=SEASON?SEASON.id:null;          // season elo resets monthly, so it is
@@ -4077,13 +4255,14 @@ function openVS(){
       '</div>'+
       (isMe?'<div class="von on">\ud83d\udfe2 YOU \u00b7 READY</div>':'<div class="von '+presCls+'">'+pres+'</div>')+
     '</div>';
-  const gap = (o.elo==null||!S.ranked) ? 'NON-RANKED' :
+  const gap = (S&&S.friendly) ? ('FRIENDLY \u00b7 '+((S.frSize)||1)+'v'+((S.frSize)||1))
+    : (o.elo==null||!S.ranked) ? 'NON-RANKED' :
     (o.elo>me.elo ? ('THEY LEAD BY '+(o.elo-me.elo)+' ELO') :
      o.elo<me.elo ? ('YOU LEAD BY '+(me.elo-o.elo)+' ELO') : 'DEAD LEVEL ON ELO');
   host.innerHTML='<div class="vssweep"></div><div class="vsrow">'+
       side('me','YOU',me,true)+
       '<div class="vsmid"><div class="vsvs">VS</div><div class="vsodds">'+gap+'</div></div>'+
-      side('foe', S.ranked?'OPPONENT':'THE BARON', o, false)+
+      side('foe', (S&&S.friendly)?'OPPONENT':(S.ranked?'OPPONENT':'THE BARON'), o, false)+
     '</div><div class="vsskip">tap to skip</div>';
   host.classList.remove('out'); host.classList.add('on');
   if(S)S.vsHold=true;
@@ -4229,7 +4408,9 @@ function battleAI(dt){
   }
 }
 function battleWin(){
-  if(S.over)return; S.over=true; S.running=false; hideSel();
+  if(S.over)return;
+  if(S&&S.friendly) return friendlyWin();
+  S.over=true; S.running=false; hideSel();
   recordStats();
   /* WIN RATE: every battle result counts, ranked and challenge alike */
   LB.wins=(LB.wins||0)+1; LB.lossStreak=0;
@@ -4239,6 +4420,7 @@ function battleWin(){
      ranked losses never broke it, and PLAY/Crypt touched it not at all.
      Now: every finished game counts. Win = +1, loss = back to 0. No mode exempt. */
   LB.streak=(LB.streak||0)+1;
+  LB.streakAt=Date.now();
   LB.bestStreak=Math.max(LB.bestStreak||0,LB.streak);
   if(S.ranked){ S.eloGain=eloWin(); S.eloBefore=LB.rank; LB.rank+=S.eloGain; seasonAddElo(S.eloGain); }
   addPassXP(S.ranked?150:100);   // PLEBASS XP for the win (unchanged)
@@ -4270,7 +4452,9 @@ const WIN_XP_BASE=300, WIN_XP_PER_WAVE=3;
 function battleHeroXP(){ return Math.round(WIN_XP_BASE + (S?(S.wave||0):0)*WIN_XP_PER_WAVE); }
 function battleLoseHeroXP(){ return Math.max(1, Math.round(battleHeroXP()/5)); }
 function battleLose(){
-  if(S.over)return; S.over=true; S.running=false; hideSel();
+  if(S.over)return;
+  if(S&&S.friendly) return friendlyLose();
+  S.over=true; S.running=false; hideSel();
   recordStats();
   const earnedXP=battleLoseHeroXP();
   addHeroXP(S.hero, earnedXP);              // a loss still moves your level bar, just 1/5 as far
@@ -4280,6 +4464,7 @@ function battleLose(){
   LB.losses=(LB.losses||0)+1; LB.lossStreak=(LB.lossStreak||0)+1;
   /* v2.57: ANY loss ends the streak — ranked, challenge, whatever. */
   LB.streak=0;
+  LB.streakAt=Date.now();          // v2.59: stamps the break so no stale echo can undo it
   S.streakLost=hadStreak;
   saveLB(); pushScore();
   if(hadStreak>10) setTimeout(()=>streakBreakFX(hadStreak),260);   // only big streaks get the show
@@ -4851,6 +5036,15 @@ function mercyLevel(){ return Math.min(5,(LB.lossStreak||0)*1.1); }
 /* kept so nothing that still calls the old name breaks */
 function rankedHeat(){ return battleHeat(); }
 function waveComp(w){
+  /* FRIENDLY BATTLE (v2.59): wave N fields the opponent's Nth-equipped pleb,
+     backed by N footmen escorts. 1v1 is one wave, 5v5 is five. */
+  if(S&&S.friendly){
+    const q=[];
+    const champ=(S.frTheirs&&S.frTheirs[w-1])||'farmhand'; ensureFrEnemy(champ);
+    q.push('fr_'+champ);
+    for(let i=0;i<Math.max(1,w);i++)q.push('footman');
+    return q;
+  }
   const W=WORLDS[S.world]; const q=[];
   const heat=rankedHeat();
   const n=Math.round((4+w*1.7)*(1+heat*0.085));   // more nobles per wave
@@ -4874,7 +5068,7 @@ function startWave(){
   $('startBtn').classList.add('off');
   syncHud();
   showBanner('WAVE '+S.wave+' — they advance!','red',1500);
-  if(S.wave===waveMax())showBanner('👑 '+ENEMIES[WORLDS[S.world].king].name.toUpperCase()+' ARRIVES!','gold',2300);
+  if(S.wave===waveMax() && !S.friendly)showBanner('👑 '+ENEMIES[WORLDS[S.world].king].name.toUpperCase()+' ARRIVES!','gold',2300);
 }
 
 /* =========================================================
@@ -4882,7 +5076,8 @@ function startWave(){
    ========================================================= */
 function spawn(type){
   const d=ENEMIES[type];
-  const heat=rankedHeat();
+  /* friendly battles are a fair fight: no rank/level heat scaling */
+  const heat=(S&&S.friendly)?0:rankedHeat();
   const hpScale=(1+(S.wave-1)*0.24)*(1+heat*0.13);     // ranked nobles are beefier
   const spdScale=1+Math.min(0.35,heat*0.028);          // ...and a bit faster
   S.enemies.push({
@@ -6265,6 +6460,7 @@ function endWave(){
   addDmg(W/2,H/2-40,'WAVE CLEAR  +👑'+bonus,'#8ef0ff');
   SFX.win();
   if(S.wave>=waveMax()){
+    if(S.friendly){ battleWin(); return; }        // friendly: beat their whole army = win
     if(S.crypt){ endGame(true); return; }          // Crypt: surviving all waves is the win
     // Campaign: surviving is NOT enough any more — go smash their base
     showBanner('🔥 All waves held — now SMASH THEIR BASE!','gold',2600);
@@ -6273,7 +6469,8 @@ function endWave(){
   }
   if(S.battle){
     S.nextWaveT=3.5;
-    showBanner('Wave '+S.wave+'/'+waveMax()+' cleared!  ·  RAID their base \ud83c\udfc7','gold',1900);
+    showBanner(S.friendly?('Wave '+S.wave+'/'+waveMax()+' down!  \u00b7  RAID them \ud83c\udfc7')
+                       :('Wave '+S.wave+'/'+waveMax()+' cleared!  \u00b7  RAID their base \ud83c\udfc7'),'gold',1900);
     syncHud(); buildBar(); return;
   }
   $('startBtn').classList.remove('off');
@@ -6293,6 +6490,7 @@ function endGame(win){
   const hadStreak=LB.streak||0;
   if(win){ LB.streak=hadStreak+1; LB.bestStreak=Math.max(LB.bestStreak||0,LB.streak); }
   else   { LB.streak=0; }
+  LB.streakAt=Date.now();
   if(!win && hadStreak>10) setTimeout(()=>streakBreakFX(hadStreak),260);
   /* campaign/crypt now pay level XP the same way a battle does, so PLAY mode
      isn't dead XP-wise now that levels cost real amounts */
