@@ -251,6 +251,9 @@
   .loglist{margin:0;padding-left:22px;color:#e2d3a8;font:15px/1.65 Georgia,serif}
   .loglist li{margin-bottom:5px}
   #friends h2{font:900 46px Georgia,serif;color:#f2d375;margin:0 0 6px;text-shadow:0 3px 0 #000}
+  #battle h2{font:900 46px Georgia,serif;color:#f2d375;margin:0 0 6px;text-shadow:0 3px 0 #000}
+  #battle .sub{color:#d8c48c;font:italic 17px Georgia,serif;margin-bottom:10px}
+  .bv-big{display:block;margin:6px auto 0;font:800 15px Georgia,serif;color:#c9a961;letter-spacing:1px}
   .fr-sec{font:800 14px Georgia,serif;letter-spacing:2px;text-transform:uppercase;color:#ffd24a;
     text-align:left;margin:20px 0 10px;opacity:.95}
   .fr-card.req{border-color:#c9a24a;box-shadow:0 0 16px rgba(255,210,74,.25)}
@@ -1052,7 +1055,7 @@
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
       <div class="scrollcue" id="scrollCue"><span class="arw">▼</span> scroll for more <span class="arw">▼</span></div>
     </div>
-    <div class="menu-foot">v2.59 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.60 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1148,6 +1151,19 @@
     <div id="frList" class="fr-list"></div>
     <div id="frBoard" class="fr-board"></div>
     <div class="acct-btns"><div class="mbtn small" id="frBack" style="width:220px">⬅ Back to menu</div></div>
+  </div>
+
+  <!-- ============ BATTLE SETUP (v2.60) ============ -->
+  <div id="battle" class="screen">
+    <h2 id="bvTitle">🏰 Battle</h2>
+    <div class="sub" id="bvSub">Base wars — no rank points. Pick your army size.</div>
+    <div class="fr-sec" style="width:min(760px,94vw);margin:16px auto 8px">⚔️ ARMY SIZE</div>
+    <div class="fr-chips" id="bvSizeRow" style="justify-content:center"></div>
+    <div id="bvDesc"></div>
+    <div class="acct-btns" style="margin-top:18px">
+      <div class="mbtn small" id="bvGo" style="width:290px">⚔️ FIND A MATCH</div>
+      <div class="mbtn small" id="bvBack" style="width:220px">⬅ Back to menu</div>
+    </div>
   </div>
 
   <!-- ============ FRIENDLY BATTLE ============ -->
@@ -1435,7 +1451,7 @@ function updateScrollCue(){
   window.addEventListener('orientationchange', ()=>setTimeout(updateScrollCue,120));
 })();
 function show(id){
-  ['menu','how','log','worlds','game','mart','pack','pass','board','auth','account','admin','friends','friendly'].forEach(s=>$(s).classList.toggle('on',s===id));
+  ['menu','how','log','worlds','game','mart','pack','pass','board','auth','account','admin','friends','friendly','battle'].forEach(s=>$(s).classList.toggle('on',s===id));
   if(id==='menu'){ populateWorldStrip(); updateScrollCue(); }
   if(id==='worlds')populateWorldSelect();
   if(id==='mart')renderMart();
@@ -1445,6 +1461,7 @@ function show(id){
   if(id==='account')renderAccount();
   if(id==='friends')renderFriends();
   if(id==='friendly')renderFriendly();
+  if(id==='battle')renderBattleSetup();
   if(id==='log')renderLog();
   if(id==='admin')renderAdmin();
 }
@@ -1507,8 +1524,10 @@ $('acctSwitch').onclick=()=>switchAccount();
 $('acctDel').onclick=()=>deleteAccount();
 $('rotateSkip').onclick=()=>{ ROTATE_SKIP=true; try{ localStorage.setItem('plebania_rotate_skip','1'); }catch(e){} checkOrient(); };
 $('boardBack').onclick=()=>show('menu');
-$('battleBtn').onclick=()=>{ initAudio(); show('game'); startMatch(false); };
-$('rankedBtn').onclick=()=>{ initAudio(); show('game'); startMatch(true); };
+$('battleBtn').onclick=()=>{ SFX.ui(); openBattleSetup(false); };
+$('rankedBtn').onclick=()=>{ SFX.ui(); openBattleSetup(true); };
+$('bvBack').onclick=()=>{ SFX.ui(); show('menu'); };
+$('bvGo').onclick=()=>{ initAudio(); show('game'); startMatch(BV_RANKED); };
 if($('cryptBtn'))$('cryptBtn').onclick=()=>{ initAudio(); startCrypt(); };
 if($('raidBtn'))$('raidBtn').onclick=()=>launchRaid();
 $('martBtn').onclick=()=>{ if(!S)newGame(0); S.paused=true; show('mart'); };
@@ -1765,7 +1784,7 @@ const ENEMIES={
 };
 const MAXWAVE=10;
 const CRYPT_MAX=15;                       // CRYPT mode runs longer than the campaign
-function waveMax(){ return (typeof S!=='undefined'&&S&&S.crypt)?CRYPT_MAX:((S&&S.friendly)?Math.max(1,(S.frSize||1)):MAXWAVE); }
+function waveMax(){ return (typeof S!=='undefined'&&S&&S.crypt)?CRYPT_MAX:((S&&S.friendly)?Math.max(1,(S.frSize||1)):((S&&S.bvSize)?Math.max(1,Math.min(5,S.bvSize)):MAXWAVE)); }
 function cx(c){return GX+(c+0.5)*TILE;}
 function cy(r){return GY+(r+0.5)*TILE;}
 
@@ -3441,6 +3460,13 @@ function pendingHTML(){
 /* ---- UPDATE LOG ---------------------------------------------------------
    Newest first. Add a new entry at the TOP of the array when you ship. */
 const UPDATES=[
+  {v:'2.60', d:'26 Oct 2026', e:'\u2694\ufe0f', t:'Pick your army size: 1v1 to 5v5 in BATTLE',
+   b:['<b>BATTLE and RANKED BATTLE now open a setup screen first</b> — choose <b>1v1, 2v2, 3v3, 4v4 or 5v5</b> before it finds you a match.',
+      'The size you pick is the length of the fight: <b>1v1 is one wave</b>, <b>5v5 is five waves</b>. No more fixed 10-wave battle every time.',
+      '<b>Bigger scrap = bigger enemy base</b> — a 5v5 base has roughly 2.5x the health of a 1v1 base, so a quick scrap can\u2019t farm easy rank points.',
+      'RAID AGAIN / RETRY keeps the size you chose, so a rematch is the same kind of fight.',
+      'The HUD wave counter now reads <b>1/3</b> or <b>3/5</b> — the size you picked.',
+      'Friendly battle is unchanged: that one still uses the friend\u2019s own equipped plebs, one per wave.']},
   {v:'2.59', d:'24 Oct 2026', e:'🤝', t:'Friendly battle · 1v1 to 5v5 · streak bug actually killed',
    b:['<b>The win streak bug was still there — here’s why.</b> The game holds <b>three</b> server connections at once, and every one of them replays its own saved copy of your record. So right after a loss, the fresh copy (streak 0) and an <i>older</i> copy (streak 12) both arrived — and whichever landed last won. The old one put your streak straight back.',
       'Fixed: your own record is now only accepted if it is <b>not older</b> than what you already have, and the current streak is stamped with the exact time it changed — so an out-of-date copy can never undo a loss again.',
@@ -3636,6 +3662,46 @@ function renderFriendly(){
   }
   oppRow.querySelectorAll('[data-fropp]').forEach(el=>el.onclick=()=>{ FR_OPP=el.dataset.fropp; SFX.ui(); frSelMsg(''); renderFriendly(); });
   sizeRow.querySelectorAll('[data-frsize]').forEach(el=>el.onclick=()=>{ FR_SIZE=parseInt(el.dataset.frsize)||1; SFX.ui(); renderFriendly(); });
+}
+
+/* =========================================================
+   BATTLE SETUP (v2.60, Nicholas 2026-10-26)
+   "When I choose battle make me choose between 1 to 5v5"
+   Picking BATTLE (or RANKED BATTLE) lands here first: choose an army size
+   from 1v1 up to 5v5, and that size IS the length of the fight - 1v1 is a
+   quick single-wave scrap, 5v5 is a proper five-wave war. A bigger scrap
+   also fields a beefier enemy base, so 1v1 can't be a free smash.
+   ========================================================= */
+let BV_RANKED=false, BV_SIZE=3;
+const BV_SIZES=[1,2,3,4,5];
+const BV_DESC={
+  1:'\u26a1 <b>1v1</b> \u2014 one wave, one scrap. Fast, small loot, lean base.',
+  2:'\u2694\ufe0f <b>2v2</b> \u2014 two waves. Time to get a couple of plebs down.',
+  3:'\ud83d\udee1\ufe0f <b>3v3</b> \u2014 three waves. The balanced scrap.',
+  4:'\ud83d\udd25 <b>4v4</b> \u2014 four waves. Their garrison digs in deeper.',
+  5:'\ud83c\udff0 <b>5v5</b> \u2014 the full war. Five waves, fattest base, biggest payout.'
+};
+function openBattleSetup(ranked){
+  BV_RANKED=!!ranked;
+  show('battle'); renderBattleSetup();
+}
+function bvSizeMsg(){
+  const el=$('bvDesc');
+  if(el) el.innerHTML='<div class="fr-msg ok" style="margin-top:14px;text-align:center">'+(BV_DESC[BV_SIZE]||'')+'</div>';
+  const t=$('bvTitle'), sub=$('bvSub');
+  if(t) t.textContent = BV_RANKED ? '\u2694\ufe0f Ranked Battle' : '\ud83c\udff0 Battle (base wars)';
+  if(sub) sub.innerHTML = BV_RANKED
+    ? 'Rank points on the line. Pick your army size.'
+    : 'Base wars \u2014 no rank points. Pick your army size.';
+}
+function renderBattleSetup(){
+  const row=$('bvSizeRow'); if(!row)return;
+  row.innerHTML=BV_SIZES.map(n=>
+    '<span class="fr-chip'+(n===BV_SIZE?' selchip':'')+'" data-bvsize="'+n+'">'+n+'v'+n+'</span>').join('');
+  row.querySelectorAll('[data-bvsize]').forEach(el=>el.onclick=()=>{
+    BV_SIZE=parseInt(el.dataset.bvsize)||1; SFX.ui(); renderBattleSetup();
+  });
+  bvSizeMsg();
 }
 /* an opponent champion is just a beefed-up copy of that pleb, registered as an
    enemy type on demand so the normal spawner can field it */
@@ -4099,6 +4165,7 @@ function startMatch(ranked){
   seasonRoll(); installSeasonPlebs(); installPlekeyPlebs();
   newGame(S?S.world:0);                 // fresh board behind the search
   S.battle=true; S.ranked=MM_RANKED; S.mmHold=true; S.vsHold=true;
+  S.bvSize=Math.max(1,Math.min(5,BV_SIZE||1));      // v2.60: the size you picked IS the wave count
   S.running=false; S.between=true;
   if($('startBtn'))$('startBtn').style.display='none';
   syncHud(); buildBar(); buildBar2(); updateRaidBtn();
@@ -4195,9 +4262,13 @@ function cancelMatch(){
 
 function startBattleWith(ranked, opp){
   S.battle=true; S.ranked=!!ranked;
+  if(!S.bvSize) S.bvSize=Math.max(1,Math.min(5,BV_SIZE||1));   // v2.60: rematch keeps the size
   S.mmHold=false;
   S.lives=15; S.reached=1;
-  S.ebMax=Math.round((240+rankTierIdx(LB.rank)*130)*(S.ranked?1.15:1)); S.ebHp=S.ebMax;
+  /* v2.60: a 1v1 is a short fight so its base is leaner; a 5v5 is a real war.
+     Without this, a one-wave scrap could rush a full-health base for cheap elo. */
+  const bvScale=S.bvSize?(0.5+0.15*S.bvSize):1;
+  S.ebMax=Math.round((240+rankTierIdx(LB.rank)*130)*(S.ranked?1.15:1)*bvScale); S.ebHp=S.ebMax;
   S.raid=[]; S.aiWalls=[]; S.aiT=6; S.raidCd=0; S.nextWaveT=2.5;
   S.opp=opp; S.oppName=opp.name;
   S.running=false; S.between=true; S.over=false;
@@ -4255,10 +4326,11 @@ function openVS(){
       '</div>'+
       (isMe?'<div class="von on">\ud83d\udfe2 YOU \u00b7 READY</div>':'<div class="von '+presCls+'">'+pres+'</div>')+
     '</div>';
+  const bvTag=(S&&S.bvSize&&!S.friendly)?(' \u00b7 '+S.bvSize+'v'+S.bvSize):'';
   const gap = (S&&S.friendly) ? ('FRIENDLY \u00b7 '+((S.frSize)||1)+'v'+((S.frSize)||1))
-    : (o.elo==null||!S.ranked) ? 'NON-RANKED' :
-    (o.elo>me.elo ? ('THEY LEAD BY '+(o.elo-me.elo)+' ELO') :
-     o.elo<me.elo ? ('YOU LEAD BY '+(me.elo-o.elo)+' ELO') : 'DEAD LEVEL ON ELO');
+    : (o.elo==null||!S.ranked) ? ('BATTLE'+bvTag) :
+    (o.elo>me.elo ? ('THEY LEAD BY '+(o.elo-me.elo)+' ELO'+bvTag) :
+     o.elo<me.elo ? ('YOU LEAD BY '+(me.elo-o.elo)+' ELO'+bvTag) : ('DEAD LEVEL ON ELO'+bvTag));
   host.innerHTML='<div class="vssweep"></div><div class="vsrow">'+
       side('me','YOU',me,true)+
       '<div class="vsmid"><div class="vsvs">VS</div><div class="vsodds">'+gap+'</div></div>'+
@@ -5068,7 +5140,10 @@ function startWave(){
   $('startBtn').classList.add('off');
   syncHud();
   showBanner('WAVE '+S.wave+' — they advance!','red',1500);
-  if(S.wave===waveMax() && !S.friendly)showBanner('👑 '+ENEMIES[WORLDS[S.world].king].name.toUpperCase()+' ARRIVES!','gold',2300);
+  /* v2.60: only the campaign's wave 10 actually fields the king — a short
+     battle (1v1..5v5) must never announce him on its final wave. */
+  if(S.wave===waveMax() && !S.friendly && !S.battle)showBanner('👑 '+ENEMIES[WORLDS[S.world].king].name.toUpperCase()+' ARRIVES!','gold',2300);
+  if(S.battle && S.wave===waveMax())showBanner('🏰 LAST WAVE — break their base!','gold',2100);
 }
 
 /* =========================================================
