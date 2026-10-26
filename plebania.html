@@ -282,6 +282,14 @@
   .fr-card .frm{border:2px solid #5a2a1a;border-radius:10px;padding:7px 13px;font:800 13px Georgia,serif;
     color:#ff9a86;background:rgba(90,42,26,.5);cursor:pointer;white-space:nowrap}
   .fr-card .frm:hover{background:rgba(140,60,36,.7)}
+  /* v2.61: army line-up strips (setup screen + VS card) */
+  .bv-line{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:7px}
+  .bv-line .pthumb,.bv-line .bve{width:54px;height:54px;border-radius:11px;border:2.5px solid #4a3616;
+    background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font:26px serif}
+  #vs .vline{display:flex;gap:6px;justify-content:center;margin-top:11px;flex-wrap:wrap}
+  #vs .vline .pthumb,#vs .vline .bve{width:48px;height:48px;border-radius:10px;border:2.5px solid #4a3616;
+    background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font:24px serif}
+  #vs .vside.foe .vline .pthumb,#vs .vside.foe .vline .bve{border-color:#6a2a1a}
   .fr-empty{border:3px dashed #4a3616;border-radius:16px;padding:26px;text-align:center;
     font:italic 16px Georgia,serif;color:#a89572}
   /* my login / password */
@@ -1055,7 +1063,7 @@
       <div id="userchip">Signed in as <span class="u" id="userName">—</span><a id="acctOpen">My account</a><a id="signOut">Sign out</a></div>
       <div class="scrollcue" id="scrollCue"><span class="arw">▼</span> scroll for more <span class="arw">▼</span></div>
     </div>
-    <div class="menu-foot">v2.60 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
+    <div class="menu-foot">v2.61 · a Wayne &amp; Nicholas production · free the plebs 🧑‍🌾</div>
   </div>
 
   <!-- ============ HOW TO PLAY ============ -->
@@ -1157,9 +1165,12 @@
   <div id="battle" class="screen">
     <h2 id="bvTitle">🏰 Battle</h2>
     <div class="sub" id="bvSub">Base wars — no rank points. Pick your army size.</div>
+    <div class="fr-sec" style="width:min(760px,94vw);margin:14px auto 8px">🗺️ BATTLEFIELD</div>
+    <div class="fr-chips" id="bvMapRow" style="justify-content:center"></div>
     <div class="fr-sec" style="width:min(760px,94vw);margin:16px auto 8px">⚔️ ARMY SIZE</div>
     <div class="fr-chips" id="bvSizeRow" style="justify-content:center"></div>
     <div id="bvDesc"></div>
+    <div id="bvLineup"></div>
     <div class="acct-btns" style="margin-top:18px">
       <div class="mbtn small" id="bvGo" style="width:290px">⚔️ FIND A MATCH</div>
       <div class="mbtn small" id="bvBack" style="width:220px">⬅ Back to menu</div>
@@ -1872,6 +1883,11 @@ function previewWave(w){
   if(S&&S.friendly){
     const champ=(S.frTheirs&&S.frTheirs[w-1])||'farmhand'; ensureFrEnemy(champ);
     return '\ud83e\udd1d '+TOWERS[champ].emoji+' '+TOWERS[champ].name+' +'+w+' escort'+(w===1?'':'s');
+  }
+  /* v2.61: in a battle, wave N is THEIR Nth pleb - name them. */
+  if(S&&S.battle&&S.bvTheirs&&S.bvTheirs.length){
+    const champ=S.bvTheirs[w-1]||S.bvTheirs[S.bvTheirs.length-1];
+    if(champ&&TOWERS[champ]) return '⚔️ '+TOWERS[champ].emoji+' '+TOWERS[champ].name;
   }
   const W=WORLDS[S.world];
   const q=waveComp(w); const seen={}; q.forEach(t=>seen[t]=(seen[t]||0)+1);
@@ -3460,6 +3476,13 @@ function pendingHTML(){
 /* ---- UPDATE LOG ---------------------------------------------------------
    Newest first. Add a new entry at the TOP of the array when you ship. */
 const UPDATES=[
+  {v:'2.61', d:'26 Oct 2026', e:'🗺️', t:'Pick your battlefield · 5v5 really is 5v5',
+   b:['<b>You now choose the map.</b> The battle setup screen lists all four battlefields — The Village, The Deep Forest, The Bone Caves and Halloweentown — with their own paths and scenery.',
+      '<b>5v5 now means five plebs a side.</b> Before, the VS screen showed one opponent no matter the size you picked, because the enemy was always a single bot name.',
+      'Each wave now fields <b>one of their five plebs</b>, in order, backed by escorts — so wave 3 is their third pleb.',
+      'The VS card shows the whole line-up: <b>five portraits on your side, five on theirs</b>.',
+      'The setup screen shows your line-up too, so you see what you are bringing before you commit.',
+      'Fight a <b>real player</b> and their line-up is their own equipped army. A bot gets a themed barracks instead.']},
   {v:'2.60', d:'26 Oct 2026', e:'\u2694\ufe0f', t:'Pick your army size: 1v1 to 5v5 in BATTLE',
    b:['<b>BATTLE and RANKED BATTLE now open a setup screen first</b> — choose <b>1v1, 2v2, 3v3, 4v4 or 5v5</b> before it finds you a match.',
       'The size you pick is the length of the fight: <b>1v1 is one wave</b>, <b>5v5 is five waves</b>. No more fixed 10-wave battle every time.',
@@ -3672,7 +3695,7 @@ function renderFriendly(){
    quick single-wave scrap, 5v5 is a proper five-wave war. A bigger scrap
    also fields a beefier enemy base, so 1v1 can't be a free smash.
    ========================================================= */
-let BV_RANKED=false, BV_SIZE=3;
+let BV_RANKED=false, BV_SIZE=3, BV_WORLD=0;
 const BV_SIZES=[1,2,3,4,5];
 const BV_DESC={
   1:'\u26a1 <b>1v1</b> \u2014 one wave, one scrap. Fast, small loot, lean base.',
@@ -3694,13 +3717,55 @@ function bvSizeMsg(){
     ? 'Rank points on the line. Pick your army size.'
     : 'Base wars \u2014 no rank points. Pick your army size.';
 }
+/* a themed army of n plebs - powers the line-up AND who you actually fight */
+function bvArmyFrom(list,n){
+  const out=[];
+  if(!list||!list.length) list=['farmhand'];
+  for(let i=0;i<n;i++) out.push(list[i%list.length]);
+  return out;
+}
+function bvMyArmy(n){ return bvArmyFrom(myArmyList(),n); }
+function bvTheirArmy(opp,n){
+  /* a real player on the board -> their own equipped plebs. A bot -> a themed
+     barracks, so the line-up still looks like real plebs and not one guy. */
+  const k=(opp&&opp.key)||null;
+  const acct=(k&&CLOUD&&CLOUD.accounts)?CLOUD.accounts[k]:null;
+  let list=(acct&&acct.u)?frArmyOf(k):[];
+  if(!list||!list.length){
+    list=['farmhand','poacher','militia','alchemist','berserker','longbow','knight','mortar','shadow','catapult'];
+    for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}
+  }
+  return bvArmyFrom(list,n);
+}
+function bvLineHTML(list,size){
+  if(!list||!list.length) return '';
+  const px=size||54;
+  return '<div class="bv-line">'+list.map(k=>{
+    const th=(typeof plebThumbHTML==='function')?plebThumbHTML(k,px):'';
+    return th||('<span class="bve">'+((TOWERS[k]&&TOWERS[k].emoji)||'🧑')+'</span>');
+  }).join('')+'</div>';
+}
 function renderBattleSetup(){
+  const mrow=$('bvMapRow');
+  if(mrow){
+    mrow.innerHTML=WORLDS.map((w,i)=>
+      '<span class="fr-chip'+(i===BV_WORLD?' selchip':'')+'" data-bvmap="'+i+'">'+w.emoji+' '+w.name+'</span>').join('');
+    mrow.querySelectorAll('[data-bvmap]').forEach(el=>el.onclick=()=>{
+      BV_WORLD=parseInt(el.dataset.bvmap)||0; SFX.ui(); renderBattleSetup();
+    });
+  }
   const row=$('bvSizeRow'); if(!row)return;
   row.innerHTML=BV_SIZES.map(n=>
     '<span class="fr-chip'+(n===BV_SIZE?' selchip':'')+'" data-bvsize="'+n+'">'+n+'v'+n+'</span>').join('');
   row.querySelectorAll('[data-bvsize]').forEach(el=>el.onclick=()=>{
     BV_SIZE=parseInt(el.dataset.bvsize)||1; SFX.ui(); renderBattleSetup();
   });
+  /* show the army you are actually bringing, so 5v5 visibly means 5 plebs */
+  const lu=$('bvLineup');
+  if(lu){
+    lu.innerHTML='<div class="fr-sec" style="width:min(760px,94vw);margin:16px auto 4px">'+
+      '🛡️ YOUR '+BV_SIZE+'-PLEB LINE-UP</div>'+bvLineHTML(bvMyArmy(BV_SIZE),54);
+  }
   bvSizeMsg();
 }
 /* an opponent champion is just a beefed-up copy of that pleb, registered as an
@@ -4163,7 +4228,7 @@ function offlineRealCount(){
 function startMatch(ranked){
   MM_RANKED=!!ranked; MM_DONE=false; MM_FOUND=null; MM_START=Date.now();
   seasonRoll(); installSeasonPlebs(); installPlekeyPlebs();
-  newGame(S?S.world:0);                 // fresh board behind the search
+  newGame(BV_WORLD);                    // v2.61: the battlefield you picked
   S.battle=true; S.ranked=MM_RANKED; S.mmHold=true; S.vsHold=true;
   S.bvSize=Math.max(1,Math.min(5,BV_SIZE||1));      // v2.60: the size you picked IS the wave count
   S.running=false; S.between=true;
@@ -4263,6 +4328,11 @@ function cancelMatch(){
 function startBattleWith(ranked, opp){
   S.battle=true; S.ranked=!!ranked;
   if(!S.bvSize) S.bvSize=Math.max(1,Math.min(5,BV_SIZE||1));   // v2.60: rematch keeps the size
+  /* v2.61: 5v5 now means five plebs a side, not just five waves. These two
+     armies drive the VS line-up and who actually spawns on each wave. */
+  const bvN=S.bvSize||1;
+  S.bvMine=bvMyArmy(bvN);
+  S.bvTheirs=bvTheirArmy(opp,bvN);
   S.mmHold=false;
   S.lives=15; S.reached=1;
   /* v2.60: a 1v1 is a short fight so its base is leaner; a 5v5 is a real war.
@@ -4281,6 +4351,7 @@ function startBattleWith(ranked, opp){
 function newBattle(ranked, opp){
   seasonRoll(); installSeasonPlebs(); installPlekeyPlebs();
   const pick=opp||rival(ranked);
+  if(S&&S.world!=null) BV_WORLD=S.world;   // v2.61: a rematch stays on the same battlefield
   newGame(S?S.world:0);
   startBattleWith(ranked, pick);
 }
@@ -4310,8 +4381,20 @@ function openVS(){
             : (presenceOf(rec||{}).online ? '\ud83d\udfe2 ONLINE NOW' : '\u26aa OFFLINE \u00b7 AI PLAYS FOR THEM');
   const presCls = (!o.bot && presenceOf(rec||{}).online) ? 'on':'off';
   const sign = s=>s>0?'+'+s:(''+s);
-  const side=(cls,tag,st,isMe)=>
-    '<div class="vside '+cls+'">'+
+  /* v2.61: the full line-up, so a 5v5 shows five plebs a side, not one name */
+  const lineOf=(isMe)=>{
+    let list=null;
+    if(S&&S.friendly) list = isMe?(S.frMine||[]):(S.frTheirs||[]);
+    else if(S&&S.bvSize) list = isMe?(S.bvMine||[]):(S.bvTheirs||[]);
+    if(!list||!list.length) return '';
+    return '<div class="vline">'+list.map(k=>{
+      const th=(typeof plebThumbHTML==='function')?plebThumbHTML(k,48):'';
+      return th||('<span class="bve">'+((TOWERS[k]&&TOWERS[k].emoji)||'🧑')+'</span>');
+    }).join('')+'</div>';
+  };
+  const side=(cls,tag,st,isMe)=>{
+    const vline=lineOf(isMe);
+    return '<div class="vside '+cls+'">'+
       '<div class="vtag">'+tag+'</div>'+
       '<div class="vring" style="background:linear-gradient('+st.color+',#6b5320)">'+
         String(st.name||'?').trim().charAt(0).toUpperCase().replace(/[<>&"]/g,'')+'</div>'+
@@ -4324,8 +4407,9 @@ function openVS(){
         '<div class="vchip"><b>'+st.best+'</b><span>BEST</span></div>'+
         '<div class="vchip"><b>'+st.kills+'</b><span>KILLS</span></div>'+
       '</div>'+
+      vline+
       (isMe?'<div class="von on">\ud83d\udfe2 YOU \u00b7 READY</div>':'<div class="von '+presCls+'">'+pres+'</div>')+
-    '</div>';
+    '</div>';};
   const bvTag=(S&&S.bvSize&&!S.friendly)?(' \u00b7 '+S.bvSize+'v'+S.bvSize):'';
   const gap = (S&&S.friendly) ? ('FRIENDLY \u00b7 '+((S.frSize)||1)+'v'+((S.frSize)||1))
     : (o.elo==null||!S.ranked) ? ('BATTLE'+bvTag) :
@@ -5115,6 +5199,19 @@ function waveComp(w){
     const champ=(S.frTheirs&&S.frTheirs[w-1])||'farmhand'; ensureFrEnemy(champ);
     q.push('fr_'+champ);
     for(let i=0;i<Math.max(1,w);i++)q.push('footman');
+    return q;
+  }
+  /* v2.61: in a battle the opponent fields one of their five plebs per wave,
+     backed by that world's escorts - so wave N is THEIR Nth pleb. */
+  if(S&&S.battle&&S.bvTheirs&&S.bvTheirs.length){
+    const q=[]; const heat=rankedHeat();
+    const champ=S.bvTheirs[w-1]||S.bvTheirs[S.bvTheirs.length-1];
+    if(champ){ ensureFrEnemy(champ); q.push('fr_'+champ); }
+    const WB=WORLDS[S.world];
+    const n=Math.round((2+w*1.2)*(1+heat*0.07));
+    for(let i=0;i<n;i++)q.push(WB.units.light);
+    if(w>=3){const k=Math.round((w-2)*0.7*(1+heat*0.06));for(let i=0;i<k;i++)q.push(WB.units.medium);}
+    for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
     return q;
   }
   const W=WORLDS[S.world]; const q=[];
