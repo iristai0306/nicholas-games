@@ -1894,7 +1894,9 @@ function previewWave(w){
   const order=[W.king,W.boss,W.elite,W.units.heavy,W.units.medium,W.units.light];
   return order.filter(t=>seen[t]).map(t=>ENEMIES[t].emoji+seen[t]).join(' ');
 }
-function sUpdateNext(){ const w=Math.min(S.wave+1,waveMax()); const t=$('hNext'); if(t)t.textContent=S.wave>=waveMax()?'👑 final':previewWave(w); }
+function sUpdateNext(){ const w=Math.min(S.wave+1,waveMax()); const t=$('hNext'); if(!t)return;
+  /* v2.61: a short battle has no king - never promise one. */
+  t.textContent=S.wave>=waveMax()?(S.battle?'🏰 SMASH BASE!':'👑 final'):previewWave(w); }
 let tipT=0;
 function tip(txt,ms){ const t=$('tip'); t.textContent=txt; t.classList.add('on'); tipT=Date.now()+(ms||1800); }
 let bnrT=0;
