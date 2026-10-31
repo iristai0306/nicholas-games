@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0d14">
+<title>CLICK TYCOON</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Trebuchet MS',system-ui,-apple-system,sans-serif;
+  background:radial-gradient(circle at 50% -20%,#1b2740,#0a0d14 60%);
+  color:#eef2f8;user-select:none;-webkit-user-select:none;touch-action:manipulation;
+}
+.wrap{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;
+  padding:10px 12px calc(8px + env(safe-area-inset-bottom))}
+
+/* ---------- header ---------- */
+.hdr{text-align:center;padding:6px 0 8px;flex:0 0 auto}
+.brand{font-size:9px;letter-spacing:.34em;color:#556179;font-weight:800}
+.cash{font-size:clamp(30px,9.5vw,42px);font-weight:900;letter-spacing:-.03em;line-height:1.05;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,#ffffff,#8fd7ff 70%,#4aa8e0);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  transition:transform .09s}
+.cash.pop{transform:scale(1.06)}
+.meta{display:flex;justify-content:center;gap:16px;font-size:10.5px;letter-spacing:.1em;color:#556179;margin-top:5px}
+.meta b{color:#8fd7ff;font-variant-numeric:tabular-nums}
+
+/* ---------- tap zone ---------- */
+.tapzone{flex:0 0 auto;position:relative;display:flex;align-items:center;justify-content:center;
+  padding:6px 0 10px;min-height:0}
+.bigbtn{
+  width:min(180px,42vw);height:min(180px,42vw);border-radius:50%;border:0;
+  background:radial-gradient(circle at 36% 28%,#7fe0ff,#2f9ddb 48%,#145a8a 100%);
+  box-shadow:0 0 0 7px #16202f,0 18px 42px -10px rgba(47,157,219,.65),inset 0 -8px 22px rgba(0,0,0,.45);
+  font-family:inherit;font-size:clamp(22px,6vw,30px);font-weight:900;color:#03202f;
+  letter-spacing:.04em;cursor:pointer;transition:transform .06s;
+  display:grid;place-items:center;
+}
+.bigbtn:active{transform:scale(.94)}
+.float{position:absolute;pointer-events:none;font-weight:900;font-size:15px;color:#9ff0c0;
+  text-shadow:0 2px 8px rgba(0,0,0,.8);animation:fl .85s ease-out forwards}
+@keyframes fl{0%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-64px) scale(1.25)}}
+
+.gold{
+  position:absolute;width:46px;height:46px;border-radius:50%;border:0;cursor:pointer;
+  background:radial-gradient(circle at 34% 28%,#fff3b0,#f5c451 46%,#a8781f 100%);
+  box-shadow:0 0 0 3px rgba(245,196,81,.25),0 0 26px 6px rgba(245,196,81,.5);
+  font-size:16px;font-weight:900;color:#4a3300;display:none;z-index:5;
+  animation:gp 1.1s ease-in-out infinite}
+@keyframes gp{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+
+/* ---------- tabs ---------- */
+.tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;flex:0 0 auto;margin-bottom:6px}
+.tab{padding:9px 4px;border-radius:11px;border:1px solid #1c2636;background:#0f1620;
+  color:#6c7d96;font-family:inherit;font-weight:800;font-size:11px;letter-spacing:.09em;cursor:pointer}
+.tab.on{background:#16283a;border-color:#2c5f85;color:#8fd7ff}
+
+/* ---------- buy amount ---------- */
+.amtrow{display:flex;gap:6px;flex:0 0 auto;margin-bottom:7px}
+.amt{flex:1;padding:7px 2px;border-radius:9px;border:1px solid #1c2636;background:#0c121a;
+  color:#5f708a;font-family:inherit;font-weight:800;font-size:10.5px;letter-spacing:.06em;cursor:pointer}
+.amt.on{background:#1b2f42;border-color:#2c5f85;color:#8fd7ff}
+
+/* ---------- list ---------- */
+.list{flex:1;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:6px;
+  padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.list::-webkit-scrollbar{width:0}
+
+.row{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;
+  background:#0e1520;border:1px solid #1a2433;cursor:pointer;transition:background .12s,border-color .12s}
+.row.afford{border-color:#254765;background:#0f1a26}
+.row.afford:active{background:#152535}
+.row.locked{opacity:.5}
+.ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto;
+  font-size:12px;font-weight:900;color:#031420;background:#2f9ddb}
+.row.locked .ico{background:#2a3648;color:#5f708a}
+.info{flex:1;min-width:0}
+.nm{font-size:12.5px;font-weight:800;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ef{font-size:10px;color:#5f708a;margin-top:2px;letter-spacing:.03em}
+.cst{text-align:right;flex:0 0 auto}
+.cst .c{font-size:12.5px;font-weight:900;color:#8fd7ff;font-variant-numeric:tabular-nums}
+.row.locked .cst .c{color:#5f708a}
+.cst .o{font-size:10px;color:#5f708a;margin-top:2px;letter-spacing:.04em}
+
+/* ---------- prestige ---------- */
+.prestige{padding:16px;text-align:center;display:flex;flex-direction:column;gap:12px}
+.prestige h3{font-size:11px;letter-spacing:.26em;color:#556179}
+.prestige .pm{font-size:34px;font-weight:900;color:#f5c451;letter-spacing:-.02em}
+.prestige p{font-size:11.5px;color:#6c7d96;line-height:1.65}
+.prestige button{padding:14px;border-radius:13px;border:0;font-family:inherit;font-weight:900;
+  font-size:13px;letter-spacing:.08em;cursor:pointer;
+  background:linear-gradient(180deg,#ffd977,#f0b531);color:#3d2a00}
+.prestige button:disabled{opacity:.35;pointer-events:none}
+
+/* ---------- toast ---------- */
+.toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-160%);z-index:60;
+  background:#12202e;border:1px solid #2c5f85;color:#8fd7ff;padding:10px 18px;border-radius:99px;
+  font-size:11.5px;font-weight:800;letter-spacing:.06em;transition:transform .35s;white-space:nowrap}
+.toast.show{transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hdr">
+    <div class="brand">CLICK TYCOON</div>
+    <div class="cash" id="cash">$0</div>
+    <div class="meta">
+      <div>PER SEC <b id="ps">$0</b></div>
+      <div>PER TAP <b id="pt">$1</b></div>
+    </div>
+  </div>
+
+  <div class="tapzone" id="tapzone">
+    <button class="bigbtn" id="bigbtn">TAP</button>
+    <button class="gold" id="gold">+</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="tap">TAP</button>
+    <button class="tab" data-tab="auto">BUSINESS</button>
+    <button class="tab" data-tab="prestige">PRESTIGE</button>
+  </div>
+
+  <div class="amtrow" id="amtrow">
+    <button class="amt on" data-amt="1">x1</button>
+    <button class="amt" data-amt="10">x10</button>
+    <button class="amt" data-amt="100">x100</button>
+    <button class="amt" data-amt="max">MAX</button>
+  </div>
+
+  <div class="list" id="list"></div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  var GROWTH_UP = 1.15;
+  var GROWTH_CLICK = 1.18;
+
+  var CLICK = [
+    {id:'glove',  name:'Work Gloves',      base:50,    add:1},
+    {id:'mouse',  name:'Turbo Mouse',      base:900,   add:5},
+    {id:'robot',  name:'Robot Finger',     base:14000, add:28},
+    {id:'ai',     name:'AI Assistant',     base:260000,add:170},
+    {id:'quant',  name:'Quantum Hands',    base:6.5e6, add:1300},
+    {id:'god',    name:'God Mode Fingers', base:2.4e8, add:11000},
+    {id:'inf',    name:'Infinity Gauntlet',base:9e9,   add:95000}
+  ];
+
+  var AUTO = [
+    {id:'lemon',  name:'Lemonade Stand', base:15,    rate:0.22},
+    {id:'paper',  name:'Paper Route',    base:130,   rate:1.3},
+    {id:'vend',   name:'Vending Machine',base:1300,  rate:8.5},
+    {id:'arcade', name:'Arcade',         base:15000, rate:58},
+    {id:'wash',   name:'Car Wash',       base:190000,rate:430},
+    {id:'pizza',  name:'Pizza Shop',     base:2.4e6, rate:3300},
+    {id:'fact',   name:'Factory',        base:3.2e7, rate:27000},
+    {id:'tower',  name:'Skyscraper',     base:4.8e8, rate:230000},
+    {id:'bank',   name:'Bank',           base:8.5e9, rate:2.2e6},
+    {id:'orbit',  name:'Orbital Mine',   base:1.5e11,rate:2.6e7},
+    {id:'dyson',  name:'Dyson Sphere',   base:4e12, rate:4.1e8}
+  ];
+
+  var el = function(i){ return document.getElementById(i); };
+  var cashEl=el('cash'), psEl=el('ps'), ptEl=el('pt'), listEl=el('list'),
+      tapzone=el('tapzone'), bigbtn=el('bigbtn'), goldEl=el('gold'),
+      amtrow=el('amtrow'), toastEl=el('toast');
+
+  var S;
+  function fresh(){
+    return {
+      cash: 0, clickAdd: 0, prestige: 0, totalEarned: 0,
+      counts: {}, prestiges: 0, lastSave: Date.now(), boostUntil: 0
+    };
+  }
+
+  function load(){
+    try{
+      var raw = localStorage.getItem('clickTycoonSave');
+      if (!raw) return fresh();
+      var d = JSON.parse(raw);
+      var s = fresh();
+      s.cash = Number(d.cash) || 0;
+      s.clickAdd = Number(d.clickAdd) || 0;
+      s.prestige = Number(d.prestige) || 0;
+      s.totalEarned = Number(d.totalEarned) || 0;
+      s.prestiges = Number(d.prestiges) || 0;
+      s.counts = d.counts || {};
+      s.lastSave = Number(d.lastSave) || Date.now();
+      return s;
+    }catch(e){ return fresh(); }
+  }
+
+  S = load();
+
+  function save(){
+    S.lastSave = Date.now();
+    try{ localStorage.setItem('clickTycoonSave', JSON.stringify(S)); }catch(e){}
+  }
+
+  /* ---------- numbers ---------- */
+  var UNITS = ['','K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc','Ud','Dd','Td'];
+  function fmt(n){
+    if (!isFinite(n)) return 'INF';
+    if (n < 0) return '-' + fmt(-n);
+    if (n < 1000) return n < 10 ? (Math.round(n*100)/100).toString() : Math.floor(n).toString();
+    var i = 0, v = n;
+    while (v >= 1000 && i < UNITS.length-1){ v /= 1000; i++; }
+    return (v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : Math.floor(v)) + UNITS[i];
+  }
+  function cash(n){ return '$' + fmt(n); }
+
+  function mult(){ return 1 + S.prestige * 0.15; }
+  function tapValue(){ return (1 + S.clickAdd) * mult(); }
+  function basePerSec(){
+    var t = 0;
+    for (var i=0;i<AUTO.length;i++){
+      var c = S.counts[AUTO[i].id] || 0;
+      t += AUTO[i].rate * c;
+    }
+    return t;
+  }
+  function perSec(){ return basePerSec() * mult(); }
+
+  function costOf(base, owned, growth, k){
+    return base * Math.pow(growth, owned) * (Math.pow(growth, k) - 1) / (growth - 1);
+  }
+  function maxBuy(base, owned, growth){
+    var budget = S.cash, n = 0;
+    while (n < 5000 && costOf(base, owned + n, growth, 1) <= budget) n++;
+    return n;
+  }
+
+  /* ---------- ui build ---------- */
+  var buyAmt = 1;
+  var activeTab = 'tap';
+  var rows = {};   // id -> {el, costEl, ownedEl, def, kind}
+
+  function buildRows(){
+    CLICK.forEach(function(d){
+      rows[d.id] = makeRow(d, 'click', function(){ return SC; }, '');
+    });
+    AUTO.forEach(function(d){
+      rows[d.id] = makeRow(d, 'auto', function(){ return SA; }, '');
+    });
+  }
+
+  var SC = 0, SA = 0;
+  function makeRow(d, kind, getContainer, _x){
+    var r = document.createElement('div');
+    r.className = 'row locked';
+    var badge = kind === 'click' ? '+' : 'AUTO';
+    r.innerHTML = '<div class="ico">' + (kind==='click' ? 'X' : 'S') + '</div>' +
+      '<div class="info"><div class="nm">' + d.name + '</div><div class="ef"></div></div>' +
+      '<div class="cst"><div class="c">$0</div><div class="o"></div></div>';
+    r.addEventListener('click', function(){
+      var owned = kind === 'click' ? S.counts[d.id] || 0 : S.counts[d.id] || 0;
+      var growth = kind === 'click' ? GROWTH_CLICK : GROWTH_UP;
+      var k = buyAmt === 'max' ? maxBuy(d.base, owned, growth) : buyAmt;
+      if (k < 1) return;
+      var cost = costOf(d.base, owned, growth, k);
+      if (S.cash < cost) return;
+      S.cash -= cost;
+      if (kind === 'click') S.clickAdd += d.add * k;
+      S.counts[d.id] = owned + k;
+      bump();
+    });
+    return {root: r, ef: r.querySelector('.ef'), c: r.querySelector('.c'),
+            o: r.querySelector('.o'), def: d, kind: kind};
+  }
+
+  function renderList(){
+    listEl.innerHTML = '';
+    if (activeTab === 'prestige'){ renderPrestige(); return; }
+
+    var arr = activeTab === 'tap' ? CLICK : AUTO;
+    amtrow.style.display = 'flex';
+
+    arr.forEach(function(d){
+      var R = rows[d.id];
+      listEl.appendChild(R.root);
+    });
+  }
+
+  function renderPrestige(){
+    amtrow.style.display = 'none';
+    var gain = Math.floor(Math.sqrt(S.cash / 1e6));
+    var need = 1e6;
+    var p = document.createElement('div');
+    p.className = 'prestige';
+    p.innerHTML =
+      '<h3>PRESTIGE</h3>' +
+      '<div class="pm">' + (S.prestige * 15) + '%</div>' +
+      '<p>Current bonus to <b>everything</b>. Every prestige point = +15%<br>forever.</p>' +
+      '<p>Prestiges done: <b>' + S.prestiges + '</b></p>' +
+      '<button id="pBtn">' + (gain >= 1
+        ? 'SELL THE BUSINESS — +' + gain + ' POINTS'
+        : 'NEED ' + cash(need) + ' CASH') + '</button>' +
+      '<p style="font-size:10.5px;opacity:.7">Selling wipes your cash, taps and businesses.<br>' +
+      'The multiplier stays. Forever.</p>';
+    listEl.appendChild(p);
+    var b = el('pBtn');
+    b.disabled = gain < 1;
+    b.addEventListener('click', function(){
+      if (gain < 1) return;
+      S.prestige += gain;
+      S.prestiges += 1;
+      S.cash = 0; S.clickAdd = 0; S.counts = {};
+      save(); renderList(); paint();
+      showToast('SOLD. +' + gain + ' PRESTIGE POINTS');
+    });
+  }
+
+  /* ---------- tabs ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){
+    t.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('on'); });
+      t.classList.add('on');
+      activeTab = t.getAttribute('data-tab');
+      renderList(); paint();
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.amt'), function(a){
+    a.addEventListener('click', function(){
+      document.querySelectorAll('.amt').forEach(function(x){ x.classList.remove('on'); });
+      a.classList.add('on');
+      var v = a.getAttribute('data-amt');
+      buyAmt = v === 'max' ? 'max' : parseInt(v,10);
+      paint();
+    });
+  });
+
+  /* ---------- paint ---------- */
+  function paint(){
+    cashEl.textContent = cash(S.cash);
+    psEl.textContent = cash(perSec()) + '/s';
+    ptEl.textContent = cash(tapValue());
+
+    if (activeTab === 'prestige') return;
+
+    var arr = activeTab === 'tap' ? CLICK : AUTO;
+    arr.forEach(function(d){
+      var R = rows[d.id];
+      var owned = S.counts[d.id] || 0;
+      var growth = activeTab === 'tap' ? GROWTH_CLICK : GROWTH_UP;
+      var k = buyAmt === 'max' ? Math.max(1, maxBuy(d.base, owned, growth)) : buyAmt;
+      var cost = costOf(d.base, owned, growth, k);
+      var canBuyOne = S.cash >= costOf(d.base, owned, growth, 1);
+
+      R.c.textContent = cash(cost);
+      R.o.textContent = (buyAmt === 'max' ? (k < 1 ? '-' : 'x' + k) : (owned > 0 ? bought(owned) : ''));
+
+      if (activeTab === 'tap'){
+        R.ef.textContent = '+' + cash(d.add * mult()) + ' per tap';
+      } else {
+        R.ef.textContent = cash(d.rate * mult()) + '/s each';
+      }
+
+      R.root.classList.toggle('afford', S.cash >= cost);
+      R.root.classList.toggle('locked', !canBuyOne);
+    });
+  }
+
+  function bought(n){ return 'owned ' + n; }
+
+  /* ---------- tap ---------- */
+  function bump(){
+    cashEl.classList.remove('pop');
+    void cashEl.offsetWidth;
+    cashEl.classList.add('pop');
+    setTimeout(function(){ cashEl.classList.remove('pop'); }, 100);
+  }
+
+  function doTap(ev){
+    var gain = tapValue();
+    S.cash += gain;
+    S.totalEarned += gain;
+    bump();
+    if (ev) floatText('+' + cash(gain), ev);
+  }
+
+  function floatText(txt, ev){
+    var d = document.createElement('div');
+    d.className = 'float';
+    d.textContent = txt;
+    var rect = tapzone.getBoundingClientRect();
+    var x = (ev.clientX !== undefined ? ev.clientX : rect.left + rect.width/2) - rect.left;
+    var y = (ev.clientY !== undefined ? ev.clientY : rect.top + rect.height/2) - rect.top;
+    d.style.left = (x - 24) + 'px';
+    d.style.top = (y - 12) + 'px';
+    tapzone.appendChild(d);
+    setTimeout(function(){ d.remove(); }, 870);
+  }
+
+  bigbtn.addEventListener('pointerdown', doTap);
+  // keyboard / desktop
+  document.addEventListener('keydown', function(e){
+    if (e.code === 'Space'){ e.preventDefault(); doTap(null); }
+  });
+
+  /* ---------- golden ---------- */
+  var goldTimer = null;
+  function scheduleGold(){
+    clearTimeout(goldTimer);
+    var wait = 45000 + Math.random() * 45000;
+    goldTimer = setTimeout(function(){
+      if (document.hidden){ scheduleGold(); return; }
+      showGold();
+    }, wait);
+  }
+
+  function showGold(){
+    var w = tapzone.clientWidth, h = tapzone.clientHeight;
+    goldEl.style.display = 'block';
+    goldEl.style.left = (20 + Math.random() * Math.max(1, w - 86)) + 'px';
+    goldEl.style.top  = (10 + Math.random() * Math.max(1, h - 66)) + 'px';
+    var life = 9000;
+    setTimeout(function(){
+      if (goldEl.style.display === 'block'){ goldEl.style.display = 'none'; scheduleGold(); }
+    }, life);
+  }
+
+  goldEl.addEventListener('click', function(e){
+    e.stopPropagation();
+    var prize = Math.max(perSec() * 40, tapValue() * 60);
+    S.cash += prize;
+    S.totalEarned += prize;
+    goldEl.style.display = 'none';
+    bump();
+    floatText('+' + cash(prize), e);
+    showToast('GOLDEN BONUS  +' + cash(prize));
+    S.boostUntil = Date.now() + 30000;
+    scheduleGold();
+  });
+
+  /* ---------- toast ---------- */
+  var toastT = null;
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(function(){ toastEl.classList.remove('show'); }, 2400);
+  }
+
+  /* ---------- offline ---------- */
+  function applyOffline(){
+    var dt = (Date.now() - S.lastSave) / 1000;
+    if (!(dt > 60)) return;
+    dt = Math.min(dt, 4 * 3600);
+    var earned = basePerSec() * mult() * dt * 0.5;
+    if (earned < 1) return;
+    S.cash += earned;
+    S.totalEarned += earned;
+    var mins = Math.round(dt/60);
+    showToast('WHILE AWAY (' + (mins >= 60 ? Math.round(mins/60) + 'h' : mins + 'm') + ')  +' + cash(earned));
+  }
+
+  /* ---------- loop ---------- */
+  var lastT = performance.now();
+  function loop(t){
+    var dt = Math.min(0.5, (t - lastT) / 1000);
+    lastT = t;
+
+    var gain = perSec() * dt;
+    if (gain > 0){ S.cash += gain; S.totalEarned += gain; }
+
+    paint();
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------- boot ---------- */
+  buildRows();
+  applyOffline();
+  renderList();
+  paint();
+  requestAnimationFrame(loop);
+  scheduleGold();
+
+  setInterval(save, 3000);
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) save();
+  });
+  window.addEventListener('beforeunload', save);
+})();
+</script>
+</body>
+</html>
