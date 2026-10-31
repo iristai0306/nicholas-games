@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0c12">
+<title>PENNY TOWER</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Trebuchet MS',system-ui,-apple-system,sans-serif;
+  background:radial-gradient(circle at 50% -10%,#212a42,#0a0c12 65%);
+  color:#f2f4f8;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  padding:16px 18px calc(16px + env(safe-area-inset-bottom));
+  user-select:none;-webkit-user-select:none;
+  touch-action:manipulation;
+}
+.wrap{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;max-width:520px}
+
+.top{width:100%;display:flex;align-items:center;justify-content:space-between;font-size:12px;letter-spacing:.18em;color:#7e8aa3}
+.brand{color:#f5c451;font-weight:800}
+.best{font-variant-numeric:tabular-nums}
+
+.mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;width:100%}
+
+.tier{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#7e8aa3;height:16px}
+
+.bal{
+  font-size:clamp(44px,15vw,74px);font-weight:900;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,#fff5cf,#f5c451 60%,#c08d2a);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  line-height:1;transition:transform .12s;
+}
+.bal.pop{transform:scale(1.09)}
+
+.streak{font-size:12px;letter-spacing:.16em;color:#ff9d4d;height:16px;font-weight:700}
+
+.coin{
+  width:min(150px,38vw);height:min(150px,38vw);border-radius:50%;
+  background:radial-gradient(circle at 34% 28%,#ffeaa0,#f5c451 46%,#a8781f 100%);
+  box-shadow:0 0 0 6px #232a3a,0 22px 44px -12px rgba(245,196,81,.5),inset 0 -6px 18px rgba(0,0,0,.4);
+  display:grid;place-items:center;
+  font-size:min(44px,11vw);font-weight:900;color:#4a3300;
+  text-shadow:0 1px 0 rgba(255,255,255,.55);
+  cursor:pointer;margin:6px 0 2px;
+  transform-style:preserve-3d;
+}
+.coin:active{transform:scale(.96)}
+@keyframes coinFlip{
+  0%{transform:translateY(0) rotateX(0) scale(1)}
+  45%{transform:translateY(-58px) rotateX(720deg) scale(1.1)}
+  100%{transform:translateY(0) rotateX(1440deg) scale(1)}
+}
+.coin.flip{animation:coinFlip .9s cubic-bezier(.3,.6,.3,1)}
+
+.save{
+  font-size:11px;letter-spacing:.14em;color:#6fe3a1;
+  border:1px solid rgba(111,227,161,.35);padding:4px 10px;border-radius:99px;
+  background:rgba(111,227,161,.07);
+}
+.save.off{color:#5a6478;border-color:rgba(90,100,120,.3);background:transparent}
+
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-11px)}40%{transform:translateX(10px)}60%{transform:translateX(-7px)}80%{transform:translateX(4px)}}
+.shake{animation:shake .42s}
+
+.bottom{width:100%;display:flex;flex-direction:column;gap:9px}
+.btn{
+  width:100%;border:0;border-radius:16px;font-family:inherit;font-weight:800;
+  letter-spacing:.06em;cursor:pointer;transition:transform .09s,filter .15s;
+  font-size:17px;padding:17px 10px;
+}
+.btn:active{transform:scale(.978)}
+.btn:disabled{opacity:.35;pointer-events:none}
+.flipbtn{background:linear-gradient(180deg,#ffd977,#f0b531);color:#3d2a00;box-shadow:0 8px 22px -8px rgba(240,181,49,.8)}
+.cashbtn{background:#1b2131;color:#aebbd6;border:1px solid #2b3448;font-size:14px;padding:13px}
+.hint{text-align:center;font-size:11px;color:#5a6478;letter-spacing:.04em;line-height:1.5}
+
+.mute{
+  position:fixed;top:12px;right:12px;z-index:20;background:#151a26;border:1px solid #262f42;
+  color:#7e8aa3;width:34px;height:34px;border-radius:50%;font-size:14px;cursor:pointer;
+  display:none;
+}
+
+.overlay{
+  position:fixed;inset:0;background:rgba(6,8,13,.86);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:24px;z-index:30;
+}
+.overlay.show{display:flex}
+.card{
+  width:100%;max-width:340px;background:#121723;border:1px solid #232c3f;border-radius:22px;
+  padding:28px 22px;text-align:center;box-shadow:0 30px 60px -20px #000;
+}
+.otitle{font-size:13px;letter-spacing:.28em;font-weight:800;color:#7e8aa3;margin-bottom:10px}
+.otitle.win{color:#6fe3a1}
+.otitle.lose{color:#ff6b6b}
+.oamt{font-size:clamp(38px,13vw,54px);font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin-bottom:8px}
+.osub{font-size:13px;color:#7e8aa3;line-height:1.6;margin-bottom:22px}
+.card .btn{font-size:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand">PENNY TOWER</div>
+    <div class="best" id="best">BEST $0.00</div>
+  </div>
+
+  <div class="mid" id="mid">
+    <div class="tier" id="tier">pocket change</div>
+    <div class="bal" id="bal">$1.00</div>
+    <div class="streak" id="streak"></div>
+    <div class="coin" id="coin">$1</div>
+    <div class="save" id="save">🛟 1 SAVE READY</div>
+  </div>
+
+  <div class="bottom">
+    <button class="btn flipbtn" id="flipBtn">FLIP — RISK $1.00</button>
+    <button class="btn cashbtn" id="cashBtn">CASH OUT $1.00</button>
+    <div class="hint">50/50. Win doubles. Lose wipes you out.<br>Walk away and the money is yours.</div>
+  </div>
+
+</div>
+
+<button class="mute" id="mute">🔊</button>
+
+<div class="overlay" id="overlay">
+  <div class="card">
+    <div class="otitle" id="otitle">BUSTED</div>
+    <div class="oamt" id="oamt">$0.00</div>
+    <div class="osub" id="osub"></div>
+    <button class="btn flipbtn" id="againBtn">PLAY AGAIN</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var START = 1;
+  var bal, streak, save, peak, locked, running;
+
+  var balEl   = document.getElementById('bal');
+  var tierEl  = document.getElementById('tier');
+  var streakEl= document.getElementById('streak');
+  var bestEl  = document.getElementById('best');
+  var coinEl  = document.getElementById('coin');
+  var saveEl  = document.getElementById('save');
+  var flipBtn = document.getElementById('flipBtn');
+  var cashBtn = document.getElementById('cashBtn');
+  var midEl   = document.getElementById('mid');
+  var overlay = document.getElementById('overlay');
+  var otitle  = document.getElementById('otitle');
+  var oamt    = document.getElementById('oamt');
+  var osub    = document.getElementById('osub');
+  var againBtn= document.getElementById('againBtn');
+  var muteBtn = document.getElementById('mute');
+
+  var best = Number(localStorage.getItem('pennyTowerBest') || 0) || 0;
+
+  /* ---------- audio ---------- */
+  var actx = null, muted = false;
+  function beep(freq, dur, type, vol){
+    if (muted) return;
+    try{
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.07, actx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(); o.stop(actx.currentTime + dur);
+    }catch(e){}
+  }
+
+  /* ---------- money formatting ---------- */
+  function fmt(n){
+    if (n >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
+    if (n >= 1000) return '$' + Math.round(n).toLocaleString('en-US');
+    return '$' + n.toFixed(2);
+  }
+
+  function tier(n){
+    if (n < 10) return 'pocket change';
+    if (n < 100) return 'lunch money';
+    if (n < 1000) return 'a decent day';
+    if (n < 1e4) return 'new phone territory';
+    if (n < 1e5) return 'used car money';
+    if (n < 1e6) return 'house deposit';
+    if (n < 1e9) return 'millionaire. unreal.';
+    return 'this is not real anymore';
+  }
+
+  /* ---------- render ---------- */
+  function update(){
+    balEl.textContent  = fmt(bal);
+    tierEl.textContent = tier(bal);
+    bestEl.textContent = 'BEST ' + fmt(best);
+    streakEl.textContent = streak >= 2 ? '🔥 ' + streak + ' IN A ROW' : '';
+    flipBtn.textContent = 'FLIP — RISK ' + fmt(bal);
+    cashBtn.textContent = 'CASH OUT ' + fmt(bal);
+    saveEl.textContent = save > 0 ? '🛟 1 SAVE READY' : '🛟 SAVE USED';
+    saveEl.classList.toggle('off', save <= 0);
+    var dead = bal <= 0 || !running;
+    flipBtn.disabled = dead;
+    cashBtn.disabled = dead;
+  }
+
+  function pop(){
+    balEl.classList.remove('pop');
+    void balEl.offsetWidth;
+    balEl.classList.add('pop');
+    setTimeout(function(){ balEl.classList.remove('pop'); }, 130);
+  }
+
+  function shake(){
+    midEl.classList.remove('shake');
+    void midEl.offsetWidth;
+    midEl.classList.add('shake');
+    setTimeout(function(){ midEl.classList.remove('shake'); }, 440);
+  }
+
+  /* ---------- run control ---------- */
+  function resetRun(){
+    bal = START; streak = 0; save = 1; peak = START;
+    locked = false; running = true;
+    coinEl.textContent = '$';
+    overlay.classList.remove('show');
+    update();
+  }
+
+  function endRun(busted){
+    running = false; locked = true;
+    var isBest = false;
+    if (!busted && bal > best){
+      best = bal; isBest = true;
+      try { localStorage.setItem('pennyTowerBest', String(best)); } catch(e){}
+    }
+    otitle.className = 'otitle ' + (busted ? 'lose' : 'win');
+    if (busted){
+      otitle.textContent = 'BUSTED';
+      oamt.textContent = '$0.00';
+      oamt.style.color = '#ff6b6b';
+      osub.innerHTML = 'You lost everything at <b>' + fmt(peak) + '</b>.<br>' +
+        (peak >= 64 ? 'The walk-away was right there.' : 'Cheap lesson. Go again.');
+    } else {
+      otitle.textContent = 'CASHED OUT';
+      oamt.textContent = fmt(bal);
+      oamt.style.color = '#6fe3a1';
+      osub.innerHTML = (isBest ? '🏆 <b>NEW BEST!</b><br>' : '') +
+        'You started with $1.00 and kept ' + fmt(bal) + '.<br>Peak reached: ' + fmt(peak) + '.';
+    }
+    overlay.classList.add('show');
+    update();
+  }
+
+  /* ---------- actions ---------- */
+  function flip(){
+    if (locked || !running || bal <= 0) return;
+    locked = true;
+    var bet = bal;
+
+    coinEl.textContent = '?';
+    coinEl.classList.remove('flip');
+    void coinEl.offsetWidth;
+    coinEl.classList.add('flip');
+    beep(420, 0.07, 'square', 0.05);
+
+    var win = Math.random() < 0.5;
+
+    setTimeout(function(){
+      coinEl.classList.remove('flip');
+
+      if (win){
+        bal = bet * 2;
+        if (bal > peak) peak = bal;
+        streak++;
+        coinEl.textContent = '×2';
+        pop();
+        beep(660, 0.08, 'sine', 0.07);
+        setTimeout(function(){ beep(880, 0.13, 'sine', 0.07); }, 85);
+        locked = false;
+        update();
+        return;
+      }
+
+      /* loss */
+      if (save > 0){
+        save--;
+        bal = Math.max(0.5, bet / 2);
+        streak = 0;
+        coinEl.textContent = '🛟';
+        pop();
+        beep(300, 0.18, 'triangle', 0.09);
+        setTimeout(function(){ beep(500, 0.2, 'triangle', 0.07); }, 140);
+        locked = false;
+        update();
+        return;
+      }
+
+      /* bust */
+      bal = 0; streak = 0;
+      coinEl.textContent = '✕';
+      beep(150, 0.3, 'sawtooth', 0.1);
+      shake();
+      update();
+      setTimeout(function(){ endRun(true); }, 520);
+    }, 900);
+  }
+
+  function cashOut(){
+    if (locked || !running || bal <= 0) return;
+    beep(520, 0.1, 'sine', 0.07);
+    setTimeout(function(){ beep(700, 0.1, 'sine', 0.07); }, 90);
+    setTimeout(function(){ beep(950, 0.22, 'sine', 0.07); }, 180);
+    endRun(false);
+  }
+
+  /* ---------- wire up ---------- */
+  flipBtn.addEventListener('click', flip);
+  coinEl.addEventListener('click', flip);
+  cashBtn.addEventListener('click', cashOut);
+  againBtn.addEventListener('click', resetRun);
+
+  muteBtn.addEventListener('click', function(){
+    muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.code === 'Space' || e.code === 'Enter'){ e.preventDefault(); flip(); }
+    if (e.code === 'KeyC'){ e.preventDefault(); cashOut(); }
+  });
+
+  /* show mute control only where it won't clash */
+  if (window.matchMedia('(min-width: 560px)').matches){ muteBtn.style.display = 'block'; }
+
+  resetRun();
+})();
+</script>
+</body>
+</html>
