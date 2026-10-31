@@ -114,7 +114,7 @@ body{
     <div class="bal" id="bal">$1.00</div>
     <div class="streak" id="streak"></div>
     <div class="coin" id="coin">$1</div>
-    <div class="save" id="save">🛟 1 SAVE READY</div>
+    <div class="save" id="save">◆ 1 SAVE READY</div>
   </div>
 
   <div class="bottom">
@@ -125,7 +125,7 @@ body{
 
 </div>
 
-<button class="mute" id="mute">🔊</button>
+<button class="mute" id="mute">SND</button>
 
 <div class="overlay" id="overlay">
   <div class="card">
@@ -204,7 +204,7 @@ body{
     streakEl.textContent = streak >= 2 ? '🔥 ' + streak + ' IN A ROW' : '';
     flipBtn.textContent = 'FLIP — RISK ' + fmt(bal);
     cashBtn.textContent = 'CASH OUT ' + fmt(bal);
-    saveEl.textContent = save > 0 ? '🛟 1 SAVE READY' : '🛟 SAVE USED';
+    saveEl.textContent = save > 0 ? '◆ 1 SAVE READY' : '◇ SAVE USED';
     saveEl.classList.toggle('off', save <= 0);
     var dead = bal <= 0 || !running;
     flipBtn.disabled = dead;
@@ -294,7 +294,7 @@ body{
         save--;
         bal = Math.max(0.5, bet / 2);
         streak = 0;
-        coinEl.textContent = '🛟';
+        coinEl.textContent = '◆';
         pop();
         beep(300, 0.18, 'triangle', 0.09);
         setTimeout(function(){ beep(500, 0.2, 'triangle', 0.07); }, 140);
@@ -329,7 +329,7 @@ body{
 
   muteBtn.addEventListener('click', function(){
     muted = !muted;
-    muteBtn.textContent = muted ? '🔇' : '🔊';
+    muteBtn.textContent = muted ? 'MUTE' : 'SND';
   });
 
   document.addEventListener('keydown', function(e){
