@@ -21,6 +21,17 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
   font-size:34px;font-weight:900;letter-spacing:2px;text-align:center;pointer-events:none;transition:.3s;
   text-shadow:0 0 30px rgba(94,242,168,.8),0 4px 20px #000}
 .toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#wrap.shake{animation:cshake .36s}
+@keyframes cshake{0%,100%{transform:translate(0,0)}20%{transform:translate(-6px,4px)}
+ 40%{transform:translate(5px,-4px)}60%{transform:translate(-4px,-3px)}80%{transform:translate(3px,2px)}}
+.holesel{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:330px;margin:6px 0}
+.hbtn{background:linear-gradient(180deg,#16283c,#0e1a28);border:1px solid #20374f;border-radius:14px;
+  padding:10px 6px;cursor:pointer;transition:.15s;color:#e8f1ff;font-weight:800;box-shadow:none}
+.hbtn:active{transform:scale(.95)}
+.hbtn .n{font-size:16px}
+.hbtn .s{font-size:11px;letter-spacing:1px;margin-top:2px;color:#ffd75a;height:14px}
+.hbtn .p{font-size:9.5px;color:#7f96b3;margin-top:1px}
+.hbtn.done{border-color:#2f6b53;background:linear-gradient(180deg,#14301f,#0d2116)}
 .panel{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
   gap:14px;background:rgba(4,7,15,.88);padding:24px;text-align:center;z-index:20}
 .panel.on{display:flex}
@@ -42,7 +53,7 @@ button.ghost{background:transparent;color:#7f96b3;border:1px solid #20374f;box-s
   <canvas id="cv"></canvas>
   <div class="hud">
     <div class="pill">HOLE <b id="hHole">1</b><span class="par"> · par <span id="hPar">2</span></span></div>
-    <div class="pill">STROKES <b id="hStrokes">0</b></div>
+    <div class="pill">⭐ <b id="hStars">0</b> · STROKES <b id="hStrokes">0</b></div>
   </div>
   <div class="toast" id="toast"></div>
 
@@ -59,11 +70,19 @@ button.ghost{background:transparent;color:#7f96b3;border:1px solid #20374f;box-s
     <button id="btnNext">NEXT HOLE</button>
   </div>
 
+  <div class="panel" id="pHoles">
+    <h1>HOLES</h1>
+    <p>Jump back into any hole. Stars are just for bragging rights.</p>
+    <div class="holesel" id="holeGrid"></div>
+    <button class="ghost" id="btnCloseHoles">CLOSE</button>
+  </div>
+
   <div class="panel" id="pEnd">
     <h1>ROUND <b>OVER</b></h1>
     <div class="scorecard" id="scorecard"></div>
     <p id="endLine" style="color:#5ef2a8;font-weight:800"></p>
     <button id="btnAgain">PLAY AGAIN</button>
+    <button class="ghost" id="btnHoles">PICK A HOLE</button>
   </div>
 </div>
 
@@ -127,8 +146,25 @@ const LEVELS=[
     holes:[{x:40,y:440},{x:360,y:300},{x:180,y:120},{x:260,y:600}] }
 ];
 
+/* collectible stars — 2 per hole, placed off the direct line so they cost you a shot */
+const STAR_POS=[
+  [{x:200,y:420},{x:360,y:280}],
+  [{x:200,y:180},{x:110,y:520}],
+  [{x:250,y:130},{x:60,y:520}],
+  [{x:60,y:200},{x:330,y:560}],
+  [{x:200,y:180},{x:300,y:380}],
+  [{x:200,y:320},{x:60,y:120}],
+  [{x:300,y:230},{x:60,y:400}],
+  [{x:120,y:390},{x:300,y:180}],
+  [{x:200,y:280},{x:60,y:120}]
+];
+LEVELS.forEach((L,i)=>{ L.stars=(STAR_POS[i]||[]).map(p=>({x:p.x,y:p.y,taken:false,bob:Math.random()*6.28})) });
+
 /* ---------------- STATE ---------------- */
 let li=0, strokes=0, totalStrokes=0, scores=[], phase='title';
+let starsGot=0, starsTotal=0, starPop=[];
+const holeStars=[];
+for(let i=0;i<9;i++) holeStars[i]=+(localStorage.getItem('whgolf.hole.'+i)||0);
 const ball={x:0,y:0,vx:0,vy:0,r:7,portalCd:0};
 let aiming=false, aimStart=null, aimNow=null;
 let trail=[], sinkT=0, sunk=false;
@@ -137,10 +173,12 @@ function loadHole(i){
   li=i;
   const L=LEVELS[i];
   ball.x=L.tee.x; ball.y=L.tee.y; ball.vx=0; ball.vy=0; ball.portalCd=0;
-  strokes=0; sinkT=0; sunk=false; trail=[]; aiming=false;
+  strokes=0; sinkT=0; sunk=false; trail=[]; aiming=false; fx=[]; starPop=[];
+  (L.stars||[]).forEach(st=>st.taken=false);
   document.getElementById('hHole').textContent=i+1;
   document.getElementById('hPar').textContent=L.par;
   document.getElementById('hStrokes').textContent='0';
+  updateStarHud();
 }
 
 /* ---------------- INPUT ---------------- */
@@ -213,6 +251,19 @@ function step(){
   trail.forEach(t=>t.life-=0.035);
   trail=trail.filter(t=>t.life>0);
 
+  // stars
+  for(const st of (L.stars||[])){
+    if(st.taken) continue;
+    if(Math.hypot(ball.x-st.x,ball.y-st.y)<ball.r+11){
+      st.taken=true; starsGot++; starsTotal++;
+      starPop.push({x:st.x,y:st.y,t:0});
+      burst(st.x,st.y,'#ffd75a',14);
+      beep(1180,.07); setTimeout(()=>beep(1520,.08),70);
+      buzz(14);
+      updateStarHud();
+    }
+  }
+
   // hole capture
   const hx=L.hole.x, hy=L.hole.y;
   const dh=Math.hypot(ball.x-hx,ball.y-hy);
@@ -267,7 +318,11 @@ function collide(L){
 let lastWall=0;
 function wallHit(){
   const t=performance.now();
-  if(t-lastWall>70){ lastWall=t; beep(160,.04); }
+  if(t-lastWall>70){
+    lastWall=t; beep(160,.04);
+    burst(ball.x,ball.y,'#8fc4e8',5);
+    buzz(8);
+  }
 }
 
 function portals(L){
@@ -285,7 +340,8 @@ function portals(L){
         ball.y=to.y+Math.sin(ang)*(to.r+10);
         ball.portalCd=14;
         warpFx();
-        beep(720,.09);
+        burst(to.x,to.y,'#7ee8ff',18);
+        beep(720,.09); buzz(20);
         return;
       }
     }
@@ -293,9 +349,34 @@ function portals(L){
 }
 
 /* ---------------- FX ---------------- */
-let fx=[];
+let fx=[], parts=[];
 function warpFx(){
   fx.push({x:ball.x,y:ball.y,t:0,kind:'warp'});
+}
+function burst(x,y,colour,n){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*6.283, sp=1.4+Math.random()*4.6;
+    parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,colour,r:1.5+Math.random()*2.6});
+  }
+}
+function updateParts(){
+  for(const p of parts){
+    p.x+=p.vx; p.y+=p.vy; p.vx*=0.94; p.vy*=0.94; p.life-=0.028;
+  }
+  parts=parts.filter(p=>p.life>0);
+}
+function buzz(ms){
+  try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){}
+}
+function updateStarHud(){
+  const el=document.getElementById('hStars');
+  if(el) el.textContent=starsGot;
+}
+function shakeCanvas(){
+  const w=document.getElementById('wrap');
+  if(!w) return;
+  w.classList.remove('shake'); void w.offsetWidth; w.classList.add('shake');
+  setTimeout(()=>w.classList.remove('shake'),360);
 }
 function respawn(){
   ball.x=LEVELS[li].tee.x; ball.y=LEVELS[li].tee.y;
@@ -303,10 +384,22 @@ function respawn(){
 }
 
 function sink(){
-  sunk=true; sinkT=0; ball.vx=0; ball.vy=0;
+  sunk=true; sinkT=0;
+  burst(ball.x,ball.y,'#5ef2a8',26);
+  buzz([18,40,18]);
+  shakeCanvas();
+  ball.vx=0; ball.vy=0;
   scores[li]=strokes;
   const par=LEVELS[li].par;
   const diff=strokes-par;
+
+  // per-hole stars: <=par = 3, par+1 = 2, else 1
+  const gained = strokes<=par?3 : strokes===par+1?2 : 1;
+  const key='whgolf.hole.'+li;
+  const prev=+(localStorage.getItem(key)||0);
+  if(gained>prev) localStorage.setItem(key,gained);
+  holeStars[li]=Math.max(prev,gained);
+
   let name, colour;
   if(strokes===1){name='HOLE IN ONE!';colour='#ffd75a'}
   else if(diff<=-2){name='EAGLE';colour='#ffd75a'}
@@ -314,29 +407,36 @@ function sink(){
   else if(diff===0){name='PAR';colour='#5ef2a8'}
   else if(diff===1){name='BOGEY';colour='#ffb060'}
   else {name=diff+' OVER';colour='#ff8a8a'}
-  showToast(name,colour);
+
+  const starTxt='★'.repeat(gained)+'☆'.repeat(3-gained);
+  showToast(name,colour,starTxt);
   beep(660,.1); setTimeout(()=>beep(990,.14),120);
+  if(gained===3) setTimeout(()=>beep(1320,.16),240);
+
   setTimeout(()=>{
     if(li>=LEVELS.length-1) endRound();
-    else showHolePanel(name);
-  },1300);
+    else showHolePanel(name,starTxt,gained);
+  },1450);
 }
 
-function showToast(txt,colour){
+function showToast(txt,colour,stars){
   const t=document.getElementById('toast');
-  t.textContent=txt; t.style.color=colour||'#5ef2a8';
+  t.innerHTML=txt+(stars?`<div style="font-size:22px;letter-spacing:6px;margin-top:6px;color:#ffd75a">${stars}</div>`:'');
+  t.style.color=colour||'#5ef2a8';
   t.classList.add('on');
-  setTimeout(()=>t.classList.remove('on'),1200);
+  setTimeout(()=>t.classList.remove('on'),1350);
 }
 
-function showHolePanel(result){
+function showHolePanel(result,starTxt,gained){
   const L=LEVELS[li];
   document.getElementById('hdHole').textContent='Hole '+(li+1)+' — '+result;
   const over=strokes-L.par;
   const diffTxt = over===0?'level with par':(over>0?'+'+over+' over par':Math.abs(over)+' under par');
   document.getElementById('hdText').innerHTML=
+    '<div style="font-size:26px;letter-spacing:8px;color:#ffd75a;margin-bottom:6px">'+(starTxt||'')+'</div>'+
     strokes+' stroke'+(strokes===1?'':'s')+' · '+diffTxt+
-    '<br><span style="color:#5ef2a8">Total: '+totalStrokes+' after '+(li+1)+' hole'+(li?'s':'')+'</span>';
+    '<br><span style="color:#5ef2a8">Total: '+totalStrokes+' after '+(li+1)+' hole'+(li?'s':'')+'</span>'+
+    '<br><span style="color:#ffd75a">⭐ '+starsGot+' collected</span>';
   phase='panel';
   document.getElementById('btnNext').textContent = (li>=LEVELS.length-1)?'SEE SCORECARD':'NEXT HOLE →';
   document.getElementById('pHole').classList.add('on');
@@ -356,7 +456,9 @@ function endRound(){
   else if(diff<0) line='Under par by '+Math.abs(diff)+'. Nice swinging.';
   else if(diff===0) line='Exactly par. Clean round.';
   else line=diff+' over par. The wormholes won this time.';
-  document.getElementById('endLine').textContent=line+' ('+totalStrokes+' total)';
+  const totalStars=holeStars.reduce((a,b)=>a+(b||0),0);
+  document.getElementById('endLine').innerHTML=line+' ('+totalStrokes+' total)'+
+    '<br><span style="color:#ffd75a">⭐ '+starsGot+' collected · '+totalStars+'/27 holes stars</span>';
   const best=+localStorage.getItem('whgolf.best')||999;
   if(totalStrokes<best){
     localStorage.setItem('whgolf.best',totalStrokes);
@@ -369,8 +471,10 @@ function startRound(){
   document.getElementById('pTitle').classList.remove('on');
   document.getElementById('pEnd').classList.remove('on');
   document.getElementById('pHole').classList.remove('on');
-  totalStrokes=0; scores=[]; phase='play';
+  document.getElementById('pHoles').classList.remove('on');
+  totalStrokes=0; scores=[]; starsGot=0; phase='play';
   loadHole(0);
+  updateStarHud();
 }
 
 /* ---------------- DRAW ---------------- */
@@ -419,6 +523,29 @@ function draw(){
       drawPortal(a,hue,t);
       drawPortal(b,hue,t);
     }
+
+    // stars
+    for(const st of (L.stars||[])){
+      if(st.taken) continue;
+      drawStar(st.x,st.y+Math.sin(t*2.4+st.bob)*3,t);
+    }
+
+    // star pop rings
+    for(const sp of starPop){
+      sp.t+=0.07;
+      ctx.strokeStyle=`rgba(255,215,90,${Math.max(0,1-sp.t)})`;
+      ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(sp.x,sp.y,8+sp.t*54,0,7); ctx.stroke();
+    }
+    starPop=starPop.filter(sp=>sp.t<1);
+
+    // particles
+    for(const p of parts){
+      ctx.globalAlpha=Math.max(0,p.life);
+      ctx.fillStyle=p.colour;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+    }
+    ctx.globalAlpha=1;
 
     // hole (target)
     drawHole(L.hole,t);
@@ -479,6 +606,29 @@ function roundRect(x,y,w,h,r){
   ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
   ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
   ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+}
+
+function drawStar(x,y,t){
+  const pulse=1+Math.sin(t*3+x*0.05)*0.12;
+  ctx.save();
+  ctx.translate(x,y); ctx.scale(pulse,pulse);
+  // glow
+  const gr=ctx.createRadialGradient(0,0,1,0,0,26);
+  gr.addColorStop(0,'rgba(255,215,90,.75)');
+  gr.addColorStop(1,'rgba(255,215,90,0)');
+  ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(0,0,26,0,7); ctx.fill();
+  // star
+  ctx.beginPath();
+  for(let i=0;i<10;i++){
+    const ang=-Math.PI/2+i*Math.PI/5;
+    const rad=i%2?4.6:11;
+    const px=Math.cos(ang)*rad, py=Math.sin(ang)*rad;
+    i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+  }
+  ctx.closePath();
+  ctx.fillStyle='#ffd75a'; ctx.fill();
+  ctx.strokeStyle='#8a6a10'; ctx.lineWidth=1.2; ctx.stroke();
+  ctx.restore();
 }
 
 function drawHole(h,t){
@@ -555,11 +705,41 @@ function loop(now){
     let guard=0;
     while(acc>=16.6667 && guard++<5){ step(); acc-=16.6667; }
   }
+  updateParts();
   draw();
   requestAnimationFrame(loop);
 }
 
 /* ---------------- BOOT ---------------- */
+function buildHoleGrid(){
+  const g=document.getElementById('holeGrid');
+  g.innerHTML='';
+  LEVELS.forEach((L,i)=>{
+    const st=holeStars[i]||0;
+    const b=document.createElement('div');
+    b.className='hbtn'+(st?' done':'');
+    b.innerHTML=`<div class="n">${i+1}</div>
+      <div class="s">${st?'★'.repeat(st)+'☆'.repeat(3-st):'☆☆☆'}</div>
+      <div class="p">par ${L.par}</div>`;
+    b.onclick=()=>{
+      document.getElementById('pHoles').classList.remove('on');
+      document.getElementById('pEnd').classList.remove('on');
+      document.getElementById('pTitle').classList.remove('on');
+      document.getElementById('pHole').classList.remove('on');
+      loadHole(i);
+      phase='play';
+    };
+    g.appendChild(b);
+  });
+}
+document.getElementById('btnHoles').onclick=()=>{ buildHoleGrid(); document.getElementById('pEnd').classList.remove('on'); document.getElementById('pHoles').classList.add('on'); };
+document.getElementById('btnCloseHoles').onclick=()=>document.getElementById('pHoles').classList.remove('on');
+
+/* tap the HUD hole number to open hole select mid-round */
+document.querySelector('.hud').addEventListener('click',()=>{
+  if(phase==='play'||phase==='panel'||phase==='end'){ buildHoleGrid(); document.getElementById('pHoles').classList.add('on'); }
+});
+
 document.getElementById('btnStart').onclick=startRound;
 document.getElementById('btnAgain').onclick=startRound;
 document.getElementById('btnNext').onclick=()=>{
@@ -577,7 +757,8 @@ loadHole(0);
 phase='title';
 requestAnimationFrame(loop);
 window.__whgolf={get phase(){return phase}, get li(){return li}, get ball(){return ball}, LEVELS, loadHole, startRound, step,
-  forceSink(){sink()}, setPhase(p){phase=p}};
+  forceSink(){sink()}, setPhase(p){phase=p}, get starsGot(){return starsGot}, get parts(){return parts},
+  get holeStars(){return holeStars}, buildHoleGrid};
 </script>
 </body>
 </html>
