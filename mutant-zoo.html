@@ -269,108 +269,127 @@ const SURF_POOL=['o','us','ax','ith','orp','oid','ling','apod','zilla','mite','o
 
 /* ============ SVG RENDERER ============ */
 let cid=0;
-function shapeFor(t,fill,extra){
+
+function bodyShape(t,fill,extra){
   const f=`fill="${fill}" ${extra||''}`;
   switch(t){
-    case 'blob': return `<ellipse cx="60" cy="74" rx="35" ry="27" ${f}/>`;
-    case 'tall': return `<rect x="36" y="44" width="48" height="58" rx="22" ${f}/>`;
-    case 'wide': return `<ellipse cx="60" cy="80" rx="44" ry="21" ${f}/>`;
-    case 'bug':  return `<circle cx="60" cy="72" r="30" ${f}/>`;
-    case 'slug': return `<path d="M18 94 Q18 56 60 56 Q102 56 102 94 Z" ${f}/>`;
-    default:     return `<ellipse cx="60" cy="74" rx="35" ry="27" ${f}/>`;
+    case 'blob': return `<ellipse cx="60" cy="74" rx="34" ry="26" ${f}/>`;
+    case 'tall': return `<rect x="36" y="46" width="48" height="54" rx="22" ${f}/>`;
+    case 'wide': return `<ellipse cx="60" cy="79" rx="43" ry="22" ${f}/>`;
+    case 'bug':  return `<circle cx="60" cy="73" r="28" ${f}/>`;
+    case 'slug': return `<path d="M17 98 Q17 54 60 54 Q103 54 103 98 Z" ${f}/>`;
+    default:     return `<ellipse cx="60" cy="74" rx="34" ry="26" ${f}/>`;
   }
+}
+
+/* head top y for each head shape */
+const HEADTOP={round:9,dome:8,blocky:10,spiky:6};
+
+function headShape(t,fill,line){
+  const st=`fill="${fill}" stroke="${line}" stroke-width="2" stroke-linejoin="round"`;
+  switch(t){
+    case 'round': return `<circle cx="60" cy="31" r="22" ${st}/>`;
+    case 'dome':  return `<path d="M38 52 L38 30 A22 22 0 0 1 82 30 L82 52 Z" ${st}/>`;
+    case 'blocky':return `<rect x="36" y="10" width="48" height="42" rx="12" ${st}/>`;
+    case 'spiky': return `<path d="M60 6 L76 17 L86 32 L76 52 L44 52 L34 32 L44 17 Z" ${st}/>`;
+  }
+  return '';
+}
+
+function neckFor(body,accent,dark){
+  return `<rect x="50" y="40" width="20" height="26" rx="9" fill="${body}" stroke="${dark}" stroke-width="2"/>`;
 }
 
 function legsFor(g,accent,dark){
   const n={none:0,two:2,four:4,six:6,tentacle:3}[g.limbs];
   if(!n) return '';
-  let out='';
   if(g.limbs==='tentacle'){
-    for(let i=0;i<3;i++){
-      const x=42+i*18;
-      out+=`<path d="M${x} 92 q ${i===1?0:-6} 14 ${i===2?-4:4} 18" stroke="${accent}" stroke-width="7" stroke-linecap="round" fill="none"/>`;
+    let o='';
+    for(let i=0;i<4;i++){
+      const x=38+i*15;
+      o+=`<path d="M${x} 92 q ${i%2?8:-8} 12 ${i%2?4:-4} 18" stroke="${accent}" stroke-width="7" stroke-linecap="round" fill="none"/>`;
     }
-    return out;
+    return o;
   }
-  const spread = n===2?[-20,20]:n===4?[-26,-9,9,26]:[-30,-18,-6,6,18,30];
+  const y = g.body==='wide'||g.body==='slug' ? 92 : 90;
+  const spread = n===2?[-18,18]:n===4?[-24,-9,9,24]:[-27,-16,-5,5,16,27];
+  let out='';
   for(const dx of spread){
-    out+=`<rect x="${60+dx-4}" y="90" width="8" height="16" rx="4" fill="${dark}"/>`;
+    out+=`<rect x="${60+dx-4}" y="${y}" width="8" height="${n===6?15:16}" rx="4" fill="${dark}"/>`;
   }
   return out;
 }
 
 function tailFor(g,accent){
   if(g.tail==='none') return '';
-  if(g.tail==='curl') return `<path d="M27 74 q -22 -6 -18 -22 q 3 -12 13 -9" stroke="${accent}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
-  if(g.tail==='spike') return `<path d="M28 72 L4 60 L22 84 Z" fill="${accent}"/>`;
-  return `<ellipse cx="16" cy="66" rx="14" ry="10" fill="${accent}"/><ellipse cx="8" cy="58" rx="8" ry="7" fill="${accent}"/>`;
+  if(g.tail==='curl') return `<path d="M28 74 q -20 -4 -17 -20 q 2 -11 12 -8" stroke="${accent}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  if(g.tail==='spike') return `<path d="M29 72 L6 58 L23 86 Z" fill="${accent}" stroke="${accent}" stroke-width="2" stroke-linejoin="round"/>`;
+  return `<ellipse cx="17" cy="68" rx="13" ry="9" fill="${accent}"/><circle cx="9" cy="60" r="7" fill="${accent}"/>`;
 }
 
 function patternFor(g,accent,id){
   if(g.pattern==='none') return '';
   let inner='';
   if(g.pattern==='spots'){
-    const pts=[[46,66,5],[66,60,4],[78,78,6],[52,88,4],[70,88,3],[38,80,3]];
+    const pts=[[46,64,5],[68,58,4],[79,76,6],[52,86,4],[71,88,3],[37,80,3],[60,72,3]];
     inner=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="${p[2]}" fill="${accent}" opacity=".85"/>`).join('');
   } else if(g.pattern==='stripes'){
-    inner=[0,1,2,3].map(i=>`<rect x="${38+i*14}" y="40" width="7" height="70" fill="${accent}" opacity=".8" transform="rotate(6 60 70)"/>`).join('');
+    inner=[0,1,2,3].map(i=>`<rect x="${38+i*14}" y="36" width="7" height="80" fill="${accent}" opacity=".85"/>`).join('');
   } else {
-    for(let r=0;r<5;r++)for(let c=0;c<5;c++){
-      if((r+c)%2===0) inner+=`<rect x="${30+c*15}" y="${44+r*13}" width="13" height="11" fill="${accent}" opacity=".55"/>`;
+    for(let r=0;r<7;r++)for(let c=0;c<6;c++){
+      if((r+c)%2===0) inner+=`<rect x="${28+c*15}" y="${34+r*12}" width="13" height="11" fill="${accent}" opacity=".5"/>`;
     }
   }
   return `<g clip-path="url(#cp${id})">${inner}</g>`;
 }
 
 function eyesFor(g,dark,white){
-  const cy=36;
-  const eye=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${white}"/><circle cx="${x}" cy="${y+1}" r="${r*0.5}" fill="${dark}"/><circle cx="${x-r*0.25}" cy="${y-r*0.3}" r="${r*0.2}" fill="#fff" opacity=".9"/>`;
+  const cy=31;
+  const eye=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${white}" stroke="${dark}" stroke-width="1.2"/>
+    <circle cx="${x}" cy="${y+0.5}" r="${r*0.52}" fill="${dark}"/>
+    <circle cx="${x-r*0.28}" cy="${y-r*0.3}" r="${r*0.22}" fill="#fff" opacity=".95"/>`;
   switch(g.eyes){
     case 'one':   return eye(60,cy,11);
-    case 'two':   return eye(50,cy,7.5)+eye(70,cy,7.5);
-    case 'three': return eye(45,cy+2,5.5)+eye(60,cy-2,6.5)+eye(75,cy+2,5.5);
-    case 'big':   return eye(50,cy,10)+eye(70,cy,10);
+    case 'two':   return eye(51,cy,7)+eye(69,cy,7);
+    case 'three': return eye(46,cy+3,5)+eye(60,cy-2,6)+eye(74,cy+3,5);
+    case 'big':   return eye(50,cy,9)+eye(70,cy,9);
     case 'stalk':
-      return `<path d="M50 30 L44 16" stroke="${dark}" stroke-width="4" stroke-linecap="round"/>
-              <path d="M70 30 L76 16" stroke="${dark}" stroke-width="4" stroke-linecap="round"/>
-              ${eye(44,14,7)}${eye(76,14,7)}`;
-  }
-  return '';
-}
-
-function headFor(g,body,line){
-  switch(g.head){
-    case 'round': return `<circle cx="60" cy="34" r="21" fill="${body}" stroke="${line}" stroke-width="2"/>`;
-    case 'dome':  return `<path d="M39 44 a21 21 0 0 1 42 0 z" fill="${body}" stroke="${line}" stroke-width="2"/>`;
-    case 'blocky':return `<rect x="40" y="15" width="40" height="36" rx="10" fill="${body}" stroke="${line}" stroke-width="2"/>`;
-    case 'spiky': return `<path d="M60 10 L74 20 L84 34 L76 52 L44 52 L36 34 L46 20 Z" fill="${body}" stroke="${line}" stroke-width="2"/>`;
+      return `<path d="M51 26 L46 14" stroke="${dark}" stroke-width="4" stroke-linecap="round"/>
+              <path d="M69 26 L74 14" stroke="${dark}" stroke-width="4" stroke-linecap="round"/>
+              ${eye(46,12,6.5)}${eye(74,12,6.5)}`;
   }
   return '';
 }
 
 function hornsFor(g,accent){
+  const hy=HEADTOP[g.head]||9;
   switch(g.horns){
     case 'none': return '';
-    case 'two': return `<path d="M46 18 L42 4 L54 14 Z" fill="${accent}"/><path d="M74 18 L78 4 L66 14 Z" fill="${accent}"/>`;
-    case 'one': return `<path d="M60 12 L54 0 L66 0 Z" fill="${accent}"/>`;
-    case 'antlers': return `<path d="M48 18 q -10 -12 -4 -18 M48 18 q -14 -4 -18 -2" stroke="${accent}" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <path d="M72 18 q 10 -12 4 -18 M72 18 q 14 -4 18 -2" stroke="${accent}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+    case 'two':
+      return `<path d="M49 ${hy+7} L43 ${hy-7} L57 ${hy+3} Z" fill="${accent}"/>
+              <path d="M71 ${hy+7} L77 ${hy-7} L63 ${hy+3} Z" fill="${accent}"/>`;
+    case 'one':
+      return `<path d="M60 ${hy+3} L53 ${hy-13} L67 ${hy-13} Z" fill="${accent}"/>`;
+    case 'antlers':
+      return `<path d="M50 ${hy+8} q -9 -13 -3 -20 M50 ${hy+8} q -13 -3 -17 1" stroke="${accent}" stroke-width="4" fill="none" stroke-linecap="round"/>
+              <path d="M70 ${hy+8} q 9 -13 3 -20 M70 ${hy+8} q 13 -3 17 1" stroke="${accent}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
   }
   return '';
 }
 
 function render(g,cls){
   const id=++cid;
-  const p=PAL[g.palette%PAL.length];
+  const p=PAL[((g.palette|0)+PAL.length)%PAL.length];
   const body=p[0], accent=p[1], dark=p[2];
-  const line=dark;
-  return `<svg viewBox="0 0 120 112" class="${cls||''}" xmlns="http://www.w3.org/2000/svg">
-    <defs><clipPath id="cp${id}">${shapeFor(g.body,'#000')}</clipPath></defs>
+  const outline=`stroke="${dark}" stroke-width="2"`;
+  return `<svg viewBox="0 -18 120 126" class="${cls||''}" xmlns="http://www.w3.org/2000/svg">
+    <defs><clipPath id="cp${id}">${bodyShape(g.body,'#000')}</clipPath></defs>
     ${tailFor(g,accent)}
     ${legsFor(g,accent,dark)}
-    ${shapeFor(g.body,body,`stroke="${line}" stroke-width="2"`)}
+    ${bodyShape(g.body,body,outline)}
     ${patternFor(g,accent,id)}
-    ${headFor(g,body,line)}
+    ${neckFor(body,accent,dark)}
+    ${headShape(g.head,body,dark)}
     ${hornsFor(g,accent)}
     ${eyesFor(g,dark,'#ffffff')}
   </svg>`;
