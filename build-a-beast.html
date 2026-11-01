@@ -7,7 +7,8 @@
 <title>Build a Beast</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;overflow:hidden}
+html,body{margin:0;height:100%;height:100dvh;overflow:hidden}
+#app{height:100%;height:100dvh}
 body{background:radial-gradient(900px 600px at 50% -10%,#2a1740 0%,#0f0a1a 55%,#07050d 100%);
   color:#eef0ff;font-family:ui-rounded,'Segoe UI',system-ui,-apple-system,sans-serif;user-select:none;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
@@ -449,7 +450,23 @@ function boot(){
   $('hBest').textContent=bst.best;
   const grid=$('pickGrid');
   if(!beasts.length){
-    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#9a90b8;font-size:13px;padding:30px 12px;line-height:1.7">No beasts found.<br>Go to <b>Mutant Zoo</b>, splice a couple, then come back here — your zoo is your army.</div>';
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#9a90b8;font-size:13px;padding:22px 12px;line-height:1.7">Your Mutant Zoo is empty on this device.<br>Either go splice a couple in <b>Mutant Zoo</b>, or grab a random beast below.</div>';
+    // give them a way in anyway
+    const d=document.createElement('div');
+    d.className='pcard';
+    const wild=newGenome();
+    wild.name='Wild '+wild.name;
+    d.innerHTML=render(wild)+`<div class="nm">RANDOM</div>`;
+    d.onclick=()=>{
+      beasts=[wild];
+      picked=0;
+      [...grid.children].forEach(c=>c.classList.remove('sel'));
+      d.classList.add('sel');
+      $('btnGo').disabled=false;
+      $('btnGo').textContent='FIGHT AS '+wild.name.toUpperCase();
+      beep(520,.05);
+    };
+    grid.appendChild(d);
     $('btnGo').disabled=true;
     return;
   }
@@ -468,6 +485,21 @@ function boot(){
     };
     grid.appendChild(d);
   });
+  // always offer one wild card
+  const rand=document.createElement('div');
+  rand.className='pcard';
+  rand.style.borderColor='#4a3a6e';
+  const rw=newGenome(); rw.name='Wild '+rw.name;
+  rand.innerHTML=render(rw)+`<div class="nm">🎲 RANDOM</div>`;
+  rand.onclick=()=>{
+    beasts.push(rw); picked=beasts.length-1;
+    [...grid.children].forEach(c=>c.classList.remove('sel'));
+    rand.classList.add('sel');
+    $('btnGo').disabled=false;
+    $('btnGo').textContent='FIGHT AS '+rw.name.toUpperCase();
+    beep(520,.05);
+  };
+  grid.appendChild(rand);
 }
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
@@ -691,6 +723,11 @@ function beep(freq,dur){
     o.start(); o.stop(actx.currentTime+dur);
   }catch(e){}
 }
+
+window.addEventListener('error',e=>{
+  const t=document.getElementById('toast');
+  if(t){ t.textContent='Something broke: '+e.message; t.classList.add('on'); }
+});
 
 boot();
 window.__bab={get P(){return P}, get E(){return E}, statsOf, specialOf, makeEnemy, startWave, playerMove,
