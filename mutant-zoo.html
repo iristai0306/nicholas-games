@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="theme-color" content="#0a1220"/>
+<title>Mutant Zoo</title>
+<style>
+:root{
+  --bg:#0a1220; --panel:#111c2e; --panel2:#16243a; --line:#22374f;
+  --txt:#e8f1ff; --dim:#7f96b3; --acc:#5ef2a8; --acc2:#59c4ff; --warn:#ffcf5a;
+  --leg:#ff9de0;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:radial-gradient(1200px 700px at 50% -10%,#17364f 0%,#0a1220 55%,#060b13 100%);
+  color:var(--txt);font-family:ui-rounded,'Segoe UI',system-ui,-apple-system,sans-serif;
+  overscroll-behavior:none;user-select:none;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+#app{display:flex;flex-direction:column;height:100%;max-width:820px;margin:0 auto}
+
+header{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:12px 14px 10px;
+}
+.logo{font-weight:800;font-size:18px;letter-spacing:.5px}
+.logo b{color:var(--acc)}
+.hstat{font-size:12px;color:var(--dim);text-align:right;line-height:1.35}
+.hstat b{color:var(--txt);font-size:14px}
+
+#zoo{
+  flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));
+  gap:10px;padding:6px 14px 120px;align-content:start;
+}
+.cell{
+  position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid var(--line);border-radius:16px;padding:6px 4px 4px;
+  display:flex;flex-direction:column;align-items:center;transition:.16s;
+  cursor:pointer;
+}
+.cell:active{transform:scale(.95)}
+.cell svg{width:100%;height:auto;display:block}
+.cell .nm{font-size:10px;color:var(--dim);margin-top:-2px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell.sel{border-color:var(--acc);box-shadow:0 0 0 2px rgba(94,242,168,.35),0 0 22px rgba(94,242,168,.25)}
+.cell.sel::after{
+  content:'✓';position:absolute;top:4px;right:6px;font-size:12px;color:#04220f;
+  background:var(--acc);width:17px;height:17px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:900;
+}
+.cell.r-uncommon{border-color:#3d7a5c}
+.cell.r-rare{border-color:#7d5fd6;box-shadow:0 0 16px rgba(125,95,214,.28)}
+.cell.r-legendary{border-color:#ffcf5a;box-shadow:0 0 22px rgba(255,207,90,.35)}
+
+footer{
+  position:fixed;left:0;right:0;bottom:0;padding:10px 14px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(10,18,32,0),rgba(8,14,24,.96) 38%);
+  display:flex;gap:10px;justify-content:center;
+}
+.btn{
+  border:none;border-radius:14px;padding:14px 18px;font-weight:800;font-size:15px;
+  font-family:inherit;letter-spacing:.4px;cursor:pointer;transition:.15s;
+  background:linear-gradient(180deg,#2a425f,#1b2c42);color:var(--txt);
+  border:1px solid #2e4760;flex:1;max-width:340px;
+}
+.btn:active{transform:scale(.97)}
+.btn.go{background:linear-gradient(180deg,#5ef2a8,#28b477);color:#04220f;border-color:#7bffc0;box-shadow:0 6px 22px rgba(94,242,168,.28)}
+.btn.go:disabled{background:#1a2637;color:#4c6382;box-shadow:none;border-color:#22374f}
+.btn.ghost{background:transparent;color:var(--dim);border:1px solid var(--line);flex:0 0 auto;padding:14px 16px}
+
+/* overlay screens */
+.screen{
+  position:fixed;inset:0;z-index:40;display:none;flex-direction:column;
+  background:radial-gradient(900px 600px at 50% 0%,#173a54,#0a1220 60%,#060b13);
+  padding:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom));
+}
+.screen.on{display:flex;animation:fade .18s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.screen h2{margin:6px 0 2px;font-size:20px;text-align:center}
+.screen .sub{text-align:center;color:var(--dim);font-size:12px;margin-bottom:10px}
+.stage{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  min-height:0;position:relative;
+}
+.stage .slot{
+  flex:1;max-width:200px;display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.stage .slot svg{width:100%;height:auto;max-height:26vh}
+.plus{font-size:26px;color:var(--dim);font-weight:900}
+.slot .cap{font-size:11px;color:var(--dim);text-align:center;line-height:1.3}
+
+.resultWrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:0}
+#resSvg{width:min(64vw,300px);height:auto;filter:drop-shadow(0 12px 30px rgba(0,0,0,.55))}
+#resSvg.pop{animation:pop .55s cubic-bezier(.2,1.5,.4,1)}
+@keyframes pop{0%{transform:scale(.2) rotate(-14deg);opacity:0}60%{transform:scale(1.08) rotate(3deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+#resName{font-size:22px;font-weight:900;letter-spacing:.4px}
+#resRar{font-size:12px;font-weight:800;letter-spacing:2px;padding:5px 14px;border-radius:99px}
+.r-common{color:#9fb4cc;background:rgba(159,180,204,.14)}
+.r-uncommon{color:var(--acc);background:rgba(94,242,168,.14)}
+.r-rare{color:#b39dff;background:rgba(125,95,214,.2)}
+.r-legendary{color:var(--warn);background:rgba(255,207,90,.16);box-shadow:0 0 22px rgba(255,207,90,.3)}
+.traitlist{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:0 10px}
+.chip{font-size:10px;letter-spacing:.3px;color:var(--dim);background:rgba(255,255,255,.05);
+  border:1px solid var(--line);padding:4px 9px;border-radius:99px;text-transform:uppercase}
+.chip.new{color:#04220f;background:var(--acc);border-color:var(--acc);font-weight:800}
+
+.rowbtns{display:flex;gap:10px;margin-top:10px}
+
+/* detail sheet */
+#detail{justify-content:flex-start}
+#detSvg{width:min(46vw,190px);height:auto;margin:0 auto;display:block}
+.detrow{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.detrow span:first-child{color:var(--dim);text-transform:capitalize}
+.detrow span:last-child{font-weight:700}
+#detTraits{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:10px 0;background:rgba(255,255,255,.02)}
+
+.toast{
+  position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);
+  background:rgba(20,32,50,.96);border:1px solid var(--line);color:var(--txt);
+  padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;
+  transition:.25s;pointer-events:none;z-index:80;white-space:nowrap;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{grid-column:1/-1;text-align:center;color:var(--dim);font-size:13px;padding:40px 20px;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">🧬 MUTANT<b>ZOO</b></div>
+    <div class="hstat">
+      <b id="statCount">0</b> specimens · <b id="statDex">0</b> genes<br>
+      <span id="statRare"></span>
+    </div>
+  </header>
+  <main id="zoo"></main>
+  <footer>
+    <button class="btn ghost" id="btnHelp">?</button>
+    <button class="btn go" id="btnSplice" disabled>SPLICE 2 SPECIMENS</button>
+  </footer>
+</div>
+
+<!-- SPLICE CONFIRM -->
+<div class="screen" id="scrSplice">
+  <h2>Splice</h2>
+  <div class="sub">Two parents, one result. Traits split 50/50 — and sometimes mutate.</div>
+  <div class="stage" id="spliceStage"></div>
+  <div class="rowbtns">
+    <button class="btn ghost" id="scCancel" style="flex:1;max-width:none">CANCEL</button>
+    <button class="btn go" id="scGo" style="flex:2;max-width:none">SPLICE</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="scrResult">
+  <h2 id="resTitle">New specimen</h2>
+  <div class="resultWrap">
+    <div id="resSvg"></div>
+    <div id="resName">—</div>
+    <div id="resRar" class="r-common">COMMON</div>
+    <div class="traitlist" id="resTraits"></div>
+  </div>
+  <div class="rowbtns">
+    <button class="btn ghost" id="rsDrop" style="flex:1;max-width:none">DISCARD</button>
+    <button class="btn go" id="rsKeep" style="flex:2;max-width:none">ADD TO ZOO</button>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div class="screen" id="detail">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <button class="btn ghost" id="dtBack" style="padding:8px 14px;flex:0 0 auto">‹ Back</button>
+    <span class="chip" id="dtRar">COMMON</span>
+  </div>
+  <div id="detSvg"></div>
+  <h2 id="detName" style="margin-top:0">—</h2>
+  <div id="detTraits"></div>
+  <div class="rowbtns">
+    <button class="btn ghost" id="dtRename" style="flex:1;max-width:none">RENAME</button>
+    <button class="btn ghost" id="dtRelease" style="flex:1;max-width:none;color:#ff8a8a;border-color:#4a2530">RELEASE</button>
+  </div>
+</div>
+
+<!-- HELP -->
+<div class="screen" id="help">
+  <h2>How it works</h2>
+  <div class="sub" style="text-align:left;line-height:1.7;padding:0 8px;font-size:13px">
+    <p>1. Tap <b>two</b> specimens in your zoo.</p>
+    <p>2. Hit <b>SPLICE</b>. The baby inherits each trait from one parent.</p>
+    <p>3. Every trait has a <b>14%</b> chance to <b>mutate</b> into something neither parent has.</p>
+    <p>4. More mutations = rarer + more valuable:</p>
+    <p style="margin-left:14px">
+      <span class="chip">COMMON 0-1</span> <span class="chip new">UNCOMMON 2</span>
+      <span class="chip">RARE 3</span> <span class="chip">LEGENDARY 4+</span>
+    </p>
+    <p>5. Zoo caps at <b>40</b>. Release the boring ones to keep splicing.</p>
+    <p>6. <b>Hold</b> a specimen to inspect, rename, or release it.</p>
+    <p style="color:#7f96b3">Tip: two legendary parents won't make a legendary. Mutation is random — the only way to get one is to keep splicing. Legendary is roughly 1 in 60 births.</p>
+  </div>
+  <div class="rowbtns"><button class="btn go" id="hpClose" style="flex:1;max-width:none">GOT IT</button></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ TRAITS ============ */
+const T = {
+  body:    ['blob','tall','wide','bug','slug'],
+  head:    ['round','dome','blocky','spiky'],
+  eyes:    ['one','two','three','big','stalk'],
+  limbs:   ['none','two','four','six','tentacle'],
+  pattern: ['none','spots','stripes','checker'],
+  horns:   ['none','two','one','antlers'],
+  tail:    ['none','curl','spike','bushy'],
+  palette: [0,1,2,3,4,5,6,7]
+};
+const KEYS = Object.keys(T);
+
+const PAL = [
+  ['#7ef2a1','#2fa96b','#0d3b23'], // 0 mint
+  ['#8fd4ff','#2f8dc4','#0b2b3d'], // 1 sky
+  ['#ffb3d1','#e2649c','#3d0b22'], // 2 pink
+  ['#ffd98f','#d99a2b','#3d2a05'], // 3 gold
+  ['#c9a7ff','#7d4fd6','#1f0b3d'], // 4 violet
+  ['#ff9c8f','#d14634','#3d0f0a'], // 5 coral
+  ['#bdf2e6','#4fb3a3','#0b3330'], // 6 teal
+  ['#d8d8e8','#8a8aa0','#24242e'], // 7 bone
+];
+const PALNAMES=['MINT','SKY','ROSE','GOLD','VIOLET','CORAL','TEAL','BONE'];
+
+const MAXZOO=40, MUT=0.14;
+
+/* ============ GENOME ============ */
+let uid=1;
+function randOf(a){return a[Math.floor(Math.random()*a.length)]}
+function newGenome(){
+  const g={id:uid++};
+  for(const k of KEYS) g[k]=randOf(T[k]);
+  g.name=nameFor(g);
+  return g;
+}
+function hash(g){
+  return KEYS.map(k=>g[k]).join('|');
+}
+function rarityOf(child,a,b){
+  let m=0;
+  for(const k of KEYS) if(child[k]!==a[k] && child[k]!==b[k]) m++;
+  if(m>=4) return {key:'legendary',label:'LEGENDARY',muts:m};
+  if(m===3) return {key:'rare',label:'RARE',muts:m};
+  if(m===2) return {key:'uncommon',label:'UNCOMMON',muts:m};
+  return {key:'common',label:'COMMON',muts:m};
+}
+
+/* ============ NAMES ============ */
+const PRE=['Gloop','Zorp','Blix','Murk','Snib','Quaz','Vex','Wob','Grub','Flomp','Kron','Nub','Thwack','Yip','Bleb','Snorp','Zib','Mung','Flark','Grib'];
+const SUF=['o','us','ax','ith','orp','oid','ling','apod','zilla','mite','on','ux','el','ara','og'];
+function nameFor(g){
+  const p=PRE[(g.body?T.body.indexOf(g.body):0)*3%PRE.length];
+  let n=p+SURF();
+  return n.charAt(0).toUpperCase()+n.slice(1);
+}
+function SURF(){
+  const s=SURF_POOL[Math.floor(Math.random()*SURF_POOL.length)];
+  return s;
+}
+const SURF_POOL=['o','us','ax','ith','orp','oid','ling','apod','zilla','mite','on','ux','el','ara','og','ik','ump'];
+
+/* ============ SVG RENDERER ============ */
+let cid=0;
+function shapeFor(t,fill,extra){
+  const f=`fill="${fill}" ${extra||''}`;
+  switch(t){
+    case 'blob': return `<ellipse cx="60" cy="74" rx="35" ry="27" ${f}/>`;
+    case 'tall': return `<rect x="36" y="44" width="48" height="58" rx="22" ${f}/>`;
+    case 'wide': return `<ellipse cx="60" cy="80" rx="44" ry="21" ${f}/>`;
+    case 'bug':  return `<circle cx="60" cy="72" r="30" ${f}/>`;
+    case 'slug': return `<path d="M18 94 Q18 56 60 56 Q102 56 102 94 Z" ${f}/>`;
+    default:     return `<ellipse cx="60" cy="74" rx="35" ry="27" ${f}/>`;
+  }
+}
+
+function legsFor(g,accent,dark){
+  const n={none:0,two:2,four:4,six:6,tentacle:3}[g.limbs];
+  if(!n) return '';
+  let out='';
+  if(g.limbs==='tentacle'){
+    for(let i=0;i<3;i++){
+      const x=42+i*18;
+      out+=`<path d="M${x} 92 q ${i===1?0:-6} 14 ${i===2?-4:4} 18" stroke="${accent}" stroke-width="7" stroke-linecap="round" fill="none"/>`;
+    }
+    return out;
+  }
+  const spread = n===2?[-20,20]:n===4?[-26,-9,9,26]:[-30,-18,-6,6,18,30];
+  for(const dx of spread){
+    out+=`<rect x="${60+dx-4}" y="90" width="8" height="16" rx="4" fill="${dark}"/>`;
+  }
+  return out;
+}
+
+function tailFor(g,accent){
+  if(g.tail==='none') return '';
+  if(g.tail==='curl') return `<path d="M27 74 q -22 -6 -18 -22 q 3 -12 13 -9" stroke="${accent}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  if(g.tail==='spike') return `<path d="M28 72 L4 60 L22 84 Z" fill="${accent}"/>`;
+  return `<ellipse cx="16" cy="66" rx="14" ry="10" fill="${accent}"/><ellipse cx="8" cy="58" rx="8" ry="7" fill="${accent}"/>`;
+}
+
+function patternFor(g,accent,id){
+  if(g.pattern==='none') return '';
+  let inner='';
+  if(g.pattern==='spots'){
+    const pts=[[46,66,5],[66,60,4],[78,78,6],[52,88,4],[70,88,3],[38,80,3]];
+    inner=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="${p[2]}" fill="${accent}" opacity=".85"/>`).join('');
+  } else if(g.pattern==='stripes'){
+    inner=[0,1,2,3].map(i=>`<rect x="${38+i*14}" y="40" width="7" height="70" fill="${accent}" opacity=".8" transform="rotate(6 60 70)"/>`).join('');
+  } else {
+    for(let r=0;r<5;r++)for(let c=0;c<5;c++){
+      if((r+c)%2===0) inner+=`<rect x="${30+c*15}" y="${44+r*13}" width="13" height="11" fill="${accent}" opacity=".55"/>`;
+    }
+  }
+  return `<g clip-path="url(#cp${id})">${inner}</g>`;
+}
+
+function eyesFor(g,dark,white){
+  const cy=36;
+  const eye=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${white}"/><circle cx="${x}" cy="${y+1}" r="${r*0.5}" fill="${dark}"/><circle cx="${x-r*0.25}" cy="${y-r*0.3}" r="${r*0.2}" fill="#fff" opacity=".9"/>`;
+  switch(g.eyes){
+    case 'one':   return eye(60,cy,11);
+    case 'two':   return eye(50,cy,7.5)+eye(70,cy,7.5);
+    case 'three': return eye(45,cy+2,5.5)+eye(60,cy-2,6.5)+eye(75,cy+2,5.5);
+    case 'big':   return eye(50,cy,10)+eye(70,cy,10);
+    case 'stalk':
+      return `<path d="M50 30 L44 16" stroke="${dark}" stroke-width="4" stroke-linecap="round"/>
+              <path d="M70 30 L76 16" stroke="${dark}" stroke-width="4" stroke-linecap="round"/>
+              ${eye(44,14,7)}${eye(76,14,7)}`;
+  }
+  return '';
+}
+
+function headFor(g,body,line){
+  switch(g.head){
+    case 'round': return `<circle cx="60" cy="34" r="21" fill="${body}" stroke="${line}" stroke-width="2"/>`;
+    case 'dome':  return `<path d="M39 44 a21 21 0 0 1 42 0 z" fill="${body}" stroke="${line}" stroke-width="2"/>`;
+    case 'blocky':return `<rect x="40" y="15" width="40" height="36" rx="10" fill="${body}" stroke="${line}" stroke-width="2"/>`;
+    case 'spiky': return `<path d="M60 10 L74 20 L84 34 L76 52 L44 52 L36 34 L46 20 Z" fill="${body}" stroke="${line}" stroke-width="2"/>`;
+  }
+  return '';
+}
+
+function hornsFor(g,accent){
+  switch(g.horns){
+    case 'none': return '';
+    case 'two': return `<path d="M46 18 L42 4 L54 14 Z" fill="${accent}"/><path d="M74 18 L78 4 L66 14 Z" fill="${accent}"/>`;
+    case 'one': return `<path d="M60 12 L54 0 L66 0 Z" fill="${accent}"/>`;
+    case 'antlers': return `<path d="M48 18 q -10 -12 -4 -18 M48 18 q -14 -4 -18 -2" stroke="${accent}" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M72 18 q 10 -12 4 -18 M72 18 q 14 -4 18 -2" stroke="${accent}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+  }
+  return '';
+}
+
+function render(g,cls){
+  const id=++cid;
+  const p=PAL[g.palette%PAL.length];
+  const body=p[0], accent=p[1], dark=p[2];
+  const line=dark;
+  return `<svg viewBox="0 0 120 112" class="${cls||''}" xmlns="http://www.w3.org/2000/svg">
+    <defs><clipPath id="cp${id}">${shapeFor(g.body,'#000')}</clipPath></defs>
+    ${tailFor(g,accent)}
+    ${legsFor(g,accent,dark)}
+    ${shapeFor(g.body,body,`stroke="${line}" stroke-width="2"`)}
+    ${patternFor(g,accent,id)}
+    ${headFor(g,body,line)}
+    ${hornsFor(g,accent)}
+    ${eyesFor(g,dark,'#ffffff')}
+  </svg>`;
+}
+
+/* ============ STATE ============ */
+const SAVE='mutantzoo.v1';
+let zoo=[]; let dex=new Set(); let sel=[]; let pending=null; let current=null;
+
+function save(){
+  try{
+    localStorage.setItem(SAVE,JSON.stringify({zoo,dex:[...dex],uid}));
+  }catch(e){}
+}
+function load(){
+  try{
+    const raw=localStorage.getItem(SAVE);
+    if(!raw) return false;
+    const d=JSON.parse(raw);
+    if(!d.zoo||!d.zoo.length) return false;
+    zoo=d.zoo; dex=new Set(d.dex||[]); uid=d.uid||zoo.length+1;
+    return true;
+  }catch(e){return false}
+}
+
+function seed(){
+  zoo=[];
+  const used=new Set();
+  for(let i=0;i<3;i++){
+    const g=newGenome();
+    let guard=0;
+    while(used.has(g.palette)&&guard++<20){ g.palette=randOf(T.palette); }
+    used.add(g.palette);
+    g.name=['Gloopus','Snorpo','Blixith'][i]||nameFor(g);
+    zoo.push(g); dex.add(hash(g));
+  }
+}
+
+/* ============ SPLICE ============ */
+function makeChild(a,b){
+  const c={id:uid++}; const fresh=[];
+  for(const k of KEYS){
+    if(Math.random()<MUT){
+      // a mutation is ALWAYS something neither parent has
+      const pool=T[k].filter(v=>v!==a[k]&&v!==b[k]);
+      if(pool.length){ c[k]=randOf(pool); fresh.push(k); }
+      else c[k]=Math.random()<0.5?a[k]:b[k];
+    } else {
+      c[k]=Math.random()<0.5?a[k]:b[k];
+    }
+  }
+  const rar=rarityOf(c,a,b);
+  c.name=newName(c,rar);
+  return {child:c,fresh,rar};
+}
+function newName(c,rar){
+  const prefix=PRE[Math.floor(Math.random()*PRE.length)];
+  const suffix=SURF_POOL[Math.floor(Math.random()*SURF_POOL.length)];
+  let n=prefix+suffix;
+  if(rar.key==='legendary'&&Math.random()<0.55) n='THE '+n.toUpperCase();
+  return n;
+}
+
+/* ============ UI ============ */
+const el=id=>document.getElementById(id);
+const zooEl=el('zoo');
+
+function rarityClass(g){
+  // stored rarity if present, else compute vs nothing
+  return g.rarity||'common';
+}
+
+function drawZoo(){
+  zooEl.innerHTML='';
+  if(!zoo.length){
+    zooEl.innerHTML='<div class="empty">Your zoo is empty.<br>That is a problem.</div>';
+    return;
+  }
+  zoo.forEach(g=>{
+    const d=document.createElement('div');
+    d.className='cell r-'+(g.rarity||'common')+(sel.includes(g.id)?' sel':'');
+    d.innerHTML=render(g)+`<div class="nm">${escapeHtml(g.name)}</div>`;
+    d.onclick=()=>{ if(lpFired){ lpFired=false; return; } onCell(g.id); };
+    zooEl.appendChild(d);
+  });
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+function updateStats(){
+  el('statCount').textContent=zoo.length+'/'+MAXZOO;
+  el('statDex').textContent=dex.size;
+  const leg=zoo.filter(g=>g.rarity==='legendary').length;
+  const rar=zoo.filter(g=>g.rarity==='rare').length;
+  el('statRare').innerHTML = leg? `👑 ${leg} legendary` : rar? `💜 ${rar} rare` : 'splice to find rares';
+}
+
+function onCell(id){
+  const g=zoo.find(x=>x.id===id);
+  if(!g) return;
+  const i=sel.indexOf(id);
+  if(i>=0){ sel.splice(i,1); }
+  else {
+    if(sel.length>=2) sel.shift();
+    sel.push(id);
+  }
+  drawZoo();
+  const btn=el('btnSplice');
+  btn.disabled=sel.length!==2;
+  btn.textContent = sel.length===2 ? 'SPLICE THESE TWO' : `SPLICE 2 (${sel.length}/2)`;
+  if(sel.length===2){
+    const a=zoo.find(x=>x.id===sel[0]), b=zoo.find(x=>x.id===sel[1]);
+    setTimeout(()=>openSplice(a,b),120);
+  }
+  // long press -> detail
+}
+
+/* detail via double-tap alternative: dedicated button? use contextmenu */
+zooEl.addEventListener('contextmenu',e=>e.preventDefault());
+
+function openSplice(a,b){
+  el('spliceStage').innerHTML=`
+    <div class="slot">${render(a)}<div class="cap">${escapeHtml(a.name)}</div></div>
+    <div class="plus">＋</div>
+    <div class="slot">${render(b)}<div class="cap">${escapeHtml(b.name)}</div></div>`;
+  el('scrSplice').classList.add('on');
+  el('scrSplice').dataset.a=a.id;
+  el('scrSplice').dataset.b=b.id;
+  beep(520,.05);
+}
+
+el('scCancel').onclick=()=>{
+  el('scrSplice').classList.remove('on');
+  sel=[]; drawZoo(); el('btnSplice').disabled=true; el('btnSplice').textContent='SPLICE 2 SPECIMENS';
+};
+
+el('scGo').onclick=()=>{
+  const a=zoo.find(x=>x.id==el('scrSplice').dataset.a);
+  const b=zoo.find(x=>x.id==el('scrSplice').dataset.b);
+  const {child,fresh,rar}=makeChild(a,b);
+  pending={child,fresh,rar,a,b};
+  el('scrSplice').classList.remove('on');
+  showResult();
+};
+
+function showResult(){
+  const {child,fresh,rar}=pending;
+  el('resTitle').textContent = rar.muts>=4?'⚠ MASSIVE MUTATION' : rar.muts>=2?'Mutation detected' : 'New specimen';
+  const box=el('resSvg');
+  box.innerHTML=render(child);
+  const svg=box.querySelector('svg');
+  svg.removeAttribute('width');
+  box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop');
+  el('resName').textContent=child.name;
+  const r=el('resRar');
+  r.className='r-'+rar.key; r.textContent=rar.label+'  ·  '+rar.muts+' MUT'+(rar.muts===1?'':'S');
+  el('resTraits').innerHTML = KEYS.filter(k=>k!=='palette').map(k=>{
+    const isNew=child[k]!==pending.a[k] && child[k]!==pending.b[k];
+    return `<span class="chip ${isNew?'new':''}">${child[k]}</span>`;
+  }).join('')+`<span class="chip ${child.palette!==pending.a.palette&&child.palette!==pending.b.palette?'new':''}">${PALNAMES[child.palette]}</span>`;
+  el('scrResult').classList.add('on');
+  sel=[]; drawZoo(); el('btnSplice').disabled=true; el('btnSplice').textContent='SPLICE 2 SPECIMENS';
+  beep(rar.key==='legendary'?880:660,.09);
+  if(rar.key==='legendary') setTimeout(()=>beep(1180,.12),110);
+}
+
+el('rsKeep').onclick=()=>{
+  const c=pending.child;
+  c.rarity=pending.rar.key;
+  if(zoo.length>=MAXZOO){ toast('Zoo full (40) — release one first'); return; }
+  zoo.push(c); dex.add(hash(c)); save(); drawZoo(); updateStats();
+  el('scrResult').classList.remove('on');
+  if(pending.rar.key==='legendary') toast('👑 LEGENDARY: '+c.name);
+  else if(pending.rar.key==='rare') toast('💜 Rare: '+c.name);
+  pending=null;
+};
+
+el('rsDrop').onclick=()=>{
+  el('scrResult').classList.remove('on');
+  pending=null;
+};
+
+/* ---- detail ---- */
+let detailId=null;
+function openDetail(g){
+  detailId=g.id; current=g;
+  document.getElementById('detSvg').innerHTML=render(g);
+  const svg=document.getElementById('detSvg').querySelector('svg');
+  if(svg){svg.removeAttribute('width');}
+  el('detName').textContent=g.name;
+  const rc=el('dtRar'); rc.className='chip r-'+(g.rarity||'common');
+  rc.textContent=(g.rarity||'common').toUpperCase();
+  el('detTraits').innerHTML=KEYS.map(k=>
+    `<div class="detrow"><span>${k==='palette'?'colour':k}</span><span>${k==='palette'?PALNAMES[g.palette]:g[k]}</span></div>`
+  ).join('');
+  el('detail').classList.add('on');
+}
+el('dtBack').onclick=()=>el('detail').classList.remove('on');
+el('dtRename').onclick=()=>{
+  const g=zoo.find(x=>x.id===detailId); if(!g) return;
+  const n=prompt('Name this specimen:',g.name);
+  if(n&&n.trim()){ g.name=n.trim().slice(0,18); save(); drawZoo(); el('detName').textContent=g.name; }
+};
+el('dtRelease').onclick=()=>{
+  const g=zoo.find(x=>x.id===detailId); if(!g) return;
+  if(!confirm('Release '+g.name+' into the wild?')) return;
+  zoo=zoo.filter(x=>x.id!==g.id);
+  sel=sel.filter(i=>i!==g.id);
+  save(); drawZoo(); updateStats();
+  el('detail').classList.remove('on');
+  toast(g.name+' escaped 🐾');
+};
+
+el('btnHelp').onclick=()=>el('help').classList.add('on');
+el('hpClose').onclick=()=>el('help').classList.remove('on');
+
+/* long-press open detail */
+let lpTimer=null, lpMoved=false, lpFired=false;
+zooEl.addEventListener('pointerdown',e=>{
+  const cell=e.target.closest('.cell'); if(!cell) return;
+  lpMoved=false; lpFired=false;
+  lpTimer=setTimeout(()=>{
+    if(lpMoved) return;
+    lpFired=true;
+    const idx=[...zooEl.children].indexOf(cell);
+    if(idx>=0&&zoo[idx]){ navigator.vibrate&&navigator.vibrate(12); openDetail(zoo[idx]); }
+  },450);
+},{passive:true});
+zooEl.addEventListener('pointerup',()=>clearTimeout(lpTimer),{passive:true});
+zooEl.addEventListener('pointercancel',()=>clearTimeout(lpTimer),{passive:true});
+zooEl.addEventListener('pointermove',()=>{lpMoved=true;clearTimeout(lpTimer)},{passive:true});
+
+/* toast */
+let toastT=null;
+function toast(msg){
+  const t=el('toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),1900);
+}
+
+/* audio */
+let actx=null;
+function beep(freq,dur){
+  try{
+    if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended') actx.resume();
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type='triangle'; o.frequency.value=freq;
+    g.gain.setValueAtTime(.06,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+
+/* ============ BOOT ============ */
+function boot(){
+  if(!load()){ seed(); save(); }
+  // ensure rarity tags exist
+  let changed=false;
+  zoo.forEach(g=>{ if(!g.rarity){ g.rarity='common'; changed=true; } });
+  if(changed) save();
+  drawZoo(); updateStats();
+  el('btnSplice').textContent='SPLICE 2 SPECIMENS';
+  setTimeout(()=>{ if(!localStorage.getItem(SAVE+'.seen')){ el('help').classList.add('on'); localStorage.setItem(SAVE+'.seen','1'); } },400);
+}
+boot();
+</script>
+</body>
+</html>
