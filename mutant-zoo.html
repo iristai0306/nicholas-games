@@ -296,35 +296,40 @@ function headShape(t,fill,line){
   return '';
 }
 
-function neckFor(body,accent,dark){
-  return `<rect x="50" y="40" width="20" height="26" rx="9" fill="${body}" stroke="${dark}" stroke-width="2"/>`;
-}
+/* per-body geometry: left edge, bottom edge, width */
+const BODY={ blob:{l:26,b:100,w:68}, tall:{l:36,b:100,w:48}, wide:{l:17,b:101,w:86}, bug:{l:32,b:101,w:56}, slug:{l:17,b:98,w:86} };
+function bg(g){return BODY[g.body]||BODY.blob}
 
 function legsFor(g,accent,dark){
   const n={none:0,two:2,four:4,six:6,tentacle:3}[g.limbs];
   if(!n) return '';
+  const b=bg(g);
   if(g.limbs==='tentacle'){
     let o='';
     for(let i=0;i<4;i++){
-      const x=38+i*15;
-      o+=`<path d="M${x} 92 q ${i%2?8:-8} 12 ${i%2?4:-4} 18" stroke="${accent}" stroke-width="7" stroke-linecap="round" fill="none"/>`;
+      const x=b.l+b.w*(0.18+i*0.21);
+      o+=`<path d="M${x} ${b.b-14} q ${i%2?9:-9} 14 ${i%2?5:-5} 20" stroke="${accent}" stroke-width="7" stroke-linecap="round" fill="none"/>`;
     }
     return o;
   }
-  const y = g.body==='wide'||g.body==='slug' ? 92 : 90;
-  const spread = n===2?[-18,18]:n===4?[-24,-9,9,24]:[-27,-16,-5,5,16,27];
+  const y=b.b-9;
+  const c=b.l+b.w/2;
+  const spread = n===2?[c-14,c+14]
+    : n===4?[c-21,c-7,c+7,c+21]
+    : [c-26,c-15,c-5,c+5,c+15,c+26];
   let out='';
   for(const dx of spread){
-    out+=`<rect x="${60+dx-4}" y="${y}" width="8" height="${n===6?15:16}" rx="4" fill="${dark}"/>`;
+    out+=`<rect x="${dx-4}" y="${y}" width="8" height="17" rx="4" fill="${dark}"/>`;
   }
   return out;
 }
 
 function tailFor(g,accent){
   if(g.tail==='none') return '';
-  if(g.tail==='curl') return `<path d="M28 74 q -20 -4 -17 -20 q 2 -11 12 -8" stroke="${accent}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
-  if(g.tail==='spike') return `<path d="M29 72 L6 58 L23 86 Z" fill="${accent}" stroke="${accent}" stroke-width="2" stroke-linejoin="round"/>`;
-  return `<ellipse cx="17" cy="68" rx="13" ry="9" fill="${accent}"/><circle cx="9" cy="60" r="7" fill="${accent}"/>`;
+  const x=bg(g).l+2, y=(g.body==='tall'?76:74);
+  if(g.tail==='curl') return `<path d="M${x} ${y} q -20 -4 -17 -20 q 2 -11 12 -8" stroke="${accent}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  if(g.tail==='spike') return `<path d="M${x} ${y-2} L${x-23} ${y-16} L${x-6} ${y+12} Z" fill="${accent}" stroke="${accent}" stroke-width="2" stroke-linejoin="round"/>`;
+  return `<ellipse cx="${x-11}" cy="${y-6}" rx="13" ry="9" fill="${accent}"/><circle cx="${x-19}" cy="${y-14}" r="7" fill="${accent}"/>`;
 }
 
 function patternFor(g,accent,id){
@@ -388,7 +393,6 @@ function render(g,cls){
     ${legsFor(g,accent,dark)}
     ${bodyShape(g.body,body,outline)}
     ${patternFor(g,accent,id)}
-    ${neckFor(body,accent,dark)}
     ${headShape(g.head,body,dark)}
     ${hornsFor(g,accent)}
     ${eyesFor(g,dark,'#ffffff')}
