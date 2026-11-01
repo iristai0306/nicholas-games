@@ -53,7 +53,7 @@ button.ghost{background:transparent;color:#7f96b3;border:1px solid #20374f;box-s
   <canvas id="cv"></canvas>
   <div class="hud">
     <div class="pill">HOLE <b id="hHole">1</b><span class="par"> · par <span id="hPar">2</span></span></div>
-    <div class="pill">⭐ <b id="hStars">0</b> · STROKES <b id="hStrokes">0</b></div>
+    <div class="pill"><span style="color:#ffd75a">★</span> <b id="hStars">0</b> · STROKES <b id="hStrokes">0</b></div>
   </div>
   <div class="toast" id="toast"></div>
 
@@ -436,7 +436,7 @@ function showHolePanel(result,starTxt,gained){
     '<div style="font-size:26px;letter-spacing:8px;color:#ffd75a;margin-bottom:6px">'+(starTxt||'')+'</div>'+
     strokes+' stroke'+(strokes===1?'':'s')+' · '+diffTxt+
     '<br><span style="color:#5ef2a8">Total: '+totalStrokes+' after '+(li+1)+' hole'+(li?'s':'')+'</span>'+
-    '<br><span style="color:#ffd75a">⭐ '+starsGot+' collected</span>';
+    '<br><span style="color:#ffd75a">★ '+starsGot+' collected</span>';
   phase='panel';
   document.getElementById('btnNext').textContent = (li>=LEVELS.length-1)?'SEE SCORECARD':'NEXT HOLE →';
   document.getElementById('pHole').classList.add('on');
@@ -452,13 +452,13 @@ function endRound(){
     return `<div>${i+1}</div><div>${s}</div><div style="color:#7f96b3">${d===0?'E':d>0?'+'+d:d}</div><div></div>`;
   }).join('');
   let line;
-  if(diff<=-4) line='🏆 UNREAL. Under par by '+Math.abs(diff)+'.';
+  if(diff<=-4) line='UNREAL. Under par by '+Math.abs(diff)+'.';
   else if(diff<0) line='Under par by '+Math.abs(diff)+'. Nice swinging.';
   else if(diff===0) line='Exactly par. Clean round.';
   else line=diff+' over par. The wormholes won this time.';
   const totalStars=holeStars.reduce((a,b)=>a+(b||0),0);
   document.getElementById('endLine').innerHTML=line+' ('+totalStrokes+' total)'+
-    '<br><span style="color:#ffd75a">⭐ '+starsGot+' collected · '+totalStars+'/27 holes stars</span>';
+    '<br><span style="color:#ffd75a">★ '+starsGot+' collected · '+totalStars+'/27 hole stars</span>';
   const best=+localStorage.getItem('whgolf.best')||999;
   if(totalStrokes<best){
     localStorage.setItem('whgolf.best',totalStrokes);
