@@ -193,6 +193,7 @@
 
 const TILE = 1.42, COLS = 12, ROWS = 9;
 const MODEL_BASE = "pleb-td/models/";
+const MODEL_H = 1.52;   // world height of a scale-1.0 pleb
 
 // ---------------- path (grid cells, in order) ----------------
 const PATH_SEGMENTS = [
@@ -237,11 +238,11 @@ const TOWER_ORDER = ["basic","scout","guard","bomber","mage","king"];
 
 // ---------------- enemy defs ----------------
 const ENEMIES = {
-  grunt: { model:"pleb_basic",  hp:42,  spd:1.55, gold:8,   scale:0.62, tint:0xff4d6a },
-  fast:  { model:"pleb_scout",  hp:30,  spd:2.75, gold:9,   scale:0.56, tint:0xffe14d },
-  tank:  { model:"pleb_brute",  hp:185, spd:0.92, gold:22,  scale:0.82, tint:0x8f5bff },
-  runner:{ model:"pleb_banner", hp:60,  spd:2.1,  gold:12,  scale:0.60, tint:0x4dffe1 },
-  boss:  { model:"pleb_brute",  hp:1400,spd:0.72, gold:180, scale:1.15, tint:0xff2b2b }
+  grunt: { model:"pleb_basic",  hp:42,  spd:1.55, gold:8,   scale:0.70, tint:0xff4d6a },
+  fast:  { model:"pleb_scout",  hp:30,  spd:2.75, gold:9,   scale:0.64, tint:0xffe14d },
+  tank:  { model:"pleb_brute",  hp:185, spd:0.92, gold:22,  scale:0.92, tint:0x8f5bff },
+  runner:{ model:"pleb_banner", hp:60,  spd:2.1,  gold:12,  scale:0.68, tint:0x4dffe1 },
+  boss:  { model:"pleb_brute",  hp:1400,spd:0.72, gold:180, scale:1.30, tint:0xff2b2b }
 };
 
 /* ============================================================
@@ -306,6 +307,27 @@ function loadAll(done){
   });
 }
 
+const OUTLINE_MAT = new THREE.MeshBasicMaterial({color:0x101018, side:THREE.BackSide});
+const OUTLINE_MAT_THIN = new THREE.MeshBasicMaterial({color:0x101018, side:THREE.BackSide});
+
+// The 2D pleb has a bold ink outline. Fake it with a back-face hull, which is
+// what makes them read as plebs instead of blobs at this camera distance.
+function addOutline(obj, amount){
+  const shells = [];
+  obj.traverse(o=>{
+    if(!o.isMesh || !o.geometry) return;
+    if(o.material && /eye_white/i.test(o.material.name || "")) return;
+    const sh = new THREE.Mesh(o.geometry, OUTLINE_MAT);
+    sh.scale.setScalar(1 + amount);
+    sh.position.copy(o.position);
+    sh.rotation.copy(o.rotation);
+    sh.quaternion.copy(o.quaternion);
+    sh.renderOrder = -1;
+    shells.push({parent:o.parent, shell:sh});
+  });
+  shells.forEach(({parent, shell})=>parent && parent.add(shell));
+}
+
 function spawnModel(name, tint){
   const src = MODELS[name];
   let obj;
@@ -329,6 +351,7 @@ function spawnModel(name, tint){
   } else {
     obj = makeFallbackPleb(tint !== undefined ? tint : 0x35d0e8);
   }
+  addOutline(obj, tint !== undefined ? 0.075 : 0.045);
   return obj;
 }
 
@@ -566,7 +589,7 @@ function placeTower(pad, typeKey){
   holder.position.set(pad.x, 0.10, pad.z);
 
   const model = spawnModel(def.model);
-  model.scale.setScalar(0.72);
+  model.scale.setScalar(0.86);
   model.rotation.y = 0;                 // face the camera
   holder.add(model);
 
@@ -634,7 +657,7 @@ function spawnEnemy(typeKey, hpMul, spdMul){
 
   // blob shadow
   const shadow = new THREE.Mesh(
-    new THREE.CircleGeometry(0.34*def.scale/0.62, 14),
+    new THREE.CircleGeometry(0.40*def.scale/0.62, 16),
     new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0.34})
   );
   shadow.rotation.x = -Math.PI/2; shadow.position.y = 0.004;
@@ -648,7 +671,7 @@ function spawnEnemy(typeKey, hpMul, spdMul){
     new THREE.MeshBasicMaterial({color:0x4dff88}));
   fg.position.z = 0.001;
   barG.add(bg); barG.add(fg);
-  barG.position.y = 1.42 * def.scale / 0.62;
+  barG.position.y = MODEL_H * (def.scale / 0.62) + 0.08;
   barG.userData.fg = fg;
   barG.visible = false;
   holder.add(barG);
@@ -915,7 +938,7 @@ function update(dt){
     // hp bar faces camera
     e.hpBar.quaternion.copy(camera.quaternion);
     if(e.hpBar.visible){
-      e.hpBar.position.y = (1.42 * e.def.scale/0.62) - 0.12;
+      e.hpBar.position.y = MODEL_H * (e.def.scale/0.62) + 0.08;
     }
   }
 
