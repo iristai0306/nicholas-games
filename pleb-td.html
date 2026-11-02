@@ -100,15 +100,27 @@
     transition:width .25s;border-radius:3px}
   #loadTxt{font-size:13px;color:#6f93b8;letter-spacing:1.5px;font-weight:700}
 
-  /* ---------- selected tower panel ---------- */
+  /* ---------- selected / preview panel ---------- */
   #selPanel{position:fixed;left:12px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:22;
-    background:rgba(10,18,30,.94);border:1px solid rgba(120,190,255,.3);border-radius:14px;
-    padding:9px 12px;font-size:12px;color:#bcd8f5;display:none;max-width:190px}
+    background:rgba(10,18,30,.95);border:1px solid rgba(120,190,255,.3);border-radius:14px;
+    padding:10px 12px;font-size:12px;color:#bcd8f5;display:none;width:196px;
+    box-shadow:0 8px 26px rgba(0,0,0,.5)}
   #selPanel.show{display:block}
-  #selPanel .nm{font-weight:800;color:#fff;font-size:13px;margin-bottom:2px}
-  #selPanel .row{display:flex;gap:10px;color:#8fb2d4;margin-top:3px;font-size:11px}
-  #sellBtn{margin-top:7px;width:100%;background:#8a2f3f;border:none;border-radius:9px;
-    color:#ffd9df;font-weight:800;font-size:11.5px;padding:7px;cursor:pointer;font-family:inherit}
+  #selPanel.preview{border-color:#5fc8ff;box-shadow:0 0 0 2px rgba(95,200,255,.25),0 8px 26px rgba(0,0,0,.5)}
+  #selPanel .nm{font-weight:900;color:#fff;font-size:13.5px;letter-spacing:.6px;margin-bottom:5px;
+    display:flex;justify-content:space-between;align-items:center}
+  #selPanel .nm .cost{color:#ffd451;font-size:12px}
+  #selPanel .stat{display:flex;justify-content:space-between;font-size:11.5px;
+    color:#93b4d4;padding:2px 0;border-bottom:1px solid rgba(120,190,255,.09)}
+  #selPanel .stat:last-of-type{border-bottom:none}
+  #selPanel .stat b{color:#e6f3ff;font-weight:800}
+  #selPanel .note{margin-top:6px;font-size:10.5px;line-height:1.4;color:#7f9dbb}
+  #selPanel .hint{margin-top:7px;font-size:10.5px;font-weight:800;letter-spacing:.3px;
+    color:#5fc8ff;text-align:center;line-height:1.35}
+  #selPanel .hint.armed{color:#57e08c}
+  #selPanel .hint.poor{color:#ff7f8f}
+  #sellBtn{margin-top:8px;width:100%;background:#8a2f3f;border:none;border-radius:9px;
+    color:#ffd9df;font-weight:800;font-size:11.5px;padding:8px;cursor:pointer;font-family:inherit}
 </style>
 </head>
 <body>
@@ -132,8 +144,14 @@
 <button id="sendBtn">NEXT WAVE</button>
 
 <div id="selPanel">
-  <div class="nm" id="spName">Pleb</div>
-  <div class="row"><span id="spDmg">DMG 12</span><span id="spRng">RNG 3.2</span></div>
+  <div class="nm"><span id="spName">PLEB</span><span class="cost" id="spCost">50g</span></div>
+  <div class="stat"><span>Damage</span><b id="spDmg">11</b></div>
+  <div class="stat"><span>Fire rate</span><b id="spRate">0.95/s</b></div>
+  <div class="stat"><span>DPS</span><b id="spDps">10</b></div>
+  <div class="stat"><span>Radius</span><b id="spRng">3.3</b></div>
+  <div class="stat" id="spEffRow"><span>Effect</span><b id="spEff">-</b></div>
+  <div class="note" id="spNote"></div>
+  <div class="hint" id="spHint"></div>
   <button id="sellBtn">SELL +25</button>
 </div>
 
@@ -144,7 +162,7 @@
     <h1>PLEB TD 3D</h1>
     <p style="margin-top:8px">The plebs are coming. Build defenders along the path and stop them reaching your core.</p>
     <div class="roster" id="rosterArt"></div>
-    <p style="font-size:12px;color:#7d9ab8">Tap a pad next to the path &rarr; pick a pleb &rarr; press <span class="kbd">NEXT WAVE</span></p>
+    <p style="font-size:12px;color:#7d9ab8">Pick a pleb below, tap a pad to <b style="color:#9fd4ff">preview its radius and stats</b>, then tap the same pad again <b style="color:#9fd4ff">fast</b> to build it. Then press <span class="kbd">NEXT WAVE</span></p>
     <button class="big" id="startBtn">START</button>
   </div>
 </div>
@@ -567,7 +585,8 @@ const G = {
   waveActive: false,
   endless: false,
   selectedType: null,
-  selectedTower: null
+  selectedTower: null,
+  preview: null,        // {pad, type, armedAt}  -- staged, not charged until confirmed
 };
 
 const enemies = [];
@@ -1248,58 +1267,188 @@ function onPointerUp(e){
   handleTap(t.clientX, t.clientY);
 }
 
+/* ---- placement preview -------------------------------------
+   Tap an empty pad once  -> show radius + full stats, nothing is charged.
+   Tap the SAME pad again within DOUBLE_MS -> buy it.
+   Slow second tap re-arms rather than buying, so a stray tap can't cost gold.
+   ------------------------------------------------------------ */
+const DOUBLE_MS = 650;
+let previewRing = null;
+
+function getPreviewRing(){
+  if(previewRing) return previewRing;
+
+  // group: soft filled disc + crisp rim, both scaled to the tower radius
+  const g = new THREE.Group();
+
+  const disc = new THREE.Mesh(
+    new THREE.CircleGeometry(1.0, 64),
+    new THREE.MeshBasicMaterial({color:0x5fc8ff, transparent:true, opacity:0.055,
+      side:THREE.DoubleSide, depthWrite:false})
+  );
+  disc.rotation.x = -Math.PI/2;
+  disc.renderOrder = 4;
+  g.add(disc);
+
+  const rim = new THREE.Mesh(
+    new THREE.RingGeometry(0.985, 1.0, 96),
+    new THREE.MeshBasicMaterial({color:0x9fe6ff, transparent:true, opacity:0.9,
+      side:THREE.DoubleSide, depthWrite:false})
+  );
+  rim.rotation.x = -Math.PI/2;
+  rim.renderOrder = 5;
+  g.add(rim);
+
+  g.visible = false;
+  g.userData.disc = disc;
+  g.userData.rim = rim;
+  scene.add(g);
+  previewRing = g;
+  return g;
+}
+
+function showPreview(pad, type){
+  const def = TOWERS[type];
+  G.preview = {pad, type, armedAt: performance.now()};
+  selectTower(null);
+
+  const rr = getPreviewRing();
+  rr.visible = true;
+  rr.position.set(pad.x, 0.13, pad.z);
+  rr.scale.setScalar(def.range * TILE);
+  rr.userData.disc.material.color.setHex(def.col);
+  rr.userData.rim.material.color.setHex(def.col);
+
+  // pad highlight
+  pads.forEach(p=>{ if(!p.tower) p.ring.material.opacity = 0.20; });
+  pad.ring.material.opacity = 0.95;
+
+  // stats card in PREVIEW mode
+  const panel = document.getElementById("selPanel");
+  panel.classList.add("show", "preview");
+  document.getElementById("spName").textContent = def.name;
+  document.getElementById("spCost").textContent = def.cost + "g";
+  document.getElementById("spDmg").textContent = def.dmg;
+  document.getElementById("spRate").textContent = def.rate.toFixed(2) + "/s";
+  document.getElementById("spDps").textContent = Math.round(def.dmg * def.rate);
+  document.getElementById("spRng").textContent = def.range;
+  document.getElementById("spEff").textContent = effectText(def);
+  document.getElementById("spNote").textContent = def.desc;
+  document.getElementById("sellBtn").style.display = "none";
+
+  const hint = document.getElementById("spHint");
+  const poor = G.gold < def.cost;
+  hint.className = "hint" + (poor ? " poor" : "");
+  hint.textContent = poor
+    ? `Need ${def.cost}g — you have ${Math.floor(G.gold)}g`
+    : "TAP AGAIN to build";
+}
+
+function clearPreview(){
+  G.preview = null;
+  if(previewRing) previewRing.visible = false;
+  const panel = document.getElementById("selPanel");
+  panel.classList.remove("preview");
+  document.getElementById("sellBtn").style.display = "block";
+  if(!G.selectedTower){
+    panel.classList.remove("show");
+  }
+}
+
+function effectText(def){
+  if(def.aoe) return "Splash " + def.aoe;
+  if(def.slow) return "Slow " + Math.round((1-def.slow)*100) + "%";
+  if(def.proj === "melee") return "Point blank";
+  if(def.proj === "beam") return "Hitscan";
+  return "Single target";
+}
+
 function handleTap(x, y){
   const pad = pickPad(x, y);
 
   if(!pad){
-    // tapped empty space: deselect
+    clearPreview();
     selectTower(null);
-    if(G.selectedType){ setSelectedType(null); }
+    if(G.selectedType){ /* keep tray selection, just drop the staged pad */ }
     return;
   }
 
   if(pad.tower){
-    if(G.selectedType){
-      showTip("That pad's taken. Tap an empty one.", 1400);
+    clearPreview();
+    if(G.selectedType && G.preview && G.preview.pad === pad){
+      showTip("That pad's taken. Pick an empty one.", 1400);
       return;
     }
     selectTower(pad.tower);
     return;
   }
 
-  // empty pad
-  if(G.selectedType){
-    if(G.gold < TOWERS[G.selectedType].cost){
-      showTip("Not enough gold for that.", 1400);
-      SFX.hurt();
-      return;
-    }
+  // ---- empty pad ----
+  if(!G.selectedType){
+    clearPreview();
+    showTip("Pick a pleb below, then tap a pad.", 1600);
+    pad.ring.material.opacity = 0.85;
+    setTimeout(()=>{ if(!pad.tower) pad.ring.material.opacity = 0.42; }, 400);
+    return;
+  }
+
+  const def = TOWERS[G.selectedType];
+
+  if(G.gold < def.cost){
+    showPreview(pad, G.selectedType);
+    const hint = document.getElementById("spHint");
+    hint.className = "hint poor";
+    hint.textContent = `Need ${def.cost}g — you have ${Math.floor(G.gold)}g`;
+    SFX.hurt();
+    return;
+  }
+
+  // same pad + still armed inside the window -> build
+  const armed = G.preview && G.preview.pad === pad && G.preview.type === G.selectedType
+                && (performance.now() - G.preview.armedAt) <= DOUBLE_MS;
+
+  if(armed){
     const ok = placeTower(pad, G.selectedType);
     if(ok){
       updateHUD();
+      clearPreview();
       selectTower(pad.tower);
-      // keep type selected for rapid building
+      SFX.place();
     }
-  } else {
-    showTip("Pick a pleb below, then tap this pad.", 1500);
-    pad.ring.material.opacity = 0.85;
-    setTimeout(()=>{ if(!pad.tower) pad.ring.material.opacity = 0.42; }, 400);
+    return;
   }
+
+  // first tap on this pad, or the window expired -> stage/re-arm
+  showPreview(pad, G.selectedType);
+  if(G.preview && performance.now() - G.preview.armedAt <= DOUBLE_MS){ /* unreachable */ }
+  SFX.unlock();
 }
 
 function selectTower(t){
   G.selectedTower = t;
   towers.forEach(x=>x.rangeRing.visible = false);
   const panel = document.getElementById("selPanel");
+
   if(t){
+    clearPreview();
     t.rangeRing.visible = true;
     panel.classList.add("show");
+    panel.classList.remove("preview");
     document.getElementById("spName").textContent = t.def.name;
-    document.getElementById("spDmg").textContent = "DMG " + t.def.dmg;
-    document.getElementById("spRng").textContent = "RNG " + t.def.range;
+    document.getElementById("spCost").textContent = t.def.cost + "g";
+    document.getElementById("spDmg").textContent = t.def.dmg;
+    document.getElementById("spRate").textContent = t.def.rate.toFixed(2) + "/s";
+    document.getElementById("spDps").textContent = Math.round(t.def.dmg * t.def.rate);
+    document.getElementById("spRng").textContent = t.def.range;
+    document.getElementById("spEff").textContent = effectText(t.def);
+    document.getElementById("spNote").textContent = t.def.desc;
+    document.getElementById("spHint").className = "hint";
+    document.getElementById("spHint").textContent = "";
+    document.getElementById("sellBtn").style.display = "block";
     document.getElementById("sellBtn").textContent = "SELL +" + Math.floor(t.def.cost*0.6);
   } else {
     panel.classList.remove("show");
+    document.getElementById("sellBtn").style.display = "block";
   }
 }
 
@@ -1331,7 +1480,7 @@ function buildTray(){
       SFX.unlock();
       if(G.gold < d.cost){ showTip("Need " + d.cost + " gold. Kill some plebs first.", 1600); }
       setSelectedType(G.selectedType === k ? null : k);
-      showTip(d.name + " &mdash; " + d.desc, 2600);
+      showTip(d.name + " — " + d.desc, 2600);
     });
     tray.appendChild(el);
   });
@@ -1342,6 +1491,7 @@ function setSelectedType(k){
   document.querySelectorAll(".card").forEach(el=>{
     el.classList.toggle("sel", el.dataset.k === k);
   });
+  clearPreview();
   if(k) selectTower(null);
 }
 
@@ -1362,6 +1512,7 @@ function startGame(){
   G.running = true; G.paused = false; G.over = false;
   G.endless = false; G.waveActive = false; G.spawnQueue = [];
   G.selectedType = null; G.selectedTower = null;
+  clearPreview();
   setSelectedType(null); selectTower(null);
   document.getElementById("ovStart").classList.add("hide");
   document.getElementById("ovOver").classList.add("hide");
