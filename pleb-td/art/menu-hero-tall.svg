@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 760" width="620" height="760" role="img" aria-label="Two plebs fighting">
+  <defs>
+    <radialGradient id="tSky" cx="50%" cy="30%" r="78%">
+      <stop offset="0%" stop-color="#20486f"/>
+      <stop offset="40%" stop-color="#122740"/>
+      <stop offset="100%" stop-color="#04070d"/>
+    </radialGradient>
+    <radialGradient id="tFloor" cx="50%" cy="0%" r="75%">
+      <stop offset="0%" stop-color="#2f7cb8" stop-opacity=".5"/>
+      <stop offset="100%" stop-color="#2f7cb8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="tW1" x1="0" y1="0" x2=".3" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="52%" stop-color="#e9eff8"/>
+      <stop offset="100%" stop-color="#b6c4d6"/>
+    </linearGradient>
+    <linearGradient id="tW2" x1=".2" y1="0" x2=".95" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="52%" stop-color="#ebf0f8"/>
+      <stop offset="100%" stop-color="#aebdd1"/>
+    </linearGradient>
+    <linearGradient id="tBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7fd8ff" stop-opacity=".95"/>
+      <stop offset="100%" stop-color="#7fd8ff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="tRed" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff8a6b" stop-opacity=".9"/>
+      <stop offset="100%" stop-color="#ff8a6b" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="tOrb" cx="34%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f2feff"/>
+      <stop offset="42%" stop-color="#5fd0ff"/>
+      <stop offset="100%" stop-color="#1668ad"/>
+    </radialGradient>
+    <radialGradient id="tSpark" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fffbe4"/>
+      <stop offset="40%" stop-color="#ffd451" stop-opacity=".9"/>
+      <stop offset="100%" stop-color="#ff9f1a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tVig" cx="50%" cy="42%" r="70%">
+      <stop offset="52%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity=".78"/>
+    </radialGradient>
+    <filter id="tSoft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="tSoft2" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4"/></filter>
+  </defs>
+
+  <rect width="620" height="760" fill="url(#tSky)"/>
+  <ellipse cx="310" cy="640" rx="360" ry="200" fill="url(#tFloor)"/>
+
+  <!-- perspective arena floor -->
+  <g stroke="#54a8e0" stroke-opacity=".17" stroke-width="1.4">
+    <line x1="310" y1="520" x2="-220" y2="760"/>
+    <line x1="310" y1="520" x2="40" y2="760"/>
+    <line x1="310" y1="520" x2="180" y2="760"/>
+    <line x1="310" y1="520" x2="310" y2="760"/>
+    <line x1="310" y1="520" x2="440" y2="760"/>
+    <line x1="310" y1="520" x2="580" y2="760"/>
+    <line x1="310" y1="520" x2="840" y2="760"/>
+    <line x1="0" y1="556" x2="620" y2="556"/>
+    <line x1="0" y1="592" x2="620" y2="592"/>
+    <line x1="0" y1="642" x2="620" y2="642"/>
+    <line x1="0" y1="712" x2="620" y2="712"/>
+  </g>
+
+  <!-- back glow -->
+  <ellipse cx="310" cy="450" rx="230" ry="170" fill="#3aa9ff" opacity=".16" filter="url(#tSoft)"/>
+
+  <!-- ===== MAGE PLEB (left, lower) ===== -->
+  <g transform="translate(196 472) scale(1.42) translate(-250 -207)">
+    <g stroke="#e3ebf6" stroke-width="9" stroke-linecap="round" fill="none">
+      <line x1="228" y1="252" x2="206" y2="300"/>
+      <line x1="272" y1="252" x2="292" y2="301"/>
+    </g>
+    <line x1="205" y1="212" x2="172" y2="184" stroke="#e3ebf6" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="250" cy="207" r="52" fill="url(#tW1)"/>
+    <path d="M250 155a52 52 0 0 1 0 104" fill="none" stroke="url(#tBlue)" stroke-width="4"/>
+    <g fill="#0b1220">
+      <rect x="238" y="196" width="13" height="4.6" rx="2.3"/>
+      <rect x="259" y="196" width="13" height="4.6" rx="2.3"/>
+    </g>
+    <line x1="300" y1="128" x2="340" y2="288" stroke="#8a6b46" stroke-width="7" stroke-linecap="round"/>
+    <line x1="300" y1="128" x2="340" y2="288" stroke="#c79a63" stroke-width="2.4" stroke-linecap="round" opacity=".7"/>
+    <circle cx="298" cy="122" r="20" fill="url(#tOrb)"/>
+    <circle cx="298" cy="122" r="34" fill="#5fd0ff" opacity=".3" filter="url(#tSoft2)"/>
+    <path d="M288 218 Q310 199 320 185" stroke="#f2f6fb" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M214 172 L250 104 L286 172 Z" fill="#2f6fbf"/>
+    <path d="M214 172 L250 104 L250 172 Z" fill="#4290e6"/>
+    <ellipse cx="250" cy="173" rx="38" ry="8" fill="#2f6fbf"/>
+    <circle cx="250" cy="109" r="4.5" fill="#c8ecff"/>
+  </g>
+
+  <!-- ===== BRAWLER PLEB (right, higher) ===== -->
+  <g transform="translate(430 408) scale(1.42) translate(-554 -205)">
+    <g stroke="#e8eef7" stroke-width="9" stroke-linecap="round" fill="none">
+      <line x1="532" y1="250" x2="514" y2="300"/>
+      <line x1="578" y1="248" x2="602" y2="296"/>
+    </g>
+    <circle cx="554" cy="205" r="54" fill="url(#tW2)"/>
+    <path d="M554 151a54 54 0 0 0 0 108" fill="none" stroke="url(#tRed)" stroke-width="4"/>
+    <g fill="#0b1220">
+      <rect x="524" y="188" width="14" height="4.8" rx="2.4" transform="rotate(-9 531 190)"/>
+      <rect x="556" y="188" width="14" height="4.8" rx="2.4" transform="rotate(9 563 190)"/>
+    </g>
+    <path d="M600 196 Q634 156 652 128" stroke="#e8eef7" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <line x1="654" y1="124" x2="692" y2="66" stroke="#8a6b46" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="698" cy="58" r="19" fill="#a87d4f"/>
+    <circle cx="698" cy="58" r="19" fill="none" stroke="#6d4e2d" stroke-width="3"/>
+    <path d="M516 214 Q482 208 458 200" stroke="#f4f8fc" stroke-width="9" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- impact spark -->
+  <g>
+    <circle cx="316" cy="404" r="72" fill="url(#tSpark)" filter="url(#tSoft)"/>
+    <circle cx="316" cy="404" r="14" fill="#fffceb"/>
+    <g stroke="#ffeaa8" stroke-width="3.4" stroke-linecap="round" opacity=".92">
+      <line x1="316" y1="336" x2="316" y2="306"/>
+      <line x1="316" y1="472" x2="316" y2="500"/>
+      <line x1="248" y1="404" x2="214" y2="404"/>
+      <line x1="384" y1="404" x2="418" y2="404"/>
+      <line x1="268" y1="356" x2="246" y2="334"/>
+      <line x1="364" y1="452" x2="386" y2="474"/>
+    </g>
+  </g>
+
+  <!-- speed streaks -->
+  <g stroke="#bfe3ff" stroke-linecap="round" opacity=".22">
+    <line x1="60" y1="318" x2="126" y2="318" stroke-width="3.4"/>
+    <line x1="34" y1="360" x2="112" y2="360" stroke-width="2.2"/>
+    <line x1="500" y1="286" x2="576" y2="286" stroke-width="3"/>
+    <line x1="524" y1="330" x2="586" y2="330" stroke-width="2"/>
+  </g>
+
+  <!-- floating dust -->
+  <g fill="#9fc4e0" opacity=".2" filter="url(#tSoft2)">
+    <circle cx="120" cy="560" r="18"/>
+    <circle cx="212" cy="628" r="13"/>
+    <circle cx="440" cy="606" r="16"/>
+    <circle cx="530" cy="556" r="11"/>
+    <circle cx="316" cy="676" r="20"/>
+  </g>
+
+  <rect width="620" height="760" fill="url(#tVig)"/>
+</svg>

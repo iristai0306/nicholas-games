@@ -125,6 +125,95 @@
   .autoRow .lbl{flex:1 1 auto;text-align:left}
   .autoRow .st{flex:0 0 auto;font-size:11px;color:#7c93b0;letter-spacing:1.2px}
   .autoRow.on .st{color:#8fe6ff}
+  /* ---------- full-screen menu ---------- */
+  #ovStart{padding:0;background:#050a13}
+  .menu{position:absolute;inset:0;display:flex;flex-direction:column;
+    padding:calc(16px + env(safe-area-inset-top)) 20px calc(18px + env(safe-area-inset-bottom));
+    background:
+      radial-gradient(ellipse at 50% 12%, rgba(58,169,255,.20), transparent 62%),
+      radial-gradient(ellipse at 50% 108%, rgba(20,120,220,.22), transparent 60%),
+      linear-gradient(180deg,#0a1526 0%,#070e1a 55%,#04080f 100%)}
+  .menu::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:linear-gradient(rgba(90,180,255,.055) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(90,180,255,.055) 1px,transparent 1px);
+    background-size:44px 44px;
+    mask-image:radial-gradient(ellipse at 50% 40%,#000 20%,transparent 78%);
+    -webkit-mask-image:radial-gradient(ellipse at 50% 40%,#000 20%,transparent 78%)}
+  .menuTop{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2}
+  .kicker{font-size:10px;letter-spacing:5px;color:#5b8fbe;font-weight:900}
+  .bestBadge{font-size:10px;font-weight:900;letter-spacing:1.4px;color:#ffd451;
+    border:1px solid rgba(255,212,81,.35);background:rgba(255,212,81,.08);
+    border-radius:999px;padding:5px 12px}
+  .bestBadge[hidden]{display:none}
+  .menuLeft{display:contents}
+  .menuTop{order:1}
+  .menuMid{order:2}
+  .menuArt{order:3}
+  .menuBottom{order:4}
+  .menuMid{position:relative;z-index:2;display:flex;flex-direction:column;
+    align-items:center;text-align:center;margin-top:14px;flex:0 0 auto}
+  .menuTitle{margin:0;font-size:clamp(38px,11vw,62px);line-height:.92;letter-spacing:-1px;
+    font-weight:900;color:#fff;
+    text-shadow:0 0 34px rgba(95,200,255,.55),0 4px 0 rgba(10,30,55,.9),0 12px 34px rgba(0,0,0,.75)}
+  .menuTitle span{background:linear-gradient(180deg,#8fe6ff,#2f8fe0);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 22px rgba(95,200,255,.6))}
+  .menuSub{margin-top:6px;font-size:10.5px;letter-spacing:5.5px;font-weight:900;color:#63a4d8}
+  .menuTag{margin:12px 0 0;font-size:12.5px;line-height:1.5;color:#8fb0ce;max-width:330px}
+  .menuArt{position:relative;z-index:1;flex:1 1 auto;min-height:0;display:flex;
+    align-items:center;justify-content:center;margin:8px 0;overflow:hidden}
+  .menuArt img{max-width:100%;max-height:100%;width:auto;height:auto;display:block;
+    filter:drop-shadow(0 18px 45px rgba(0,0,0,.6))}
+  .menuArt .artP{display:block}
+  .menuArt .artW{display:none}
+  @media (orientation:landscape) and (min-height:621px){
+    .menuArt .artP{display:none}
+    .menuArt .artW{display:block}
+  }
+  .menuBottom{position:relative;z-index:2;flex:0 0 auto;display:flex;flex-direction:column;gap:9px}
+  .playBtn{padding:17px;border-radius:17px;border:none;font-family:inherit;font-weight:900;
+    font-size:21px;letter-spacing:2.5px;color:#04130b;cursor:pointer;
+    background:linear-gradient(180deg,#5df2a0,#16b866);
+    box-shadow:0 10px 30px rgba(30,220,130,.42),inset 0 1px 0 rgba(255,255,255,.5);
+    transition:transform .1s}
+  .playBtn:active{transform:scale(.975)}
+  .menuRow{display:flex;gap:9px}
+  .ghost{flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:7px;
+    padding:12px 10px;border-radius:14px;background:rgba(14,26,44,.82);
+    border:1px solid rgba(120,190,255,.26);color:#b9d5f0;font-family:inherit;
+    font-size:12px;font-weight:800;letter-spacing:1.1px;cursor:pointer;transition:.14s}
+  .ghost:active{transform:scale(.98)}
+  .ghost.tog.on{background:rgba(29,122,224,.24);border-color:#5fb4ff;color:#eaf6ff}
+  .ghost .sw{width:30px;height:18px;border-radius:999px;background:#26364e;position:relative;
+    border:1px solid rgba(120,190,255,.3);flex:0 0 auto;transition:.16s}
+  .ghost .sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;
+    border-radius:50%;background:#7c93b0;transition:.16s}
+  .ghost.on .sw{background:#1d7ae0;border-color:#7fd8ff;box-shadow:0 0 12px rgba(95,200,255,.6)}
+  .ghost.on .sw::after{left:14px;background:#fff}
+  @media (orientation:landscape) and (max-height:620px){
+    .menu{display:flex;flex-direction:row;align-items:center;
+      padding:14px 26px calc(14px + env(safe-area-inset-bottom));gap:24px}
+    .menuTop{order:1;position:absolute;top:12px;left:26px;right:26px;
+      display:flex;justify-content:space-between;align-items:center}
+    .menuLeft{order:2;flex:0 0 46%;display:flex;flex-direction:column;
+      justify-content:center;min-width:0;padding-top:30px}
+    .menuLeft .menuMid,.menuLeft .menuBottom{order:0}
+    .menuMid{margin:0;align-items:flex-start;text-align:left;min-width:0}
+    .menuTitle{font-size:clamp(30px,4.4vw,44px);letter-spacing:-.5px;line-height:.95}
+    .menuSub{font-size:8.5px;letter-spacing:3px;margin-top:6px;white-space:nowrap}
+    .menuTag{max-width:250px;font-size:10.5px;line-height:1.45;margin-top:7px}
+    .menuArt{order:3;flex:1 1 auto;margin:26px 0 6px;min-width:0;
+      align-items:center;justify-content:center}
+    .menuArt .artP{display:none}
+    .menuArt .artW{display:block;width:100%;height:auto;max-height:calc(100vh - 150px)}
+    .menuBottom{margin-top:13px;gap:7px}
+    .playBtn{padding:12px;font-size:16px;letter-spacing:2px;border-radius:13px}
+    .ghost{padding:8px 8px;font-size:10.5px;letter-spacing:.6px;border-radius:11px}
+    .bestBadge{font-size:9px;padding:4px 10px}
+    .kicker{font-size:9px;letter-spacing:4px}
+  }
+  /* ---------- how to play ---------- */
+  #ovHow .panel{max-width:520px}
   @media (max-height:720px){
     .panel.start{padding:12px 16px 14px;max-width:560px}
     .panel.start h1{font-size:24px}
@@ -245,27 +334,44 @@
 <div id="tip"></div>
 
 <div class="ov hide" id="ovStart">
-  <div class="panel start">
-    <div class="hero"><img src="pleb-td/art/menu-hero.svg" alt="Two plebs fighting"></div>
-    <div class="brand">
-      <div class="sub">TOWER DEFENCE</div>
-      <h1>PLEB TD 3D</h1>
+  <div class="menu">
+    <div class="menuTop">
+      <div class="kicker">TOWER DEFENCE</div>
+      <div class="bestBadge" id="bestPill" hidden>BEST WAVE 0</div>
     </div>
-    <p class="tagline">The plebs are marching. They are dumb, but there are a lot of them.</p>
-    <div class="rosterGrid" id="rosterArt"></div>
+    <div class="menuLeft">
+    <div class="menuMid">
+      <h1 class="menuTitle">PLEB <span>TD 3D</span></h1>
+      <div class="menuSub">THEY ARE DUMB · THERE ARE LOTS</div>
+      <p class="menuTag">Drop plebs on the pads, hold the line, survive 25 waves.</p>
+    </div>
+    <div class="menuBottom">
+      <button class="playBtn" id="startBtn">PLAY</button>
+      <div class="menuRow">
+        <button class="ghost tog" id="menuAuto" type="button">
+          <span class="sw"></span><span id="menuAutoState">AUTO OFF</span>
+        </button>
+        <button class="ghost" id="howBtn" type="button">HOW TO PLAY</button>
+      </div>
+    </div>
+    </div>
+    <div class="menuArt">
+      <img class="artP" src="pleb-td/art/menu-hero-tall.svg" alt="Two plebs fighting">
+      <img class="artW" src="pleb-td/art/menu-hero.svg" alt="Two plebs fighting">
+    </div>
+  </div>
+</div>
+
+<div class="ov hide" id="ovHow">
+  <div class="panel">
+    <h2>HOW TO PLAY</h2>
     <div class="steps">
       <div class="step"><div class="n">1</div><div><b>Pick a pleb</b><span>Tap a card in the bottom tray. Each one shoots differently.</span></div></div>
       <div class="step"><div class="n">2</div><div><b>Tap a pad to preview</b><span>Damage, fire rate, DPS and a circle showing exactly what it covers.</span></div></div>
       <div class="step"><div class="n">3</div><div><b>Tap the same pad again fast</b><span>That's the buy. A slow second tap just re-selects, so no accidental spending.</span></div></div>
       <div class="step"><div class="n">4</div><div><b>Hit NEXT WAVE</b><span>Gold comes from kills. Survive 25 waves to win.</span></div></div>
     </div>
-    <div class="bestPill" id="bestPill" hidden>BEST WAVE 0</div>
-    <button class="autoRow" id="menuAuto" type="button">
-      <span class="sw"></span>
-      <span class="lbl">AUTO START WAVES</span>
-      <span class="st" id="menuAutoState">OFF</span>
-    </button>
-    <button class="big" id="startBtn">START</button>
+    <button class="big" id="howBack">GOT IT</button>
   </div>
 </div>
 
@@ -1280,7 +1386,7 @@ function syncAutoUI(){
   const row = document.getElementById("menuAuto");
   if(row) row.classList.toggle("on", on);
   const st = document.getElementById("menuAutoState");
-  if(st) st.textContent = on ? "ON" : "OFF";
+  if(st) st.textContent = on ? "AUTO ON" : "AUTO OFF";
 }
 
 function flashBanner(text){
@@ -1786,6 +1892,12 @@ function wireUI(){
     G.autoWave = !G.autoWave;
     G.autoT = 0;
     syncAutoUI();
+  });
+  document.getElementById("howBtn").addEventListener("click", ()=>{
+    document.getElementById("ovHow").classList.remove("hide");
+  });
+  document.getElementById("howBack").addEventListener("click", ()=>{
+    document.getElementById("ovHow").classList.add("hide");
   });
   document.getElementById("retryBtn").addEventListener("click", ()=>{ SFX.unlock(); startGame(); });
   document.getElementById("endlessBtn").addEventListener("click", ()=>{
