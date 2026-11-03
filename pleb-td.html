@@ -110,14 +110,29 @@
     letter-spacing:1.3px;color:#ffd451;border:1px solid rgba(255,212,81,.32);
     background:rgba(255,212,81,.07);border-radius:999px;padding:4px 13px}
   .bestPill[hidden]{display:none}
-  @media (max-height:560px){
+  .autoRow{display:flex;align-items:center;justify-content:center;gap:9px;margin:12px 0 0;
+    padding:10px 12px;border-radius:13px;background:rgba(15,28,46,.7);
+    border:1px solid rgba(120,190,255,.2);cursor:pointer;font-family:inherit;width:100%;
+    color:#cfe6ff;font-size:12.5px;font-weight:800;letter-spacing:.6px;transition:.14s}
+  .autoRow:active{transform:scale(.985)}
+  .autoRow .sw{flex:0 0 auto;width:38px;height:22px;border-radius:999px;background:#26364e;
+    border:1px solid rgba(120,190,255,.25);position:relative;transition:.16s}
+  .autoRow .sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;
+    border-radius:50%;background:#7c93b0;transition:.16s}
+  .autoRow.on{background:rgba(29,122,224,.22);border-color:#5fb4ff}
+  .autoRow.on .sw{background:#1d7ae0;border-color:#7fd8ff;box-shadow:0 0 14px rgba(95,200,255,.55)}
+  .autoRow.on .sw::after{left:19px;background:#fff}
+  .autoRow .lbl{flex:1 1 auto;text-align:left}
+  .autoRow .st{flex:0 0 auto;font-size:11px;color:#7c93b0;letter-spacing:1.2px}
+  .autoRow.on .st{color:#8fe6ff}
+  @media (max-height:720px){
     .panel.start{padding:12px 16px 14px;max-width:560px}
     .panel.start h1{font-size:24px}
     .brand .sub{display:none}
     .brand{gap:2px}
     .tagline{display:none}
-    .hero{margin:0 0 8px;border-radius:11px;max-height:120px}
-    .hero img{max-height:120px;object-fit:cover;object-position:center}
+    .hero{margin:0 0 6px;border-radius:11px;max-height:96px}
+    .hero img{max-height:96px;object-fit:cover;object-position:center}
     .rosterGrid{margin:8px 0 0;gap:5px}
     .rChip{width:38px;height:38px;border-radius:9px}
     .rChip img{width:29px;height:29px}
@@ -127,6 +142,11 @@
     .step b{font-size:11.5px}
     .step span{font-size:10.5px;line-height:1.3}
     .bestPill{margin-top:8px;font-size:9.5px;padding:3px 11px}
+    .autoRow{margin-top:7px;padding:6px 10px;font-size:11.5px}
+    .panel.start .big{margin-top:10px;padding:12px}
+    .autoRow .sw{width:34px;height:20px}
+    .autoRow .sw::after{width:14px;height:14px}
+    .autoRow.on .sw::after{left:17px}
     .panel.start .big{margin-top:9px;padding:11px;font-size:15.5px;border-radius:12px}
   }
   .kbd{display:inline-block;background:#1b2c46;border:1px solid #35547a;border-radius:6px;
@@ -240,6 +260,11 @@
       <div class="step"><div class="n">4</div><div><b>Hit NEXT WAVE</b><span>Gold comes from kills. Survive 25 waves to win.</span></div></div>
     </div>
     <div class="bestPill" id="bestPill" hidden>BEST WAVE 0</div>
+    <button class="autoRow" id="menuAuto" type="button">
+      <span class="sw"></span>
+      <span class="lbl">AUTO START WAVES</span>
+      <span class="st" id="menuAutoState">OFF</span>
+    </button>
     <button class="big" id="startBtn">START</button>
   </div>
 </div>
@@ -1223,6 +1248,7 @@ function shake(a){ shakeAmt = Math.max(shakeAmt, a); }
    HUD
    ============================================================ */
 function updateHUD(){
+  syncAutoUI();
   document.getElementById("gold").textContent = Math.floor(G.gold);
   document.getElementById("lives").textContent = Math.max(0, G.lives);
   document.getElementById("wave").textContent = G.wave;
@@ -1245,6 +1271,16 @@ function updateHUD(){
     sb.textContent = G.wave === 0 ? "START WAVE" : "NEXT WAVE";
     sb.classList.remove("wait");
   }
+}
+
+function syncAutoUI(){
+  const on = !!G.autoWave;
+  const ab = document.getElementById("autoBtn");
+  if(ab) ab.classList.toggle("on", on);
+  const row = document.getElementById("menuAuto");
+  if(row) row.classList.toggle("on", on);
+  const st = document.getElementById("menuAutoState");
+  if(st) st.textContent = on ? "ON" : "OFF";
 }
 
 function flashBanner(text){
@@ -1658,8 +1694,7 @@ function startGame(){
   G.autoPaused = false;
   G.endless = false; G.waveActive = false; G.spawnQueue = [];
   G.autoT = 0;
-  const _ab = document.getElementById("autoBtn");
-  if(_ab) _ab.classList.toggle("on", G.autoWave);
+  syncAutoUI();
   G.selectedType = null; G.selectedTower = null;
   clearPreview();
   setSelectedType(null); selectTower(null);
@@ -1747,6 +1782,11 @@ function wireUI(){
   });
 
   document.getElementById("startBtn").addEventListener("click", ()=>{ SFX.unlock(); startGame(); });
+  document.getElementById("menuAuto").addEventListener("click", ()=>{
+    G.autoWave = !G.autoWave;
+    G.autoT = 0;
+    syncAutoUI();
+  });
   document.getElementById("retryBtn").addEventListener("click", ()=>{ SFX.unlock(); startGame(); });
   document.getElementById("endlessBtn").addEventListener("click", ()=>{
     G.endless = true; G.over = false; G.running = true;
@@ -1765,7 +1805,7 @@ function wireUI(){
   autoBtn.addEventListener("click", ()=>{
     G.autoWave = !G.autoWave;
     G.autoT = 0;
-    autoBtn.classList.toggle("on", G.autoWave);
+    syncAutoUI();
     showTip(G.autoWave ? "Auto wave ON — next wave starts after " + AUTO_WAVE_DELAY + "s" : "Auto wave OFF", 1600);
     updateHUD();
   });
