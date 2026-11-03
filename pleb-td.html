@@ -200,6 +200,7 @@
     <div class="pill score"><b id="score">0</b></div>
   </div>
   <div id="rightTop">
+    <button class="btn" id="autoBtn">AUTO</button>
     <button class="btn" id="spdBtn">1x</button>
     <button class="btn" id="pauseBtn">II</button>
   </div>
@@ -675,7 +676,10 @@ const G = {
   selectedType: null,
   selectedTower: null,
   preview: null,        // {pad, type, armedAt}  -- staged, not charged until confirmed
+  autoWave: false,      // auto-start next wave after a short build window
+  autoT: 0,             // countdown to the next auto wave
 };
+const AUTO_WAVE_DELAY = 3.0;   // seconds of build time between waves
 
 const enemies = [];const towers = [];
 const projectiles = [];
@@ -954,6 +958,7 @@ function startWave(){
   });
   G.spawnTimer = 0;
   G.waveActive = true;
+  G.autoT = 0;
   SFX.waveStart();
   updateHUD();
   flashBanner("WAVE " + G.wave);
@@ -970,6 +975,7 @@ function updateWave(dt){
     }
   } else if(enemies.length === 0){
     G.waveActive = false;
+    G.autoT = 0;
     const bonus = 30 + G.wave * 8;
     G.gold += bonus;
     G.score += bonus * 5;
@@ -1149,6 +1155,19 @@ function update(dt){
   // ---- waves
   updateWave(dt);
 
+  // ---- auto wave: short build window, then fire the next wave
+  if(G.autoWave && G.running && !G.over && !G.waveActive && enemies.length === 0 && !G.paused){
+    if(!(G.wave >= 25 && !G.endless)){
+      G.autoT += dt;
+      const sb = document.getElementById("sendBtn");
+      if(sb) sb.textContent = (G.wave === 0 ? "START IN " : "NEXT IN ") + Math.max(0, AUTO_WAVE_DELAY - G.autoT).toFixed(1) + "s";
+      if(G.autoT >= AUTO_WAVE_DELAY){
+        G.autoT = 0;
+        startWave();
+      }
+    }
+  }
+
   if(G.running && !G.waveActive && enemies.length === 0 && G.wave >= 25 && !G.endless){
     // handled by updateWave
   }
@@ -1217,6 +1236,10 @@ function updateHUD(){
   const sb = document.getElementById("sendBtn");
   if(G.waveActive){
     sb.textContent = "INCOMING...";
+    sb.classList.add("wait");
+  } else if(G.autoWave && G.running && !G.over && !(G.wave >= 25 && !G.endless)){
+    const left = Math.max(0, AUTO_WAVE_DELAY - G.autoT);
+    sb.textContent = (G.wave === 0 ? "START IN " : "NEXT IN ") + left.toFixed(1) + "s";
     sb.classList.add("wait");
   } else {
     sb.textContent = G.wave === 0 ? "START WAVE" : "NEXT WAVE";
@@ -1634,6 +1657,9 @@ function startGame(){
   G.running = true; G.paused = false; G.over = false;
   G.autoPaused = false;
   G.endless = false; G.waveActive = false; G.spawnQueue = [];
+  G.autoT = 0;
+  const _ab = document.getElementById("autoBtn");
+  if(_ab) _ab.classList.toggle("on", G.autoWave);
   G.selectedType = null; G.selectedTower = null;
   clearPreview();
   setSelectedType(null); selectTower(null);
@@ -1733,6 +1759,15 @@ function wireUI(){
     G.speed = G.speed === 1 ? 2 : 1;
     spdBtn.textContent = G.speed + "x";
     spdBtn.classList.toggle("on", G.speed === 2);
+  });
+
+  const autoBtn = document.getElementById("autoBtn");
+  autoBtn.addEventListener("click", ()=>{
+    G.autoWave = !G.autoWave;
+    G.autoT = 0;
+    autoBtn.classList.toggle("on", G.autoWave);
+    showTip(G.autoWave ? "Auto wave ON — next wave starts after " + AUTO_WAVE_DELAY + "s" : "Auto wave OFF", 1600);
+    updateHUD();
   });
 
   const pauseBtn = document.getElementById("pauseBtn");
