@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 55 800 285" width="800" height="285" role="img" aria-label="Two plebs fighting">
+  <defs>
+    <radialGradient id="sky" cx="50%" cy="18%" r="85%">
+      <stop offset="0%" stop-color="#1d3f66"/>
+      <stop offset="45%" stop-color="#122540"/>
+      <stop offset="100%" stop-color="#050a13"/>
+    </radialGradient>
+    <radialGradient id="floorGlow" cx="50%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="#2b6fa8" stop-opacity=".55"/>
+      <stop offset="100%" stop-color="#2b6fa8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bodyW" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#e8eef7"/>
+      <stop offset="100%" stop-color="#b9c6d8"/>
+    </linearGradient>
+    <linearGradient id="bodyW2" x1="0.2" y1="0" x2="0.9" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#eaeff7"/>
+      <stop offset="100%" stop-color="#b0bfd2"/>
+    </linearGradient>
+    <linearGradient id="blueRim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7fd8ff" stop-opacity=".9"/>
+      <stop offset="100%" stop-color="#7fd8ff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="redRim" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff8a6b" stop-opacity=".85"/>
+      <stop offset="100%" stop-color="#ff8a6b" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="orb" cx="35%" cy="32%" r="70%">
+      <stop offset="0%" stop-color="#eafcff"/>
+      <stop offset="45%" stop-color="#5fd0ff"/>
+      <stop offset="100%" stop-color="#1b6fb5"/>
+    </radialGradient>
+    <radialGradient id="spark" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff6cf"/>
+      <stop offset="45%" stop-color="#ffd451" stop-opacity=".85"/>
+      <stop offset="100%" stop-color="#ffb020" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vig" cx="50%" cy="45%" r="72%">
+      <stop offset="55%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity=".72"/>
+    </radialGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <filter id="soft2" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+
+  <!-- background -->
+  <rect width="800" height="360" fill="url(#sky)"/>
+  <ellipse cx="400" cy="300" rx="420" ry="120" fill="url(#floorGlow)"/>
+
+  <!-- distant arena floor grid in perspective -->
+  <g stroke="#4a9fd8" stroke-opacity=".16" stroke-width="1.2">
+    <line x1="400" y1="232" x2="-120" y2="360"/>
+    <line x1="400" y1="232" x2="140" y2="360"/>
+    <line x1="400" y1="232" x2="290" y2="360"/>
+    <line x1="400" y1="232" x2="400" y2="360"/>
+    <line x1="400" y1="232" x2="510" y2="360"/>
+    <line x1="400" y1="232" x2="660" y2="360"/>
+    <line x1="400" y1="232" x2="920" y2="360"/>
+    <line x1="0" y1="250" x2="800" y2="250"/>
+    <line x1="0" y1="272" x2="800" y2="272"/>
+    <line x1="0" y1="302" x2="800" y2="302"/>
+    <line x1="0" y1="342" x2="800" y2="342"/>
+  </g>
+
+  <!-- back glow behind the fight -->
+  <ellipse cx="400" cy="210" rx="200" ry="95" fill="#3aa9ff" opacity=".13" filter="url(#soft)"/>
+
+  <!-- ground shadows -->
+  <ellipse cx="252" cy="306" rx="78" ry="15" fill="#000" opacity=".55" filter="url(#soft2)"/>
+  <ellipse cx="556" cy="304" rx="80" ry="15" fill="#000" opacity=".55" filter="url(#soft2)"/>
+
+  <!-- ================= LEFT PLEB (mage, blue rim) ================= -->
+  <g>
+    <!-- legs -->
+    <g stroke="#dfe7f2" stroke-width="9" stroke-linecap="round" fill="none">
+      <line x1="228" y1="252" x2="206" y2="300"/>
+      <line x1="272" y1="252" x2="292" y2="301"/>
+    </g>
+    <!-- back arm -->
+    <line x1="205" y1="212" x2="176" y2="186" stroke="#dfe7f2" stroke-width="8" stroke-linecap="round"/>
+    <!-- body -->
+    <circle cx="250" cy="207" r="52" fill="url(#bodyW)"/>
+    <path d="M250 155a52 52 0 0 1 0 104" fill="none" stroke="url(#blueRim)" stroke-width="4" opacity=".85"/>
+    <!-- eye slits (deadpan) -->
+    <g fill="#0b1220">
+      <rect x="238" y="196" width="13" height="4.6" rx="2.3"/>
+      <rect x="259" y="196" width="13" height="4.6" rx="2.3"/>
+    </g>
+    <!-- staff -->
+    <line x1="300" y1="128" x2="336" y2="284" stroke="#8a6b46" stroke-width="7" stroke-linecap="round"/>
+    <line x1="300" y1="128" x2="336" y2="284" stroke="#c79a63" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
+    <circle cx="298" cy="122" r="20" fill="url(#orb)"/>
+    <circle cx="298" cy="122" r="30" fill="#5fd0ff" opacity=".28" filter="url(#soft)"/>
+    <!-- front arm gripping the staff -->
+    <path d="M288 218 Q308 200 318 186" stroke="#eef3fa" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <!-- mage hat -->
+    <path d="M214 172 L250 108 L286 172 Z" fill="#2f6fbf"/>
+    <path d="M214 172 L250 108 L250 172 Z" fill="#3f8ade"/>
+    <ellipse cx="250" cy="173" rx="38" ry="8" fill="#2f6fbf"/>
+    <circle cx="250" cy="113" r="4" fill="#bfe9ff"/>
+  </g>
+
+  <!-- ================= RIGHT PLEB (brawler, red rim) ================= -->
+  <g>
+    <!-- legs -->
+    <g stroke="#e6ecf5" stroke-width="9" stroke-linecap="round" fill="none">
+      <line x1="532" y1="250" x2="516" y2="300"/>
+      <line x1="576" y1="248" x2="600" y2="296"/>
+    </g>
+    <!-- body -->
+    <circle cx="554" cy="205" r="54" fill="url(#bodyW2)"/>
+    <path d="M554 151a54 54 0 0 0 0 108" fill="none" stroke="url(#redRim)" stroke-width="4" opacity=".8"/>
+    <!-- eye slits, angled = angry -->
+    <g fill="#0b1220">
+      <rect x="524" y="188" width="14" height="4.8" rx="2.4" transform="rotate(-8 531 190)"/>
+      <rect x="556" y="188" width="14" height="4.8" rx="2.4" transform="rotate(8 563 190)"/>
+    </g>
+    <!-- raised back arm with club -->
+    <path d="M600 196 Q630 158 646 132" stroke="#e6ecf5" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <line x1="648" y1="128" x2="684" y2="74" stroke="#8a6b46" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="690" cy="66" r="18" fill="#a87d4f"/>
+    <circle cx="690" cy="66" r="18" fill="none" stroke="#6d4e2d" stroke-width="3"/>
+    <!-- front arm swinging in -->
+    <path d="M516 214 Q484 206 466 196" stroke="#f2f6fb" stroke-width="9" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- impact spark between them -->
+  <g opacity=".95">
+    <circle cx="430" cy="196" r="46" fill="url(#spark)" filter="url(#soft)"/>
+    <circle cx="430" cy="196" r="11" fill="#fff8dd"/>
+    <g stroke="#ffe9a6" stroke-width="3" stroke-linecap="round" opacity=".9">
+      <line x1="430" y1="150" x2="430" y2="128"/>
+      <line x1="392" y1="196" x2="366" y2="196"/>
+      <line x1="468" y1="196" x2="494" y2="196"/>
+      <line x1="402" y1="168" x2="384" y2="150"/>
+      <line x1="458" y1="224" x2="476" y2="242"/>
+    </g>
+  </g>
+
+  <!-- motion streaks -->
+  <g stroke="#bfe3ff" stroke-linecap="round" opacity=".25">
+    <line x1="150" y1="150" x2="188" y2="150" stroke-width="3"/>
+    <line x1="132" y1="176" x2="176" y2="176" stroke-width="2"/>
+    <line x1="648" y1="160" x2="690" y2="160" stroke-width="2.5"/>
+  </g>
+
+  <!-- dust -->
+  <g fill="#9fc4e0" opacity=".18" filter="url(#soft2)">
+    <circle cx="210" cy="306" r="16"/>
+    <circle cx="300" cy="312" r="12"/>
+    <circle cx="510" cy="308" r="14"/>
+    <circle cx="606" cy="304" r="11"/>
+  </g>
+
+  <!-- vignette -->
+  <rect width="800" height="360" fill="url(#vig)"/>
+</svg>

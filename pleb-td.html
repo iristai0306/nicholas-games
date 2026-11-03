@@ -88,6 +88,9 @@
   .big.alt{background:linear-gradient(180deg,#3a8fe0,#1f63b0);box-shadow:0 8px 24px rgba(60,150,230,.3)}
   /* ---------- start menu ---------- */
   .panel.start{max-width:520px;padding:20px 22px 22px}
+  .hero{margin:0 0 12px;border-radius:14px;overflow:hidden;border:1px solid rgba(120,190,255,.22);
+    box-shadow:inset 0 0 40px rgba(10,25,45,.5);line-height:0;background:#0a1322}
+  .hero img{width:100%;display:block;height:auto}
   .brand{display:flex;flex-direction:column;align-items:center;gap:4px}
   .brand .sub{font-size:10.5px;letter-spacing:4.5px;color:#578bbd;font-weight:800}
   .tagline{font-size:13px;color:#9db9d6;line-height:1.5;margin:9px 0 0}
@@ -107,12 +110,14 @@
     letter-spacing:1.3px;color:#ffd451;border:1px solid rgba(255,212,81,.32);
     background:rgba(255,212,81,.07);border-radius:999px;padding:4px 13px}
   .bestPill[hidden]{display:none}
-  @media (max-height:470px){
+  @media (max-height:560px){
     .panel.start{padding:12px 16px 14px;max-width:560px}
     .panel.start h1{font-size:24px}
     .brand .sub{display:none}
     .brand{gap:2px}
     .tagline{display:none}
+    .hero{margin:0 0 8px;border-radius:11px;max-height:120px}
+    .hero img{max-height:120px;object-fit:cover;object-position:center}
     .rosterGrid{margin:8px 0 0;gap:5px}
     .rChip{width:38px;height:38px;border-radius:9px}
     .rChip img{width:29px;height:29px}
@@ -220,6 +225,7 @@
 
 <div class="ov hide" id="ovStart">
   <div class="panel start">
+    <div class="hero"><img src="pleb-td/art/menu-hero.svg" alt="Two plebs fighting"></div>
     <div class="brand">
       <div class="sub">TOWER DEFENCE</div>
       <h1>PLEB TD 3D</h1>
