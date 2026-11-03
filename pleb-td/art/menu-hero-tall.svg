@@ -91,7 +91,7 @@
   </g>
 
   <!-- ===== BRAWLER PLEB (right, higher) ===== -->
-  <g transform="translate(430 408) scale(1.42) translate(-554 -205)">
+  <g transform="translate(408 402) scale(1.30) translate(-554 -205)">
     <g stroke="#e8eef7" stroke-width="9" stroke-linecap="round" fill="none">
       <line x1="532" y1="250" x2="514" y2="300"/>
       <line x1="578" y1="248" x2="602" y2="296"/>
@@ -111,7 +111,7 @@
 
   <!-- impact spark -->
   <g>
-    <circle cx="316" cy="404" r="72" fill="url(#tSpark)" filter="url(#tSoft)"/>
+    <circle cx="308" cy="404" r="72" fill="url(#tSpark)" filter="url(#tSoft)"/>
     <circle cx="316" cy="404" r="14" fill="#fffceb"/>
     <g stroke="#ffeaa8" stroke-width="3.4" stroke-linecap="round" opacity=".92">
       <line x1="316" y1="336" x2="316" y2="306"/>

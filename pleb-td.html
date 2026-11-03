@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0d1524">
-<title>PLEB TD 3D</title>
+<title>PTD — Pleb Tower Defence</title>
 <link rel="icon" href="plebania-favicon.ico">
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -152,13 +152,13 @@
   .menuBottom{order:4}
   .menuMid{position:relative;z-index:2;display:flex;flex-direction:column;
     align-items:center;text-align:center;margin-top:14px;flex:0 0 auto}
-  .menuTitle{margin:0;font-size:clamp(38px,11vw,62px);line-height:.92;letter-spacing:-1px;
+  .menuTitle{margin:0;font-size:clamp(84px,30vw,168px);line-height:.86;letter-spacing:-2px;
     font-weight:900;color:#fff;
     text-shadow:0 0 34px rgba(95,200,255,.55),0 4px 0 rgba(10,30,55,.9),0 12px 34px rgba(0,0,0,.75)}
   .menuTitle span{background:linear-gradient(180deg,#8fe6ff,#2f8fe0);
     -webkit-background-clip:text;background-clip:text;color:transparent;
     filter:drop-shadow(0 0 22px rgba(95,200,255,.6))}
-  .menuSub{margin-top:6px;font-size:10.5px;letter-spacing:5.5px;font-weight:900;color:#63a4d8}
+  .menuSub{margin-top:2px;font-size:11px;letter-spacing:6px;font-weight:900;color:#63a4d8}
   .menuTag{margin:12px 0 0;font-size:12.5px;line-height:1.5;color:#8fb0ce;max-width:330px}
   .menuArt{position:relative;z-index:1;flex:1 1 auto;min-height:0;display:flex;
     align-items:center;justify-content:center;margin:8px 0;overflow:hidden}
@@ -199,13 +199,14 @@
       justify-content:center;min-width:0;padding-top:30px}
     .menuLeft .menuMid,.menuLeft .menuBottom{order:0}
     .menuMid{margin:0;align-items:flex-start;text-align:left;min-width:0}
-    .menuTitle{font-size:clamp(30px,4.4vw,44px);letter-spacing:-.5px;line-height:.95}
-    .menuSub{font-size:8.5px;letter-spacing:3px;margin-top:6px;white-space:nowrap}
+    .menuTitle{font-size:clamp(64px,11vw,112px);letter-spacing:-2px;line-height:.86}
+    .menuSub{font-size:9.5px;letter-spacing:4.5px;margin-top:4px;white-space:nowrap}
     .menuTag{max-width:250px;font-size:10.5px;line-height:1.45;margin-top:7px}
-    .menuArt{order:3;flex:1 1 auto;margin:26px 0 6px;min-width:0;
-      align-items:center;justify-content:center}
-    .menuArt .artP{display:none}
-    .menuArt .artW{display:block;width:100%;height:auto;max-height:calc(100vh - 150px)}
+    .menuArt{order:3;flex:1 1 auto;margin:30px 0 10px;min-width:0;
+      align-self:stretch;align-items:stretch;justify-content:center}
+    .menuArt .artP{display:block;width:100%;height:100%;max-width:none;
+      max-height:none;object-fit:cover;object-position:50% 46%}
+    .menuArt .artW{display:none}
     .menuBottom{margin-top:13px;gap:7px}
     .playBtn{padding:12px;font-size:16px;letter-spacing:2px;border-radius:13px}
     .ghost{padding:8px 8px;font-size:10.5px;letter-spacing:.6px;border-radius:11px}
@@ -336,21 +337,18 @@
 <div class="ov hide" id="ovStart">
   <div class="menu">
     <div class="menuTop">
-      <div class="kicker">TOWER DEFENCE</div>
+      <div class="kicker">3D</div>
       <div class="bestBadge" id="bestPill" hidden>BEST WAVE 0</div>
     </div>
     <div class="menuLeft">
     <div class="menuMid">
-      <h1 class="menuTitle">PLEB <span>TD 3D</span></h1>
-      <div class="menuSub">THEY ARE DUMB · THERE ARE LOTS</div>
+      <h1 class="menuTitle"><span>PTD</span></h1>
+      <div class="menuSub">PLEB TOWER DEFENCE</div>
       <p class="menuTag">Drop plebs on the pads, hold the line, survive 25 waves.</p>
     </div>
     <div class="menuBottom">
       <button class="playBtn" id="startBtn">PLAY</button>
       <div class="menuRow">
-        <button class="ghost tog" id="menuAuto" type="button">
-          <span class="sw"></span><span id="menuAutoState">AUTO OFF</span>
-        </button>
         <button class="ghost" id="howBtn" type="button">HOW TO PLAY</button>
       </div>
     </div>
@@ -395,7 +393,7 @@
 <div id="loading">
   <div style="font-size:26px;font-weight:900;letter-spacing:3px;
     background:linear-gradient(180deg,#8fe6ff,#3aa9ff);-webkit-background-clip:text;
-    background-clip:text;color:transparent">PLEB TD 3D</div>
+    background-clip:text;color:transparent">PTD</div>
   <div id="bar"><div id="barIn"></div></div>
   <div id="loadTxt">LOADING PLEBS...</div>
 </div>
@@ -1383,10 +1381,6 @@ function syncAutoUI(){
   const on = !!G.autoWave;
   const ab = document.getElementById("autoBtn");
   if(ab) ab.classList.toggle("on", on);
-  const row = document.getElementById("menuAuto");
-  if(row) row.classList.toggle("on", on);
-  const st = document.getElementById("menuAutoState");
-  if(st) st.textContent = on ? "AUTO ON" : "AUTO OFF";
 }
 
 function flashBanner(text){
@@ -1888,11 +1882,6 @@ function wireUI(){
   });
 
   document.getElementById("startBtn").addEventListener("click", ()=>{ SFX.unlock(); startGame(); });
-  document.getElementById("menuAuto").addEventListener("click", ()=>{
-    G.autoWave = !G.autoWave;
-    G.autoT = 0;
-    syncAutoUI();
-  });
   document.getElementById("howBtn").addEventListener("click", ()=>{
     document.getElementById("ovHow").classList.remove("hide");
   });
