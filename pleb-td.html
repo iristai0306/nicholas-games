@@ -86,12 +86,47 @@
     box-shadow:0 8px 24px rgba(30,200,120,.35)}
   .big:active{transform:scale(.97)}
   .big.alt{background:linear-gradient(180deg,#3a8fe0,#1f63b0);box-shadow:0 8px 24px rgba(60,150,230,.3)}
-  .roster{display:flex;justify-content:center;gap:4px;margin:14px 0 6px;flex-wrap:wrap}
-  .roster img{width:46px;height:46px;object-fit:contain;opacity:.9}
+  /* ---------- start menu ---------- */
+  .panel.start{max-width:520px;padding:20px 22px 22px}
+  .brand{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .brand .sub{font-size:10.5px;letter-spacing:4.5px;color:#578bbd;font-weight:800}
+  .tagline{font-size:13px;color:#9db9d6;line-height:1.5;margin:9px 0 0}
+  .rosterGrid{display:flex;justify-content:center;gap:6px;margin:12px 0 2px;flex-wrap:wrap}
+  .rChip{width:44px;height:44px;border-radius:11px;background:rgba(20,36,58,.75);
+    border:1px solid rgba(120,190,255,.18);display:flex;align-items:center;justify-content:center}
+  .rChip img{width:34px;height:34px;object-fit:contain;opacity:.95}
+  .steps{margin:12px 0 2px;display:flex;flex-direction:column;gap:7px;text-align:left}
+  .step{display:flex;gap:9px;align-items:flex-start;background:rgba(15,28,46,.68);
+    border:1px solid rgba(120,190,255,.14);border-radius:11px;padding:8px 10px}
+  .step .n{flex:0 0 auto;width:19px;height:19px;border-radius:50%;
+    background:linear-gradient(180deg,#3aa9ff,#1f63b0);color:#fff;font-size:11.5px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .step b{display:block;font-size:12.5px;color:#e3f0ff;letter-spacing:.3px}
+  .step span{display:block;font-size:11.5px;color:#87a7c8;line-height:1.4;margin-top:1px}
+  .bestPill{margin:11px auto 0;display:inline-block;font-size:10.5px;font-weight:900;
+    letter-spacing:1.3px;color:#ffd451;border:1px solid rgba(255,212,81,.32);
+    background:rgba(255,212,81,.07);border-radius:999px;padding:4px 13px}
+  .bestPill[hidden]{display:none}
+  @media (max-height:470px){
+    .panel.start{padding:12px 16px 14px;max-width:560px}
+    .panel.start h1{font-size:24px}
+    .brand .sub{display:none}
+    .brand{gap:2px}
+    .tagline{display:none}
+    .rosterGrid{margin:8px 0 0;gap:5px}
+    .rChip{width:38px;height:38px;border-radius:9px}
+    .rChip img{width:29px;height:29px}
+    .steps{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}
+    .step{padding:6px 8px;gap:7px;border-radius:9px}
+    .step .n{width:17px;height:17px;font-size:10.5px}
+    .step b{font-size:11.5px}
+    .step span{font-size:10.5px;line-height:1.3}
+    .bestPill{margin-top:8px;font-size:9.5px;padding:3px 11px}
+    .panel.start .big{margin-top:9px;padding:11px;font-size:15.5px;border-radius:12px}
+  }
   .kbd{display:inline-block;background:#1b2c46;border:1px solid #35547a;border-radius:6px;
     padding:1px 7px;font-size:12px;color:#bcd8f5;font-weight:700}
 
-  #rotate{z-index:55}
   #loading{position:fixed;inset:0;z-index:60;background:#0b1220;display:flex;
     flex-direction:column;align-items:center;justify-content:center;gap:18px}
   #loading.hide{display:none}
@@ -121,6 +156,32 @@
   #selPanel .hint.poor{color:#ff7f8f}
   #sellBtn{margin-top:8px;width:100%;background:#8a2f3f;border:none;border-radius:9px;
     color:#ffd9df;font-weight:800;font-size:11.5px;padding:8px;cursor:pointer;font-family:inherit}
+
+  /* narrow / portrait phone: keep the HUD on one line */
+  @media (max-width:480px){
+    #hud{padding:6px 7px;gap:6px}
+    .stats{gap:4px;flex-wrap:nowrap}
+    .pill{padding:5px 8px;font-size:12px;border-radius:9px;gap:4px}
+    .pill b{font-size:13.5px}
+    #rightTop{gap:4px}
+    .btn{padding:7px 9px;font-size:12px;border-radius:9px}
+    #tray{gap:5px;padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+    .card{width:66px;padding:6px 4px 5px}
+    .card .thumb{width:36px;height:36px}
+  }
+
+  /* short landscape screens: shrink the tray so the board gets the space */
+  @media (max-height:430px){
+    #tray{gap:6px;padding:5px 8px calc(5px + env(safe-area-inset-bottom))}
+    .card{width:64px;padding:4px 4px 4px;border-radius:11px}
+    .card .thumb{width:30px;height:30px;margin-bottom:0}
+    .card .nm{font-size:9.5px}
+    .card .cost{font-size:10.5px;margin-top:0}
+    .card .dps{display:none}
+    #sendBtn{bottom:calc(74px + env(safe-area-inset-bottom));padding:11px 15px;font-size:13px}
+    #selPanel{bottom:calc(74px + env(safe-area-inset-bottom));width:180px;padding:8px 10px}
+    #tip{bottom:calc(70px + env(safe-area-inset-bottom))}
+  }
 </style>
 </head>
 <body>
@@ -158,11 +219,20 @@
 <div id="tip"></div>
 
 <div class="ov hide" id="ovStart">
-  <div class="panel">
-    <h1>PLEB TD 3D</h1>
-    <p style="margin-top:8px">The plebs are coming. Build defenders along the path and stop them reaching your core.</p>
-    <div class="roster" id="rosterArt"></div>
-    <p style="font-size:12px;color:#7d9ab8">Pick a pleb below, tap a pad to <b style="color:#9fd4ff">preview its radius and stats</b>, then tap the same pad again <b style="color:#9fd4ff">fast</b> to build it. Then press <span class="kbd">NEXT WAVE</span></p>
+  <div class="panel start">
+    <div class="brand">
+      <div class="sub">TOWER DEFENCE</div>
+      <h1>PLEB TD 3D</h1>
+    </div>
+    <p class="tagline">The plebs are marching. They are dumb, but there are a lot of them.</p>
+    <div class="rosterGrid" id="rosterArt"></div>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div><b>Pick a pleb</b><span>Tap a card in the bottom tray. Each one shoots differently.</span></div></div>
+      <div class="step"><div class="n">2</div><div><b>Tap a pad to preview</b><span>Damage, fire rate, DPS and a circle showing exactly what it covers.</span></div></div>
+      <div class="step"><div class="n">3</div><div><b>Tap the same pad again fast</b><span>That's the buy. A slow second tap just re-selects, so no accidental spending.</span></div></div>
+      <div class="step"><div class="n">4</div><div><b>Hit NEXT WAVE</b><span>Gold comes from kills. Survive 25 waves to win.</span></div></div>
+    </div>
+    <div class="bestPill" id="bestPill" hidden>BEST WAVE 0</div>
     <button class="big" id="startBtn">START</button>
   </div>
 </div>
@@ -181,14 +251,6 @@
     <h2>PAUSED</h2>
     <button class="big" id="resumeBtn">RESUME</button>
     <button class="big alt" id="restartBtn">RESTART</button>
-  </div>
-</div>
-
-<div class="ov hide" id="rotate">
-  <div class="panel" style="max-width:340px">
-    <div style="font-size:52px;line-height:1;margin-bottom:10px">&#128241;&#8635;</div>
-    <h2 style="margin-bottom:6px">ROTATE YOUR PHONE</h2>
-    <p>PLEB TD 3D needs landscape. Turn your phone sideways and the board will be right there.</p>
   </div>
 </div>
 
@@ -413,54 +475,74 @@ const CAM_DIR = new THREE.Vector3(0, 0.80, 1).normalize();
 let camDist = 20;
 
 // Fit the whole board inside the usable screen area (below HUD, above tray).
+// Rather than asking the player to rotate the phone, we search for the camera
+// tilt + distance that make the board as big as possible in whatever shape the
+// screen happens to be. Portrait gets a quarter-turn roll so the board's long
+// side runs up the tall screen.
 function layoutCamera(){
   const w = window.innerWidth, h = window.innerHeight;
   const portrait = h > w;
   camera.aspect = w / h;
-  camera.fov = portrait ? 46 : 46;
+  camera.fov = 46;
   camera.updateProjectionMatrix();
 
-  const hw = COLS*TILE/2 + 0.9;
-  const hd = ROWS*TILE/2 + 0.9;
+  const hw = COLS*TILE/2 + 0.85;
+  const hd = ROWS*TILE/2 + 0.85;
   const corners = [[-hw,-hd],[hw,-hd],[-hw,hd],[hw,hd]]
-    .map(([x,z]) => new THREE.Vector3(x, 0.45, z));
+    .map(([x,z]) => new THREE.Vector3(x, 0.42, z));
 
-  // usable NDC window: leave room for HUD (top) and build tray (bottom)
-  const topLim = portrait ? 0.62 : 0.80;
-  const botLim = portrait ? -0.58 : -0.72;
-  const sideLim = 0.94;
+  // usable NDC window derived from the real HUD / tray sizes
+  const hudEl  = document.getElementById("hud");
+  const trayEl = document.getElementById("tray");
+  const hudH  = hudEl  ? hudEl.getBoundingClientRect().height  : 46;
+  const trayH = trayEl ? trayEl.getBoundingClientRect().height : 104;
+  const pad   = portrait ? 14 : 10;
+  const topLim =  Math.min(0.94, 1 - (2 * (hudH + pad)) / h);
+  const botLim = -Math.min(0.94, 1 - (2 * (trayH + pad)) / h);
+  const sideLim = 0.97;
 
-  let dist = 12;
-  for(let i=0;i<60;i++){
+  const fits = dist => {
     camera.position.copy(camTarget).addScaledVector(CAM_DIR, dist);
     camera.lookAt(camTarget);
-    camera.updateProjectionMatrix();
-    let over = false;
+    camera.updateMatrixWorld(true);
     for(const c of corners){
       const v = c.clone().project(camera);
-      if(Math.abs(v.x) > sideLim || v.y > topLim || v.y < botLim){ over = true; break; }
+      if(Math.abs(v.x) > sideLim || v.y > topLim || v.y < botLim) return false;
     }
-    if(!over) break;
-    dist *= 1.04;
-  }
-  camDist = dist;
-  camBase.copy(camera.position);
-  scene.fog.near = dist * 1.7;
-  scene.fog.far  = dist * 3.4;
+    return true;
+  };
 
-  // portrait is not playable: the board cannot fit without going microscopic
-  const rot = document.getElementById("rotate");
-  if(rot){
-    const portrait = h > w;
-    rot.classList.toggle("hide", !portrait);
-    if(portrait && G.running && !G.over && !G.paused){
-      G.paused = true; G.autoPaused = true;
-      document.getElementById("ovPause").classList.remove("hide");
-    } else if(!portrait && G.autoPaused){
-      G.autoPaused = false; G.paused = false;
-      document.getElementById("ovPause").classList.add("hide");
-    }
+  // smallest camera distance that still fits, for the current CAM_DIR
+  const bestDist = () => {
+    let dist = 0;
+    for(let d = 110; d > 3; d -= 0.25){ if(fits(d)) dist = d; else break; }
+    return dist;
+  };
+
+  // try a range of tilts and keep whichever lets the camera sit closest
+  // (closest camera = biggest, most readable board)
+  const ratios = portrait ? [0.9,1.1,1.3,1.5,1.8,2.1,2.5,3.0]
+                          : [0.7,0.85,1.0,1.15,1.3,1.5,1.8,2.1,2.5];
+  camTarget.set(0, 0.10, 0);
+  camera.up.set(portrait ? 1 : 0, portrait ? 0 : 1, 0);
+
+  let best = {dist:0, dir:null};
+  for(const r of ratios){
+    CAM_DIR.set(0, r, 1).normalize();
+    const d = bestDist();
+    if(d > 0 && (!best.dir || d < best.dist)){ best = {dist:d, dir:CAM_DIR.clone()}; }
   }
+  if(!best.dir){ best.dir = new THREE.Vector3(0, 1.3, 1).normalize(); best.dist = 60; }
+
+  CAM_DIR.copy(best.dir);
+  camDist = best.dist;
+  camera.position.copy(camTarget).addScaledVector(CAM_DIR, camDist);
+  camera.lookAt(camTarget);
+  camera.updateMatrixWorld(true);
+
+  camBase.copy(camera.position);
+  scene.fog.near = camDist * 1.7;
+  scene.fog.far  = camDist * 3.4;
 }
 
 function onResize(){
@@ -589,8 +671,7 @@ const G = {
   preview: null,        // {pad, type, armedAt}  -- staged, not charged until confirmed
 };
 
-const enemies = [];
-const towers = [];
+const enemies = [];const towers = [];
 const projectiles = [];
 const fx = [];
 
@@ -1217,6 +1298,7 @@ const SFX = (()=>{
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 let lastDownT = 0, lastDownXY = null, moved = false;
+let lastTapAt = 0, lastTapXY = {x:0, y:0};
 
 function pickPad(clientX, clientY){
   pointer.x = (clientX / window.innerWidth) * 2 - 1;
@@ -1250,21 +1332,25 @@ function isDescendant(o, root){
 function onPointerDown(e){
   if(!G.running || G.paused || G.over) return;
   SFX.unlock();
-  const t = e.touches ? e.touches[0] : e;
   moved = false;
   lastDownT = Date.now();
-  lastDownXY = {x:t.clientX, y:t.clientY};
+  lastDownXY = {x:e.clientX, y:e.clientY};
 }
 
 function onPointerUp(e){
   if(!G.running || G.paused || G.over) return;
-  const t = e.changedTouches ? e.changedTouches[0] : e;
   if(!lastDownXY) return;
-  const dx = t.clientX - lastDownXY.x, dy = t.clientY - lastDownXY.y;
-  if(Math.hypot(dx,dy) > 18) return;             // dragged = ignore
-  if(Date.now() - lastDownT > 700) return;
+  const dx = e.clientX - lastDownXY.x, dy = e.clientY - lastDownXY.y;
+  if(Math.hypot(dx,dy) > 18) { lastDownXY = null; return; }   // dragged = ignore
+  if(Date.now() - lastDownT > 700) { lastDownXY = null; return; }
+  lastDownXY = null;
 
-  handleTap(t.clientX, t.clientY);
+  // guard against any browser that still fires a duplicate synthetic event
+  const now = Date.now();
+  if(now - lastTapAt < 45 && Math.hypot(e.clientX - lastTapXY.x, e.clientY - lastTapXY.y) < 24) return;
+  lastTapAt = now; lastTapXY = {x:e.clientX, y:e.clientY};
+
+  handleTap(e.clientX, e.clientY);
 }
 
 /* ---- placement preview -------------------------------------
@@ -1464,6 +1550,36 @@ function showTip(msg, ms){
   tipTimer = setTimeout(()=>el.classList.remove("show"), ms || 2200);
 }
 
+function renderRoster(){
+  const box = document.getElementById("rosterArt");
+  if(!box || box.dataset.done) return;
+  box.innerHTML = TOWER_ORDER.map(k=>{
+    const d = TOWERS[k];
+    return `<div class="rChip"><img src="${MODEL_BASE}thumb_${d.model}.png" alt="" onerror="this.style.display='none'"></div>`;
+  }).join("");
+  box.dataset.done = "1";
+}
+
+function loadBest(){
+  let w = 0;
+  try{ w = parseInt(localStorage.getItem("plebtd_best") || "0", 10) || 0; }catch(e){}
+  return w;
+}
+
+function saveBest(wave){
+  try{
+    if(wave > loadBest()) localStorage.setItem("plebtd_best", String(wave));
+  }catch(e){}
+}
+
+function refreshBestPill(){
+  const el = document.getElementById("bestPill");
+  if(!el) return;
+  const b = loadBest();
+  if(b > 0){ el.textContent = "BEST WAVE " + b; el.hidden = false; }
+  else el.hidden = true;
+}
+
 function buildTray(){
   const tray = document.getElementById("tray");
   tray.innerHTML = "";
@@ -1510,6 +1626,7 @@ function startGame(){
 
   G.gold = 220; G.lives = 20; G.wave = 0; G.score = 0;
   G.running = true; G.paused = false; G.over = false;
+  G.autoPaused = false;
   G.endless = false; G.waveActive = false; G.spawnQueue = [];
   G.selectedType = null; G.selectedTower = null;
   clearPreview();
@@ -1524,6 +1641,8 @@ function startGame(){
 function gameOver(){
   G.over = true;
   G.running = false;
+  saveBest(G.wave);
+  refreshBestPill();
   SFX.gameover();
   document.getElementById("overTitle").textContent = "CORE LOST";
   document.getElementById("overBody").innerHTML =
@@ -1535,6 +1654,8 @@ function gameOver(){
 function winGame(){
   G.over = true;
   G.running = false;
+  saveBest(25);
+  refreshBestPill();
   SFX.waveClear();
   document.getElementById("overTitle").textContent = "VICTORY";
   document.getElementById("overBody").innerHTML =
@@ -1582,10 +1703,10 @@ function animate(){
    ============================================================ */
 function wireUI(){
   const el = renderer.domElement;
-  el.addEventListener("touchstart", onPointerDown, {passive:true});
-  el.addEventListener("touchend", onPointerUp, {passive:true});
-  el.addEventListener("mousedown", onPointerDown);
-  el.addEventListener("mouseup", onPointerUp);
+  // pointer events only: touch + mouse are unified, so one tap can never fire twice
+  el.addEventListener("pointerdown", onPointerDown);
+  el.addEventListener("pointerup", onPointerUp);
+  el.addEventListener("pointercancel", ()=>{ lastDownXY = null; });
 
   document.getElementById("sendBtn").addEventListener("click", ()=>{
     SFX.unlock();
@@ -1646,25 +1767,21 @@ function wireUI(){
 /* ============================================================
    Boot
    ============================================================ */
-function tryLockLandscape(){
-  try{
-    if(screen.orientation && screen.orientation.lock){
-      screen.orientation.lock("landscape").catch(()=>{});
-    }
-  }catch(e){}
-}
-
 function boot(){
-  tryLockLandscape();
-  document.addEventListener("click", tryLockLandscape, {once:true});
   initThree();
   buildBoard();
   buildTray();
+  renderRoster();
+  refreshBestPill();
+  layoutCamera();   // re-fit now the tray has real height
   wireUI();
 
 
   loadAll(()=>{
     document.getElementById("loading").classList.add("hide");
+    renderRoster();
+    refreshBestPill();
+    layoutCamera();
     document.getElementById("ovStart").classList.remove("hide");
     animate();
   });
