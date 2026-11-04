@@ -254,7 +254,9 @@
   #selPanel{position:fixed;left:12px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:22;
     background:rgba(10,18,30,.95);border:1px solid rgba(120,190,255,.3);border-radius:14px;
     padding:10px 12px;font-size:12px;color:#bcd8f5;display:none;width:196px;
-    box-shadow:0 8px 26px rgba(0,0,0,.5)}
+    box-shadow:0 8px 26px rgba(0,0,0,.5);
+    /* info only — taps must fall through to the board underneath */
+    pointer-events:none}
   #selPanel.show{display:block}
   #selPanel.preview{border-color:#5fc8ff;box-shadow:0 0 0 2px rgba(95,200,255,.25),0 8px 26px rgba(0,0,0,.5)}
   #selPanel .nm{font-weight:900;color:#fff;font-size:13.5px;letter-spacing:.6px;margin-bottom:5px;
@@ -270,7 +272,50 @@
   #selPanel .hint.armed{color:#57e08c}
   #selPanel .hint.poor{color:#ff7f8f}
   #sellBtn{margin-top:8px;width:100%;background:#8a2f3f;border:none;border-radius:9px;
-    color:#ffd9df;font-weight:800;font-size:11.5px;padding:8px;cursor:pointer;font-family:inherit}
+    color:#ffd9df;font-weight:800;font-size:11.5px;padding:8px;cursor:pointer;font-family:inherit;
+    pointer-events:auto}
+
+  /* ---------- pleb pack / pleb mart ---------- */
+  .blepDot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;
+    background:radial-gradient(circle at 32% 28%,#d9f7ff,#5fc8ff 62%,#1f7fd0);
+    box-shadow:0 0 9px rgba(95,200,255,.75);flex:0 0 auto}
+  .blepDot.sm{width:8px;height:8px;margin-right:3px;box-shadow:0 0 6px rgba(95,200,255,.6)}
+  .pCard .ps .blepDot{position:relative;top:-1px}
+  .pill.blep b{color:#8fe6ff}
+  .panel.shop{max-width:560px;padding:16px 16px 15px;text-align:left}
+  .shopTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px}
+  .shopTitle{font-size:20px;font-weight:900;letter-spacing:1.4px;
+    background:linear-gradient(180deg,#8fe6ff,#3aa9ff);-webkit-background-clip:text;
+    background-clip:text;color:transparent;white-space:nowrap}
+  .blepBig{display:flex;align-items:center;gap:6px;font-size:16px;font-weight:900;color:#8fe6ff;
+    background:rgba(95,200,255,.1);border:1px solid rgba(95,200,255,.32);border-radius:999px;
+    padding:5px 13px;white-space:nowrap}
+  .tabs{display:flex;gap:7px;margin-bottom:10px}
+  .tab{flex:1 1 0;padding:10px;border-radius:11px;border:1px solid rgba(120,190,255,.25);
+    background:rgba(14,26,44,.8);color:#9bb6d8;font-family:inherit;font-weight:900;
+    font-size:12px;letter-spacing:1.4px;cursor:pointer}
+  .tab:active{transform:scale(.98)}
+  .tab.on{background:linear-gradient(180deg,#1d7ae0,#14548f);color:#fff;border-color:#5fb4ff}
+  .shopGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;
+    max-height:44vh;overflow-y:auto;padding:2px 2px 2px 0}
+  .pCard{background:linear-gradient(180deg,#16233a,#0e1728);border:1px solid rgba(120,190,255,.24);
+    border-radius:13px;padding:8px 6px 7px;text-align:center;position:relative;cursor:pointer;
+    transition:.12s}
+  .pCard:active{transform:scale(.97)}
+  .pCard img{width:46px;height:46px;object-fit:contain;display:block;margin:0 auto 3px;
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.55))}
+  .pCard .pn{font-size:11px;font-weight:900;letter-spacing:.5px;color:#dbeaff}
+  .pCard .ps{font-size:10px;font-weight:800;margin-top:3px;color:#7f9dbb;letter-spacing:.4px;line-height:1.3}
+  .pCard.locked img{filter:brightness(0) opacity(.4)}
+  .pCard.owned{border-color:rgba(87,224,140,.42)}
+  .pCard.eq{border-color:#5fc8ff;box-shadow:0 0 0 2px rgba(95,200,255,.28),0 0 16px rgba(95,200,255,.22)}
+  .pCard.eq .ps{color:#8fe6ff}
+  .pCard .badge{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;
+    background:linear-gradient(180deg,#5df2a0,#16b866);color:#04130b;font-size:11px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.55)}
+  .pCard .price{color:#8fe6ff}
+  .pCard .price.no{color:#ff7f8f}
+  .shopFoot{margin-top:10px;font-size:11px;color:#7f9dbb;text-align:center;line-height:1.45}
 
   /* narrow / portrait phone: keep the HUD on one line */
   @media (max-width:480px){
@@ -283,6 +328,25 @@
     #tray{gap:5px;padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
     .card{width:66px;padding:6px 4px 5px}
     .card .thumb{width:36px;height:36px}
+  }
+
+  /* short landscape: the shop has to fit in ~360px of height */
+  @media (max-height:520px){
+    .panel.shop{padding:11px 12px 10px;border-radius:15px}
+    .shopTitle{font-size:16px}
+    .blepBig{font-size:13px;padding:3px 10px}
+    .shopTop{margin-bottom:7px}
+    .tabs{margin-bottom:7px}
+    .tab{padding:6px;font-size:10.5px;border-radius:9px}
+    .shopGrid{grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:6px;
+      max-height:calc(100vh - 232px)}
+    .pCard{padding:5px 4px 4px;border-radius:10px}
+    .pCard img{width:32px;height:32px;margin-bottom:1px}
+    .pCard .pn{font-size:10px}
+    .pCard .ps{font-size:9px;margin-top:2px}
+    .pCard .badge{width:16px;height:16px;font-size:9px;top:-5px;right:-5px}
+    .shopFoot{font-size:9.5px;margin-top:6px;line-height:1.35}
+    .panel.shop .big{margin-top:8px;padding:9px;font-size:13px;border-radius:11px}
   }
 
   /* short landscape screens: shrink the tray so the board gets the space */
@@ -308,8 +372,10 @@
     <div class="pill life">&#10084;<b id="lives">20</b></div>
     <div class="pill wave">WAVE<b id="wave">0</b></div>
     <div class="pill score"><b id="score">0</b></div>
+    <div class="pill blep"><i class="blepDot"></i><b id="blep">0</b></div>
   </div>
   <div id="rightTop">
+    <button class="btn" id="packBtn">PACK</button>
     <button class="btn" id="autoBtn">AUTO</button>
     <button class="btn" id="spdBtn">1x</button>
     <button class="btn" id="pauseBtn">II</button>
@@ -349,6 +415,10 @@
     <div class="menuBottom">
       <button class="playBtn" id="startBtn">PLAY</button>
       <div class="menuRow">
+        <button class="ghost" id="packBtn2" type="button">PACK</button>
+        <button class="ghost" id="martBtn2" type="button">MART</button>
+      </div>
+      <div class="menuRow">
         <button class="ghost" id="howBtn" type="button">HOW TO PLAY</button>
       </div>
     </div>
@@ -368,6 +438,8 @@
       <div class="step"><div class="n">2</div><div><b>Tap a pad to preview</b><span>Damage, fire rate, DPS and a circle showing exactly what it covers.</span></div></div>
       <div class="step"><div class="n">3</div><div><b>Tap the same pad again fast</b><span>That's the buy. A slow second tap just re-selects, so no accidental spending.</span></div></div>
       <div class="step"><div class="n">4</div><div><b>Hit NEXT WAVE</b><span>Gold comes from kills. Survive 25 waves to win.</span></div></div>
+      <div class="step"><div class="n">5</div><div><b>Clear waves to earn Blep</b><span>Spend Blep in the MART to unlock new plebs. They stay yours forever.</span></div></div>
+      <div class="step"><div class="n">6</div><div><b>Middle mouse to look around</b><span>Hold middle mouse and drag to spin, scroll to zoom, shift+middle to slide. On a phone: two fingers.</span></div></div>
     </div>
     <button class="big" id="howBack">GOT IT</button>
   </div>
@@ -387,6 +459,23 @@
     <h2>PAUSED</h2>
     <button class="big" id="resumeBtn">RESUME</button>
     <button class="big alt" id="restartBtn">RESTART</button>
+    <button class="big alt" id="viewBtn">RESET VIEW</button>
+  </div>
+</div>
+
+<div class="ov hide" id="ovShop">
+  <div class="panel shop">
+    <div class="shopTop">
+      <div class="shopTitle" id="shopTitle">PLEB PACK</div>
+      <div class="blepBig"><i class="blepDot"></i><span id="shopBlep">0</span></div>
+    </div>
+    <div class="tabs">
+      <button class="tab on" data-tab="pack" type="button">PACK</button>
+      <button class="tab" data-tab="mart" type="button">MART</button>
+    </div>
+    <div class="shopGrid" id="shopGrid"></div>
+    <div class="shopFoot" id="shopFoot"></div>
+    <button class="big alt" id="shopClose">CLOSE</button>
   </div>
 </div>
 
@@ -448,9 +537,58 @@ const TOWERS = {
   bomber: { key:"bomber", model:"pleb_bomber", name:"BOMBER", em:"&#128163;", cost:130, dmg:20,  rate:0.5,  range:2.9, proj:"bomb",  col:0xff9a35, aoe:1.5, desc:"Lobs bombs. Splash damage hits groups." },
   mage:   { key:"mage",   model:"pleb_mage",   name:"MAGE",   em:"&#10024;", cost:155, dmg:9,   rate:1.05, range:3.5, proj:"orb",   col:0xff5f8f, slow:0.45, slowT:1.6, desc:"Frost orbs. Slows everything it hits." },
   guard:  { key:"guard",  model:"pleb_guard",  name:"GUARD",  em:"&#128737;", cost:115, dmg:26,  rate:1.15, range:1.6, proj:"melee", col:0xa07fe0, desc:"Short range, heavy hits. Path guard." },
-  king:   { key:"king",   model:"pleb_king",   name:"KING",   em:"&#128081;", cost:280, dmg:46,  rate:0.52, range:5.6, proj:"beam",  col:0xffd451, desc:"Long range sniper. Deletes the big ones." }
+  king:   { key:"king",   model:"pleb_king",   name:"KING",   em:"&#128081;", cost:280, dmg:46,  rate:0.52, range:5.6, proj:"beam",  col:0xffd451, desc:"Long range sniper. Deletes the big ones." },
+  brute:  { key:"brute",  model:"pleb_brute",  name:"BRUTE",  em:"&#128170;", cost:200, dmg:38,  rate:0.72, range:2.1, proj:"melee", col:0x8f5bff, desc:"Huge hits at arm's length. Nasty next to a bend." },
+  banner: { key:"banner", model:"pleb_banner", name:"BANNER", em:"&#127987;", cost:95,  dmg:6,   rate:1.7,  range:4.2, proj:"bolt",  col:0x4dffe1, aura:2.6, desc:"Weak shots, but every pleb nearby fires faster." }
 };
-const TOWER_ORDER = ["basic","scout","guard","bomber","mage","king"];
+const TOWER_ORDER = ["basic","scout","guard","bomber","mage","brute","banner","king"];
+
+// ---- PLEB PACK / PLEB MART -----------------------------------
+// Blep is the persistent currency: earn it by clearing waves, spend it in the
+// MART to unlock plebs forever. The PACK is what you take into battle.
+const MAX_ARMY = 5;
+const PLEB_UNLOCK = {
+  basic:0, scout:0, guard:0,
+  bomber:120, mage:150, banner:180, brute:220, king:300
+};
+const PACK_KEY = "plebtd_pack_v1";
+
+const PACK = {
+  blep: 0,
+  owned: ["basic","scout","guard"],
+  equipped: ["basic","scout","guard"],
+  tab: "pack"
+};
+
+function loadPack(){
+  try{
+    const raw = localStorage.getItem(PACK_KEY);
+    if(raw){
+      const j = JSON.parse(raw);
+      if(typeof j.blep === "number") PACK.blep = j.blep;
+      if(Array.isArray(j.owned)) PACK.owned = j.owned.filter(k=>TOWERS[k]);
+      if(Array.isArray(j.equipped)) PACK.equipped = j.equipped.filter(k=>TOWERS[k]);
+    }
+  }catch(e){}
+  // always at least the starter set
+  ["basic","scout","guard"].forEach(k=>{ if(!PACK.owned.includes(k)) PACK.owned.push(k); });
+  PACK.equipped = PACK.equipped.filter(k=>PACK.owned.includes(k)).slice(0, MAX_ARMY);
+  if(!PACK.equipped.length) PACK.equipped = PACK.owned.slice(0, MAX_ARMY);
+}
+
+function savePack(){
+  try{
+    localStorage.setItem(PACK_KEY, JSON.stringify({
+      blep: PACK.blep, owned: PACK.owned, equipped: PACK.equipped
+    }));
+  }catch(e){}
+}
+
+function addBlep(n){
+  PACK.blep += n;
+  savePack();
+  updateHUD();
+}
 
 // ---------------- enemy defs ----------------
 const ENEMIES = {
@@ -466,7 +604,11 @@ const ENEMIES = {
    ============================================================ */
 const loader = new THREE.GLTFLoader();
 const MODELS = {};
+const LOADED = new Set();          // which model files have actually arrived
 const MODEL_NAMES = ["pleb_basic","pleb_scout","pleb_bomber","pleb_guard","pleb_mage","pleb_brute","pleb_king","pleb_banner"];
+// these must be ready before the player can start, so the first wave never
+// pops in placeholder boxes. Everything else streams in after the menu shows.
+const INITIAL_MODELS = ["pleb_basic","pleb_scout","pleb_bomber","pleb_guard","pleb_mage","pleb_brute","pleb_king","pleb_banner"];
 let loadedCount = 0;
 
 function bumpProgress(){
@@ -500,26 +642,38 @@ function makeFallbackPleb(color){
   return g;
 }
 
-function loadAll(done){
-  let pending = MODEL_NAMES.length;
-  MODEL_NAMES.forEach(name=>{
-    loader.load(MODEL_BASE + name + ".glb", gltf=>{
-      const root = gltf.scene;
-      root.traverse(o=>{
-        if(o.isMesh){
-          o.castShadow = false; o.receiveShadow = false;
-          o.frustumCulled = true;
-        }
-      });
-      MODELS[name] = root;
-      bumpProgress();
-      if(--pending === 0) done();
-    }, undefined, err=>{
-      console.warn("GLB failed, using fallback:", name, err);
-      MODELS[name] = null;
-      bumpProgress();
-      if(--pending === 0) done();
+function loadModel(name, onDone){
+  loader.load(MODEL_BASE + name + ".glb", gltf=>{
+    const root = gltf.scene;
+    root.traverse(o=>{
+      if(o.isMesh){
+        o.castShadow = false; o.receiveShadow = false;
+        o.frustumCulled = true;
+      }
     });
+    MODELS[name] = root;
+    LOADED.add(name);
+    bumpProgress();
+    if(onDone) onDone();
+  }, undefined, err=>{
+    console.warn("GLB failed, using fallback:", name, err);
+    MODELS[name] = MODELS[name] || null;
+    bumpProgress();
+    if(onDone) onDone();
+  });
+}
+
+function loadAll(done){
+  let pending = INITIAL_MODELS.length;
+  const finish = ()=>{ if(--pending === 0) done(); };
+  INITIAL_MODELS.forEach(name=>loadModel(name, finish));
+}
+
+// background streaming for the plebs you haven't seen yet
+function loadRest(){
+  MODEL_NAMES.forEach(name=>{
+    if(MODELS[name] || LOADED.has(name)) return;
+    loadModel(name);
   });
 }
 
@@ -684,6 +838,67 @@ function layoutCamera(){
 function onResize(){
   renderer.setSize(window.innerWidth, window.innerHeight);
   layoutCamera();
+}
+
+/* ============================================================
+   Free camera — middle mouse drag = orbit, wheel = zoom,
+   shift + middle drag = slide, two fingers on phone = orbit/pinch.
+   ------------------------------------------------------------ */
+const VIEW = { yaw:0, pitch:0, zoom:1, pan: new THREE.Vector3() };
+const VIEW_PITCH_MIN = -0.75, VIEW_PITCH_MAX = 1.15;
+
+function clampView(){
+  VIEW.pitch = Math.max(VIEW_PITCH_MIN, Math.min(VIEW_PITCH_MAX, VIEW.pitch));
+  VIEW.zoom  = Math.max(0.22, Math.min(3.2, VIEW.zoom));
+  const lim = 22;
+  VIEW.pan.x = Math.max(-lim, Math.min(lim, VIEW.pan.x));
+  VIEW.pan.z = Math.max(-lim, Math.min(lim, VIEW.pan.z));
+}
+
+function resetView(){
+  VIEW.yaw = 0; VIEW.pitch = 0; VIEW.zoom = 1; VIEW.pan.set(0,0,0);
+}
+
+// the perfectly-fitted camera, then the player's orbit/zoom/pan on top of it
+function applyView(){
+  const base = new THREE.Vector3().subVectors(camBase, camTarget);
+  const sph = new THREE.Spherical().setFromVector3(base);
+  sph.phi = Math.max(0.12, Math.min(Math.PI - 0.12, sph.phi + VIEW.pitch));
+  sph.theta += VIEW.yaw;
+  sph.radius = camDist * VIEW.zoom;
+  const off = new THREE.Vector3().setFromSpherical(sph);
+  const focus = camTarget.clone().add(VIEW.pan);
+  camera.position.copy(focus).add(off);
+  camera.lookAt(focus);
+}
+
+// how much world a screen pixel is worth at the current camera distance
+function panScale(){
+  return (camDist * VIEW.zoom) * 0.0016;
+}
+
+function panBy(dx, dy){
+  const k = panScale();
+  const fwd = new THREE.Vector3();
+  camera.getWorldDirection(fwd);
+  fwd.y = 0;
+  if(fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1);
+  fwd.normalize();
+  const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0,1,0)).normalize();
+  VIEW.pan.addScaledVector(right, -dx * k);
+  VIEW.pan.addScaledVector(fwd, dy * k);
+  clampView();
+}
+
+function orbitBy(dx, dy){
+  VIEW.yaw   -= dx * 0.006;
+  VIEW.pitch += dy * 0.005;
+  clampView();
+}
+
+function zoomBy(factor){
+  VIEW.zoom *= factor;
+  clampView();
 }
 
 /* ============================================================
@@ -1003,7 +1218,7 @@ function floatText(pos, text, color){
    ============================================================ */
 function fire(t, target){
   const def = t.def;
-  const from = new THREE.Vector3(t.pad.x, 1.05, t.pad.z);
+  const from = new THREE.Vector3(t.holder.position.x, 1.05, t.holder.position.z);
 
   if(def.proj === "melee"){
     // instant hit with a slash flash
@@ -1108,8 +1323,11 @@ function updateWave(dt){
     const bonus = 30 + G.wave * 8;
     G.gold += bonus;
     G.score += bonus * 5;
+    // Blep: permanent currency, scales with the wave you just cleared
+    const blepGain = 12 + G.wave * 5;
+    addBlep(blepGain);
     floatText(new THREE.Vector3(gx(PATH_CELLS[PATH_CELLS.length-1][0]), 1.2, gz(PATH_CELLS[PATH_CELLS.length-1][1])),
-      "WAVE CLEAR +" + bonus, "#8fffa8");
+      "WAVE CLEAR +" + bonus + "g  +" + blepGain + " blep", "#8fffa8");
     SFX.waveClear();
     updateHUD();
     if(G.wave >= 25 && !G.endless){
@@ -1211,7 +1429,7 @@ function update(dt){
       fire(t, best);
       t.cool = 1 / t.def.rate;
       // lean slightly toward the target, keep facing the camera
-      const ang = Math.atan2(best.holder.position.x - t.pad.x, best.holder.position.z - t.pad.z);
+      const ang = Math.atan2(best.holder.position.x - t.holder.position.x, best.holder.position.z - t.holder.position.z);
       let rel = ang;
       while(rel > Math.PI) rel -= Math.PI*2;
       while(rel < -Math.PI) rel += Math.PI*2;
@@ -1357,6 +1575,8 @@ function updateHUD(){
   document.getElementById("lives").textContent = Math.max(0, G.lives);
   document.getElementById("wave").textContent = G.wave;
   document.getElementById("score").textContent = G.score;
+  const blepEl = document.getElementById("blep");
+  if(blepEl) blepEl.textContent = PACK.blep;
   // tray affordability
   document.querySelectorAll(".card").forEach(el=>{
     const k = el.dataset.k;
@@ -1465,6 +1685,42 @@ const pointer = new THREE.Vector2();
 let lastDownT = 0, lastDownXY = null, moved = false;
 let lastTapAt = 0, lastTapXY = {x:0, y:0};
 
+/* ---- camera input state ------------------------------------
+   Middle mouse (button 1): drag = orbit, shift/ctrl + drag = slide.
+   Wheel = zoom. Touch: one finger still builds, two fingers = orbit + pinch.
+   ------------------------------------------------------------ */
+let camDrag = null;      // {mode:"orbit"|"pan", x, y}
+const touches = new Map();
+let pinchStart = 0, pinchZoomStart = 1, touchOrbit = null;
+
+function camPointerDown(e){
+  if(e.button === 1){
+    e.preventDefault();
+    camDrag = { mode: (e.shiftKey || e.ctrlKey || e.metaKey) ? "pan" : "orbit",
+                x: e.clientX, y: e.clientY };
+    try{ renderer.domElement.setPointerCapture(e.pointerId); }catch(err){}
+    renderer.domElement.style.cursor = camDrag.mode === "pan" ? "move" : "grabbing";
+    return true;
+  }
+  return false;
+}
+
+function camPointerMove(e){
+  if(!camDrag) return false;
+  const dx = e.clientX - camDrag.x, dy = e.clientY - camDrag.y;
+  camDrag.x = e.clientX; camDrag.y = e.clientY;
+  if(camDrag.mode === "pan") panBy(dx, dy);
+  else orbitBy(dx, dy);
+  return true;
+}
+
+function camPointerUp(){
+  if(!camDrag) return false;
+  camDrag = null;
+  renderer.domElement.style.cursor = "";
+  return true;
+}
+
 function pickPad(clientX, clientY){
   pointer.x = (clientX / window.innerWidth) * 2 - 1;
   pointer.y = -(clientY / window.innerHeight) * 2 + 1;
@@ -1495,6 +1751,19 @@ function isDescendant(o, root){
 }
 
 function onPointerDown(e){
+  if(camPointerDown(e)) return;
+  // touch: track fingers so two-finger gestures become camera control
+  if(e.pointerType === "touch"){
+    touches.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(touches.size === 2){
+      lastDownXY = null;
+      const [a, b] = [...touches.values()];
+      pinchStart = Math.hypot(a.x-b.x, a.y-b.y) || 1;
+      pinchZoomStart = VIEW.zoom;
+      touchOrbit = { cx:(a.x+b.x)/2, cy:(a.y+b.y)/2 };
+      return;
+    }
+  }
   if(!G.running || G.paused || G.over) return;
   SFX.unlock();
   moved = false;
@@ -1503,6 +1772,11 @@ function onPointerDown(e){
 }
 
 function onPointerUp(e){
+  if(camPointerUp()) return;
+  if(e.pointerType === "touch"){
+    touches.delete(e.pointerId);
+    if(touches.size < 2) touchOrbit = null;
+  }
   if(!G.running || G.paused || G.over) return;
   if(!lastDownXY) return;
   const dx = e.clientX - lastDownXY.x, dy = e.clientY - lastDownXY.y;
@@ -1516,6 +1790,28 @@ function onPointerUp(e){
   lastTapAt = now; lastTapXY = {x:e.clientX, y:e.clientY};
 
   handleTap(e.clientX, e.clientY);
+}
+
+function onPointerMove(e){
+  if(camPointerMove(e)) return;
+  if(e.pointerType !== "touch" || touches.size !== 2) return;
+  if(!touches.has(e.pointerId)) return;
+  touches.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  const [a, b] = [...touches.values()];
+  const dist = Math.hypot(a.x-b.x, a.y-b.y) || 1;
+  if(pinchStart > 0) VIEW.zoom = pinchZoomStart * (pinchStart / dist);
+  clampView();
+  const cx = (a.x+b.x)/2, cy = (a.y+b.y)/2;
+  if(touchOrbit){
+    orbitBy((cx - touchOrbit.cx) * 0.7, (cy - touchOrbit.cy) * 0.7);
+    touchOrbit = {cx, cy};
+  }
+}
+
+function onWheel(e){
+  e.preventDefault();
+  const f = Math.pow(1.0015, e.deltaY);
+  zoomBy(f);
 }
 
 /* ---- placement preview -------------------------------------
@@ -1748,7 +2044,8 @@ function refreshBestPill(){
 function buildTray(){
   const tray = document.getElementById("tray");
   tray.innerHTML = "";
-  TOWER_ORDER.forEach(k=>{
+  const list = PACK.equipped.filter(k=>TOWERS[k]);
+  list.forEach(k=>{
     const d = TOWERS[k];
     const el = document.createElement("div");
     el.className = "card";
@@ -1765,6 +2062,120 @@ function buildTray(){
     });
     tray.appendChild(el);
   });
+  if(!list.length){
+    const el = document.createElement("div");
+    el.style.cssText = "padding:14px 12px;font-size:12px;color:#7f9dbb;font-weight:700";
+    el.textContent = "PACK IS EMPTY — open PACK to equip plebs";
+    tray.appendChild(el);
+  }
+  updateHUD();
+}
+
+/* ============================================================
+   PLEB PACK / PLEB MART UI
+   ============================================================ */
+function isOwned(k){ return PACK.owned.includes(k); }
+function isEquipped(k){ return PACK.equipped.includes(k); }
+
+function openShop(tab){
+  PACK.tab = tab || PACK.tab || "pack";
+  document.getElementById("ovShop").classList.remove("hide");
+  renderShop();
+}
+
+function closeShop(){
+  document.getElementById("ovShop").classList.add("hide");
+  buildTray();
+  if(G.selectedType && !isEquipped(G.selectedType)) setSelectedType(null);
+  savePack();
+}
+
+function renderShop(){
+  const mart = PACK.tab === "mart";
+  document.getElementById("shopTitle").textContent = mart ? "PLEB MART" : "PLEB PACK";
+  document.getElementById("shopBlep").textContent = PACK.blep;
+  document.querySelectorAll("#ovShop .tab").forEach(t=>{
+    t.classList.toggle("on", t.dataset.tab === PACK.tab);
+  });
+
+  const grid = document.getElementById("shopGrid");
+  grid.innerHTML = "";
+
+  TOWER_ORDER.forEach(k=>{
+    const d = TOWERS[k];
+    const owned = isOwned(k), eq = isEquipped(k);
+    const price = PLEB_UNLOCK[k] || 0;
+    const el = document.createElement("div");
+    el.className = "pCard";
+    if(!owned && mart) el.classList.add("locked");
+    if(owned) el.classList.add("owned");
+    if(eq) el.classList.add("eq");
+
+    let status;
+    if(mart){
+      status = owned
+        ? '<span class="ps" style="color:#57e08c">OWNED</span>'
+        : `<span class="ps price${PACK.blep < price ? " no" : ""}"><i class="blepDot sm"></i>${price}</span>`;
+    } else {
+      status = !owned
+        ? '<span class="ps" style="color:#7f9dbb">LOCKED</span>'
+        : eq
+          ? '<span class="ps">IN PACK</span>'
+          : '<span class="ps">TAP TO EQUIP</span>';
+    }
+
+    el.innerHTML = `<img src="${MODEL_BASE}thumb_${d.model}.png" alt="">
+      <div class="pn">${d.name}</div>${status}
+      ${eq ? '<div class="badge">&#10003;</div>' : ""}`;
+
+    el.addEventListener("click", ()=>mart ? buyPleb(k) : toggleEquip(k));
+    grid.appendChild(el);
+  });
+
+  const foot = document.getElementById("shopFoot");
+  if(mart){
+    foot.innerHTML = `Blep is earned by clearing waves — harder waves pay more.<br>
+      Owned plebs stay yours forever. ${PACK.owned.length}/${TOWER_ORDER.length} unlocked.`;
+  } else {
+    foot.innerHTML = `Equip up to <b>${MAX_ARMY}</b> plebs — those are the cards in your build tray.<br>
+      ${PACK.equipped.length}/${MAX_ARMY} equipped.`;
+  }
+  document.getElementById("shopBlep").textContent = PACK.blep;
+}
+
+function buyPleb(k){
+  const price = PLEB_UNLOCK[k] || 0;
+  if(isOwned(k)){ PACK.tab = "pack"; renderShop(); return; }
+  if(PACK.blep < price){
+    showTip(`Need ${price} Blep — you have ${PACK.blep}.`, 1800);
+    SFX.hurt();
+    return;
+  }
+  PACK.blep -= price;
+  PACK.owned.push(k);
+  if(PACK.equipped.length < MAX_ARMY) PACK.equipped.push(k);
+  savePack();
+  SFX.waveClear();
+  flashBanner(TOWERS[k].name + " UNLOCKED");
+  renderShop();
+  updateHUD();
+}
+
+function toggleEquip(k){
+  if(!isOwned(k)){ PACK.tab = "mart"; renderShop(); return; }
+  if(isEquipped(k)){
+    PACK.equipped = PACK.equipped.filter(x=>x !== k);
+  } else {
+    if(PACK.equipped.length >= MAX_ARMY){
+      showTip(`Pack is full — ${MAX_ARMY} max. Tap one to swap out.`, 1900);
+      SFX.hurt();
+      return;
+    }
+    PACK.equipped.push(k);
+  }
+  savePack();
+  SFX.place();
+  renderShop();
 }
 
 function setSelectedType(k){
@@ -1797,10 +2208,13 @@ function startGame(){
   syncAutoUI();
   G.selectedType = null; G.selectedTower = null;
   clearPreview();
+  resetView();
   setSelectedType(null); selectTower(null);
   document.getElementById("ovStart").classList.add("hide");
   document.getElementById("ovOver").classList.add("hide");
   document.getElementById("ovPause").classList.add("hide");
+  document.getElementById("ovShop").classList.add("hide");
+  buildTray();
   updateHUD();
   flashBanner("DEFEND THE CORE");
 }
@@ -1854,13 +2268,12 @@ function animate(){
 
   // camera shake (offset from the fitted base position)
   shakeAmt = Math.max(0, shakeAmt - raw * 1.6);
-  camera.position.copy(camBase);
+  applyView();
   if(shakeAmt > 0.001){
     camera.position.x += Math.sin(elapsed*80) * shakeAmt;
     camera.position.y += Math.cos(elapsed*70) * shakeAmt * 0.6;
     camera.position.z += Math.sin(elapsed*55) * shakeAmt * 0.4;
   }
-  camera.lookAt(camTarget);
 
   renderer.render(scene, camera);
 }
@@ -1873,7 +2286,24 @@ function wireUI(){
   // pointer events only: touch + mouse are unified, so one tap can never fire twice
   el.addEventListener("pointerdown", onPointerDown);
   el.addEventListener("pointerup", onPointerUp);
-  el.addEventListener("pointercancel", ()=>{ lastDownXY = null; });
+  el.addEventListener("pointermove", onPointerMove);
+  el.addEventListener("pointercancel", e=>{
+    lastDownXY = null;
+    camPointerUp();
+    if(e.pointerType === "touch"){ touches.delete(e.pointerId); if(touches.size < 2) touchOrbit = null; }
+  });
+  el.addEventListener("wheel", onWheel, {passive:false});
+  el.addEventListener("contextmenu", e=>e.preventDefault());
+  el.addEventListener("auxclick", e=>{ if(e.button === 1) e.preventDefault(); });
+
+  // ---- pack / mart
+  document.getElementById("packBtn").addEventListener("click", ()=>{ SFX.unlock(); openShop("pack"); });
+  document.getElementById("packBtn2").addEventListener("click", ()=>{ SFX.unlock(); openShop("pack"); });
+  document.getElementById("martBtn2").addEventListener("click", ()=>{ SFX.unlock(); openShop("mart"); });
+  document.getElementById("shopClose").addEventListener("click", closeShop);
+  document.querySelectorAll("#ovShop .tab").forEach(t=>{
+    t.addEventListener("click", ()=>{ PACK.tab = t.dataset.tab; renderShop(); });
+  });
 
   document.getElementById("sendBtn").addEventListener("click", ()=>{
     SFX.unlock();
@@ -1928,6 +2358,10 @@ function wireUI(){
     document.getElementById("ovPause").classList.add("hide");
     startGame();
   });
+  document.getElementById("viewBtn").addEventListener("click", ()=>{
+    resetView();
+    showTip("View reset. Middle mouse drag to look around.", 1800);
+  });
 
   document.getElementById("sellBtn").addEventListener("click", ()=>{
     if(G.selectedTower) sellTower(G.selectedTower);
@@ -1935,13 +2369,18 @@ function wireUI(){
 
   // keyboard
   window.addEventListener("keydown", e=>{
+    if(e.key === "Escape" && !document.getElementById("ovShop").classList.contains("hide")){
+      closeShop(); return;
+    }
     if(e.key === " "){ e.preventDefault(); if(G.running) startWave(); }
-    if(e.key === "1") setSelectedType("basic");
-    if(e.key === "2") setSelectedType("scout");
-    if(e.key === "3") setSelectedType("guard");
-    if(e.key === "4") setSelectedType("bomber");
-    if(e.key === "5") setSelectedType("mage");
-    if(e.key === "6") setSelectedType("king");
+    const n = parseInt(e.key, 10);
+    if(n >= 1 && n <= MAX_ARMY){
+      const k = PACK.equipped[n-1];
+      if(k) setSelectedType(k);
+    }
+    if(e.key.toLowerCase() === "p") openShop("pack");
+    if(e.key.toLowerCase() === "m") openShop("mart");
+    if(e.key.toLowerCase() === "r" && e.shiftKey) resetView();
     if(e.key === "Escape"){ selectTower(null); setSelectedType(null); }
   });
 }
@@ -1951,6 +2390,7 @@ function wireUI(){
    ============================================================ */
 function boot(){
   initThree();
+  loadPack();
   buildBoard();
   buildTray();
   renderRoster();
@@ -1964,8 +2404,10 @@ function boot(){
     renderRoster();
     refreshBestPill();
     layoutCamera();
+    resetView();
     document.getElementById("ovStart").classList.remove("hide");
     animate();
+    loadRest();     // stream any plebs the player hasn't unlocked yet
   });
 }
 
