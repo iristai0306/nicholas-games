@@ -127,86 +127,97 @@
   .autoRow.on .st{color:#8fe6ff}
   /* ---------- full-screen menu ---------- */
   #ovStart{padding:0;background:#050a13}
-  .menu{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;
+  .menu{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+    align-items:flex-start;overflow:hidden;
     padding:calc(14px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
     background:#050a13}
-  /* readability scrim over the full-bleed art */
+  /* readability scrim — heavier on the left where the controls live */
   .menu::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
     background:
-      linear-gradient(90deg,rgba(4,8,15,.86) 0%,rgba(4,8,15,.55) 34%,rgba(4,8,15,.12) 62%,rgba(4,8,15,.55) 100%),
-      linear-gradient(180deg,rgba(4,8,15,.72) 0%,transparent 26%,transparent 62%,rgba(4,8,15,.8) 100%)}
+      linear-gradient(90deg,rgba(4,8,15,.90) 0%,rgba(4,8,15,.66) 26%,rgba(4,8,15,.10) 52%,rgba(4,8,15,0) 70%),
+      linear-gradient(180deg,rgba(4,8,15,.62) 0%,transparent 24%,transparent 66%,rgba(4,8,15,.7) 100%)}
   .menuTop{position:absolute;z-index:5;top:calc(14px + env(safe-area-inset-top));
     left:16px;right:16px;display:flex;align-items:center;justify-content:space-between}
   .kicker{font-size:10px;letter-spacing:5px;color:#7fb0dd;font-weight:900;
     text-shadow:0 2px 10px rgba(0,0,0,.9)}
   .bestBadge{font-size:10px;font-weight:900;letter-spacing:1.4px;color:#ffd451;
-    border:1px solid rgba(255,212,81,.35);background:rgba(8,14,24,.7);
-    border-radius:999px;padding:5px 12px}
+    border:1px solid rgba(255,212,81,.35);background:rgba(8,14,24,.55);
+    border-radius:999px;padding:5px 12px;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .bestBadge[hidden]{display:none}
-  .menuLeft{display:contents}
   /* ---------- the pleb fight fills the whole screen ---------- */
   .menuArt{position:absolute;inset:0;z-index:1;overflow:hidden;background:#050a13}
-  .menuArt img{width:100%;height:100%;object-fit:cover;object-position:50% 42%;
+  .menuArt img{width:100%;height:100%;object-fit:cover;object-position:56% 42%;
     display:none}
   .menuArt .artP{display:block}
   @media (orientation:landscape),(min-aspect-ratio:1/1){
     .menuArt .artP{display:none}
     .menuArt .artW{display:block}
   }
-  .menuMid{position:absolute;z-index:5;left:20px;top:calc(52px + env(safe-area-inset-top));
-    display:flex;flex-direction:column;align-items:flex-start;text-align:left;max-width:58%}
-  .menuTitle{margin:0;font-size:clamp(64px,17vw,124px);line-height:.86;letter-spacing:-2px;
+  /* ---------- title + controls: one tidy left column ---------- */
+  .menuLeft{position:relative;z-index:5;display:flex;flex-direction:column;
+    align-items:flex-start;gap:16px;width:min(330px,46vw);margin-top:26px}
+  .menuMid{position:relative;display:flex;flex-direction:column;align-items:flex-start;
+    text-align:left;max-width:100%}
+  .menuTitle{margin:0;font-size:clamp(52px,8.6vw,88px);line-height:.86;letter-spacing:-2px;
     font-weight:900;color:#fff;
     text-shadow:0 0 34px rgba(95,200,255,.55),0 4px 0 rgba(10,30,55,.9),0 12px 34px rgba(0,0,0,.8)}
   .menuTitle span{background:linear-gradient(180deg,#8fe6ff,#2f8fe0);
     -webkit-background-clip:text;background-clip:text;color:transparent;
     filter:drop-shadow(0 0 22px rgba(95,200,255,.6))}
-  .menuSub{margin-top:4px;font-size:11px;letter-spacing:5px;font-weight:900;color:#8dc0ea;
-    text-shadow:0 2px 12px rgba(0,0,0,.9)}
-  .menuTag{margin:10px 0 0;font-size:12px;line-height:1.45;color:#b6d2ec;max-width:280px;
+  .menuSub{margin-top:4px;font-size:10.5px;letter-spacing:4.5px;font-weight:900;color:#8dc0ea;
+    text-shadow:0 2px 12px rgba(0,0,0,.9);white-space:nowrap}
+  .menuTag{margin:9px 0 0;font-size:11.5px;line-height:1.45;color:#b6d2ec;max-width:250px;
     text-shadow:0 2px 12px rgba(0,0,0,.95)}
-  /* ---------- buttons: vertical stack on the right ---------- */
-  .menuBottom{position:absolute;z-index:6;right:16px;top:50%;transform:translateY(-50%);
-    width:min(300px,44vw);display:flex;flex-direction:column;gap:9px}
-  .playBtn{padding:17px;border-radius:17px;border:none;font-family:inherit;font-weight:900;
-    font-size:21px;letter-spacing:2.5px;color:#04130b;cursor:pointer;
-    background:linear-gradient(180deg,#5df2a0,#16b866);
-    box-shadow:0 10px 30px rgba(30,220,130,.42),inset 0 1px 0 rgba(255,255,255,.5);
-    transition:transform .1s}
-  .playBtn:active{transform:scale(.975)}
-  .menuRow{display:flex;gap:9px}
+  .menuBottom{position:relative;width:100%;display:flex;flex-direction:column;gap:8px}
+  /* glassy, mostly see-through buttons */
+  .playBtn{padding:15px;border-radius:15px;font-family:inherit;font-weight:900;
+    font-size:18px;letter-spacing:2.5px;cursor:pointer;
+    color:#a8ffcd;border:1px solid rgba(93,242,160,.5);
+    background:linear-gradient(180deg,rgba(93,242,160,.20),rgba(22,184,102,.10));
+    backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+    box-shadow:0 8px 26px rgba(20,190,120,.16),inset 0 1px 0 rgba(255,255,255,.22);
+    transition:transform .1s,background .14s}
+  .playBtn:active{transform:scale(.975);background:rgba(93,242,160,.3)}
+  .menuRow{display:flex;gap:8px}
   .ghost{flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:7px;
-    padding:12px 10px;border-radius:14px;background:rgba(10,18,30,.78);
-    border:1px solid rgba(120,190,255,.26);color:#c6ddf5;font-family:inherit;
-    font-size:12px;font-weight:800;letter-spacing:1.1px;cursor:pointer;transition:.14s;
-    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-  .ghost:active{transform:scale(.98)}
-  .ghost.tog.on{background:rgba(29,122,224,.24);border-color:#5fb4ff;color:#eaf6ff}
-  .ghost .sw{width:30px;height:18px;border-radius:999px;background:#26364e;position:relative;
+    padding:11px 10px;border-radius:13px;background:rgba(8,16,28,.26);
+    border:1px solid rgba(150,200,255,.24);color:#cfe2f7;font-family:inherit;
+    font-size:11.5px;font-weight:800;letter-spacing:1.1px;cursor:pointer;
+    transition:transform .14s,background .14s,border-color .14s;
+    backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+  .ghost:active{transform:scale(.98);background:rgba(10,20,34,.45)}
+  .ghost.tog.on{background:rgba(29,122,224,.26);border-color:rgba(95,180,255,.7);color:#eaf6ff}
+  .ghost .sw{width:30px;height:18px;border-radius:999px;background:rgba(38,54,78,.7);position:relative;
     border:1px solid rgba(120,190,255,.3);flex:0 0 auto;transition:.16s}
   .ghost .sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;
     border-radius:50%;background:#7c93b0;transition:.16s}
   .ghost.on .sw{background:#1d7ae0;border-color:#7fd8ff;box-shadow:0 0 12px rgba(95,200,255,.6)}
   .ghost.on .sw::after{left:14px;background:#fff}
-  /* short landscape phones: smaller title + narrower button rail */
+  /* short landscape phones */
   @media (orientation:landscape) and (max-height:620px){
     .menu{padding:10px 18px calc(10px + env(safe-area-inset-bottom))}
     .menuTop{top:calc(10px + env(safe-area-inset-top));left:18px;right:18px}
-    .menuMid{left:20px;top:calc(38px + env(safe-area-inset-top));max-width:52%}
-    .menuTitle{font-size:clamp(56px,9.5vw,96px);letter-spacing:-2px;line-height:.86}
-    .menuSub{font-size:9.5px;letter-spacing:4.5px;margin-top:3px;white-space:nowrap}
-    .menuTag{max-width:240px;font-size:10.5px;line-height:1.4;margin-top:6px}
-    .menuBottom{right:18px;width:min(250px,32vw);gap:7px}
-    .playBtn{padding:12px;font-size:16px;letter-spacing:2px;border-radius:13px}
-    .ghost{padding:8px;font-size:10.5px;letter-spacing:.6px;border-radius:11px}
+    .menuLeft{width:min(280px,42vw);gap:10px;margin-top:14px}
+    .menuTitle{font-size:clamp(46px,7.4vw,72px);letter-spacing:-1.5px;line-height:.86}
+    .menuSub{font-size:9px;letter-spacing:4px;margin-top:3px}
+    .menuTag{max-width:225px;font-size:10px;line-height:1.4;margin-top:6px}
+    .menuBottom{gap:6px}
+    .playBtn{padding:11px;font-size:15px;letter-spacing:2px;border-radius:12px}
+    .ghost{padding:8px;font-size:10px;letter-spacing:.6px;border-radius:10px}
     .bestBadge{font-size:9px;padding:4px 10px}
     .kicker{font-size:9px;letter-spacing:4px}
   }
-  /* narrow portrait phones: button rail still hugs the right edge, lower half */
+  /* portrait phones: same left-aligned stack, sitting lower so the art breathes */
   @media (orientation:portrait){
-    .menuMid{max-width:84%}
-    .menuBottom{right:16px;left:auto;width:min(300px,74%);top:auto;
-      bottom:calc(16px + env(safe-area-inset-bottom));transform:none}
+    .menu{justify-content:flex-end;padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+    .menu::before{background:
+      linear-gradient(180deg,rgba(4,8,15,.66) 0%,rgba(4,8,15,.05) 22%,rgba(4,8,15,.28) 46%,rgba(4,8,15,.92) 78%)}
+    .menuLeft{width:min(340px,86vw);gap:13px;margin-top:0;margin-bottom:12px}
+    .menuTitle{font-size:clamp(58px,16vw,96px)}
+    .menuSub{font-size:10px;letter-spacing:5px}
+    .menuTag{max-width:270px;font-size:12px}
+    .menuArt img{object-position:50% 38%}
   }
   /* ---------- how to play ---------- */
   #ovHow .panel{max-width:520px}
