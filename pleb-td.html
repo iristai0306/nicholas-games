@@ -154,9 +154,9 @@
     .menuArt .artP{display:none}
     .menuArt .artW{display:block}
   }
-  /* ---------- title + controls: one tidy left column ---------- */
+  /* ---------- title + edge tabs down the left side ---------- */
   .menuLeft{position:relative;z-index:5;display:flex;flex-direction:column;
-    align-items:flex-start;gap:16px;width:min(330px,46vw);margin-top:26px}
+    align-items:flex-start;gap:18px;max-width:62vw;margin-top:22px}
   .menuMid{position:relative;display:flex;flex-direction:column;align-items:flex-start;
     text-align:left;max-width:100%}
   .menuTitle{margin:0;font-size:clamp(52px,8.6vw,88px);line-height:.86;letter-spacing:-2px;
@@ -167,57 +167,87 @@
     filter:drop-shadow(0 0 22px rgba(95,200,255,.6))}
   .menuSub{margin-top:4px;font-size:10.5px;letter-spacing:4.5px;font-weight:900;color:#8dc0ea;
     text-shadow:0 2px 12px rgba(0,0,0,.9);white-space:nowrap}
-  .menuTag{margin:9px 0 0;font-size:11.5px;line-height:1.45;color:#b6d2ec;max-width:250px;
+  .menuTag{margin:9px 0 0;font-size:11.5px;line-height:1.45;color:#b6d2ec;max-width:230px;
     text-shadow:0 2px 12px rgba(0,0,0,.95)}
-  .menuBottom{position:relative;width:100%;display:flex;flex-direction:column;gap:8px}
-  /* glassy, mostly see-through buttons */
-  .playBtn{padding:15px;border-radius:15px;font-family:inherit;font-weight:900;
-    font-size:18px;letter-spacing:2.5px;cursor:pointer;
-    color:#a8ffcd;border:1px solid rgba(93,242,160,.5);
-    background:linear-gradient(180deg,rgba(93,242,160,.20),rgba(22,184,102,.10));
-    backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
-    box-shadow:0 8px 26px rgba(20,190,120,.16),inset 0 1px 0 rgba(255,255,255,.22);
-    transition:transform .1s,background .14s}
-  .playBtn:active{transform:scale(.975);background:rgba(93,242,160,.3)}
-  .menuRow{display:flex;gap:8px}
-  .ghost{flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:7px;
-    padding:11px 10px;border-radius:13px;background:rgba(8,16,28,.26);
-    border:1px solid rgba(150,200,255,.24);color:#cfe2f7;font-family:inherit;
-    font-size:11.5px;font-weight:800;letter-spacing:1.1px;cursor:pointer;
-    transition:transform .14s,background .14s,border-color .14s;
-    backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
-  .ghost:active{transform:scale(.98);background:rgba(10,20,34,.45)}
-  .ghost.tog.on{background:rgba(29,122,224,.26);border-color:rgba(95,180,255,.7);color:#eaf6ff}
-  .ghost .sw{width:30px;height:18px;border-radius:999px;background:rgba(38,54,78,.7);position:relative;
-    border:1px solid rgba(120,190,255,.3);flex:0 0 auto;transition:.16s}
-  .ghost .sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;
+  /* nav = slim tabs bolted to the screen edge, stacked cleanly top to bottom */
+  .menuBottom{position:relative;display:flex;flex-direction:column;align-items:flex-start;
+    gap:6px;margin-left:-16px}
+  .menuRow{display:none}
+  .edgeTab{position:relative;display:flex;align-items:center;justify-content:flex-start;
+    height:38px;padding:0 24px 0 17px;border-radius:0 999px 999px 0;
+    font-family:inherit;font-size:10.5px;font-weight:900;letter-spacing:2.4px;cursor:pointer;
+    color:#c3d8ef;border:1px solid rgba(150,200,255,.20);border-left:none;
+    background:rgba(10,18,30,.30);
+    backdrop-filter:blur(11px);-webkit-backdrop-filter:blur(11px);
+    transition:width .2s cubic-bezier(.22,.9,.3,1),padding .2s cubic-bezier(.22,.9,.3,1),
+      background .16s,color .16s,border-color .16s,box-shadow .2s,height .2s;
+    box-shadow:0 5px 20px rgba(0,0,0,.26);white-space:nowrap;overflow:hidden;
+    -webkit-tap-highlight-color:transparent}
+  .edgeTab::after{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;border-radius:2px;
+    background:rgba(140,200,255,.45);opacity:.0;transition:opacity .16s}
+  .edgeTab:hover,.edgeTab:active{color:#fff;background:rgba(22,44,72,.55);
+    border-color:rgba(150,210,255,.55);box-shadow:0 8px 26px rgba(30,140,240,.32)}
+  .edgeTab:hover::after,.edgeTab:active::after{opacity:1;background:#7fd8ff}
+  /* primary tab */
+  .edgeTab.play{height:48px;width:196px;padding:0 30px 0 20px;font-size:13.5px;letter-spacing:3px;
+    color:#a8ffcd;border-color:rgba(93,242,160,.4);background:rgba(14,58,40,.32);
+    box-shadow:0 8px 26px rgba(20,190,120,.18),inset 0 1px 0 rgba(255,255,255,.12)}
+  .edgeTab.play::after{background:#5df2a0}
+  .edgeTab.play:hover,.edgeTab.play:active{width:222px;color:#d6ffe8;background:rgba(24,92,62,.52);
+    border-color:rgba(93,242,160,.8);box-shadow:0 10px 34px rgba(24,210,130,.42)}
+  /* staggered secondary tabs — reads as a tidy rail, not a wall of bricks */
+  .edgeTab.s1{width:126px}
+  .edgeTab.s1:hover,.edgeTab.s1:active{width:146px}
+  .edgeTab.s2{width:126px}
+  .edgeTab.s2:hover,.edgeTab.s2:active{width:146px}
+  .edgeTab.s3{width:160px}
+  .edgeTab.s3:hover,.edgeTab.s3:active{width:182px}
+  .edgeTab .sw{width:26px;height:15px;border-radius:999px;background:rgba(38,54,78,.8);position:relative;
+    border:1px solid rgba(120,190,255,.3);flex:0 0 auto;margin-right:9px;transition:.16s}
+  .edgeTab .sw::after{content:"";position:absolute;top:1px;left:1px;width:11px;height:11px;
     border-radius:50%;background:#7c93b0;transition:.16s}
-  .ghost.on .sw{background:#1d7ae0;border-color:#7fd8ff;box-shadow:0 0 12px rgba(95,200,255,.6)}
-  .ghost.on .sw::after{left:14px;background:#fff}
+  .edgeTab.on .sw{background:#1d7ae0;border-color:#7fd8ff;box-shadow:0 0 12px rgba(95,200,255,.6)}
+  .edgeTab.on .sw::after{left:11px;background:#fff}
   /* short landscape phones */
   @media (orientation:landscape) and (max-height:620px){
     .menu{padding:10px 18px calc(10px + env(safe-area-inset-bottom))}
     .menuTop{top:calc(10px + env(safe-area-inset-top));left:18px;right:18px}
-    .menuLeft{width:min(280px,42vw);gap:10px;margin-top:14px}
-    .menuTitle{font-size:clamp(46px,7.4vw,72px);letter-spacing:-1.5px;line-height:.86}
-    .menuSub{font-size:9px;letter-spacing:4px;margin-top:3px}
-    .menuTag{max-width:225px;font-size:10px;line-height:1.4;margin-top:6px}
-    .menuBottom{gap:6px}
-    .playBtn{padding:11px;font-size:15px;letter-spacing:2px;border-radius:12px}
-    .ghost{padding:8px;font-size:10px;letter-spacing:.6px;border-radius:10px}
+    .menuLeft{max-width:58vw;gap:11px;margin-top:10px}
+    .menuTitle{font-size:clamp(44px,7vw,68px);letter-spacing:-1.5px;line-height:.86}
+    .menuSub{font-size:8.5px;letter-spacing:3.6px;margin-top:3px}
+    .menuTag{max-width:205px;font-size:9.5px;line-height:1.35;margin-top:5px}
+    .menuBottom{gap:4px;margin-left:-18px}
+    .edgeTab{height:29px;padding:0 18px 0 14px;font-size:9.5px;letter-spacing:1.9px}
+    .edgeTab.play{width:152px;height:36px;font-size:11.5px;letter-spacing:2.4px;padding:0 22px 0 16px}
+    .edgeTab.play:hover,.edgeTab.play:active{width:174px}
+    .edgeTab.s1,.edgeTab.s2{width:100px}
+    .edgeTab.s1:hover,.edgeTab.s1:active,.edgeTab.s2:hover,.edgeTab.s2:active{width:118px}
+    .edgeTab.s3{width:128px}
+    .edgeTab.s3:hover,.edgeTab.s3:active{width:148px}
+    .edgeTab .sw{width:22px;height:13px}
+    .edgeTab .sw::after{width:9px;height:9px}
+    .edgeTab.on .sw::after{left:9px}
     .bestBadge{font-size:9px;padding:4px 10px}
     .kicker{font-size:9px;letter-spacing:4px}
   }
-  /* portrait phones: same left-aligned stack, sitting lower so the art breathes */
+  /* portrait phones: art fills the top, tabs rail sits low-left over a dark wash */
   @media (orientation:portrait){
-    .menu{justify-content:flex-end;padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+    .menu{justify-content:flex-end;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
     .menu::before{background:
-      linear-gradient(180deg,rgba(4,8,15,.66) 0%,rgba(4,8,15,.05) 22%,rgba(4,8,15,.28) 46%,rgba(4,8,15,.92) 78%)}
-    .menuLeft{width:min(340px,86vw);gap:13px;margin-top:0;margin-bottom:12px}
-    .menuTitle{font-size:clamp(58px,16vw,96px)}
-    .menuSub{font-size:10px;letter-spacing:5px}
-    .menuTag{max-width:270px;font-size:12px}
-    .menuArt img{object-position:50% 38%}
+      linear-gradient(180deg,rgba(4,8,15,.58) 0%,rgba(4,8,15,.04) 20%,rgba(4,8,15,.30) 44%,rgba(4,8,15,.94) 74%)}
+    .menuLeft{max-width:88vw;gap:14px;margin-top:0;margin-bottom:8px}
+    .menuTitle{font-size:clamp(56px,15vw,92px)}
+    .menuSub{font-size:9.5px;letter-spacing:4.2px}
+    .menuTag{max-width:255px;font-size:11.5px}
+    .menuBottom{gap:6px;margin-left:-16px}
+    .edgeTab.play{width:190px;height:46px}
+    .edgeTab.play:hover,.edgeTab.play:active{width:212px}
+    .edgeTab.s1,.edgeTab.s2{width:130px}
+    .edgeTab.s2:hover,.edgeTab.s2:active{width:150px}
+    .edgeTab.s1:hover,.edgeTab.s1:active{width:150px}
+    .edgeTab.s3{width:164px}
+    .edgeTab.s3:hover,.edgeTab.s3:active{width:186px}
+    .menuArt img{object-position:50% 36%}
   }
   /* ---------- how to play ---------- */
   #ovHow .panel{max-width:520px}
@@ -419,14 +449,10 @@
       <p class="menuTag">Drop plebs on the pads, hold the line, survive 25 waves.</p>
     </div>
     <div class="menuBottom">
-      <button class="playBtn" id="startBtn">PLAY</button>
-      <div class="menuRow">
-        <button class="ghost" id="packBtn2" type="button">PACK</button>
-        <button class="ghost" id="martBtn2" type="button">MART</button>
-      </div>
-      <div class="menuRow">
-        <button class="ghost" id="howBtn" type="button">HOW TO PLAY</button>
-      </div>
+      <button class="edgeTab play" id="startBtn">PLAY</button>
+      <button class="edgeTab s1" id="packBtn2" type="button">PACK</button>
+      <button class="edgeTab s2" id="martBtn2" type="button">MART</button>
+      <button class="edgeTab s3" id="howBtn" type="button">HOW TO PLAY</button>
     </div>
     </div>
     <div class="menuArt">
